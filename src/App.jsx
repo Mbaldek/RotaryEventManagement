@@ -67,17 +67,25 @@ const AuthenticatedApp = () => {
 
 
 function App() {
+  // RSA pages are public — bypass auth entirely
+  const path = window.location.pathname;
+  if (path.startsWith('/RsaDashboard') || path.startsWith('/RsaScore')) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/RsaDashboard" element={<RsaDashboard />} />
+          <Route path="/RsaScore" element={<RsaScore />} />
+        </Routes>
+      </Router>
+    );
+  }
 
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <NavigationTracker />
-          <Routes>
-            <Route path="/RsaDashboard" element={<RsaDashboard />} />
-            <Route path="/RsaScore" element={<RsaScore />} />
-            <Route path="*" element={<AuthenticatedApp />} />
-          </Routes>
+          <AuthenticatedApp />
         </Router>
         <Toaster />
       </QueryClientProvider>
