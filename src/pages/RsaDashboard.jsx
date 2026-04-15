@@ -407,6 +407,42 @@ export default function RsaDashboard() {
                           <a href={"/?page=RsaScore&s="+sid} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>
                         </div>
                       </div>
+                      {/* Activate session */}
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:7}}>Statut session</div>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div style={{flex:1,padding:"8px 12px",borderRadius:9,background:cfg.session_active?"#e8f5ee":"#fff8f6",border:"1px solid "+(cfg.session_active?"#b0d8c4":"#f0c0b0")}}>
+                            <div style={{fontSize:12,fontWeight:500,color:cfg.session_active?"#1d6b4f":"#8a2040"}}>
+                              {cfg.session_active?"🟢 Active — jurés peuvent scorer":"🔴 Inactive — scoring bloqué"}
+                            </div>
+                          </div>
+                          <button className="btn" onClick={async()=>{await saveConf(sid,"session_active",!cfg.session_active);}}
+                            style={{fontSize:11,padding:"8px 14px",borderRadius:9,background:cfg.session_active?"#8a2040":NAVY,color:"white",border:"none",fontFamily:"Inter,sans-serif",fontWeight:500,flexShrink:0}}>
+                            {cfg.session_active?"Désactiver":"Activer"}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Startup order */}
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:7}}>Ordre de passage ↑↓</div>
+                        {(()=>{
+                          const order=(cfg.session_order&&cfg.session_order.length>0)?cfg.session_order:s.startups;
+                          return order.map((name,i)=>(
+                            <div key={name} style={{display:"flex",alignItems:"center",gap:7,padding:"4px 7px",background:"white",border:"1px solid "+CREAM2,borderRadius:7,marginBottom:2}}>
+                              <span style={{fontSize:10,color:"#b0b0c0",width:14,textAlign:"center",flexShrink:0}}>{i+1}</span>
+                              <span style={{flex:1,fontSize:11.5,color:NAVY}}>{name}</span>
+                              <div style={{display:"flex",gap:2,flexShrink:0}}>
+                                <button className="btn" disabled={i===0} onClick={async()=>{const o=[...order];[o[i-1],o[i]]=[o[i],o[i-1]];await saveConf(sid,"session_order",o);}}
+                                  style={{fontSize:10,padding:"1px 6px",borderRadius:5,background:CREAM,border:"1px solid "+CREAM2,color:i===0?"#d0d0d0":NAVY,fontFamily:"Inter,sans-serif"}}>↑</button>
+                                <button className="btn" disabled={i===order.length-1} onClick={async()=>{const o=[...order];[o[i+1],o[i]]=[o[i],o[i+1]];await saveConf(sid,"session_order",o);}}
+                                  style={{fontSize:10,padding:"1px 6px",borderRadius:5,background:CREAM,border:"1px solid "+CREAM2,color:i===order.length-1?"#d0d0d0":NAVY,fontFamily:"Inter,sans-serif"}}>↓</button>
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+
                       {/* Confirmations */}
                       <div>
                         <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:7}}>Confirmations startups</div>
