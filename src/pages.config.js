@@ -31,6 +31,7 @@
  *   import __Layout from './Layout.jsx';
 import RsaDashboard from './pages/RsaDashboard';
 import RsaScore from './pages/RsaScore';
+import RsaJuryForm from './pages/RsaJuryForm';
  *
  *   export const PAGES = {
  *       "Home": Home,
@@ -63,6 +64,7 @@ import UserManagement from './pages/UserManagement';
 import __Layout from './Layout.jsx';
 import RsaDashboard from './pages/RsaDashboard';
 import RsaScore from './pages/RsaScore';
+import RsaJuryForm from './pages/RsaJuryForm';
 
 
 export const PAGES = {
@@ -79,6 +81,7 @@ export const PAGES = {
     "UserManagement": UserManagement,
     "RsaDashboard": RsaDashboard,
     "RsaScore": RsaScore,
+    "RsaJuryForm": RsaJuryForm,
 }
 
 export const pagesConfig = {
