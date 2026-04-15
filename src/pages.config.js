@@ -29,6 +29,8 @@
  *   import Home from './pages/Home';
  *   import Settings from './pages/Settings';
  *   import __Layout from './Layout.jsx';
+import RsaDashboard from './pages/RsaDashboard';
+import RsaScore from './pages/RsaScore';
  *
  *   export const PAGES = {
  *       "Home": Home,
@@ -59,6 +61,8 @@ import Reservations from './pages/Reservations';
 import TableView from './pages/TableView';
 import UserManagement from './pages/UserManagement';
 import __Layout from './Layout.jsx';
+import RsaDashboard from './pages/RsaDashboard';
+import RsaScore from './pages/RsaScore';
 
 
 export const PAGES = {
@@ -73,6 +77,8 @@ export const PAGES = {
     "Reservations": Reservations,
     "TableView": TableView,
     "UserManagement": UserManagement,
+    "RsaDashboard": RsaDashboard,
+    "RsaScore": RsaScore,
 }
 
 export const pagesConfig = {
