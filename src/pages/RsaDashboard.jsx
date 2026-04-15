@@ -663,7 +663,7 @@ export default function RsaDashboard() {
           </div>
         )}
 
-        {/* PROFILES */}}
+        {/* PROFILES */}
         {tab==="profiles" && (
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:10}}>
             {profiles.length===0&&<div style={{padding:"3rem",color:"#c0c0d0",fontStyle:"italic",fontSize:13}}>Aucun profil reçu</div>}
