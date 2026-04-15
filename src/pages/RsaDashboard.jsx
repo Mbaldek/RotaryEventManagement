@@ -53,7 +53,7 @@ const TIMELINE = [
 const TABS = [
   {id:"calendar",label:"Calendrier"},
   {id:"sessions",label:"Organisation sessions"},
-  {id:"jury",label:"Jury & Placement"},
+  {id:"jury",label:"Jury"},
   {id:"profiles",label:"Profils jury"},
 ];
 
@@ -183,6 +183,7 @@ export default function RsaDashboard() {
   const [sessConf, setSessConf] = useState({});
   const [confs, setConfs] = useState({});
   const [profiles, setProfiles] = useState([]);
+  const [juryView, setJuryView] = useState("pool");
   const [jurys, setJurys] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -505,96 +506,164 @@ export default function RsaDashboard() {
         {/* JURY */}
         {tab==="jury" && (
           <div>
-            {/* Session counters */}
-            <div style={{marginBottom:14}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:600,color:NAVY,marginBottom:10}}>Couverture jury par session</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8}}>
-                {SK.map(sk => {
-                  const s = SC[sk];
-                  const assigned = jurys.filter(j=>j.sessions.includes(sk)).length
-                    + profiles.filter(p=>(p.sessions||[]).some(ps=>ps.toLowerCase().includes(s.short.toLowerCase()))).length;
-                  return (
-                    <div key={sk} style={{background:assigned>=3?s.light:CREAM,border:"1px solid "+(assigned>=3?s.border:CREAM2),borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
-                      <div style={{fontSize:10,marginBottom:3}}>{s.emoji}</div>
-                      <div style={{fontSize:22,fontWeight:600,color:assigned>=3?s.color:"#9090a8",fontFamily:"'Playfair Display',serif"}}>{assigned}</div>
-                      <div style={{fontSize:9,color:assigned>=3?s.color:"#9090a8",marginTop:2}}>{s.dateL.split(" ").slice(1).join(" ")}</div>
-                      {assigned<3&&<div style={{fontSize:9,color:"#c03010",marginTop:2}}>⚠ min. 3</div>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Profiles */}
-            <div className="card fade" style={{padding:"16px 18px",marginBottom:12}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:NAVY,marginBottom:10}}>Profils reçus via formulaire ({profiles.length})</div>
-              {profiles.length===0&&<div style={{fontSize:12,color:"#c0c0d0",fontStyle:"italic"}}>Aucun profil reçu</div>}
-              {profiles.map((p,i) => (
-                <div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 10px",borderRadius:10,background:i%2===0?CREAM:"white",marginBottom:3}}>
-                  {p.photo_base64
-                    ?<img src={p.photo_base64} alt="" style={{width:32,height:32,borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
-                    :<div style={{width:32,height:32,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:GOLD,flexShrink:0}}>{(p.prenom||"?")[0]}{(p.nom||"?")[0]}</div>
-                  }
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:500,color:NAVY,fontFamily:"'Playfair Display',serif"}}>{p.prenom} {p.nom}</div>
-                    <div style={{fontSize:10.5,color:"#6a6a8a"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
-                  </div>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:4,justifyContent:"flex-end"}}>
-                    {(p.sessions||[]).map(sl => {
-                      const f = Object.values(SC).find(s=>sl.toLowerCase().includes(s.short.toLowerCase()));
-                      return <span key={sl} style={{fontSize:9.5,padding:"2px 8px",borderRadius:10,background:f?f.light:CREAM,color:f?f.color:"#888",fontWeight:500}}>{sl.split("&")[0].trim()}</span>;
-                    })}
-                    {p.grande_finale&&<span style={{fontSize:9.5,padding:"2px 8px",borderRadius:10,background:"#fdf6e8",color:"#9a6400",fontWeight:500}}>🏆</span>}
-                  </div>
-                </div>
+            {/* Sub-nav */}
+            <div style={{display:"flex",gap:6,marginBottom:16,background:"white",padding:"4px",borderRadius:12,border:"1px solid "+CREAM2,width:"fit-content"}}>
+              {[["pool","Pool entrant"],["validated","Panel validé"],["assign","Allocation sessions"]].map(([id,lbl])=>(
+                <button key={id} className="btn" onClick={()=>setJuryView(id)}
+                  style={{fontSize:12,padding:"7px 16px",borderRadius:9,background:juryView===id?NAVY:"transparent",color:juryView===id?"white":"#9090a8",border:"none",fontFamily:"Inter,sans-serif",fontWeight:juryView===id?500:400}}>
+                  {lbl}
+                  {id==="pool"&&profiles.filter(p=>!p.validated).length>0&&<span style={{marginLeft:6,fontSize:9,background:"#c9a84c",color:NAVY,padding:"1px 5px",borderRadius:8}}>{profiles.filter(p=>!p.validated).length}</span>}
+                  {id==="validated"&&profiles.filter(p=>p.validated).length>0&&<span style={{marginLeft:6,fontSize:9,background:"#1d6b4f",color:"white",padding:"1px 5px",borderRadius:8}}>{profiles.filter(p=>p.validated).length}</span>}
+                </button>
               ))}
             </div>
 
-            {/* Manual jurys */}
-            <div className="card fade" style={{padding:"16px 18px"}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:NAVY,marginBottom:12}}>Jurés ajoutés manuellement</div>
-              <div style={{display:"grid",gridTemplateColumns:"2fr 90px 1.5fr",gap:8,marginBottom:10}}>
-                {[["name","Nom complet"],["role","Expertise"],["email","Email"]].map(([f,pl]) => (
-                  <input key={f} className="inp" value={nj[f]||""} onChange={e=>setNj(p=>({...p,[f]:e.target.value}))} placeholder={pl}/>
-                ))}
-              </div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
-                {SK.concat(["Grande Finale"]).map(sk => {
-                  const s = sk==="Grande Finale"?{color:GOLD,light:"#fdf6e8",border:"#e8d090",emoji:"🏆",short:"Finale"}:SC[sk];
-                  const sel = nj.sessions.includes(sk);
-                  return (
-                    <button key={sk} className="btn" onClick={()=>setNj(p=>({...p,sessions:sel?p.sessions.filter(x=>x!==sk):[...p.sessions,sk]}))}
-                      style={{fontSize:11,padding:"5px 12px",borderRadius:20,border:"1px solid "+(sel?s.color:CREAM2),background:sel?s.light:"white",color:sel?s.color:"#9090a8",fontFamily:"Inter,sans-serif",fontWeight:sel?500:400}}>
-                      {s.emoji} {s.short}
-                    </button>
+            {/* POOL — jurés en attente de validation */}
+            {juryView==="pool"&&(
+              <div>
+                <div style={{fontSize:12,color:"#9090a8",marginBottom:10}}>Jurés inscrits via le formulaire — à valider avant de les affecter aux sessions.</div>
+                {profiles.filter(p=>!p.validated).length===0&&<div style={{padding:"2rem",textAlign:"center",color:"#c0c0d0",fontStyle:"italic",fontSize:13}}>Aucun profil en attente</div>}
+                {profiles.filter(p=>!p.validated).map((p,i)=>{
+                  const name=p.prenom+" "+p.nom;
+                  return(
+                    <div key={p.id} className="card fade" style={{padding:"13px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:14}}>
+                      <div style={{width:38,height:38,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:GOLD,flexShrink:0}}>{(p.prenom||"?")[0]}{(p.nom||"?")[0]}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:NAVY}}>{name}</div>
+                        <div style={{fontSize:11,color:"#6a6a8a"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
+                        <div style={{fontSize:10,color:"#a0a0b8",marginTop:2}}>{p.email}</div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:5}}>
+                          {(p.sessions||[]).map(s=>{
+                            const f=Object.values(SC).find(x=>s.toLowerCase().includes(x.short.toLowerCase()));
+                            return <span key={s} style={{fontSize:9.5,padding:"2px 7px",borderRadius:8,background:f?f.light:CREAM,color:f?f.color:"#888",border:"1px solid "+(f?f.border:CREAM2)}}>{f?f.emoji:""} {s.split("&")[0].trim()}</span>;
+                          })}
+                          {p.grande_finale&&<span style={{fontSize:9.5,padding:"2px 7px",borderRadius:8,background:"#fdf6e8",color:"#9a6400",border:"1px solid #e8d090"}}>🏆 Finale</span>}
+                        </div>
+                      </div>
+                      <div style={{display:"flex",gap:8,flexShrink:0}}>
+                        <button className="btn" onClick={async()=>{
+                          await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({validated:true,assigned_sessions:p.sessions||[]})});
+                          await loadAll();
+                        }} style={{fontSize:11,padding:"7px 14px",borderRadius:9,background:"#1d6b4f",color:"white",border:"none",fontFamily:"Inter,sans-serif",fontWeight:500}}>✓ Valider</button>
+                        <button className="btn" onClick={async()=>{
+                          if(!confirm("Supprimer ce profil ?")) return;
+                          await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"DELETE",headers:{...SB_HEADERS,"Prefer":"return=minimal"}});
+                          await loadAll();
+                        }} style={{fontSize:11,padding:"7px 10px",borderRadius:9,background:"#fbe8ee",color:"#8a2040",border:"1px solid #e8a8bc",fontFamily:"Inter,sans-serif"}}>✕</button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
-              <button className="btn" onClick={addJury} style={{fontSize:12,padding:"8px 20px",borderRadius:8,background:NAVY,color:"white",border:"none",fontWeight:500}}>Ajouter</button>
-              {jurys.length>0&&(
-                <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:6}}>
-                  {jurys.map(j => (
-                    <div key={j.id} className="card" style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:12}}>
+            )}
+
+            {/* VALIDATED — jurés validés */}
+            {juryView==="validated"&&(
+              <div>
+                <div style={{fontSize:12,color:"#9090a8",marginBottom:10}}>Jurés validés — disponibles pour l'allocation aux sessions.</div>
+                {profiles.filter(p=>p.validated).length===0&&<div style={{padding:"2rem",textAlign:"center",color:"#c0c0d0",fontStyle:"italic",fontSize:13}}>Aucun juré validé</div>}
+                {profiles.filter(p=>p.validated).map((p,i)=>{
+                  const name=p.prenom+" "+p.nom;
+                  return(
+                    <div key={p.id} className="card fade" style={{padding:"13px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:14}}>
+                      <div style={{width:38,height:38,borderRadius:"50%",background:"#e8f5ee",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:"#1d6b4f",flexShrink:0}}>{(p.prenom||"?")[0]}{(p.nom||"?")[0]}</div>
                       <div style={{flex:1}}>
-                        <div style={{fontSize:13,fontWeight:500,color:NAVY,fontFamily:"'Playfair Display',serif"}}>{j.name}</div>
-                        <div style={{fontSize:10.5,color:"#6a6a8a"}}>{j.role} {j.email?"· "+j.email:""}</div>
-                        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
-                          {j.sessions.map(sk => {
-                            const s = sk==="Grande Finale"?{color:GOLD,light:"#fdf6e8",border:"#e8d090",emoji:"🏆",short:"Finale"}:SC[sk];
-                            return <span key={sk} className="btn" onClick={()=>setJurys(p=>p.map(jj=>jj.id===j.id?{...jj,sessions:jj.sessions.filter(x=>x!==sk)}:jj))} style={{fontSize:10,padding:"2px 8px",borderRadius:10,background:s.light,color:s.color,border:"1px solid "+(s.border||CREAM2),fontFamily:"Inter,sans-serif"}}>{s.emoji} {s.short} ×</span>;
+                        <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:NAVY}}>{name}</div>
+                        <div style={{fontSize:11,color:"#6a6a8a"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:5}}>
+                          {(p.assigned_sessions||[]).map(s=>{
+                            const f=Object.values(SC).find(x=>s.toLowerCase().includes(x.short.toLowerCase()));
+                            return <span key={s} style={{fontSize:9.5,padding:"2px 7px",borderRadius:8,background:f?f.light:CREAM,color:f?f.color:"#888",border:"1px solid "+(f?f.border:CREAM2)}}>{f?f.emoji:""} {s.split("&")[0].trim()}</span>;
                           })}
+                          {p.grande_finale&&<span style={{fontSize:9.5,padding:"2px 7px",borderRadius:8,background:"#fdf6e8",color:"#9a6400",border:"1px solid #e8d090"}}>🏆 Finale</span>}
                         </div>
                       </div>
-                      <button className="btn" onClick={()=>setJurys(p=>p.filter(jj=>jj.id!==j.id))} style={{fontSize:11,color:"#c0a8a8",background:"none",border:"none"}}>✕</button>
+                      <button className="btn" onClick={async()=>{
+                        await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({validated:false})});
+                        await loadAll();
+                      }} style={{fontSize:10,padding:"5px 10px",borderRadius:8,background:CREAM,color:"#9090a8",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif",flexShrink:0}}>Retirer</button>
                     </div>
-                  ))}
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ASSIGN — allocation par session */}
+            {juryView==="assign"&&(
+              <div>
+                {/* Compteur par session */}
+                <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}}>
+                  {SK.map(sk=>{
+                    const s=SC[sk];
+                    const assigned=profiles.filter(p=>p.validated&&(p.assigned_sessions||[]).some(as=>as.toLowerCase().includes(s.short.toLowerCase()))).length;
+                    return(
+                      <div key={sk} style={{background:assigned>=3?s.light:CREAM,border:"1px solid "+(assigned>=3?s.border:CREAM2),borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+                        <div style={{fontSize:12,marginBottom:3}}>{s.emoji}</div>
+                        <div style={{fontSize:22,fontWeight:600,color:assigned>=3?s.color:"#9090a8",fontFamily:"'Playfair Display',serif"}}>{assigned}</div>
+                        <div style={{fontSize:9,color:assigned>=3?s.color:"#9090a8",marginTop:2}}>{s.date}</div>
+                        {assigned<3&&<div style={{fontSize:9,color:"#c03010",marginTop:1}}>⚠ min. 3</div>}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
+
+                {/* Grille jurés × sessions */}
+                <div style={{background:"white",border:"1px solid "+CREAM2,borderRadius:12,overflow:"hidden"}}>
+                  {/* Header sessions */}
+                  <div style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 60px",background:NAVY,padding:"8px 14px",gap:4}}>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>Juré</div>
+                    {SK.map(sk=><div key={sk} style={{fontSize:9.5,color:"rgba(255,255,255,.5)",textAlign:"center"}}>{SC[sk].emoji} {SC[sk].short}</div>)}
+                    <div style={{fontSize:9.5,color:"rgba(255,255,255,.4)",textAlign:"center"}}>Finale</div>
+                  </div>
+                  {profiles.filter(p=>p.validated).length===0&&(
+                    <div style={{padding:"2rem",textAlign:"center",color:"#c0c0d0",fontStyle:"italic",fontSize:13}}>Aucun juré validé — aller dans "Panel validé" d'abord</div>
+                  )}
+                  {profiles.filter(p=>p.validated).map((p,i)=>{
+                    const assignedSess = p.assigned_sessions||[];
+                    async function toggleSession(sk){
+                      const sLabel=sk;
+                      const cur=assignedSess.includes(sLabel)?assignedSess.filter(x=>x!==sLabel):[...assignedSess,sLabel];
+                      await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({assigned_sessions:cur})});
+                      await loadAll();
+                    }
+                    async function toggleFinale(){
+                      await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({grande_finale:!p.grande_finale})});
+                      await loadAll();
+                    }
+                    return(
+                      <div key={p.id} style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 60px",padding:"8px 14px",gap:4,borderTop:"1px solid "+CREAM2,background:i%2===0?"white":CREAM,alignItems:"center"}}>
+                        <div>
+                          <div style={{fontSize:12,fontWeight:500,color:NAVY,fontFamily:"'Playfair Display',serif"}}>{p.prenom} {p.nom}</div>
+                          <div style={{fontSize:10,color:"#9090a8"}}>{p.qualite}</div>
+                        </div>
+                        {SK.map(sk=>{
+                          const s=SC[sk];
+                          const on=assignedSess.some(as=>as.toLowerCase().includes(s.short.toLowerCase())||as===sk);
+                          return(
+                            <div key={sk} style={{textAlign:"center"}}>
+                              <button className="btn" onClick={()=>toggleSession(sk)}
+                                style={{width:28,height:28,borderRadius:6,border:"1.5px solid "+(on?s.color:CREAM2),background:on?s.light:"white",color:on?s.color:"#d0d0d0",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",padding:0}}>
+                                {on?"✓":""}
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <div style={{textAlign:"center"}}>
+                          <button className="btn" onClick={toggleFinale}
+                            style={{width:28,height:28,borderRadius:6,border:"1.5px solid "+(p.grande_finale?"#c9a84c":CREAM2),background:p.grande_finale?"#fdf6e8":"white",color:p.grande_finale?"#9a6400":"#d0d0d0",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",padding:0}}>
+                            {p.grande_finale?"🏆":""}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* PROFILES */}
+        {/* PROFILES */}}
         {tab==="profiles" && (
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:10}}>
             {profiles.length===0&&<div style={{padding:"3rem",color:"#c0c0d0",fontStyle:"italic",fontSize:13}}>Aucun profil reçu</div>}
