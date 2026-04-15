@@ -26,7 +26,7 @@ const SK = Object.keys(SC);
 const SESSION_CHECKS = [
   {id:"teams_ok",label:"Réunion Teams créée + lien récupéré",phase:"J-5"},
   {id:"jurys_3",label:"Min. 3 jurés confirmés",phase:"J-5"},
-  {id:"airtable_ok",label:"Airtable jury paramétré",phase:"J-5"},
+  {id:"airtable_ok",label:"Lien scoring envoyé aux jurés",phase:"J-5"},
   {id:"fiches_ok",label:"Fiches startups préparées",phase:"J-5"},
   {id:"link_startups",label:"Lien Teams envoyé aux startups",phase:"J-2"},
   {id:"brief_jury",label:"Brief jury envoyé (lien + Airtable + fiches)",phase:"J-2"},
@@ -52,7 +52,7 @@ const TIMELINE = [
 
 const TABS = [
   {id:"calendar",label:"Calendrier"},
-  {id:"sessions",label:"Suivi sessions"},
+  {id:"sessions",label:"Organisation sessions"},
   {id:"jury",label:"Jury & Placement"},
   {id:"profiles",label:"Profils jury"},
 ];
@@ -94,6 +94,89 @@ body{font-family:'Inter',sans-serif;background:${CREAM};min-height:100vh}
 .inp::placeholder{color:#b8b8c8}
 .spinner{width:12px;height:12px;border:1.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
 `;
+
+
+function LiveScoresHub({sessionId, sessionLabel, color, light, border, startups}) {
+  const [scores, setScores] = useState([]);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function fetchScores() {
+    setLoading(true);
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/jury_scores?select=jury_name,startup_name,score_value_prop,score_market,score_business_model,score_team,score_pitch_quality,score_societal_impact&session_id=eq.${sessionId}`, {headers: SB_HEADERS});
+      const data = await r.json();
+      setScores(data||[]);
+      setLastRefresh(new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"}));
+    } catch(e) {}
+    setLoading(false);
+  }
+
+  useEffect(()=>{
+    fetchScores();
+    const t = setInterval(fetchScores, 30000);
+    return ()=>clearInterval(t);
+  }, [sessionId]);
+
+  if (scores.length === 0 && !loading) return (
+    <div style={{marginTop:10,padding:"10px 12px",background:CREAM,borderRadius:10,border:"1px solid "+CREAM2}}>
+      <div style={{fontSize:10,color:"#a0a0b8",textAlign:"center"}}>Aucun score encore soumis</div>
+    </div>
+  );
+
+  // Compute averages per startup
+  const CRIT_KEYS = ["score_value_prop","score_market","score_business_model","score_team","score_pitch_quality","score_societal_impact"];
+  const jurySet = [...new Set(scores.map(s=>s.jury_name))];
+  const avgByStartup = startups.map(name=>{
+    const stScores = scores.filter(s=>s.startup_name===name);
+    if(stScores.length===0) return {name,avg:null,count:0};
+    const allVals = stScores.flatMap(s=>CRIT_KEYS.map(k=>s[k]).filter(v=>v!==null&&v!==undefined));
+    const avg = allVals.length>0?(allVals.reduce((a,b)=>a+b,0)/allVals.length):null;
+    return {name,avg:avg?parseFloat(avg.toFixed(2)):null,count:stScores.length};
+  }).sort((a,b)=>(b.avg||0)-(a.avg||0));
+
+  return (
+    <div style={{marginTop:12}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+        <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500}}>
+          🔴 Scores live · {jurySet.length} juré{jurySet.length>1?"s":""} · auto-refresh 30s
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          {lastRefresh&&<span style={{fontSize:9,color:"#b0b0c0"}}>{lastRefresh}</span>}
+          <button className="btn" onClick={fetchScores} disabled={loading} style={{fontSize:9.5,padding:"3px 8px",borderRadius:6,background:CREAM,color:"#9090a8",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}>
+            {loading?"...":"↺"}
+          </button>
+        </div>
+      </div>
+      {avgByStartup.map((st,i)=>{
+        const pct = st.avg?(st.avg/5*100):0;
+        return (
+          <div key={st.name} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 8px",borderRadius:8,background:i===0&&st.avg?light:"white",border:"1px solid "+(i===0&&st.avg?border:CREAM2),marginBottom:4}}>
+            <div style={{fontSize:11,fontWeight:600,color:"#9090a8",width:16,textAlign:"center",flexShrink:0}}>{st.avg?i+1:"–"}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:11.5,fontWeight:500,color:NAVY}}>{st.name}</div>
+              {st.avg&&<div style={{height:3,background:CREAM2,borderRadius:2,marginTop:3,overflow:"hidden"}}>
+                <div style={{height:"100%",width:pct+"%",background:color,borderRadius:2,transition:"width .4s"}}/>
+              </div>}
+            </div>
+            <div style={{textAlign:"right",flexShrink:0}}>
+              {st.avg
+                ?<><span style={{fontSize:14,fontWeight:600,color:color,fontFamily:"'Playfair Display',serif"}}>{st.avg}</span><span style={{fontSize:9.5,color:"#a0a0b8"}}>/5</span></>
+                :<span style={{fontSize:10,color:"#c0c0d0"}}>—</span>
+              }
+              <div style={{fontSize:9,color:"#b0b0c0"}}>{st.count} score{st.count>1?"s":""}</div>
+            </div>
+          </div>
+        );
+      })}
+      {jurySet.length>0&&(
+        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+          {jurySet.map(j=><span key={j} style={{fontSize:9.5,padding:"2px 8px",borderRadius:8,background:"#e8f5ee",color:"#1d6b4f",border:"1px solid #b0d8c4"}}>✓ {j}</span>)}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function RsaDashboard() {
   const [tab, setTab] = useState("calendar");
@@ -315,10 +398,10 @@ export default function RsaDashboard() {
                         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                           <span style={{fontSize:10,color:"#6a6a8a",width:60,flexShrink:0}}>📊 Scoring</span>
                           <div style={{flex:1,fontSize:11,padding:"7px 10px",background:"#e8f5ee",borderRadius:8,border:"1px solid #b0d8c4",color:"#1d6b4f",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                            ?page=RsaScore&s={sid}
+                            {window.location.origin}/RsaScore?s={sid}
                           </div>
                           <button className="btn" onClick={()=>{
-                            const link = window.location.origin + "/?page=RsaScore&s=" + sid;
+                            const link = window.location.origin + "/RsaScore?s=" + sid;
                             navigator.clipboard.writeText(link).catch(()=>{});
                           }} style={{fontSize:10,padding:"5px 10px",borderRadius:8,background:"#1d6b4f",color:"white",border:"none",flexShrink:0}}>📋</button>
                           <a href={"/?page=RsaScore&s="+sid} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>
@@ -374,6 +457,8 @@ export default function RsaDashboard() {
                         );
                       })}
                     </div>
+                    {/* Live Scores Hub */}
+                    <LiveScoresHub sessionId={sid} sessionLabel={sk} color={s.color} light={s.light} border={s.border} startups={s.startups} />
                   </div>
                 </div>
               );
