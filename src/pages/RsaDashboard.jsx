@@ -307,13 +307,22 @@ export default function RsaDashboard() {
                       {/* Links */}
                       <div style={{marginBottom:12}}>
                         <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:7}}>Liens</div>
-                        {[["teams_link","🎥 Teams","Lien réunion Teams…"],["airtable_link","📊 Airtable","Lien Airtable jury…"]].map(([f,lbl,ph]) => (
-                          <div key={f} style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-                            <span style={{fontSize:10,color:"#6a6a8a",width:60,flexShrink:0}}>{lbl}</span>
-                            <input className="inp" value={cfg[f]||""} onChange={e=>setSessConf(p=>({...p,[sid]:{...(p[sid]||{}),[f]:e.target.value}}))} onBlur={e=>saveConf(sid,f,e.target.value)} placeholder={ph} style={{flex:1,fontSize:11}}/>
-                            {cfg[f]&&<a href={cfg[f]} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>}
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                          <span style={{fontSize:10,color:"#6a6a8a",width:60,flexShrink:0}}>🎥 Teams</span>
+                          <input className="inp" value={cfg.teams_link||""} onChange={e=>setSessConf(p=>({...p,[sid]:{...(p[sid]||{}),teams_link:e.target.value}}))} onBlur={e=>saveConf(sid,"teams_link",e.target.value)} placeholder="Lien réunion Teams…" style={{flex:1,fontSize:11}}/>
+                          {cfg.teams_link&&<a href={cfg.teams_link} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>}
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                          <span style={{fontSize:10,color:"#6a6a8a",width:60,flexShrink:0}}>📊 Scoring</span>
+                          <div style={{flex:1,fontSize:11,padding:"7px 10px",background:"#e8f5ee",borderRadius:8,border:"1px solid #b0d8c4",color:"#1d6b4f",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            ?page=RsaScore&s={sid}
                           </div>
-                        ))}
+                          <button className="btn" onClick={()=>{
+                            const link = window.location.origin + "/?page=RsaScore&s=" + sid;
+                            navigator.clipboard.writeText(link).catch(()=>{});
+                          }} style={{fontSize:10,padding:"5px 10px",borderRadius:8,background:"#1d6b4f",color:"white",border:"none",flexShrink:0}}>📋</button>
+                          <a href={"/?page=RsaScore&s="+sid} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>
+                        </div>
                       </div>
                       {/* Confirmations */}
                       <div>
