@@ -405,7 +405,7 @@ export default function RsaDashboard() {
                             const link = window.location.origin + "/RsaScore?s=" + sid;
                             navigator.clipboard.writeText(link).catch(()=>{});
                           }} style={{fontSize:10,padding:"5px 10px",borderRadius:8,background:"#1d6b4f",color:"white",border:"none",flexShrink:0}}>📋</button>
-                          <a href={"/?page=RsaScore&s="+sid} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>
+                          <a href={"/RsaScore?s="+sid} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>
                         </div>
                       </div>
                       {/* Activate session */}
