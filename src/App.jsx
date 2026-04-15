@@ -7,8 +7,6 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import RsaDashboard from './pages/RsaDashboard';
-import RsaScore from './pages/RsaScore';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -67,19 +65,6 @@ const AuthenticatedApp = () => {
 
 
 function App() {
-  // RSA pages are public — bypass auth entirely
-  const path = window.location.pathname;
-  if (path.startsWith('/RsaDashboard') || path.startsWith('/RsaScore')) {
-    return (
-      <Router>
-        <Routes>
-          <Route path="/RsaDashboard" element={<RsaDashboard />} />
-          <Route path="/RsaScore" element={<RsaScore />} />
-        </Routes>
-      </Router>
-    );
-  }
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
