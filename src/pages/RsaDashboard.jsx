@@ -196,7 +196,7 @@ export default function RsaDashboard() {
       const [cfgRows, confRows, profRows] = await Promise.all([
         sbGet("session_config", "?select=session_id,teams_link,airtable_link,notes,checklist"),
         sbGet("startup_confirmations", "?select=startup_name,session_id,status,note"),
-        sbGet("jury_profiles", "?select=id,prenom,nom,qualite,organisation,email,sessions,grande_finale,photo_base64,lang,created_at&order=created_at.desc")
+        sbGet("jury_profiles", "?select=id,prenom,nom,qualite,organisation,email,sessions,assigned_sessions,validated,grande_finale,photo_base64,lang,created_at&order=created_at.desc")
       ]);
       const cfg = {};
       (cfgRows||[]).forEach(r => { cfg[r.session_id] = {teams_link:r.teams_link||"",airtable_link:r.airtable_link||"",notes:r.notes||"",checklist:r.checklist||{}}; });
