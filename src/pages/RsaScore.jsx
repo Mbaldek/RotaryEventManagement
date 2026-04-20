@@ -7,15 +7,15 @@ const H = { "apikey": KEY, "Authorization": "Bearer " + KEY, "Content-Type": "ap
 const NAVY = "#0f1f3d", GOLD = "#c9a84c", CREAM = "#f7f4ef", CREAM2 = "#ede9e1";
 
 const SESSIONS = {
-  s1_foodtech: { label:"FoodTech & Économie circulaire", emoji:"🌾", date:"Jeudi 30 avril", color:"#5a7a1a", light:"#eef5e0", border:"#c0d890",
+  s1_foodtech: { label:"FoodTech & Économie circulaire", emoji:"🌾", date:"Jeudi 30 avril · 18h", color:"#5a7a1a", light:"#eef5e0", border:"#c0d890",
     startups:["DATUS","GREEN OFF GRID SAS","KIDIPOWER","KUZOG FRANCE","Kyol","Midow"] },
-  s2_social: { label:"Impact social & Edtech", emoji:"🤝", date:"Mardi 6 mai", color:"#8a2040", light:"#fbe8ee", border:"#e8a8bc",
+  s2_social: { label:"Impact social & Edtech", emoji:"🤝", date:"Mercredi 6 mai · 18h", color:"#8a2040", light:"#fbe8ee", border:"#e8a8bc",
     startups:["Buddy","Clover","Hormur","Krewzer","SightKick"] },
-  s3_tech: { label:"Tech, AI, Fintech & Mobilité", emoji:"💻", date:"Mardi 13 mai", color:"#4a2a7a", light:"#f0eaf8", border:"#c8b0e8",
+  s3_tech: { label:"Tech, AI, Fintech & Mobilité", emoji:"💻", date:"Mercredi 13 mai · 18h", color:"#4a2a7a", light:"#f0eaf8", border:"#c8b0e8",
     startups:["Boonty","DealMatrix","EVIMO","ex9","FollowTech"] },
-  s4_health: { label:"Healthtech & Biotech", emoji:"🏥", date:"Mardi 19 mai", color:"#1a5fa8", light:"#e8f0fb", border:"#a8c8f0",
+  s4_health: { label:"Healthtech & Biotech", emoji:"🏥", date:"Mardi 19 mai · 18h", color:"#1a5fa8", light:"#e8f0fb", border:"#a8c8f0",
     startups:["Femnov","InFocus Therapeutics","IPCURE","PEGMATISS BIOTECH","VAir","Virtuosis Health SAS","wilo"] },
-  s5_greentech: { label:"Greentech & Environnement", emoji:"🌱", date:"Jeudi 21 mai", color:"#1d6b4f", light:"#e8f5ee", border:"#b0d8c4",
+  s5_greentech: { label:"Greentech & Environnement", emoji:"🌱", date:"Jeudi 21 mai · 18h", color:"#1d6b4f", light:"#e8f5ee", border:"#b0d8c4",
     startups:["Maa Biodiversity","reLi Energy","SafyPower","Sycon","Vergora"] }
 };
 
