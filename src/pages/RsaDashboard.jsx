@@ -10,15 +10,15 @@ const CREAM = "#f7f4ef";
 const CREAM2 = "#ede9e1";
 
 const SC = {
-  "Foodtech & économie circulaire": { id:"s1_foodtech", color:"#5a7a1a", light:"#eef5e0", border:"#c0d890", emoji:"🌾", short:"FoodTech", dateL:"Jeudi 30 avril",
+  "Foodtech & économie circulaire": { id:"s1_foodtech", color:"#5a7a1a", light:"#eef5e0", border:"#c0d890", emoji:"🌾", short:"FoodTech", dateL:"Jeudi 30 avril · 18h",
     startups:["DATUS","GREEN OFF GRID SAS","KIDIPOWER","KUZOG FRANCE","Kyol","Midow"]},
-  "Impact social & Edtech": { id:"s2_social", color:"#8a2040", light:"#fbe8ee", border:"#e8a8bc", emoji:"🤝", short:"Social", dateL:"Mardi 6 mai",
+  "Impact social & Edtech": { id:"s2_social", color:"#8a2040", light:"#fbe8ee", border:"#e8a8bc", emoji:"🤝", short:"Social", dateL:"Mercredi 6 mai · 18h",
     startups:["Buddy","Clover","Hormur","Krewzer","SightKick"]},
-  "Tech, AI, Fintech & Mobilité": { id:"s3_tech", color:"#4a2a7a", light:"#f0eaf8", border:"#c8b0e8", emoji:"💻", short:"Tech", dateL:"Mardi 13 mai",
+  "Tech, AI, Fintech & Mobilité": { id:"s3_tech", color:"#4a2a7a", light:"#f0eaf8", border:"#c8b0e8", emoji:"💻", short:"Tech", dateL:"Mercredi 13 mai · 18h",
     startups:["Boonty","DealMatrix","EVIMO","ex9","FollowTech"]},
-  "Healthtech & Biotech": { id:"s4_health", color:"#1a5fa8", light:"#e8f0fb", border:"#a8c8f0", emoji:"🏥", short:"Health", dateL:"Mardi 19 mai",
+  "Healthtech & Biotech": { id:"s4_health", color:"#1a5fa8", light:"#e8f0fb", border:"#a8c8f0", emoji:"🏥", short:"Health", dateL:"Mardi 19 mai · 18h",
     startups:["Femnov","InFocus Therapeutics","IPCURE","PEGMATISS BIOTECH","VAir","Virtuosis Health SAS","wilo"]},
-  "Greentech & Environnement": { id:"s5_greentech", color:"#1d6b4f", light:"#e8f5ee", border:"#b0d8c4", emoji:"🌱", short:"Greentech", dateL:"Jeudi 21 mai",
+  "Greentech & Environnement": { id:"s5_greentech", color:"#1d6b4f", light:"#e8f5ee", border:"#b0d8c4", emoji:"🌱", short:"Greentech", dateL:"Jeudi 21 mai · 18h",
     startups:["Maa Biodiversity","reLi Energy","SafyPower","Sycon","Vergora"]}
 };
 const SK = Object.keys(SC);
@@ -42,8 +42,8 @@ const SESSION_CHECKS = [
 
 const TIMELINE = [
   {date:"30 avril",day:"Jeu",label:"Session 1 — FoodTech",color:"#5a7a1a"},
-  {date:"6 mai",day:"Mar",label:"Session 2 — Impact social & Edtech",color:"#8a2040"},
-  {date:"13 mai",day:"Mar",label:"Session 3 — Tech, AI, Fintech",color:"#4a2a7a"},
+  {date:"6 mai",day:"Mer",label:"Session 2 — Impact social & Edtech",color:"#8a2040"},
+  {date:"13 mai",day:"Mer",label:"Session 3 — Tech, AI, Fintech",color:"#4a2a7a"},
   {date:"19 mai",day:"Mar",label:"Session 4 — Healthtech & Biotech",color:"#1a5fa8"},
   {date:"21 mai",day:"Jeu",label:"Session 5 — Greentech",color:"#1d6b4f"},
   {date:"26 mai",day:"Mar",label:"Grande Finale — Cyrus Conseil 16h–19h",color:GOLD,type:"finale",note:"50 bd Haussmann, Paris 75009"},
