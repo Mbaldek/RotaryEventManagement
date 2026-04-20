@@ -184,6 +184,7 @@ export default function RsaDashboard() {
   const [confs, setConfs] = useState({});
   const [profiles, setProfiles] = useState([]);
   const [juryView, setJuryView] = useState("pool");
+  const [assignView, setAssignView] = useState("byJury");
   const [jurys, setJurys] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -496,6 +497,30 @@ export default function RsaDashboard() {
                     </div>
                     {/* Live Scores Hub */}
                     <LiveScoresHub sessionId={sid} sessionLabel={sk} color={s.color} light={s.light} border={s.border} startups={s.startups} />
+
+                    {/* Jurés de la session */}
+                    {(()=>{
+                      const sessJurors = profiles.filter(p=>p.validated && (p.assigned_sessions||[]).some(as=>as.toLowerCase().includes(s.short.toLowerCase())));
+                      return (
+                        <div>
+                          <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:8}}>Jurés de la session <span style={{color:sessJurors.length>=3?"#1d6b4f":"#c03010",marginLeft:4}}>({sessJurors.length})</span></div>
+                          {sessJurors.length===0&&<div style={{fontSize:11,color:"#c0c0d0",fontStyle:"italic",padding:"10px 0"}}>Aucun juré assigné — aller dans l'onglet Jury</div>}
+                          {sessJurors.map(j=>(
+                            <div key={j.id} style={{display:"flex",alignItems:"center",gap:9,padding:"6px 9px",background:"white",border:"1px solid "+CREAM2,borderRadius:8,marginBottom:3}}>
+                              {j.photo_base64
+                                ?<img src={j.photo_base64} alt="" style={{width:26,height:26,borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
+                                :<div style={{width:26,height:26,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:600,color:GOLD,flexShrink:0}}>{(j.prenom||"?")[0]}{(j.nom||"?")[0]}</div>
+                              }
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{fontSize:11.5,fontWeight:500,color:NAVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{j.prenom} {j.nom}</div>
+                                <div style={{fontSize:10,color:"#9090a8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{j.qualite}{j.organisation?" · "+j.organisation:""}</div>
+                              </div>
+                              {j.grande_finale&&<span title="Grande Finale" style={{fontSize:11,flexShrink:0}}>🏆</span>}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -591,6 +616,16 @@ export default function RsaDashboard() {
             {/* ASSIGN — allocation par session */}
             {juryView==="assign"&&(
               <div>
+                {/* View toggle */}
+                <div style={{display:"flex",gap:6,marginBottom:14,background:"white",padding:"4px",borderRadius:10,border:"1px solid "+CREAM2,width:"fit-content"}}>
+                  {[["byJury","Vue par juré"],["bySession","Vue par session"]].map(([id,lbl])=>(
+                    <button key={id} className="btn" onClick={()=>setAssignView(id)}
+                      style={{fontSize:11,padding:"6px 14px",borderRadius:7,background:assignView===id?NAVY:"transparent",color:assignView===id?"white":"#9090a8",border:"none",fontFamily:"Inter,sans-serif",fontWeight:assignView===id?500:400}}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Compteur par session */}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}}>
                   {SK.map(sk=>{
@@ -600,14 +635,75 @@ export default function RsaDashboard() {
                       <div key={sk} style={{background:assigned>=3?s.light:CREAM,border:"1px solid "+(assigned>=3?s.border:CREAM2),borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
                         <div style={{fontSize:12,marginBottom:3}}>{s.emoji}</div>
                         <div style={{fontSize:22,fontWeight:600,color:assigned>=3?s.color:"#9090a8",fontFamily:"'Playfair Display',serif"}}>{assigned}</div>
-                        <div style={{fontSize:9,color:assigned>=3?s.color:"#9090a8",marginTop:2}}>{s.date}</div>
+                        <div style={{fontSize:9,color:assigned>=3?s.color:"#9090a8",marginTop:2}}>{s.dateL}</div>
                         {assigned<3&&<div style={{fontSize:9,color:"#c03010",marginTop:1}}>⚠ min. 3</div>}
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Grille jurés × sessions */}
+                {/* Vue par session */}
+                {assignView==="bySession"&&(
+                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                    {profiles.filter(p=>p.validated).length===0&&(
+                      <div style={{padding:"2rem",textAlign:"center",color:"#c0c0d0",fontStyle:"italic",fontSize:13,background:"white",borderRadius:12,border:"1px solid "+CREAM2}}>Aucun juré validé — aller dans "Panel validé" d'abord</div>
+                    )}
+                    {SK.map(sk=>{
+                      const s=SC[sk];
+                      const sessJurors=profiles.filter(p=>p.validated&&(p.assigned_sessions||[]).some(as=>as.toLowerCase().includes(s.short.toLowerCase())));
+                      async function toggleJuror(p){
+                        const cur=p.assigned_sessions||[];
+                        const has=cur.some(as=>as.toLowerCase().includes(s.short.toLowerCase()));
+                        const next=has?cur.filter(as=>!as.toLowerCase().includes(s.short.toLowerCase())):[...cur,sk];
+                        await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({assigned_sessions:next})});
+                        await loadAll();
+                      }
+                      return(
+                        <div key={sk} className="card" style={{overflow:"hidden"}}>
+                          <div style={{background:s.color,padding:"9px 14px",display:"flex",alignItems:"center",gap:10}}>
+                            <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:"white"}}>{s.emoji} {sk}</div>
+                            <div style={{fontSize:10,color:"rgba(255,255,255,.6)"}}>{s.dateL}</div>
+                            <div style={{marginLeft:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.18)",fontWeight:500}}>{sessJurors.length} {sessJurors.length>1?"jurés":"juré"}{sessJurors.length<3?" ⚠ min 3":""}</div>
+                          </div>
+                          <div style={{padding:"10px 14px"}}>
+                            {sessJurors.length===0&&<div style={{fontSize:11.5,color:"#c0c0d0",fontStyle:"italic",padding:"6px 0"}}>Aucun juré pour l'instant. Ajouter ci-dessous depuis le panel validé.</div>}
+                            {sessJurors.map(p=>(
+                              <div key={p.id} style={{display:"flex",alignItems:"center",gap:9,padding:"6px 9px",background:s.light,border:"1px solid "+s.border,borderRadius:8,marginBottom:4}}>
+                                {p.photo_base64
+                                  ?<img src={p.photo_base64} alt="" style={{width:28,height:28,borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
+                                  :<div style={{width:28,height:28,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9.5,fontWeight:600,color:GOLD,flexShrink:0}}>{(p.prenom||"?")[0]}{(p.nom||"?")[0]}</div>
+                                }
+                                <div style={{flex:1,minWidth:0}}>
+                                  <div style={{fontSize:12,fontWeight:500,color:NAVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.prenom} {p.nom}</div>
+                                  <div style={{fontSize:10,color:"#6a6a8a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
+                                </div>
+                                {p.grande_finale&&<span title="Grande Finale" style={{fontSize:11,flexShrink:0}}>🏆</span>}
+                                <button className="btn" onClick={()=>toggleJuror(p)} style={{fontSize:10,padding:"4px 9px",borderRadius:7,background:"white",color:"#8a2040",border:"1px solid #e8a8bc",fontFamily:"Inter,sans-serif",flexShrink:0}}>Retirer</button>
+                              </div>
+                            ))}
+                            {(()=>{
+                              const avail=profiles.filter(p=>p.validated&&!(p.assigned_sessions||[]).some(as=>as.toLowerCase().includes(s.short.toLowerCase())));
+                              if(avail.length===0) return null;
+                              return(
+                                <div style={{marginTop:8,paddingTop:8,borderTop:"1px dashed "+CREAM2}}>
+                                  <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:5}}>Ajouter un juré</div>
+                                  <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                                    {avail.map(p=>(
+                                      <button key={p.id} className="btn" onClick={()=>toggleJuror(p)} style={{fontSize:11,padding:"4px 9px",borderRadius:7,background:"white",color:NAVY,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}>+ {p.prenom} {p.nom}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Vue par juré (tableau existant) */}
+                {assignView==="byJury"&&(
                 <div style={{background:"white",border:"1px solid "+CREAM2,borderRadius:12,overflow:"hidden"}}>
                   {/* Header sessions */}
                   <div style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 60px",background:NAVY,padding:"8px 14px",gap:4}}>
@@ -658,6 +754,7 @@ export default function RsaDashboard() {
                     );
                   })}
                 </div>
+                )}
               </div>
             )}
           </div>
