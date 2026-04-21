@@ -199,6 +199,7 @@ export default function RsaDashboard() {
   const [assignView, setAssignView] = useState("byJury");
   const [jurys, setJurys] = useState([]);
   const [addJuror, setAddJuror] = useState(null);
+  const [detailJuror, setDetailJuror] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nj, setNj] = useState({name:"",type:"Rotary",role:"",email:"",sessions:[]});
@@ -724,7 +725,11 @@ export default function RsaDashboard() {
                           <div style={{background:s.color,padding:"9px 14px",display:"flex",alignItems:"center",gap:10}}>
                             <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:"white"}}>{s.emoji} {sk}</div>
                             <div style={{fontSize:10,color:"rgba(255,255,255,.6)"}}>{s.dateL}</div>
-                            <div style={{marginLeft:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.18)",fontWeight:500}}>{sessJurors.length} {sessJurors.length>1?"jurés":"juré"}{sessJurors.length<3?" ⚠ min 3":""}</div>
+                            {sessJurors.filter(j=>j.email).length>0&&(
+                              <button className="btn" onClick={()=>{const emails=sessJurors.filter(j=>j.email).map(j=>j.email).join(", ");navigator.clipboard.writeText(emails);alert("Emails copiés :\n"+emails);}}
+                                style={{marginLeft:"auto",fontSize:10,padding:"3px 9px",borderRadius:7,background:"rgba(255,255,255,.18)",color:"white",border:"1px solid rgba(255,255,255,.28)",fontFamily:"Inter,sans-serif"}}>📋 Copier emails</button>
+                            )}
+                            <div style={{marginLeft:sessJurors.filter(j=>j.email).length>0?0:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.18)",fontWeight:500}}>{sessJurors.length} {sessJurors.length>1?"jurés":"juré"}{sessJurors.length<3?" ⚠ min 3":""}</div>
                           </div>
                           <div style={{padding:"10px 14px"}}>
                             {sessJurors.length===0&&<div style={{fontSize:11.5,color:"#c0c0d0",fontStyle:"italic",padding:"6px 0"}}>Aucun juré pour l'instant. Ajouter ci-dessous depuis le panel validé.</div>}
@@ -734,11 +739,13 @@ export default function RsaDashboard() {
                                   ?<img src={p.photo_base64} alt="" style={{width:28,height:28,borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
                                   :<div style={{width:28,height:28,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9.5,fontWeight:600,color:GOLD,flexShrink:0}}>{(p.prenom||"?")[0]}{(p.nom||"?")[0]}</div>
                                 }
-                                <div style={{flex:1,minWidth:0}}>
+                                <div onClick={()=>setDetailJuror(p)} style={{flex:1,minWidth:0,cursor:"pointer"}}>
                                   <div style={{fontSize:12,fontWeight:500,color:NAVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.prenom} {p.nom}</div>
                                   <div style={{fontSize:10,color:"#6a6a8a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
+                                  {p.email&&<div style={{fontSize:9.5,color:"#8a8aa8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>✉ {p.email}</div>}
                                 </div>
                                 {p.grande_finale&&<span title="Grande Finale" style={{fontSize:11,flexShrink:0}}>🏆</span>}
+                                <button className="btn" onClick={()=>setDetailJuror(p)} title="Détails" style={{fontSize:11,width:24,height:24,borderRadius:6,background:"white",color:NAVY,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif",flexShrink:0,padding:0}}>ⓘ</button>
                                 <button className="btn" onClick={()=>toggleJuror(p)} style={{fontSize:10,padding:"4px 9px",borderRadius:7,background:"white",color:"#8a2040",border:"1px solid #e8a8bc",fontFamily:"Inter,sans-serif",flexShrink:0}}>Retirer</button>
                               </div>
                             ))}
@@ -789,9 +796,10 @@ export default function RsaDashboard() {
                     }
                     return(
                       <div key={p.id} style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 60px",padding:"8px 14px",gap:4,borderTop:"1px solid "+CREAM2,background:i%2===0?"white":CREAM,alignItems:"center"}}>
-                        <div>
-                          <div style={{fontSize:12,fontWeight:500,color:NAVY,fontFamily:"'Playfair Display',serif"}}>{p.prenom} {p.nom}</div>
-                          <div style={{fontSize:10,color:"#9090a8"}}>{p.qualite}</div>
+                        <div onClick={()=>setDetailJuror(p)} style={{cursor:"pointer"}} title="Voir détails">
+                          <div style={{fontSize:12,fontWeight:500,color:NAVY,fontFamily:"'Playfair Display',serif",textDecoration:"underline",textDecorationColor:CREAM2,textDecorationThickness:1,textUnderlineOffset:2}}>{p.prenom} {p.nom} <span style={{color:"#c0c0d0",fontSize:10,fontWeight:400}}>ⓘ</span></div>
+                          <div style={{fontSize:10,color:"#9090a8"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
+                          {p.email&&<div style={{fontSize:9.5,color:"#a8a8c0",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>✉ {p.email}</div>}
                         </div>
                         {SK.map(sk=>{
                           const s=SC[sk];
@@ -853,6 +861,60 @@ export default function RsaDashboard() {
         )}
 
       </div>
+
+      {/* Modal détail juré */}
+      {detailJuror&&(
+        <div onClick={()=>setDetailJuror(null)} style={{position:"fixed",inset:0,background:"rgba(10,15,30,.55)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,padding:16}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:14,maxWidth:460,width:"100%",maxHeight:"90vh",overflow:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.25)"}}>
+            <div style={{padding:"18px 22px",borderBottom:"1px solid "+CREAM2,display:"flex",alignItems:"center",gap:14}}>
+              {detailJuror.photo_base64
+                ?<img src={detailJuror.photo_base64} alt="" style={{width:54,height:54,borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
+                :<div style={{width:54,height:54,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:600,color:GOLD,flexShrink:0}}>{(detailJuror.prenom||"?")[0]}{(detailJuror.nom||"?")[0]}</div>
+              }
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:600,color:NAVY}}>{detailJuror.prenom} {detailJuror.nom}</div>
+                <div style={{fontSize:12,color:"#6a6a8a",marginTop:2}}>{detailJuror.qualite||"—"}</div>
+                {detailJuror.organisation&&<div style={{fontSize:11,color:"#9090a8",marginTop:1}}>{detailJuror.organisation}</div>}
+              </div>
+              <button onClick={()=>setDetailJuror(null)} className="btn" style={{width:30,height:30,borderRadius:8,background:CREAM,color:"#9090a8",border:"1px solid "+CREAM2,fontSize:14,padding:0,flexShrink:0}}>✕</button>
+            </div>
+            <div style={{padding:"16px 22px"}}>
+              {detailJuror.email&&(
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>Email</div>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <a href={"mailto:"+detailJuror.email} style={{fontSize:12.5,color:NAVY,textDecoration:"none",flex:1,wordBreak:"break-all"}}>{detailJuror.email}</a>
+                    <button onClick={()=>{navigator.clipboard.writeText(detailJuror.email);}} className="btn" style={{fontSize:10,padding:"4px 9px",borderRadius:7,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif",flexShrink:0}}>📋 Copier</button>
+                  </div>
+                </div>
+              )}
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>Sessions assignées</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                  {(detailJuror.assigned_sessions||[]).length===0&&<span style={{fontSize:11,color:"#c0c0d0",fontStyle:"italic"}}>Aucune</span>}
+                  {(detailJuror.assigned_sessions||[]).map(as=>{
+                    const fk=SK.find(k=>sessMatch(as,k));const f=fk?SC[fk]:null;
+                    return <span key={as} style={{fontSize:11,padding:"3px 9px",borderRadius:8,background:f?f.light:CREAM,color:f?f.color:"#888",border:"1px solid "+(f?f.border:CREAM2)}}>{f?f.emoji:""} {as.split("&")[0].trim()}</span>;
+                  })}
+                  {detailJuror.grande_finale&&<span style={{fontSize:11,padding:"3px 9px",borderRadius:8,background:"#fdf6e8",color:"#9a6400",border:"1px solid #e8d090"}}>🏆 Grande Finale</span>}
+                </div>
+              </div>
+              {(detailJuror.sessions||[]).length>0&&JSON.stringify(detailJuror.sessions)!==JSON.stringify(detailJuror.assigned_sessions)&&(
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>Sessions souhaitées (formulaire)</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                    {detailJuror.sessions.map(s=><span key={s} style={{fontSize:11,padding:"3px 9px",borderRadius:8,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2}}>{s.split("&")[0].trim()}</span>)}
+                  </div>
+                </div>
+              )}
+              <div style={{display:"flex",gap:8,marginTop:16,paddingTop:14,borderTop:"1px solid "+CREAM2}}>
+                {detailJuror.email&&<a href={"mailto:"+detailJuror.email} className="btn" style={{fontSize:11.5,padding:"7px 14px",borderRadius:8,background:NAVY,color:GOLD,border:"none",fontFamily:"Inter,sans-serif",fontWeight:500,textDecoration:"none",flex:1,textAlign:"center"}}>✉ Envoyer un email</a>}
+                <button onClick={()=>setDetailJuror(null)} className="btn" style={{fontSize:11.5,padding:"7px 14px",borderRadius:8,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}>Fermer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer style={{background:NAVY,padding:"1.5rem 2rem",marginTop:"3rem",textAlign:"center"}}>
         <div style={{fontFamily:"'Playfair Display',serif",fontSize:14,color:"white",marginBottom:4}}>Rotary Startup Award 2026</div>
