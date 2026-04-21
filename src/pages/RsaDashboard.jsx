@@ -378,7 +378,10 @@ export default function RsaDashboard() {
               }));
               const nConf = stConfs.filter(x=>x.status==="confirmed").length;
               const nDecl = stConfs.filter(x=>x.status==="declined").length;
-              const clDone = SESSION_CHECKS.filter(c=>cl[c.id]).length;
+              const sessJurorsCount = profiles.filter(p=>p.validated && (p.assigned_sessions||[]).some(as=>sessMatch(as,sk))).length;
+              const autoCheck = (cid) => cid==="jurys_3" && sessJurorsCount>=3;
+              const isCheckDone = (cid) => autoCheck(cid) || !!cl[cid];
+              const clDone = SESSION_CHECKS.filter(c=>isCheckDone(c.id)).length;
               const phases = ["J-5","J-2","J-1","J+0"];
 
               return (
@@ -487,7 +490,7 @@ export default function RsaDashboard() {
                       <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:8}}>Checklist opérationnelle</div>
                       {phases.map(phase => {
                         const phChecks = SESSION_CHECKS.filter(c=>c.phase===phase);
-                        const phDone = phChecks.filter(c=>cl[c.id]).length;
+                        const phDone = phChecks.filter(c=>isCheckDone(c.id)).length;
                         return (
                           <div key={phase} style={{marginBottom:10}}>
                             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
@@ -495,14 +498,16 @@ export default function RsaDashboard() {
                               <span style={{fontSize:10,color:phDone===phChecks.length?"#1d6b4f":"#9090a8"}}>{phDone}/{phChecks.length}</span>
                             </div>
                             {phChecks.map(c => {
-                              const done = !!cl[c.id];
+                              const auto = autoCheck(c.id);
+                              const done = isCheckDone(c.id);
                               return (
-                                <div key={c.id} className="btn" onClick={()=>toggleSessCheck(sid,c.id)}
-                                  style={{display:"flex",alignItems:"center",gap:8,padding:"5px 6px",borderRadius:7,marginBottom:2,opacity:done?.5:1,background:done?"#f8f8f5":"transparent"}}>
-                                  <div style={{width:13,height:13,borderRadius:3,flexShrink:0,border:done?"none":"1.5px solid #d0d0e0",background:done?"#1d6b4f":"white",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                                <div key={c.id} className="btn" onClick={()=>{ if(!auto) toggleSessCheck(sid,c.id); }}
+                                  title={auto?`Auto-validé : ${sessJurorsCount} jurés assignés (≥ 3)`:undefined}
+                                  style={{display:"flex",alignItems:"center",gap:8,padding:"5px 6px",borderRadius:7,marginBottom:2,opacity:done?.5:1,background:done?"#f8f8f5":"transparent",cursor:auto?"default":"pointer"}}>
+                                  <div style={{width:13,height:13,borderRadius:3,flexShrink:0,border:done?"none":"1.5px solid #d0d0e0",background:done?(auto?GOLD:"#1d6b4f"):"white",display:"flex",alignItems:"center",justifyContent:"center"}}>
                                     {done&&<svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M1 2.5L2.5 4L6 1" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                                   </div>
-                                  <span style={{fontSize:11,color:done?"#9090a8":NAVY,textDecoration:done?"line-through":"none"}}>{c.label}</span>
+                                  <span style={{fontSize:11,color:done?"#9090a8":NAVY,textDecoration:done?"line-through":"none"}}>{c.label}{auto&&<span style={{marginLeft:5,fontSize:9,color:"#9a6400"}}>auto</span>}</span>
                                 </div>
                               );
                             })}
