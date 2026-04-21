@@ -289,6 +289,7 @@ export default function RsaDashboard() {
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             {loading && <span style={{fontSize:11,color:"rgba(255,255,255,.4)",display:"flex",alignItems:"center",gap:6}}><span className="spinner"/>Chargement…</span>}
             {saving && <span style={{fontSize:11,color:GOLD}}>Sauvegarde…</span>}
+            <a href="/RsaJuryForm" target="_blank" rel="noopener noreferrer" className="btn" style={{fontSize:11,padding:"5px 12px",borderRadius:8,background:"rgba(201,168,76,.15)",color:GOLD,border:"1px solid rgba(201,168,76,.35)",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:5}}>✎ Formulaire jury</a>
             <button className="btn" onClick={loadAll} style={{fontSize:11,padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,.08)",color:"rgba(255,255,255,.5)",border:"1px solid rgba(255,255,255,.1)"}}>↺</button>
           </div>
         </div>
