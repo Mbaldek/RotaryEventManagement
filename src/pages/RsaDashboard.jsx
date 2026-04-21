@@ -64,6 +64,7 @@ const TIMELINE = [
 
 const TABS = [
   {id:"calendar",label:"Calendrier"},
+  {id:"tracker",label:"Tracker actions"},
   {id:"sessions",label:"Organisation sessions"},
   {id:"jury",label:"Jury"},
   {id:"profiles",label:"Profils jury"},
@@ -203,15 +204,18 @@ export default function RsaDashboard() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nj, setNj] = useState({name:"",type:"Rotary",role:"",email:"",sessions:[]});
+  const [actions, setActions] = useState([]);
+  const [newAction, setNewAction] = useState({title:"",due_date:"",link:""});
   const saveTm = useRef(null);
 
   async function loadAll() {
     setLoading(true);
     try {
-      const [cfgRows, confRows, profRows] = await Promise.all([
+      const [cfgRows, confRows, profRows, actRows] = await Promise.all([
         sbGet("session_config", "?select=session_id,teams_link,airtable_link,notes,checklist"),
         sbGet("startup_confirmations", "?select=startup_name,session_id,status,note"),
-        sbGet("jury_profiles", "?select=id,prenom,nom,qualite,organisation,email,sessions,assigned_sessions,validated,grande_finale,photo_base64,lang,created_at&order=created_at.desc")
+        sbGet("jury_profiles", "?select=id,prenom,nom,qualite,organisation,email,sessions,assigned_sessions,validated,grande_finale,photo_base64,lang,created_at&order=created_at.desc"),
+        sbGet("rsa_actions", "?select=id,title,due_date,done,pos,notes,link,created_at&order=done.asc,pos.asc,created_at.asc")
       ]);
       const cfg = {};
       (cfgRows||[]).forEach(r => { cfg[r.session_id] = {teams_link:r.teams_link||"",airtable_link:r.airtable_link||"",notes:r.notes||"",checklist:r.checklist||{}}; });
@@ -220,6 +224,7 @@ export default function RsaDashboard() {
       (confRows||[]).forEach(r => { cf[r.startup_name+"__"+r.session_id] = {status:r.status,note:r.note||""}; });
       setConfs(cf);
       setProfiles(profRows||[]);
+      setActions(actRows||[]);
     } catch(e) { console.error(e); }
     setLoading(false);
   }
@@ -360,6 +365,99 @@ export default function RsaDashboard() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* TRACKER ACTIONS */}
+        {tab==="tracker" && (
+          <div style={{display:"grid",gridTemplateColumns:"1.5fr 1fr",gap:14}}>
+            {/* Left: actions court terme */}
+            <div className="card fade" style={{padding:"18px 20px"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:600,color:NAVY}}>Actions court terme</div>
+                <div style={{fontSize:10,color:"#9090a8"}}>{actions.filter(a=>!a.done).length} ouvertes · {actions.filter(a=>a.done).length} faites</div>
+              </div>
+              {actions.length===0&&<div style={{fontSize:12,color:"#c0c0d0",fontStyle:"italic",padding:"1.5rem 0",textAlign:"center"}}>Aucune action — ajouter ci-dessous</div>}
+              {actions.map(a=>{
+                const today=new Date().toISOString().slice(0,10);
+                const overdue=a.due_date&&!a.done&&a.due_date<today;
+                const dueSoon=a.due_date&&!a.done&&a.due_date===today;
+                async function toggleDone(){
+                  await fetch(`${SB_URL}/rest/v1/rsa_actions?id=eq.${a.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({done:!a.done})});
+                  await loadAll();
+                }
+                async function del(){
+                  if(!confirm("Supprimer cette action ?"))return;
+                  await fetch(`${SB_URL}/rest/v1/rsa_actions?id=eq.${a.id}`,{method:"DELETE",headers:{...SB_HEADERS,"Prefer":"return=minimal"}});
+                  await loadAll();
+                }
+                return(
+                  <div key={a.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"9px 10px",borderRadius:9,marginBottom:5,background:a.done?"#f8f8f5":overdue?"#fbe8ee":dueSoon?"#fdf6e8":"white",border:"1px solid "+(a.done?CREAM2:overdue?"#e8a8bc":dueSoon?"#e8d090":CREAM2),opacity:a.done?.6:1}}>
+                    <button className="btn" onClick={toggleDone} style={{flexShrink:0,marginTop:2,width:16,height:16,borderRadius:4,border:a.done?"none":"1.5px solid #d0d0e0",background:a.done?"#1d6b4f":"white",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+                      {a.done&&<svg width="9" height="6" viewBox="0 0 9 6" fill="none"><path d="M1 3L3 5L8 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </button>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12.5,color:a.done?"#9090a8":NAVY,textDecoration:a.done?"line-through":"none",lineHeight:1.4}}>{a.title}</div>
+                      <div style={{display:"flex",gap:10,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
+                        {a.due_date&&(
+                          <span style={{fontSize:10,color:overdue?"#8a2040":dueSoon?"#9a6400":"#9090a8",fontWeight:overdue||dueSoon?600:400}}>
+                            {overdue?"⚠ en retard · ":dueSoon?"📅 aujourd'hui · ":"📅 "}{new Date(a.due_date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}
+                          </span>
+                        )}
+                        {a.link&&<a href={a.link} target="_blank" rel="noreferrer" style={{fontSize:10,color:GOLD,textDecoration:"none"}}>↗ lien</a>}
+                      </div>
+                    </div>
+                    <button className="btn" onClick={del} title="Supprimer" style={{flexShrink:0,fontSize:10,width:22,height:22,borderRadius:5,background:"transparent",color:"#c0c0d0",border:"1px solid "+CREAM2,padding:0}}>✕</button>
+                  </div>
+                );
+              })}
+
+              {/* Add form */}
+              <div style={{marginTop:12,paddingTop:12,borderTop:"1px dashed "+CREAM2}}>
+                <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:6}}>Nouvelle action</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  <input className="inp" style={{flex:"1 1 240px",minWidth:0}} placeholder="Titre de l'action…" value={newAction.title} onChange={e=>setNewAction({...newAction,title:e.target.value})}/>
+                  <input className="inp" type="date" style={{width:140}} value={newAction.due_date} onChange={e=>setNewAction({...newAction,due_date:e.target.value})}/>
+                  <input className="inp" style={{flex:"1 1 140px",minWidth:0}} placeholder="Lien (optionnel)" value={newAction.link} onChange={e=>setNewAction({...newAction,link:e.target.value})}/>
+                  <button className="btn" disabled={!newAction.title.trim()}
+                    onClick={async()=>{
+                      const body={title:newAction.title.trim(),due_date:newAction.due_date||null,link:newAction.link.trim()||null,pos:(actions.reduce((m,a)=>Math.max(m,a.pos||0),0)+10)};
+                      await fetch(`${SB_URL}/rest/v1/rsa_actions`,{method:"POST",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify(body)});
+                      setNewAction({title:"",due_date:"",link:""});
+                      await loadAll();
+                    }}
+                    style={{fontSize:11,padding:"7px 14px",borderRadius:8,background:newAction.title.trim()?NAVY:"#d0d0d0",color:"white",border:"none",fontFamily:"Inter,sans-serif",cursor:newAction.title.trim()?"pointer":"not-allowed"}}>
+                    + Ajouter
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: liens sessions */}
+            <div className="card fade" style={{padding:"18px 20px",animationDelay:".05s"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:600,color:NAVY,marginBottom:14}}>Liens sessions</div>
+              {SK.map(sk=>{
+                const s=SC[sk]; const sid=s.id;
+                const cfg=sessConf[sid]||{};
+                const hasAny=!!(cfg.teams_link||cfg.airtable_link);
+                return(
+                  <div key={sk} style={{marginBottom:10,padding:"9px 11px",borderRadius:9,background:hasAny?s.light:CREAM,border:"1px solid "+(hasAny?s.border:CREAM2)}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:hasAny?5:0}}>
+                      <span style={{fontSize:13}}>{s.emoji}</span>
+                      <span style={{fontSize:11.5,fontWeight:600,color:NAVY,fontFamily:"'Playfair Display',serif",flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sk}</span>
+                      <span style={{fontSize:9.5,color:hasAny?s.color:"#9090a8"}}>{s.dateL}</span>
+                    </div>
+                    {cfg.teams_link&&<a href={cfg.teams_link} target="_blank" rel="noreferrer" style={{display:"block",fontSize:10.5,color:s.color,textDecoration:"none",padding:"2px 0"}}>↗ Teams · {cfg.teams_link}</a>}
+                    {cfg.airtable_link&&<a href={cfg.airtable_link} target="_blank" rel="noreferrer" style={{display:"block",fontSize:10.5,color:s.color,textDecoration:"none",padding:"2px 0"}}>↗ Airtable (scoring) · {cfg.airtable_link}</a>}
+                    {!hasAny&&<div style={{fontSize:10,color:"#c0c0d0",fontStyle:"italic"}}>Aucun lien configuré — voir Organisation sessions</div>}
+                  </div>
+                );
+              })}
+              <div style={{marginTop:14,paddingTop:12,borderTop:"1px dashed "+CREAM2,fontSize:10,color:"#9090a8",lineHeight:1.5}}>
+                <div style={{textTransform:"uppercase",letterSpacing:".1em",fontWeight:500,color:"#a0a0b8",marginBottom:4}}>Raccourcis</div>
+                <a href="/RsaJuryForm" target="_blank" rel="noreferrer" style={{display:"block",fontSize:11,color:GOLD,textDecoration:"none",padding:"2px 0"}}>↗ Formulaire juré (à diffuser)</a>
+              </div>
             </div>
           </div>
         )}
