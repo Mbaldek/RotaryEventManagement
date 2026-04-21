@@ -57,6 +57,8 @@ import Index from './pages/Index';
 import ReservationRequest from './pages/ReservationRequest';
 import Reservations from './pages/Reservations';
 import RsaAdmin from './pages/RsaAdmin';
+import RsaDashboard from './pages/RsaDashboard';
+import RsaJuryForm from './pages/RsaJuryForm';
 import RsaScore from './pages/RsaScore';
 import TableView from './pages/TableView';
 import UserManagement from './pages/UserManagement';
@@ -74,6 +76,8 @@ export const PAGES = {
     "ReservationRequest": ReservationRequest,
     "Reservations": Reservations,
     "RsaAdmin": RsaAdmin,
+    "RsaDashboard": RsaDashboard,
+    "RsaJuryForm": RsaJuryForm,
     "RsaScore": RsaScore,
     "TableView": TableView,
     "UserManagement": UserManagement,

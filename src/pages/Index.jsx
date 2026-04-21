@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
 import { UpcomingEvent, RestaurantTable, getCurrentUser } from "@/lib/db";
-import { ArrowRight, Calendar, Users, Sparkles, Settings, CalendarPlus, BookOpen, CalendarDays, Rocket } from "lucide-react";
+import { ArrowRight, Calendar, Users, Sparkles, Settings, CalendarPlus, BookOpen, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UserCalendarWidget from "../components/calendar/UserCalendarWidget";
 import CalendarModal from "../components/calendar/CalendarModal";
@@ -147,18 +147,6 @@ export default function Index() {
             >
               <Settings className="w-4 h-4 mr-2" />
               Panneau de contrôle admin
-            </Button>
-          </Link>
-        )}
-
-        {user?.role === 'admin' && (
-          <Link to={createPageUrl("RsaAdmin")} className="block mt-4">
-            <Button
-              size="lg"
-              className="w-full bg-indigo-700 hover:bg-indigo-800 text-white h-12 text-sm rounded-2xl"
-            >
-              <Rocket className="w-4 h-4 mr-2" />
-              Rotary Startup Award 2026 — Console live
             </Button>
           </Link>
         )}
