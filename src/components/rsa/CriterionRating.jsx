@@ -27,7 +27,7 @@ export default function CriterionRating({ criterion, value, onChange, disabled }
         </button>
       </div>
 
-      {/* 0-5 segmented buttons */}
+      {/* 0-5 segmented buttons — larger touch target on mobile */}
       <div className="flex gap-1 px-3 pb-3">
         {[0, 1, 2, 3, 4, 5].map((n) => {
           const selected = value === n;
@@ -37,7 +37,7 @@ export default function CriterionRating({ criterion, value, onChange, disabled }
               type="button"
               disabled={disabled}
               onClick={() => onChange(n)}
-              className={`flex-1 min-w-0 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`flex-1 min-w-0 h-11 sm:h-10 rounded-md text-base sm:text-sm font-semibold transition-all ${
                 selected
                   ? "bg-amber-600 text-white shadow-sm"
                   : "bg-stone-50 text-stone-700 hover:bg-stone-100 border border-stone-200"

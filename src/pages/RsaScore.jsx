@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, Lock, AlertTriangle } from "lucide-react";
-import { SESSIONS, SESSION_BY_ID, SCORE_FIELDS, JURY_STATUS } from "@/lib/rsa/constants";
+import { Loader2, Lock, AlertTriangle, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { SESSIONS, SESSION_BY_ID, SCORE_FIELDS, CRITERIA, JURY_STATUS } from "@/lib/rsa/constants";
 import { JuryProfile, JuryScore, JuryScoringSession, SessionConfig, StartupConfirmation } from "@/lib/db";
 import { DRAFT_FIELDS } from "@/components/rsa/StartupScoreCard";
 import StartupScoreCard from "@/components/rsa/StartupScoreCard";
@@ -261,6 +261,9 @@ export default function RsaScore() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
+        {/* Welcome / instructions — always visible but collapsible */}
+        <WelcomeBlock juryAlreadyPicked={!!juryName} />
+
         {/* Session not live warnings */}
         {status === JURY_STATUS.DRAFT && (
           <Banner
@@ -439,6 +442,105 @@ function FullPageSpinner() {
   return (
     <div className="fixed inset-0 flex items-center justify-center">
       <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
+    </div>
+  );
+}
+
+const WELCOME_LS_KEY = "rsa_welcome_seen";
+
+function WelcomeBlock({ juryAlreadyPicked }) {
+  // Default expanded if never seen, otherwise collapsed. User can always re-open.
+  const [open, setOpen] = useState(() => {
+    try {
+      return !localStorage.getItem(WELCOME_LS_KEY);
+    } catch {
+      return true;
+    }
+  });
+
+  function toggle() {
+    const next = !open;
+    setOpen(next);
+    if (!next) {
+      try {
+        localStorage.setItem(WELCOME_LS_KEY, "1");
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  return (
+    <div className="mb-5 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white shadow-sm">
+      <button
+        type="button"
+        onClick={toggle}
+        className="w-full flex items-center gap-3 p-4 text-left"
+      >
+        <Sparkles className="w-5 h-5 text-amber-600 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-stone-800 text-sm sm:text-base">
+            Welcome to the Rotary Startup Award scoring
+          </div>
+          <div className="text-xs text-stone-600 mt-0.5">
+            {open ? "Tap to collapse" : "Tap to read how scoring works"}
+          </div>
+        </div>
+        {open ? (
+          <ChevronUp className="w-4 h-4 text-stone-400 flex-shrink-0" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-stone-400 flex-shrink-0" />
+        )}
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 space-y-3 border-t border-amber-100 pt-3 text-sm text-stone-700 leading-relaxed">
+          <p>
+            As a jury member, you will score each startup on <strong>6 categories</strong>, on
+            a <strong>0 to 5 scale</strong> (0 = lowest, 5 = highest).
+          </p>
+          <p>
+            <strong>Complete and submit scores for each startup separately.</strong>{" "}
+            {juryAlreadyPicked
+              ? "Tap a startup below to expand it, rate the 6 criteria, add an optional comment, and submit. You can come back and edit any submission until the session is locked."
+              : "Start by picking your name below, then you'll see the startups to score."}
+          </p>
+
+          <details className="group" open>
+            <summary className="cursor-pointer select-none text-amber-800 font-medium text-xs uppercase tracking-wider py-1 hover:text-amber-900">
+              ▸ Criteria (tap to hide)
+            </summary>
+            <ol className="mt-2 space-y-3">
+              {CRITERIA.map((c, i) => (
+                <li key={c.id} className="pl-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-stone-800">
+                      {i + 1}. {c.label}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-200 rounded px-1.5 py-0.5">
+                      {Math.round(c.weight * 100)}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-600 mt-0.5">{c.desc}</p>
+                  <div className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+                    <span className="text-[11px] font-semibold text-stone-400">0</span>
+                    <span className="text-[11px] text-stone-500">{c.anchors[0]}</span>
+                    <span className="text-[11px] font-semibold text-stone-400">3</span>
+                    <span className="text-[11px] text-stone-500">{c.anchors[3]}</span>
+                    <span className="text-[11px] font-semibold text-stone-400">5</span>
+                    <span className="text-[11px] text-stone-500">{c.anchors[5]}</span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </details>
+
+          <p className="text-xs text-stone-500 border-t border-amber-100 pt-3">
+            Scores are saved to your device as you enter them, so you won't lose data if your
+            connection drops. Tap <strong>Submit</strong> to send each startup to the organizer.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

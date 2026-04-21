@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Copy, Plus, Trash2, ChevronUp, ChevronDown, Check } from "lucide-react";
-import { SESSION_BY_ID } from "@/lib/rsa/constants";
-import { JuryProfile, SessionConfig, StartupConfirmation } from "@/lib/db";
+import { Loader2, Copy, Plus, Trash2, ChevronUp, ChevronDown, Check, AlertTriangle, RotateCcw } from "lucide-react";
+import { SESSION_BY_ID, JURY_STATUS } from "@/lib/rsa/constants";
+import { JuryProfile, SessionConfig, StartupConfirmation, JuryScore, JuryScoringSession } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 
 export default function SetupTab({ sessionId }) {
   const session = SESSION_BY_ID[sessionId];
@@ -334,7 +335,114 @@ export default function SetupTab({ sessionId }) {
           })}
         </div>
       </Section>
+
+      {/* Danger zone — reset session for testing */}
+      <DangerZone sessionId={sessionId} sessionLabel={session.label} />
     </div>
+  );
+}
+
+function DangerZone({ sessionId, sessionLabel }) {
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [working, setWorking] = useState(false);
+  const [summary, setSummary] = useState(null);
+
+  async function resetSession() {
+    const mustType = sessionId;
+    if (confirmText !== mustType) {
+      toast.error(`Type "${mustType}" exactly to confirm.`);
+      return;
+    }
+    setWorking(true);
+    try {
+      // Delete all jury_scores for this session
+      const { error: e1, count: scoresDeleted } = await supabase
+        .from("jury_scores")
+        .delete({ count: "exact" })
+        .eq("session_id", sessionId);
+      if (e1) throw e1;
+
+      // Delete scoring session markers
+      const { error: e2 } = await supabase
+        .from("jury_scoring_sessions")
+        .delete()
+        .eq("session_id", sessionId);
+      if (e2) throw e2;
+
+      // Reset session_config lifecycle back to draft
+      await SessionConfig.updateBySessionId(sessionId, {
+        status: JURY_STATUS.DRAFT,
+        session_active: false,
+        locked_at: null,
+        published_at: null,
+        admin_overrides: {},
+        final_ranking: [],
+      });
+
+      setSummary({ scoresDeleted: scoresDeleted ?? 0 });
+      setConfirmText("");
+      toast.success(`${sessionId} reset · ${scoresDeleted ?? 0} scores deleted`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Reset failed: " + (err?.message || err));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return (
+    <section className="mt-8 border-t border-stone-200 pt-6">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="text-xs text-stone-400 hover:text-rose-600 inline-flex items-center gap-1.5"
+      >
+        <AlertTriangle className="w-3.5 h-3.5" />
+        {open ? "Hide" : "Show"} danger zone (test reset)
+      </button>
+      {open && (
+        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50/40 p-4">
+          <div className="flex items-start gap-3">
+            <RotateCcw className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-rose-900 text-sm">Reset this session</h4>
+              <p className="text-xs text-rose-800 mt-1 leading-relaxed">
+                Deletes <strong>all jury_scores</strong> and <strong>jury_scoring_sessions</strong> rows
+                for <code className="bg-rose-100 px-1 rounded">{sessionId}</code> ({sessionLabel}),
+                and resets the session to <strong>DRAFT</strong> (clears overrides + final ranking +
+                locked/published timestamps). Juror profiles and startup list are kept.
+              </p>
+              <p className="text-xs text-rose-700 mt-2">
+                Use this to dry-run the live session end-to-end, then reset before the real event.
+              </p>
+              {summary && (
+                <div className="mt-3 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-3 py-2">
+                  Last reset: <strong>{summary.scoresDeleted}</strong> scores deleted · status back to DRAFT.
+                </div>
+              )}
+              <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder={`Type "${sessionId}" to confirm`}
+                  className="flex-1 text-sm rounded-md border border-rose-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                />
+                <button
+                  onClick={resetSession}
+                  disabled={confirmText !== sessionId || working}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {working ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                  Reset session
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 

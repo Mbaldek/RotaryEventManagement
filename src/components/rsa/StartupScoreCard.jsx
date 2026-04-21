@@ -85,13 +85,13 @@ export default function StartupScoreCard({
               value={draft?.comment ?? ""}
               onChange={(e) => onChangeComment(e.target.value)}
               disabled={disabled}
-              rows={2}
+              rows={3}
               placeholder="Free-form notes on this startup…"
-              className="w-full text-sm rounded-md border border-stone-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 disabled:bg-stone-50 disabled:text-stone-400"
+              className="w-full text-base sm:text-sm rounded-md border border-stone-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 disabled:bg-stone-50 disabled:text-stone-400"
             />
           </div>
 
-          <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1">
             <div className="text-xs text-stone-500">
               {filled < total ? (
                 <span>{total - filled} criteria remaining</span>
@@ -105,7 +105,7 @@ export default function StartupScoreCard({
               type="button"
               onClick={onSubmit}
               disabled={!canSubmit}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+              className={`w-full sm:w-auto px-4 py-3 sm:py-2 rounded-md text-base sm:text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                 canSubmit
                   ? "bg-amber-600 text-white hover:bg-amber-700 active:scale-95"
                   : "bg-stone-100 text-stone-400 cursor-not-allowed"
