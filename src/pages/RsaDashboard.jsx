@@ -404,9 +404,29 @@ export default function RsaDashboard() {
           <div className="grid-2col-mob" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr",gap:14}}>
             {/* Left: actions court terme */}
             <div className="card fade" style={{padding:"18px 20px"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,gap:8,flexWrap:"wrap"}}>
                 <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:600,color:NAVY}}>Actions court terme</div>
-                <div style={{fontSize:10,color:"#9090a8"}}>{actions.filter(a=>!a.done).length} ouvertes · {actions.filter(a=>a.done).length} faites</div>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <div style={{fontSize:10,color:"#9090a8"}}>{actions.filter(a=>!a.done).length} ouvertes · {actions.filter(a=>a.done).length} faites</div>
+                  <button className="btn" title="Tri auto : items avec date en premier (croissant), puis sans date, puis les faites"
+                    onClick={async()=>{
+                      const sorted=[...actions].sort((a,b)=>{
+                        if(a.done!==b.done) return a.done?1:-1;
+                        const aD=a.due_date||null, bD=b.due_date||null;
+                        if(aD&&bD) return aD.localeCompare(bD);
+                        if(aD&&!bD) return -1;
+                        if(!aD&&bD) return 1;
+                        return (a.pos||0)-(b.pos||0);
+                      });
+                      const updated=sorted.map((a,i)=>({...a,pos:(i+1)*10}));
+                      setActions(updated);
+                      await Promise.all(updated.map(a=>fetch(`${SB_URL}/rest/v1/rsa_actions?id=eq.${a.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({pos:a.pos})})));
+                      await loadAll();
+                    }}
+                    style={{fontSize:10,padding:"4px 10px",borderRadius:7,background:"white",color:NAVY,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif",whiteSpace:"nowrap"}}>
+                    🗓 Trier par date
+                  </button>
+                </div>
               </div>
               {actions.length===0&&<div style={{fontSize:12,color:"#c0c0d0",fontStyle:"italic",padding:"1.5rem 0",textAlign:"center"}}>Aucune action — ajouter ci-dessous</div>}
               {(()=>{
