@@ -23,6 +23,18 @@ const SC = {
 };
 const SK = Object.keys(SC);
 
+function sessMatch(as, sk) {
+  const asL = (as||"").toLowerCase().trim();
+  const skL = sk.toLowerCase();
+  const shL = SC[sk].short.toLowerCase();
+  if (asL === skL || asL === shL) return true;
+  if (asL.startsWith(shL)) {
+    const nextChar = asL.charAt(shL.length);
+    return nextChar === "" || !/[a-zà-ÿ]/i.test(nextChar);
+  }
+  return asL.startsWith(skL);
+}
+
 const SESSION_CHECKS = [
   {id:"teams_ok",label:"Réunion Teams créée + lien récupéré",phase:"J-5"},
   {id:"jurys_3",label:"Min. 3 jurés confirmés",phase:"J-5"},
@@ -502,7 +514,7 @@ export default function RsaDashboard() {
 
                     {/* Jurés de la session */}
                     {(()=>{
-                      const sessJurors = profiles.filter(p=>p.validated && (p.assigned_sessions||[]).some(as=>as.toLowerCase().includes(s.short.toLowerCase())));
+                      const sessJurors = profiles.filter(p=>p.validated && (p.assigned_sessions||[]).some(as=>sessMatch(as,sk)));
                       return (
                         <div>
                           <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:8}}>Jurés de la session <span style={{color:sessJurors.length>=3?"#1d6b4f":"#c03010",marginLeft:4}}>({sessJurors.length})</span></div>
@@ -561,7 +573,7 @@ export default function RsaDashboard() {
                         <div style={{fontSize:10,color:"#a0a0b8",marginTop:2}}>{p.email}</div>
                         <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:5}}>
                           {(p.sessions||[]).map(s=>{
-                            const f=Object.values(SC).find(x=>s.toLowerCase().includes(x.short.toLowerCase()));
+                            const fk=SK.find(k=>sessMatch(s,k));const f=fk?SC[fk]:null;
                             return <span key={s} style={{fontSize:9.5,padding:"2px 7px",borderRadius:8,background:f?f.light:CREAM,color:f?f.color:"#888",border:"1px solid "+(f?f.border:CREAM2)}}>{f?f.emoji:""} {s.split("&")[0].trim()}</span>;
                           })}
                           {p.grande_finale&&<span style={{fontSize:9.5,padding:"2px 7px",borderRadius:8,background:"#fdf6e8",color:"#9a6400",border:"1px solid #e8d090"}}>🏆 Finale</span>}
@@ -646,7 +658,7 @@ export default function RsaDashboard() {
                         <div style={{fontSize:11,color:"#6a6a8a"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
                         <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:5}}>
                           {(p.assigned_sessions||[]).map(s=>{
-                            const f=Object.values(SC).find(x=>s.toLowerCase().includes(x.short.toLowerCase()));
+                            const fk=SK.find(k=>sessMatch(s,k));const f=fk?SC[fk]:null;
                             return <span key={s} style={{fontSize:9.5,padding:"2px 7px",borderRadius:8,background:f?f.light:CREAM,color:f?f.color:"#888",border:"1px solid "+(f?f.border:CREAM2)}}>{f?f.emoji:""} {s.split("&")[0].trim()}</span>;
                           })}
                           {p.grande_finale&&<span style={{fontSize:9.5,padding:"2px 7px",borderRadius:8,background:"#fdf6e8",color:"#9a6400",border:"1px solid #e8d090"}}>🏆 Finale</span>}
@@ -679,7 +691,7 @@ export default function RsaDashboard() {
                 <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}}>
                   {SK.map(sk=>{
                     const s=SC[sk];
-                    const assigned=profiles.filter(p=>p.validated&&(p.assigned_sessions||[]).some(as=>as.toLowerCase().includes(s.short.toLowerCase()))).length;
+                    const assigned=profiles.filter(p=>p.validated&&(p.assigned_sessions||[]).some(as=>sessMatch(as,sk))).length;
                     return(
                       <div key={sk} style={{background:assigned>=3?s.light:CREAM,border:"1px solid "+(assigned>=3?s.border:CREAM2),borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
                         <div style={{fontSize:12,marginBottom:3}}>{s.emoji}</div>
@@ -699,11 +711,11 @@ export default function RsaDashboard() {
                     )}
                     {SK.map(sk=>{
                       const s=SC[sk];
-                      const sessJurors=profiles.filter(p=>p.validated&&(p.assigned_sessions||[]).some(as=>as.toLowerCase().includes(s.short.toLowerCase())));
+                      const sessJurors=profiles.filter(p=>p.validated&&(p.assigned_sessions||[]).some(as=>sessMatch(as,sk)));
                       async function toggleJuror(p){
                         const cur=p.assigned_sessions||[];
-                        const has=cur.some(as=>as.toLowerCase().includes(s.short.toLowerCase()));
-                        const next=has?cur.filter(as=>!as.toLowerCase().includes(s.short.toLowerCase())):[...cur,sk];
+                        const has=cur.some(as=>sessMatch(as,sk));
+                        const next=has?cur.filter(as=>!sessMatch(as,sk)):[...cur,sk];
                         await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({assigned_sessions:next})});
                         await loadAll();
                       }
@@ -731,7 +743,7 @@ export default function RsaDashboard() {
                               </div>
                             ))}
                             {(()=>{
-                              const avail=profiles.filter(p=>p.validated&&!(p.assigned_sessions||[]).some(as=>as.toLowerCase().includes(s.short.toLowerCase())));
+                              const avail=profiles.filter(p=>p.validated&&!(p.assigned_sessions||[]).some(as=>sessMatch(as,sk)));
                               if(avail.length===0) return null;
                               return(
                                 <div style={{marginTop:8,paddingTop:8,borderTop:"1px dashed "+CREAM2}}>
@@ -766,8 +778,8 @@ export default function RsaDashboard() {
                   {profiles.filter(p=>p.validated).map((p,i)=>{
                     const assignedSess = p.assigned_sessions||[];
                     async function toggleSession(sk){
-                      const sLabel=sk;
-                      const cur=assignedSess.includes(sLabel)?assignedSess.filter(x=>x!==sLabel):[...assignedSess,sLabel];
+                      const has=assignedSess.some(as=>sessMatch(as,sk));
+                      const cur=has?assignedSess.filter(as=>!sessMatch(as,sk)):[...assignedSess,sk];
                       await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({assigned_sessions:cur})});
                       await loadAll();
                     }
@@ -783,7 +795,7 @@ export default function RsaDashboard() {
                         </div>
                         {SK.map(sk=>{
                           const s=SC[sk];
-                          const on=assignedSess.some(as=>as.toLowerCase().includes(s.short.toLowerCase())||as===sk);
+                          const on=assignedSess.some(as=>sessMatch(as,sk));
                           return(
                             <div key={sk} style={{textAlign:"center"}}>
                               <button className="btn" onClick={()=>toggleSession(sk)}
@@ -827,7 +839,7 @@ export default function RsaDashboard() {
                     {p.organisation&&<div style={{fontSize:10.5,color:"#9090a8",marginBottom:7}}>{p.organisation}</div>}
                     <div style={{display:"flex",flexWrap:"wrap",gap:3,marginBottom:5}}>
                       {(p.sessions||[]).map(sl => {
-                        const f = Object.values(SC).find(s=>sl.toLowerCase().includes(s.short.toLowerCase()));
+                        const fk=SK.find(k=>sessMatch(sl,k));const f=fk?SC[fk]:null;
                         return <span key={sl} style={{fontSize:9.5,padding:"2px 7px",borderRadius:10,background:f?f.light:CREAM,color:f?f.color:"#888",fontWeight:500}}>{sl.split("&")[0].trim()}</span>;
                       })}
                       {p.grande_finale&&<span style={{fontSize:9.5,padding:"2px 7px",borderRadius:10,background:"#fdf6e8",color:"#9a6400",fontWeight:500}}>🏆</span>}
