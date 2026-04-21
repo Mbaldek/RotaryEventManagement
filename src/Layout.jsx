@@ -4,7 +4,14 @@ import { createPageUrl } from "@/utils";
 import { Settings, UtensilsCrossed } from "lucide-react";
 import NotificationProvider from "@/components/notifications/NotificationProvider";
 
+// Pages rendered standalone (no Rotary nav, no lunch notifications).
+// RsaScore is shared with external jurors who shouldn't see the lunch chrome.
+const STANDALONE_PAGES = new Set(["RsaScore"]);
+
 export default function Layout({ children, currentPageName }) {
+  if (STANDALONE_PAGES.has(currentPageName)) {
+    return <>{children}</>;
+  }
   return (
     <div className="min-h-screen bg-stone-50">
       <style>{`

@@ -56,6 +56,8 @@ import FloorPlan from './pages/FloorPlan';
 import Index from './pages/Index';
 import ReservationRequest from './pages/ReservationRequest';
 import Reservations from './pages/Reservations';
+import RsaAdmin from './pages/RsaAdmin';
+import RsaScore from './pages/RsaScore';
 import TableView from './pages/TableView';
 import UserManagement from './pages/UserManagement';
 import __Layout from './Layout.jsx';
@@ -71,6 +73,8 @@ export const PAGES = {
     "Index": Index,
     "ReservationRequest": ReservationRequest,
     "Reservations": Reservations,
+    "RsaAdmin": RsaAdmin,
+    "RsaScore": RsaScore,
     "TableView": TableView,
     "UserManagement": UserManagement,
 }

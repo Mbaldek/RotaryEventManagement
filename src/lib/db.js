@@ -76,6 +76,40 @@ export const EventHistory = createEntity('event_history');
 export const UpcomingEvent = createEntity('upcoming_events');
 export const User = createEntity('profiles');
 
+// --- RSA 2026 entities ---
+export const JuryProfile = createEntity('jury_profiles');
+export const StartupConfirmation = createEntity('startup_confirmations');
+export const JuryScoringSession = createEntity('jury_scoring_sessions');
+
+// session_config: primary key is `session_id` (text), not `id`. Override update/delete.
+export const SessionConfig = {
+  ...createEntity('session_config'),
+  async updateBySessionId(sessionId, record) {
+    const { data, error } = await supabase
+      .from('session_config')
+      .update(record)
+      .eq('session_id', sessionId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
+
+// jury_scores: upsert on the unique triple (session_id, jury_name, startup_name)
+export const JuryScore = {
+  ...createEntity('jury_scores'),
+  async upsert(record) {
+    const { data, error } = await supabase
+      .from('jury_scores')
+      .upsert(record, { onConflict: 'session_id,jury_name,startup_name' })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
+
 // Auth helpers
 export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
