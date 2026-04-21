@@ -106,6 +106,33 @@ body{font-family:'Inter',sans-serif;background:${CREAM};min-height:100vh}
 .inp:focus{border-color:${GOLD};box-shadow:0 0 0 3px rgba(201,168,76,.13)}
 .inp::placeholder{color:#b8b8c8}
 .spinner{width:12px;height:12px;border:1.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+.hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:768px){
+  .nav-row{padding:0 12px !important;height:52px !important}
+  .nav-tabs{padding:0 12px !important}
+  .nav-title{font-size:13px !important}
+  .nav-sub{font-size:8.5px !important}
+  .nav-actions{gap:6px !important}
+  .nav-actions a,.nav-actions button{padding:5px 9px !important;font-size:10.5px !important}
+  .stats-bar{padding:10px 12px !important}
+  .stats-grid{grid-template-columns:repeat(2,1fr) !important;max-width:none !important}
+  .main-pad{padding:12px !important}
+  .grid-2col-mob{grid-template-columns:1fr !important}
+  .grid-sess-count{grid-template-columns:repeat(3,1fr) !important}
+  .sess-split{grid-template-columns:1fr !important;padding:12px !important;gap:14px !important}
+  .card-pad-mob{padding:14px 14px !important}
+  .cal-timeline{padding-left:56px !important}
+  .cal-date-col{width:52px !important;padding-right:10px !important}
+  .cal-rail{left:42px !important}
+  .by-jury-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .by-jury-grid{min-width:640px}
+  .profiles-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important}
+}
+@media (max-width:480px){
+  .nav-sub{display:none !important}
+  .stats-grid{gap:6px !important}
+  .grid-sess-count{grid-template-columns:repeat(2,1fr) !important}
+}
 `;
 
 
@@ -206,6 +233,9 @@ export default function RsaDashboard() {
   const [nj, setNj] = useState({name:"",type:"Rotary",role:"",email:"",sessions:[]});
   const [actions, setActions] = useState([]);
   const [newAction, setNewAction] = useState({title:"",due_date:"",link:""});
+  const [editingId, setEditingId] = useState(null);
+  const [editBuf, setEditBuf] = useState({title:"",due_date:"",link:""});
+  const [dragId, setDragId] = useState(null);
   const saveTm = useRef(null);
 
   async function loadAll() {
@@ -297,22 +327,22 @@ export default function RsaDashboard() {
 
       {/* NAV */}
       <div style={{background:NAVY,position:"sticky",top:0,zIndex:100,borderBottom:"1px solid rgba(201,168,76,.18)"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 1.5rem",height:58}}>
-          <div style={{display:"flex",alignItems:"center",gap:11}}>
-            <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${GOLD},#a07828)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:NAVY}}>R</div>
-            <div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:600,color:"white"}}>Rotary Startup Award 2026</div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:".1em",textTransform:"uppercase"}}>Dashboard · Commission Paris</div>
+        <div className="nav-row" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 1.5rem",height:58,gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:11,minWidth:0}}>
+            <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${GOLD},#a07828)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:NAVY,flexShrink:0}}>R</div>
+            <div style={{minWidth:0}}>
+              <div className="nav-title" style={{fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:600,color:"white",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>Rotary Startup Award 2026</div>
+              <div className="nav-sub" style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:".1em",textTransform:"uppercase",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>Dashboard · Commission Paris</div>
             </div>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div className="nav-actions" style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
             {loading && <span style={{fontSize:11,color:"rgba(255,255,255,.4)",display:"flex",alignItems:"center",gap:6}}><span className="spinner"/>Chargement…</span>}
             {saving && <span style={{fontSize:11,color:GOLD}}>Sauvegarde…</span>}
-            <a href="/RsaJuryForm" target="_blank" rel="noopener noreferrer" className="btn" style={{fontSize:11,padding:"5px 12px",borderRadius:8,background:"rgba(201,168,76,.15)",color:GOLD,border:"1px solid rgba(201,168,76,.35)",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:5}}>✎ Formulaire jury</a>
+            <a href="/RsaJuryForm" target="_blank" rel="noopener noreferrer" className="btn" style={{fontSize:11,padding:"5px 12px",borderRadius:8,background:"rgba(201,168,76,.15)",color:GOLD,border:"1px solid rgba(201,168,76,.35)",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>✎ Formulaire jury</a>
             <button className="btn" onClick={loadAll} style={{fontSize:11,padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,.08)",color:"rgba(255,255,255,.5)",border:"1px solid rgba(255,255,255,.1)"}}>↺</button>
           </div>
         </div>
-        <div style={{display:"flex",padding:"0 1.5rem",overflowX:"auto"}}>
+        <div className="nav-tabs" style={{display:"flex",padding:"0 1.5rem",overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               style={{fontFamily:"Inter,sans-serif",fontSize:11.5,padding:"8px 14px",background:"none",border:"none",cursor:"pointer",color:tab===t.id?GOLD:"rgba(255,255,255,.4)",fontWeight:tab===t.id?500:400,borderBottom:"2px solid "+(tab===t.id?GOLD:"transparent"),marginBottom:-1,whiteSpace:"nowrap",transition:"color .2s"}}>
@@ -325,8 +355,8 @@ export default function RsaDashboard() {
       </div>
 
       {/* STATS */}
-      <div style={{background:"white",borderBottom:"1px solid "+CREAM2,padding:"12px 1.5rem"}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,maxWidth:700}}>
+      <div className="stats-bar" style={{background:"white",borderBottom:"1px solid "+CREAM2,padding:"12px 1.5rem"}}>
+        <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,maxWidth:700}}>
           {[
             [totalSt+"/64","startups sélectionnées"],
             [totalConf+"/"+totalSt,"confirmations reçues"],
@@ -341,19 +371,19 @@ export default function RsaDashboard() {
         </div>
       </div>
 
-      <div style={{padding:"1.25rem 1.5rem"}}>
+      <div className="main-pad" style={{padding:"1.25rem 1.5rem"}}>
 
         {/* CALENDAR */}
         {tab==="calendar" && (
-          <div className="card fade" style={{padding:"20px 22px"}}>
+          <div className="card fade card-pad-mob" style={{padding:"20px 22px"}}>
             <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:600,color:NAVY,marginBottom:20}}>Calendrier de la compétition</div>
-            <div style={{position:"relative",paddingLeft:80}}>
-              <div style={{position:"absolute",left:62,top:14,bottom:14,width:2,background:CREAM2,borderRadius:1}}/>
+            <div className="cal-timeline" style={{position:"relative",paddingLeft:80}}>
+              <div className="cal-rail" style={{position:"absolute",left:62,top:14,bottom:14,width:2,background:CREAM2,borderRadius:1}}/>
               {TIMELINE.map((item,i) => {
                 const isF=item.type==="finale"; const isC=item.type==="ceremony";
                 return (
-                  <div key={i} className="fade" style={{display:"flex",alignItems:"flex-start",gap:18,marginBottom:18,animationDelay:i*.05+"s"}}>
-                    <div style={{width:80,flexShrink:0,textAlign:"right",paddingRight:18,position:"relative"}}>
+                  <div key={i} className="fade" style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:18,animationDelay:i*.05+"s"}}>
+                    <div className="cal-date-col" style={{width:80,flexShrink:0,textAlign:"right",paddingRight:18,position:"relative"}}>
                       <div style={{fontSize:13,fontWeight:500,color:NAVY}}>{item.date}</div>
                       <div style={{fontSize:10,color:"#9090a8"}}>{item.day}</div>
                       <div style={{position:"absolute",right:-6,top:"50%",transform:"translateY(-50%)",width:isF||isC?14:10,height:isF||isC?14:10,borderRadius:"50%",background:item.color,border:"2px solid white",boxShadow:`0 0 0 2px ${item.color}40`}}/>
@@ -371,7 +401,7 @@ export default function RsaDashboard() {
 
         {/* TRACKER ACTIONS */}
         {tab==="tracker" && (
-          <div style={{display:"grid",gridTemplateColumns:"1.5fr 1fr",gap:14}}>
+          <div className="grid-2col-mob" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr",gap:14}}>
             {/* Left: actions court terme */}
             <div className="card fade" style={{padding:"18px 20px"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
@@ -379,39 +409,100 @@ export default function RsaDashboard() {
                 <div style={{fontSize:10,color:"#9090a8"}}>{actions.filter(a=>!a.done).length} ouvertes · {actions.filter(a=>a.done).length} faites</div>
               </div>
               {actions.length===0&&<div style={{fontSize:12,color:"#c0c0d0",fontStyle:"italic",padding:"1.5rem 0",textAlign:"center"}}>Aucune action — ajouter ci-dessous</div>}
-              {actions.map(a=>{
-                const today=new Date().toISOString().slice(0,10);
-                const overdue=a.due_date&&!a.done&&a.due_date<today;
-                const dueSoon=a.due_date&&!a.done&&a.due_date===today;
-                async function toggleDone(){
-                  await fetch(`${SB_URL}/rest/v1/rsa_actions?id=eq.${a.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({done:!a.done})});
+              {(()=>{
+                async function reorder(fromId,toId){
+                  if(fromId===toId) return;
+                  const list=[...actions];
+                  const fi=list.findIndex(x=>x.id===fromId);
+                  const ti=list.findIndex(x=>x.id===toId);
+                  if(fi<0||ti<0) return;
+                  const [moved]=list.splice(fi,1);
+                  list.splice(ti,0,moved);
+                  setActions(list.map((a,i)=>({...a,pos:(i+1)*10})));
+                  await Promise.all(list.map((a,i)=>fetch(`${SB_URL}/rest/v1/rsa_actions?id=eq.${a.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({pos:(i+1)*10})})));
                   await loadAll();
                 }
-                async function del(){
-                  if(!confirm("Supprimer cette action ?"))return;
-                  await fetch(`${SB_URL}/rest/v1/rsa_actions?id=eq.${a.id}`,{method:"DELETE",headers:{...SB_HEADERS,"Prefer":"return=minimal"}});
-                  await loadAll();
+                async function move(id,dir){
+                  const i=actions.findIndex(x=>x.id===id);
+                  const j=i+dir;
+                  if(i<0||j<0||j>=actions.length) return;
+                  await reorder(id,actions[j].id);
                 }
-                return(
-                  <div key={a.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"9px 10px",borderRadius:9,marginBottom:5,background:a.done?"#f8f8f5":overdue?"#fbe8ee":dueSoon?"#fdf6e8":"white",border:"1px solid "+(a.done?CREAM2:overdue?"#e8a8bc":dueSoon?"#e8d090":CREAM2),opacity:a.done?.6:1}}>
-                    <button className="btn" onClick={toggleDone} style={{flexShrink:0,marginTop:2,width:16,height:16,borderRadius:4,border:a.done?"none":"1.5px solid #d0d0e0",background:a.done?"#1d6b4f":"white",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
-                      {a.done&&<svg width="9" height="6" viewBox="0 0 9 6" fill="none"><path d="M1 3L3 5L8 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                    </button>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12.5,color:a.done?"#9090a8":NAVY,textDecoration:a.done?"line-through":"none",lineHeight:1.4}}>{a.title}</div>
-                      <div style={{display:"flex",gap:10,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
-                        {a.due_date&&(
-                          <span style={{fontSize:10,color:overdue?"#8a2040":dueSoon?"#9a6400":"#9090a8",fontWeight:overdue||dueSoon?600:400}}>
-                            {overdue?"⚠ en retard · ":dueSoon?"📅 aujourd'hui · ":"📅 "}{new Date(a.due_date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}
-                          </span>
-                        )}
-                        {a.link&&<a href={a.link} target="_blank" rel="noreferrer" style={{fontSize:10,color:GOLD,textDecoration:"none"}}>↗ lien</a>}
+                return actions.map((a,idx)=>{
+                  const today=new Date().toISOString().slice(0,10);
+                  const overdue=a.due_date&&!a.done&&a.due_date<today;
+                  const dueSoon=a.due_date&&!a.done&&a.due_date===today;
+                  const isEditing=editingId===a.id;
+                  async function toggleDone(){
+                    await fetch(`${SB_URL}/rest/v1/rsa_actions?id=eq.${a.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({done:!a.done})});
+                    await loadAll();
+                  }
+                  async function del(){
+                    if(!confirm("Supprimer cette action ?"))return;
+                    await fetch(`${SB_URL}/rest/v1/rsa_actions?id=eq.${a.id}`,{method:"DELETE",headers:{...SB_HEADERS,"Prefer":"return=minimal"}});
+                    await loadAll();
+                  }
+                  function startEdit(){
+                    setEditBuf({title:a.title||"",due_date:a.due_date||"",link:a.link||""});
+                    setEditingId(a.id);
+                  }
+                  async function saveEdit(){
+                    const body={title:editBuf.title.trim()||a.title,due_date:editBuf.due_date||null,link:editBuf.link.trim()||null};
+                    await fetch(`${SB_URL}/rest/v1/rsa_actions?id=eq.${a.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify(body)});
+                    setEditingId(null);
+                    await loadAll();
+                  }
+                  return(
+                    <div key={a.id}
+                      draggable={!isEditing}
+                      onDragStart={()=>setDragId(a.id)}
+                      onDragOver={e=>{e.preventDefault();}}
+                      onDrop={e=>{e.preventDefault();if(dragId&&dragId!==a.id)reorder(dragId,a.id);setDragId(null);}}
+                      onDragEnd={()=>setDragId(null)}
+                      style={{display:"flex",alignItems:"flex-start",gap:8,padding:"9px 10px",borderRadius:9,marginBottom:5,background:a.done?"#f8f8f5":overdue?"#fbe8ee":dueSoon?"#fdf6e8":"white",border:"1px solid "+(dragId===a.id?GOLD:(a.done?CREAM2:overdue?"#e8a8bc":dueSoon?"#e8d090":CREAM2)),opacity:a.done?.6:1,cursor:isEditing?"default":"grab"}}>
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,flexShrink:0}}>
+                        <span title="Glisser pour réordonner" style={{fontSize:11,color:"#c0c0d0",lineHeight:1,cursor:"grab",userSelect:"none"}}>⋮⋮</span>
+                        <button className="btn" onClick={()=>move(a.id,-1)} disabled={idx===0} title="Monter" style={{width:18,height:14,fontSize:9,padding:0,background:"transparent",border:"none",color:idx===0?"#e0e0e8":"#9090a8",cursor:idx===0?"not-allowed":"pointer"}}>▲</button>
+                        <button className="btn" onClick={()=>move(a.id,1)} disabled={idx===actions.length-1} title="Descendre" style={{width:18,height:14,fontSize:9,padding:0,background:"transparent",border:"none",color:idx===actions.length-1?"#e0e0e8":"#9090a8",cursor:idx===actions.length-1?"not-allowed":"pointer"}}>▼</button>
                       </div>
+                      <button className="btn" onClick={toggleDone} style={{flexShrink:0,marginTop:2,width:16,height:16,borderRadius:4,border:a.done?"none":"1.5px solid #d0d0e0",background:a.done?"#1d6b4f":"white",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+                        {a.done&&<svg width="9" height="6" viewBox="0 0 9 6" fill="none"><path d="M1 3L3 5L8 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </button>
+                      {isEditing?(
+                        <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",gap:5}}>
+                          <textarea className="inp" rows={2} value={editBuf.title} onChange={e=>setEditBuf({...editBuf,title:e.target.value})} style={{width:"100%",fontSize:12,resize:"vertical",minHeight:44}}/>
+                          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                            <input className="inp" type="date" style={{width:140,fontSize:11}} value={editBuf.due_date} onChange={e=>setEditBuf({...editBuf,due_date:e.target.value})}/>
+                            <input className="inp" style={{flex:"1 1 140px",minWidth:0,fontSize:11}} placeholder="Lien (optionnel)" value={editBuf.link} onChange={e=>setEditBuf({...editBuf,link:e.target.value})}/>
+                          </div>
+                          <div style={{display:"flex",gap:5,justifyContent:"flex-end"}}>
+                            <button className="btn" onClick={()=>setEditingId(null)} style={{fontSize:10,padding:"4px 10px",borderRadius:6,background:"white",color:"#8a8aa8",border:"1px solid "+CREAM2}}>Annuler</button>
+                            <button className="btn" onClick={saveEdit} style={{fontSize:10,padding:"4px 10px",borderRadius:6,background:NAVY,color:"white",border:"none"}}>Enregistrer</button>
+                          </div>
+                        </div>
+                      ):(
+                        <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={startEdit} title="Cliquer pour modifier">
+                          <div style={{fontSize:12.5,color:a.done?"#9090a8":NAVY,textDecoration:a.done?"line-through":"none",lineHeight:1.4}}>{a.title}</div>
+                          <div style={{display:"flex",gap:10,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
+                            {a.due_date&&(
+                              <span style={{fontSize:10,color:overdue?"#8a2040":dueSoon?"#9a6400":"#9090a8",fontWeight:overdue||dueSoon?600:400}}>
+                                {overdue?"⚠ en retard · ":dueSoon?"📅 aujourd'hui · ":"📅 "}{new Date(a.due_date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}
+                              </span>
+                            )}
+                            {a.link&&<a href={a.link} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{fontSize:10,color:GOLD,textDecoration:"none"}}>↗ lien</a>}
+                          </div>
+                        </div>
+                      )}
+                      {!isEditing&&(
+                        <>
+                          <button className="btn" onClick={startEdit} title="Modifier" style={{flexShrink:0,fontSize:11,width:22,height:22,borderRadius:5,background:"transparent",color:"#9090a8",border:"1px solid "+CREAM2,padding:0}}>✎</button>
+                          <button className="btn" onClick={del} title="Supprimer" style={{flexShrink:0,fontSize:10,width:22,height:22,borderRadius:5,background:"transparent",color:"#c0c0d0",border:"1px solid "+CREAM2,padding:0}}>✕</button>
+                        </>
+                      )}
                     </div>
-                    <button className="btn" onClick={del} title="Supprimer" style={{flexShrink:0,fontSize:10,width:22,height:22,borderRadius:5,background:"transparent",color:"#c0c0d0",border:"1px solid "+CREAM2,padding:0}}>✕</button>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
 
               {/* Add form */}
               <div style={{marginTop:12,paddingTop:12,borderTop:"1px dashed "+CREAM2}}>
@@ -502,7 +593,7 @@ export default function RsaDashboard() {
                     </div>
                   </div>
 
-                  <div style={{padding:"14px 18px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+                  <div className="sess-split" style={{padding:"14px 18px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                     {/* Left */}
                     <div>
                       {/* Links */}
@@ -714,7 +805,7 @@ export default function RsaDashboard() {
                 {addJuror&&(
                   <div className="card fade" style={{padding:"14px 16px",marginBottom:12,border:"1px dashed "+GOLD,background:"#fffdf6"}}>
                     <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:NAVY,marginBottom:10}}>Nouveau juré externe</div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                    <div className="grid-2col-mob" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
                       <input placeholder="Prénom *" value={addJuror.prenom} onChange={e=>setAddJuror({...addJuror,prenom:e.target.value})} style={{padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
                       <input placeholder="Nom *" value={addJuror.nom} onChange={e=>setAddJuror({...addJuror,nom:e.target.value})} style={{padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
                       <input placeholder="Qualité (ex. Expert AI)" value={addJuror.qualite} onChange={e=>setAddJuror({...addJuror,qualite:e.target.value})} style={{padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
@@ -792,7 +883,7 @@ export default function RsaDashboard() {
                 </div>
 
                 {/* Compteur par session */}
-                <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8,marginBottom:16}}>
+                <div className="grid-sess-count" style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8,marginBottom:16}}>
                   {SK.map(sk=>{
                     const s=SC[sk];
                     const assigned=profiles.filter(p=>p.validated&&(p.assigned_sessions||[]).some(as=>sessMatch(as,sk))).length;
@@ -941,7 +1032,8 @@ export default function RsaDashboard() {
 
                 {/* Vue par juré (tableau existant) */}
                 {assignView==="byJury"&&(
-                <div style={{background:"white",border:"1px solid "+CREAM2,borderRadius:12,overflow:"hidden"}}>
+                <div className="by-jury-wrap" style={{background:"white",border:"1px solid "+CREAM2,borderRadius:12,overflow:"auto",WebkitOverflowScrolling:"touch"}}>
+                  <div className="by-jury-grid">
                   {/* Header sessions */}
                   <div style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 50px 60px",background:NAVY,padding:"8px 14px",gap:4}}>
                     <div style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>Juré</div>
@@ -1014,6 +1106,7 @@ export default function RsaDashboard() {
                       </div>
                     );
                   })()}
+                  </div>
                 </div>
                 )}
               </div>
@@ -1023,7 +1116,7 @@ export default function RsaDashboard() {
 
         {/* PROFILES */}
         {tab==="profiles" && (
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:10}}>
+          <div className="profiles-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:10}}>
             {profiles.length===0&&<div style={{padding:"3rem",color:"#c0c0d0",fontStyle:"italic",fontSize:13}}>Aucun profil reçu</div>}
             {profiles.map(p => {
               const initials = (p.prenom||"?")[0].toUpperCase()+(p.nom||"?")[0].toUpperCase();
