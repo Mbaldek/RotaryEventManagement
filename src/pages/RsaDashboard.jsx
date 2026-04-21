@@ -186,6 +186,7 @@ export default function RsaDashboard() {
   const [juryView, setJuryView] = useState("pool");
   const [assignView, setAssignView] = useState("byJury");
   const [jurys, setJurys] = useState([]);
+  const [addJuror, setAddJuror] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nj, setNj] = useState({name:"",type:"Rotary",role:"",email:"",sessions:[]});
@@ -586,7 +587,54 @@ export default function RsaDashboard() {
             {/* VALIDATED — jurés validés */}
             {juryView==="validated"&&(
               <div>
-                <div style={{fontSize:12,color:"#9090a8",marginBottom:10}}>Jurés validés — disponibles pour l'allocation aux sessions.</div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:10,flexWrap:"wrap"}}>
+                  <div style={{fontSize:12,color:"#9090a8"}}>Jurés validés — disponibles pour l'allocation aux sessions.</div>
+                  <button className="btn" onClick={()=>setAddJuror(addJuror?null:{prenom:"",nom:"",qualite:"",organisation:"",email:"",assigned_sessions:[],grande_finale:false})}
+                    style={{fontSize:11,padding:"6px 13px",borderRadius:8,background:addJuror?CREAM:NAVY,color:addJuror?"#6a6a8a":GOLD,border:"1px solid "+(addJuror?CREAM2:NAVY),fontFamily:"Inter,sans-serif",fontWeight:500}}>
+                    {addJuror?"✕ Annuler":"+ Ajouter juré externe"}
+                  </button>
+                </div>
+
+                {addJuror&&(
+                  <div className="card fade" style={{padding:"14px 16px",marginBottom:12,border:"1px dashed "+GOLD,background:"#fffdf6"}}>
+                    <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:NAVY,marginBottom:10}}>Nouveau juré externe</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                      <input placeholder="Prénom *" value={addJuror.prenom} onChange={e=>setAddJuror({...addJuror,prenom:e.target.value})} style={{padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
+                      <input placeholder="Nom *" value={addJuror.nom} onChange={e=>setAddJuror({...addJuror,nom:e.target.value})} style={{padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
+                      <input placeholder="Qualité (ex. Expert AI)" value={addJuror.qualite} onChange={e=>setAddJuror({...addJuror,qualite:e.target.value})} style={{padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
+                      <input placeholder="Organisation" value={addJuror.organisation} onChange={e=>setAddJuror({...addJuror,organisation:e.target.value})} style={{padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
+                      <input placeholder="Email" value={addJuror.email} onChange={e=>setAddJuror({...addJuror,email:e.target.value})} style={{gridColumn:"1/3",padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
+                    </div>
+                    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:6,marginTop:4}}>Sessions assignées</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+                      {SK.map(sk=>{
+                        const s=SC[sk];
+                        const sel=addJuror.assigned_sessions.includes(sk);
+                        return(
+                          <button key={sk} className="btn" onClick={()=>setAddJuror({...addJuror,assigned_sessions:sel?addJuror.assigned_sessions.filter(x=>x!==sk):[...addJuror.assigned_sessions,sk]})}
+                            style={{fontSize:11,padding:"5px 10px",borderRadius:7,background:sel?s.light:"white",color:sel?s.color:"#9090a8",border:"1px solid "+(sel?s.border:CREAM2),fontFamily:"Inter,sans-serif",fontWeight:sel?500:400}}>
+                            {s.emoji} {s.short}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <label style={{display:"flex",alignItems:"center",gap:7,fontSize:11.5,color:NAVY,cursor:"pointer",marginBottom:12}}>
+                      <input type="checkbox" checked={addJuror.grande_finale} onChange={e=>setAddJuror({...addJuror,grande_finale:e.target.checked})} style={{width:14,height:14}}/>
+                      🏆 Grande Finale
+                    </label>
+                    <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+                      <button className="btn" onClick={()=>setAddJuror(null)} style={{fontSize:11,padding:"6px 13px",borderRadius:8,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}>Annuler</button>
+                      <button className="btn" disabled={!addJuror.prenom.trim()||!addJuror.nom.trim()} onClick={async()=>{
+                        const body={prenom:addJuror.prenom.trim(),nom:addJuror.nom.trim(),qualite:addJuror.qualite.trim(),organisation:addJuror.organisation.trim(),email:addJuror.email.trim(),sessions:addJuror.assigned_sessions,assigned_sessions:addJuror.assigned_sessions,validated:true,grande_finale:addJuror.grande_finale,lang:"fr"};
+                        const r=await fetch(`${SB_URL}/rest/v1/jury_profiles`,{method:"POST",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify(body)});
+                        if(!r.ok){alert("Erreur: "+(await r.text()));return;}
+                        setAddJuror(null);
+                        await loadAll();
+                      }} style={{fontSize:11,padding:"6px 13px",borderRadius:8,background:"#1d6b4f",color:"white",border:"none",fontFamily:"Inter,sans-serif",fontWeight:500,opacity:(!addJuror.prenom.trim()||!addJuror.nom.trim())?0.4:1}}>✓ Ajouter</button>
+                    </div>
+                  </div>
+                )}
+
                 {profiles.filter(p=>p.validated).length===0&&<div style={{padding:"2rem",textAlign:"center",color:"#c0c0d0",fontStyle:"italic",fontSize:13}}>Aucun juré validé</div>}
                 {profiles.filter(p=>p.validated).map((p,i)=>{
                   const name=p.prenom+" "+p.nom;
