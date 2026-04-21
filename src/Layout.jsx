@@ -24,10 +24,11 @@ export default function Layout({ children, currentPageName }) {
             to={createPageUrl("Index")}
             className="flex items-center gap-3 text-stone-800 hover:text-amber-700 transition-colors"
           >
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/698886adec2381a5bebb878f/8eca9f2bf_rotaryinterrouecrop.png" 
-              alt="Rotary Logo" 
+            <img
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/698886adec2381a5bebb878f/8eca9f2bf_rotaryinterrouecrop.png"
+              alt="Rotary Logo"
               className="w-8 h-8"
+              style={{width:32,height:32,flexShrink:0}}
             />
             <div className="flex flex-col">
               <span className="font-semibold text-sm tracking-wide leading-tight">Rotary Club de Paris</span>

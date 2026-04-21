@@ -689,7 +689,7 @@ export default function RsaDashboard() {
                 </div>
 
                 {/* Compteur par session */}
-                <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8,marginBottom:16}}>
                   {SK.map(sk=>{
                     const s=SC[sk];
                     const assigned=profiles.filter(p=>p.validated&&(p.assigned_sessions||[]).some(as=>sessMatch(as,sk))).length;
@@ -702,6 +702,18 @@ export default function RsaDashboard() {
                       </div>
                     );
                   })}
+                  {(()=>{
+                    const finaleCount=profiles.filter(p=>p.validated&&p.grande_finale).length;
+                    const ok=finaleCount>=3;
+                    return(
+                      <div style={{background:ok?"#fdf6e8":CREAM,border:"1px solid "+(ok?"#e8d090":CREAM2),borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+                        <div style={{fontSize:12,marginBottom:3}}>🏆</div>
+                        <div style={{fontSize:22,fontWeight:600,color:ok?"#9a6400":"#9090a8",fontFamily:"'Playfair Display',serif"}}>{finaleCount}</div>
+                        <div style={{fontSize:9,color:ok?"#9a6400":"#9090a8",marginTop:2}}>Mar 26 mai · 16h</div>
+                        {finaleCount<3&&<div style={{fontSize:9,color:"#c03010",marginTop:1}}>⚠ min. 3</div>}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Vue par session */}
@@ -767,6 +779,60 @@ export default function RsaDashboard() {
                         </div>
                       );
                     })}
+                    {/* Carte Grande Finale */}
+                    {(()=>{
+                      const FINALE_COLOR=GOLD, FINALE_LIGHT="#fdf6e8", FINALE_BORDER="#e8d090";
+                      const finaleJurors=profiles.filter(p=>p.validated&&p.grande_finale);
+                      async function toggleFinale(p){
+                        await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({grande_finale:!p.grande_finale})});
+                        await loadAll();
+                      }
+                      return(
+                        <div key="finale" className="card" style={{overflow:"hidden"}}>
+                          <div style={{background:FINALE_COLOR,padding:"9px 14px",display:"flex",alignItems:"center",gap:10}}>
+                            <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:"white"}}>🏆 Grande Finale</div>
+                            <div style={{fontSize:10,color:"rgba(255,255,255,.75)"}}>Mardi 26 mai · 16h–19h · Cyrus Conseil</div>
+                            {finaleJurors.filter(j=>j.email).length>0&&(
+                              <button className="btn" onClick={()=>{const emails=finaleJurors.filter(j=>j.email).map(j=>j.email).join(", ");navigator.clipboard.writeText(emails);alert("Emails copiés :\n"+emails);}}
+                                style={{marginLeft:"auto",fontSize:10,padding:"3px 9px",borderRadius:7,background:"rgba(255,255,255,.22)",color:"white",border:"1px solid rgba(255,255,255,.35)",fontFamily:"Inter,sans-serif"}}>📋 Copier emails</button>
+                            )}
+                            <div style={{marginLeft:finaleJurors.filter(j=>j.email).length>0?0:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.22)",fontWeight:500}}>{finaleJurors.length} {finaleJurors.length>1?"jurés":"juré"}{finaleJurors.length<3?" ⚠ min 3":""}</div>
+                          </div>
+                          <div style={{padding:"10px 14px"}}>
+                            {finaleJurors.length===0&&<div style={{fontSize:11.5,color:"#c0c0d0",fontStyle:"italic",padding:"6px 0"}}>Aucun juré pour la Grande Finale. Ajouter ci-dessous depuis le panel validé.</div>}
+                            {finaleJurors.map(p=>(
+                              <div key={p.id} style={{display:"flex",alignItems:"center",gap:9,padding:"6px 9px",background:FINALE_LIGHT,border:"1px solid "+FINALE_BORDER,borderRadius:8,marginBottom:4}}>
+                                {p.photo_base64
+                                  ?<img src={p.photo_base64} alt="" style={{width:28,height:28,borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
+                                  :<div style={{width:28,height:28,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9.5,fontWeight:600,color:GOLD,flexShrink:0}}>{(p.prenom||"?")[0]}{(p.nom||"?")[0]}</div>
+                                }
+                                <div onClick={()=>setDetailJuror(p)} style={{flex:1,minWidth:0,cursor:"pointer"}}>
+                                  <div style={{fontSize:12,fontWeight:500,color:NAVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.prenom} {p.nom}</div>
+                                  <div style={{fontSize:10,color:"#6a6a8a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
+                                  {p.email&&<div style={{fontSize:9.5,color:"#8a8aa8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>✉ {p.email}</div>}
+                                </div>
+                                <button className="btn" onClick={()=>setDetailJuror(p)} title="Détails" style={{fontSize:11,width:24,height:24,borderRadius:6,background:"white",color:NAVY,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif",flexShrink:0,padding:0}}>ⓘ</button>
+                                <button className="btn" onClick={()=>toggleFinale(p)} style={{fontSize:10,padding:"4px 9px",borderRadius:7,background:"white",color:"#8a2040",border:"1px solid #e8a8bc",fontFamily:"Inter,sans-serif",flexShrink:0}}>Retirer</button>
+                              </div>
+                            ))}
+                            {(()=>{
+                              const avail=profiles.filter(p=>p.validated&&!p.grande_finale);
+                              if(avail.length===0) return null;
+                              return(
+                                <div style={{marginTop:8,paddingTop:8,borderTop:"1px dashed "+CREAM2}}>
+                                  <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:5}}>Ajouter un juré</div>
+                                  <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                                    {avail.map(p=>(
+                                      <button key={p.id} className="btn" onClick={()=>toggleFinale(p)} style={{fontSize:11,padding:"4px 9px",borderRadius:7,background:"white",color:NAVY,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}>+ {p.prenom} {p.nom}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
