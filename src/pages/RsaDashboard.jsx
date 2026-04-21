@@ -845,9 +845,10 @@ export default function RsaDashboard() {
                 {assignView==="byJury"&&(
                 <div style={{background:"white",border:"1px solid "+CREAM2,borderRadius:12,overflow:"hidden"}}>
                   {/* Header sessions */}
-                  <div style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 60px",background:NAVY,padding:"8px 14px",gap:4}}>
+                  <div style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 50px 60px",background:NAVY,padding:"8px 14px",gap:4}}>
                     <div style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>Juré</div>
                     {SK.map(sk=><div key={sk} style={{fontSize:9.5,color:"rgba(255,255,255,.5)",textAlign:"center"}}>{SC[sk].emoji} {SC[sk].short}</div>)}
+                    <div style={{fontSize:9.5,color:"rgba(255,255,255,.5)",textAlign:"center"}}>Total</div>
                     <div style={{fontSize:9.5,color:"rgba(255,255,255,.4)",textAlign:"center"}}>Finale</div>
                   </div>
                   {profiles.filter(p=>p.validated).length===0&&(
@@ -865,8 +866,9 @@ export default function RsaDashboard() {
                       await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${p.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({grande_finale:!p.grande_finale})});
                       await loadAll();
                     }
+                    const sessCount=SK.filter(sk=>assignedSess.some(as=>sessMatch(as,sk))).length;
                     return(
-                      <div key={p.id} style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 60px",padding:"8px 14px",gap:4,borderTop:"1px solid "+CREAM2,background:i%2===0?"white":CREAM,alignItems:"center"}}>
+                      <div key={p.id} style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 50px 60px",padding:"8px 14px",gap:4,borderTop:"1px solid "+CREAM2,background:i%2===0?"white":CREAM,alignItems:"center"}}>
                         <div onClick={()=>setDetailJuror(p)} style={{cursor:"pointer"}} title="Voir détails">
                           <div style={{fontSize:12,fontWeight:500,color:NAVY,fontFamily:"'Playfair Display',serif",textDecoration:"underline",textDecorationColor:CREAM2,textDecorationThickness:1,textUnderlineOffset:2}}>{p.prenom} {p.nom} <span style={{color:"#c0c0d0",fontSize:10,fontWeight:400}}>ⓘ</span></div>
                           <div style={{fontSize:10,color:"#9090a8"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
@@ -884,6 +886,7 @@ export default function RsaDashboard() {
                             </div>
                           );
                         })}
+                        <div style={{textAlign:"center",fontSize:13,fontWeight:600,color:sessCount===0?"#c0c0d0":NAVY,fontFamily:"'Playfair Display',serif"}}>{sessCount}</div>
                         <div style={{textAlign:"center"}}>
                           <button className="btn" onClick={toggleFinale}
                             style={{width:28,height:28,borderRadius:6,border:"1.5px solid "+(p.grande_finale?"#c9a84c":CREAM2),background:p.grande_finale?"#fdf6e8":"white",color:p.grande_finale?"#9a6400":"#d0d0d0",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",padding:0}}>
@@ -893,6 +896,26 @@ export default function RsaDashboard() {
                       </div>
                     );
                   })}
+                  {/* Footer: totaux par session */}
+                  {profiles.filter(p=>p.validated).length>0&&(()=>{
+                    const vjp=profiles.filter(p=>p.validated);
+                    const totSess=SK.map(sk=>vjp.filter(p=>(p.assigned_sessions||[]).some(as=>sessMatch(as,sk))).length);
+                    const totAll=totSess.reduce((a,b)=>a+b,0);
+                    const totFin=vjp.filter(p=>p.grande_finale).length;
+                    return(
+                      <div style={{display:"grid",gridTemplateColumns:"200px repeat(5,1fr) 50px 60px",padding:"8px 14px",gap:4,borderTop:"2px solid "+NAVY,background:CREAM,alignItems:"center"}}>
+                        <div style={{fontSize:10,color:NAVY,fontWeight:600,letterSpacing:".06em",textTransform:"uppercase"}}>Total / session</div>
+                        {totSess.map((n,k)=>{
+                          const s=SC[SK[k]];
+                          return(
+                            <div key={k} style={{textAlign:"center",fontSize:13,fontWeight:600,color:n>=3?s.color:"#c03010",fontFamily:"'Playfair Display',serif"}}>{n}{n<3&&<span style={{fontSize:9,marginLeft:2}}>⚠</span>}</div>
+                          );
+                        })}
+                        <div style={{textAlign:"center",fontSize:13,fontWeight:600,color:NAVY,fontFamily:"'Playfair Display',serif"}}>{totAll}</div>
+                        <div style={{textAlign:"center",fontSize:13,fontWeight:600,color:totFin>=3?"#9a6400":"#c03010",fontFamily:"'Playfair Display',serif"}}>{totFin}{totFin<3&&<span style={{fontSize:9,marginLeft:2}}>⚠</span>}</div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 )}
               </div>
