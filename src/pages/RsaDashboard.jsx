@@ -637,19 +637,32 @@ export default function RsaDashboard() {
                           <a href={"/RsaScore?s="+sid} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>
                         </div>
                       </div>
-                      {/* Activate session */}
+                      {/* Session lifecycle status (read-only) — managed in /RsaAdmin */}
                       <div style={{marginBottom:12}}>
-                        <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:7}}>Statut session</div>
-                        <div style={{display:"flex",alignItems:"center",gap:8}}>
-                          <div style={{flex:1,padding:"8px 12px",borderRadius:9,background:cfg.session_active?"#e8f5ee":"#fff8f6",border:"1px solid "+(cfg.session_active?"#b0d8c4":"#f0c0b0")}}>
-                            <div style={{fontSize:12,fontWeight:500,color:cfg.session_active?"#1d6b4f":"#8a2040"}}>
-                              {cfg.session_active?"🟢 Active — jurés peuvent scorer":"🔴 Inactive — scoring bloqué"}
-                            </div>
-                          </div>
-                          <button className="btn" onClick={async()=>{await saveConf(sid,"session_active",!cfg.session_active);}}
-                            style={{fontSize:11,padding:"8px 14px",borderRadius:9,background:cfg.session_active?"#8a2040":NAVY,color:"white",border:"none",fontFamily:"Inter,sans-serif",fontWeight:500,flexShrink:0}}>
-                            {cfg.session_active?"Désactiver":"Activer"}
-                          </button>
+                        <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:7}}>Statut scoring</div>
+                        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                          {(()=>{
+                            const st=(cfg.status||"draft").toLowerCase();
+                            const MAP={
+                              draft:{label:"DRAFT — scoring fermé",bg:"#f0eef0",fg:"#64536a",bd:"#d9d0dc"},
+                              live:{label:"● LIVE — jurés peuvent scorer",bg:"#e8f5ee",fg:"#1d6b4f",bd:"#b0d8c4"},
+                              locked:{label:"LOCKED — scoring fermé",bg:"#fff4e0",fg:"#8a5a10",bd:"#f0d890"},
+                              published:{label:"PUBLISHED — résultats publiés",bg:"#eef0fb",fg:"#3d3a8a",bd:"#c0c4e8"},
+                            };
+                            const m=MAP[st]||MAP.draft;
+                            return (
+                              <div style={{flex:"1 1 180px",padding:"8px 12px",borderRadius:9,background:m.bg,border:"1px solid "+m.bd}}>
+                                <div style={{fontSize:12,fontWeight:500,color:m.fg}}>{m.label}</div>
+                              </div>
+                            );
+                          })()}
+                          <a href={`/RsaAdmin${import.meta.env.VITE_RSA_ADMIN_KEY?`?k=${import.meta.env.VITE_RSA_ADMIN_KEY}`:""}`}
+                            style={{fontSize:11,padding:"8px 14px",borderRadius:9,background:NAVY,color:"white",textDecoration:"none",fontFamily:"Inter,sans-serif",fontWeight:500,flexShrink:0,display:"inline-flex",alignItems:"center",gap:5}}>
+                            ⚙ Gérer dans l'Admin live →
+                          </a>
+                        </div>
+                        <div style={{fontSize:10,color:"#a0a0b8",marginTop:5}}>
+                          Open / Lock / Publish se fait dans l'onglet Live de la console admin.
                         </div>
                       </div>
 
