@@ -76,12 +76,14 @@ async function sbGet(table, params = "") {
   return r.json();
 }
 
-async function sbUpsert(table, data) {
-  await fetch(`${SB_URL}/rest/v1/${table}`, {
+async function sbUpsert(table, data, onConflict) {
+  const qs = onConflict ? `?on_conflict=${onConflict}` : "";
+  const r = await fetch(`${SB_URL}/rest/v1/${table}${qs}`, {
     method: "POST",
     headers: { ...SB_HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify(data)
   });
+  if (!r.ok) throw new Error(`${table} upsert failed: ${r.status} ${await r.text()}`);
 }
 
 async function sbRpc(sql) {
@@ -291,7 +293,7 @@ export default function RsaDashboard() {
     setConfs(p => ({...p, [key]:{...(p[key]||{}),status:next}}));
     setSaving(true);
     try {
-      await sbUpsert("startup_confirmations", {startup_name:name, session_id:sid, status:next, note:(confs[key]||{}).note||""});
+      await sbUpsert("startup_confirmations", {startup_name:name, session_id:sid, status:next, note:(confs[key]||{}).note||""}, "startup_name,session_id");
     } catch(e) {}
     setSaving(false);
   }
@@ -303,7 +305,7 @@ export default function RsaDashboard() {
     saveTm.current = setTimeout(async () => {
       setSaving(true);
       try {
-        await sbUpsert("startup_confirmations", {startup_name:name, session_id:sid, status:(confs[key]||{}).status||"pending", note});
+        await sbUpsert("startup_confirmations", {startup_name:name, session_id:sid, status:(confs[key]||{}).status||"pending", note}, "startup_name,session_id");
       } catch(e) {}
       setSaving(false);
     }, 800);
