@@ -1,11 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2, Lock, AlertTriangle, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { SESSIONS, SESSION_BY_ID, SCORE_FIELDS, CRITERIA, JURY_STATUS } from "@/lib/rsa/constants";
-import { JuryProfile, JuryScore, JuryScoringSession, SessionConfig, StartupConfirmation } from "@/lib/db";
+import { JuryProfile, JuryScore, JuryScoreDraft, JuryScoringSession, SessionConfig, StartupConfirmation } from "@/lib/db";
 import { DRAFT_FIELDS } from "@/components/rsa/StartupScoreCard";
 import StartupScoreCard from "@/components/rsa/StartupScoreCard";
+
+const DRAFT_DEBOUNCE_MS = 600;
 
 const LS_KEY = (sessionId, juryName) => `rsa_jury_draft::${sessionId}::${juryName}`;
 const LS_IDENTITY = "rsa_jury_identity";
@@ -26,6 +28,7 @@ export default function RsaScore() {
   const [expandedStartup, setExpandedStartup] = useState(null);
   const [submittingFor, setSubmittingFor] = useState(null);
   const [loading, setLoading] = useState(true);
+  const draftSaveTimers = useRef({}); // { [startup]: timeoutId }
 
   // --- Initial + realtime load (skipped when session id is invalid) ---
   useEffect(() => {
@@ -92,15 +95,21 @@ export default function RsaScore() {
     if (!juryName) return;
     let cancelled = false;
     async function loadScores() {
-      const mine = await JuryScore.filter({ session_id: sessionId, jury_name: juryName });
+      const [mine, remoteDrafts] = await Promise.all([
+        JuryScore.filter({ session_id: sessionId, jury_name: juryName }),
+        JuryScoreDraft.filter({ session_id: sessionId, jury_name: juryName }).catch(() => []),
+      ]);
       if (cancelled) return;
       setScores(mine);
-      // Seed drafts from submitted rows + localStorage fallback
+      const remoteByStartup = {};
+      for (const d of remoteDrafts || []) remoteByStartup[d.startup_name] = pickDraft(d);
+      // Seed: submitted jurors are locked; otherwise prefer local (fastest, most recent), then remote (cross-device), then blank
       const seeded = {};
       for (const s of startups) {
         const submitted = mine.find((m) => m.startup_name === s);
+        if (submitted) { seeded[s] = submitted; continue; }
         const local = safeLocal(LS_KEY(sessionId, juryName), s);
-        seeded[s] = local || submitted || blankDraft();
+        seeded[s] = local || remoteByStartup[s] || blankDraft();
       }
       setDrafts(seeded);
     }
@@ -147,9 +156,27 @@ export default function RsaScore() {
       } catch {
         // ignore quota errors
       }
+      // Debounced server sync so jurors can resume on another device
+      if (juryName && sessionId) {
+        if (draftSaveTimers.current[startup]) clearTimeout(draftSaveTimers.current[startup]);
+        const snapshot = next[startup];
+        draftSaveTimers.current[startup] = setTimeout(() => {
+          const payload = { session_id: sessionId, jury_name: juryName, startup_name: startup };
+          for (const f of DRAFT_FIELDS) payload[f] = snapshot[f] ?? null;
+          JuryScoreDraft.upsert(payload).catch(() => {});
+        }, DRAFT_DEBOUNCE_MS);
+      }
       return next;
     });
   }
+
+  // Flush pending saves before unload (best-effort: uses fetch keepalive via Supabase client when possible)
+  useEffect(() => {
+    return () => {
+      for (const t of Object.values(draftSaveTimers.current)) clearTimeout(t);
+      draftSaveTimers.current = {};
+    };
+  }, []);
 
   async function submitFor(startup) {
     if (!juryName) return;
@@ -172,6 +199,20 @@ export default function RsaScore() {
       };
       for (const f of SCORE_FIELDS) payload[f] = d[f];
       await JuryScore.upsert(payload);
+      // Clear the draft both locally and on the server — it's now a submitted score
+      if (draftSaveTimers.current[startup]) {
+        clearTimeout(draftSaveTimers.current[startup]);
+        delete draftSaveTimers.current[startup];
+      }
+      JuryScoreDraft.deleteOne(sessionId, juryName, startup).catch(() => {});
+      try {
+        const key = LS_KEY(sessionId, juryName);
+        const all = JSON.parse(localStorage.getItem(key) || "{}");
+        delete all[startup];
+        localStorage.setItem(key, JSON.stringify(all));
+      } catch {
+        // ignore
+      }
       toast.success(`Scores submitted for ${startup}`);
       // advance to next un-submitted startup
       const currentIdx = startups.indexOf(startup);
@@ -369,7 +410,7 @@ export default function RsaScore() {
               <button onClick={signOut} className="hover:text-stone-700 underline">
                 Not you? Switch juror
               </button>
-              <span>Data is saved to this device as you score.</span>
+              <span>Auto-saved — close the tab and resume on any device.</span>
             </div>
           </section>
         )}
@@ -397,6 +438,12 @@ function safeLocal(key, startup) {
   } catch {
     return null;
   }
+}
+
+function pickDraft(row) {
+  const out = blankDraft();
+  for (const f of DRAFT_FIELDS) if (row?.[f] != null) out[f] = row[f];
+  return out;
 }
 
 function isSubmitted(startup, scores) {

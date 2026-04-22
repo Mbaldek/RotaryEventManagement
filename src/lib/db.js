@@ -110,6 +110,30 @@ export const JuryScore = {
   },
 };
 
+// jury_score_drafts: in-progress scores synced to server so jurors can resume on another device.
+// Composite PK (session_id, jury_name, startup_name) with permissive RLS for anon inserts.
+export const JuryScoreDraft = {
+  ...createEntity('jury_score_drafts'),
+  async upsert(record) {
+    const { data, error } = await supabase
+      .from('jury_score_drafts')
+      .upsert({ ...record, updated_at: new Date().toISOString() }, { onConflict: 'session_id,jury_name,startup_name' })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+  async deleteOne(session_id, jury_name, startup_name) {
+    const { error } = await supabase
+      .from('jury_score_drafts')
+      .delete()
+      .eq('session_id', session_id)
+      .eq('jury_name', jury_name)
+      .eq('startup_name', startup_name);
+    if (error) throw error;
+  },
+};
+
 // Auth helpers
 export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
