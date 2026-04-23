@@ -222,6 +222,7 @@ export default function RsaScore() {
   const [submittingFor, setSubmittingFor] = useState(null);
   const [loading, setLoading] = useState(true);
   const draftSaveTimers = useRef({}); // { [startup]: timeoutId }
+  const seededKeyRef = useRef(null); // guard against re-seeding drafts when sessionRow updates mid-session
 
   function changeLang(next) {
     setLang(next);
@@ -292,10 +293,13 @@ export default function RsaScore() {
     };
   }, [sessionId, sessionLabel, sessionInternalId, session]);
 
-  // --- Once we know the juror, load their submitted scores ---
+  // --- Once we know the juror + session, load their submitted scores ---
   useEffect(() => {
-    if (!juryName) return;
+    if (!juryName || !sessionRow || !startups.length) return;
+    const key = `${sessionId}::${juryName}`;
+    const alreadySeeded = seededKeyRef.current === key;
     let cancelled = false;
+
     async function loadScores() {
       const [mine, remoteDrafts] = await Promise.all([
         JuryScore.filter({ session_id: sessionId, jury_name: juryName }),
@@ -303,17 +307,38 @@ export default function RsaScore() {
       ]);
       if (cancelled) return;
       setScores(mine);
+
+      // Only seed drafts once per (session, juror) tuple — subsequent re-runs due to
+      // status flips (e.g. admin opens scoring) must not wipe in-progress local work.
+      if (alreadySeeded) return;
+
+      // Fresh-session detection: status=draft + no activated_at + server has nothing
+      // means the admin just reset (or it's the pre-event state). In that case, any
+      // local drafts are stale from a prior run and should be nuked.
+      const isFreshSession =
+        (sessionRow.status ?? JURY_STATUS.DRAFT) === JURY_STATUS.DRAFT && !sessionRow.activated_at;
+      const serverHasNothing = mine.length === 0 && (remoteDrafts?.length || 0) === 0;
+      if (isFreshSession && serverHasNothing) {
+        try {
+          localStorage.removeItem(LS_KEY(sessionId, juryName));
+        } catch {
+          // ignore
+        }
+      }
+
       const remoteByStartup = {};
       for (const d of remoteDrafts || []) remoteByStartup[d.startup_name] = pickDraft(d);
-      // Seed: submitted jurors are locked; otherwise prefer local (fastest, most recent), then remote (cross-device), then blank
       const seeded = {};
       for (const s of startups) {
         const submitted = mine.find((m) => m.startup_name === s);
         if (submitted) { seeded[s] = submitted; continue; }
-        const local = safeLocal(LS_KEY(sessionId, juryName), s);
+        const local = isFreshSession && serverHasNothing
+          ? null
+          : safeLocal(LS_KEY(sessionId, juryName), s);
         seeded[s] = local || remoteByStartup[s] || blankDraft();
       }
       setDrafts(seeded);
+      seededKeyRef.current = key;
     }
     loadScores();
 
@@ -344,7 +369,7 @@ export default function RsaScore() {
       cancelled = true;
       unsub?.();
     };
-  }, [juryName, sessionId, startups.length]);
+  }, [juryName, sessionId, startups.length, sessionRow]);
 
   // --- Draft persistence ---
   function updateDraft(startup, patch) {
