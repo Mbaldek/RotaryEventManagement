@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Reservation } from "@/lib/db";
+import { Reservation, UpcomingEvent } from "@/lib/db";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 export default function ReservationRequest() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    event_id: "",
     reservation_date: "",
     number_of_people: 1,
     guest_name: "",
@@ -24,24 +25,35 @@ export default function ReservationRequest() {
     notes: "",
   });
 
-  // Get next Wednesdays
-  const getNextWednesdays = () => {
-    const wednesdays = [];
-    const today = new Date();
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + (i * 7));
-      const day = date.getDay();
-      const daysUntilWednesday = (3 - day + 7) % 7;
-      date.setDate(date.getDate() + daysUntilWednesday);
-      if (date >= today) {
-        wednesdays.push(date.toISOString().split('T')[0]);
-      }
-    }
-    return wednesdays;
+  const { data: upcomingEvents = [] } = useQuery({
+    queryKey: ["upcomingEvents"],
+    queryFn: () => UpcomingEvent.list("event_date"),
+  });
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  const futureEvents = upcomingEvents.filter(
+    (ev) => ev.event_date && ev.event_date >= todayStr
+  );
+
+  const handleEventChange = (eventId) => {
+    const selectedEvent = futureEvents.find((ev) => ev.id === eventId);
+    setFormData({
+      ...formData,
+      event_id: eventId,
+      reservation_date: selectedEvent?.event_date || "",
+    });
   };
 
-  const nextWednesdays = getNextWednesdays();
+  const formatEventLabel = (ev) => {
+    const d = new Date(ev.event_date).toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const title = ev.title || ev.speaker_name || "Déjeuner statutaire";
+    return `${d} — ${title}`;
+  };
 
   const createRequestMutation = useMutation({
     mutationFn: async (data) => {
@@ -58,7 +70,7 @@ export default function ReservationRequest() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.reservation_date || !formData.guest_name || !formData.guest_email) {
+    if (!formData.event_id || !formData.guest_name || !formData.guest_email) {
       toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
@@ -90,24 +102,29 @@ export default function ReservationRequest() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Date - Wednesdays only */}
-                <div>
-                  <Label className="text-xs text-stone-500 mb-2 block flex items-center gap-1">
+                {/* Event selection — drives reservation_date */}
+                <div className="md:col-span-2">
+                  <Label className="text-xs text-stone-500 mb-2 flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    Date du mercredi *
+                    Événement *
                   </Label>
-                  <Select value={formData.reservation_date} onValueChange={(value) => setFormData({ ...formData, reservation_date: value })}>
+                  <Select value={formData.event_id} onValueChange={handleEventChange}>
                     <SelectTrigger className="border-stone-200">
-                      <SelectValue placeholder="Sélectionner un mercredi" />
+                      <SelectValue placeholder={futureEvents.length === 0 ? "Aucun événement planifié" : "Sélectionner un événement"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {nextWednesdays.map(date => (
-                        <SelectItem key={date} value={date}>
-                          {new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      {futureEvents.map((ev) => (
+                        <SelectItem key={ev.id} value={ev.id}>
+                          {formatEventLabel(ev)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {futureEvents.length === 0 && (
+                    <p className="text-[11px] text-amber-700 mt-1">
+                      Aucun événement à venir pour le moment — réessayez plus tard.
+                    </p>
+                  )}
                 </div>
 
                 {/* Number of people */}

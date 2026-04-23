@@ -1,17 +1,35 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { User } from "lucide-react";
+
+// Design tokens — "Elysée"
+const NAVY = "#0f1f3d";
+const GOLD = "#c9a84c";
+const CREAM = "#faf7f2";
+const CREAM2 = "#e8e3d9";
+const MUTED = "#9090a8";
+
+// Soft pastel tints — same map as TableCard
+const TINTS = {
+  amber: "#f5ede0",
+  blue: "#eff1f6",
+  green: "#ecf1e5",
+  purple: "#f0ebf5",
+  red: "#f5e8e8",
+  pink: "#f7e9ee",
+  orange: "#f7ebe0",
+  slate: "#eff0f2",
+};
 
 // Seat positions for 8-seat round table
 const seatPositions8 = [
-  { top: "5%", left: "50%", transform: "translateX(-50%)", label: "Haut" },
-  { top: "15%", right: "15%", label: "Haut-droite" },
-  { top: "50%", right: "5%", transform: "translateY(-50%)", label: "Droite" },
-  { bottom: "15%", right: "15%", label: "Bas-droite" },
-  { bottom: "5%", left: "50%", transform: "translateX(-50%)", label: "Bas" },
-  { bottom: "15%", left: "15%", label: "Bas-gauche" },
-  { top: "50%", left: "5%", transform: "translateY(-50%)", label: "Gauche" },
-  { top: "15%", left: "15%", label: "Haut-gauche" },
+  { top: "5%", left: "50%", transform: "translateX(-50%)" },
+  { top: "15%", right: "15%" },
+  { top: "50%", right: "5%", transform: "translateY(-50%)" },
+  { bottom: "15%", right: "15%" },
+  { bottom: "5%", left: "50%", transform: "translateX(-50%)" },
+  { bottom: "15%", left: "15%" },
+  { top: "50%", left: "5%", transform: "translateY(-50%)" },
+  { top: "15%", left: "15%" },
 ];
 
 // Seat positions for 12-seat round table (presidential)
@@ -30,111 +48,209 @@ const seatPositions12 = [
   { top: "10%", left: "25%", transform: "translateX(-50%)" },
 ];
 
-const colorClasses = {
-  amber: { bg: "from-amber-100 to-amber-50", border: "border-amber-200" },
-  blue: { bg: "from-blue-100 to-blue-50", border: "border-blue-200" },
-  green: { bg: "from-green-100 to-green-50", border: "border-green-200" },
-  purple: { bg: "from-purple-100 to-purple-50", border: "border-purple-200" },
-  red: { bg: "from-red-100 to-red-50", border: "border-red-200" },
-  pink: { bg: "from-pink-100 to-pink-50", border: "border-pink-200" },
-  orange: { bg: "from-orange-100 to-orange-50", border: "border-orange-200" },
-  slate: { bg: "from-slate-100 to-slate-50", border: "border-slate-200" },
-};
+function getInitials(first, last) {
+  const a = (first || "").trim().charAt(0);
+  const b = (last || "").trim().charAt(0);
+  return (a + b).toUpperCase() || "·";
+}
 
-export default function TableLayout({ seats, onSeatClick, activeSeatId, tableNumber, isPresidential = false, shape = "round", color = "amber", rotation = 0 }) {
+function RoomMarker({ children, position, dashSide = "left" }) {
+  const dash = (
+    <span className="h-[1px] w-3" style={{ background: GOLD }} aria-hidden />
+  );
+  return (
+    <div
+      className="absolute z-10 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em]"
+      style={position}
+    >
+      {dashSide === "left" && dash}
+      <span style={{ color: MUTED, fontWeight: 500 }}>{children}</span>
+      {dashSide === "right" && dash}
+    </div>
+  );
+}
+
+export default function TableLayout({
+  seats,
+  onSeatClick,
+  activeSeatId,
+  tableNumber,
+  isPresidential = false,
+  shape = "round",
+  color = "amber",
+  rotation = 0,
+}) {
   const maxSeats = isPresidential ? 12 : 8;
   const seatPositions = isPresidential ? seatPositions12 : seatPositions8;
-  
   const getSeatData = (seatNum) => seats.find((s) => s.seat_number === seatNum);
-
-  const colors = colorClasses[color] || colorClasses.amber;
+  const tint = TINTS[color] || TINTS.amber;
   const isRound = shape === "round";
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="text-center mb-3">
-        <h2 className="text-lg font-semibold text-stone-800">
-          {isPresidential ? "Table Présidentielle" : `Table ${tableNumber}`}
-        </h2>
-        <p className="text-xs text-stone-400">{maxSeats} sièges</p>
-      </div>
-
       <div className="relative w-full pb-[100%]">
+        {/* Ambient soft gold ring */}
+        <div
+          aria-hidden
+          className="absolute inset-[3%] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(201,168,76,0.06), transparent 60%)",
+          }}
+        />
+
         {/* Table Surface */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div 
-            className={`${isPresidential ? 'w-[65%] h-[65%]' : 'w-[60%] h-[60%]'} ${isRound ? 'rounded-full' : 'rounded-3xl'} bg-gradient-to-br ${colors.bg} border-4 ${colors.border} shadow-xl flex items-center justify-center transition-all`}
-            style={{ transform: `rotate(${rotation}deg)` }}
+          <motion.div
+            className={`${
+              isPresidential ? "w-[62%] h-[62%]" : "w-[56%] h-[56%]"
+            } ${isRound ? "rounded-full" : "rounded-[4px]"} flex items-center justify-center`}
+            style={{
+              background: tint,
+              border: `1px solid ${CREAM2}`,
+              transform: `rotate(${rotation}deg)`,
+              boxShadow: "inset 0 0 0 1px rgba(15,31,61,0.04)",
+            }}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="text-center">
-              <div className="text-4xl font-light text-stone-800/30">
-                {isPresidential ? "★" : tableNumber}
-              </div>
+            <div
+              className="text-[56px] md:text-[72px] leading-none"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                color: isPresidential ? GOLD : NAVY,
+                opacity: 0.22,
+                fontWeight: 500,
+                transform: `rotate(-${rotation}deg)`,
+              }}
+            >
+              {isPresidential ? "★" : tableNumber}
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Estrade - à droite du siège 3 */}
-        <div className="absolute top-[50%] right-[-8%] transform translate-y-[-50%] bg-stone-700 text-white px-2 py-1 rounded text-[9px] font-medium shadow-md z-10">
+        {/* Room markers — editorial, minimal */}
+        <RoomMarker
+          position={{ top: "50%", right: "-2%", transform: "translateY(-50%)" }}
+          dashSide="left"
+        >
           Estrade
-        </div>
-
-        {/* Fenêtre - à gauche du siège 7 */}
-        <div className="absolute top-[50%] left-[-8%] transform translate-y-[-50%] bg-blue-100 text-blue-700 px-2 py-1 rounded text-[9px] font-medium border border-blue-300 z-10">
+        </RoomMarker>
+        <RoomMarker
+          position={{ top: "50%", left: "-2%", transform: "translateY(-50%)" }}
+          dashSide="right"
+        >
           Fenêtre
-        </div>
-
-        {/* Entrée - en bas du siège 5 */}
-        <div className="absolute bottom-[-6%] left-[50%] transform translate-x-[-50%] bg-green-100 text-green-700 px-2 py-1 rounded text-[9px] font-medium border border-green-300 z-10">
+        </RoomMarker>
+        <RoomMarker
+          position={{ bottom: "-4%", left: "50%", transform: "translateX(-50%)" }}
+          dashSide="left"
+        >
           Entrée
-        </div>
+        </RoomMarker>
 
-        {/* Seats around the table */}
+        {/* Seats */}
         {Array.from({ length: maxSeats }, (_, i) => i + 1).map((seatNum) => {
           const seatData = getSeatData(seatNum);
-          const isOccupied = seatData?.first_name;
+          const isOccupied = !!seatData?.first_name;
           const isActive = seatData?.id === activeSeatId;
-          const position = seatPositions[seatNum - 1];
-
           const isReserved = seatData?.is_reserved;
+          const position = seatPositions[seatNum - 1];
+          const fullName = isOccupied
+            ? `${seatData.first_name || ""} ${seatData.last_name || ""}`.trim()
+            : null;
+
+          // Visual style per state
+          let bg, border, textColor, label;
+          if (isActive) {
+            bg = NAVY;
+            border = `2px solid ${GOLD}`;
+            textColor = "white";
+            label = getInitials(seatData.first_name, seatData.last_name);
+          } else if (isReserved) {
+            bg = "white";
+            border = `1.5px dashed ${GOLD}`;
+            textColor = GOLD;
+            label = "R";
+          } else if (isOccupied) {
+            bg = "white";
+            border = `1.5px solid ${NAVY}`;
+            textColor = NAVY;
+            label = getInitials(seatData.first_name, seatData.last_name);
+          } else {
+            bg = CREAM;
+            border = `1px dashed ${CREAM2}`;
+            textColor = MUTED;
+            label = seatNum;
+          }
 
           return (
-            <motion.button
+            <div
               key={seatNum}
-              onClick={() => onSeatClick(seatNum, seatData)}
-              className={`absolute w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all ${
-                isActive
-                  ? "bg-amber-600 text-white shadow-lg ring-4 ring-amber-300"
-                  : isReserved
-                  ? "bg-blue-100 border-2 border-blue-300 text-blue-700 cursor-not-allowed"
-                  : isOccupied
-                  ? "bg-white border-2 border-stone-300 text-stone-700 hover:border-amber-400 hover:shadow-md"
-                  : "bg-stone-100 border-2 border-dashed border-stone-300 text-stone-400 hover:border-amber-400 hover:bg-amber-50"
-              }`}
+              className="absolute group"
               style={position}
-              whileHover={{ scale: isReserved ? 1 : 1.1 }}
-              whileTap={{ scale: isReserved ? 1 : 0.95 }}
-              disabled={isReserved}
             >
-              {isReserved ? (
-                <>
-                  <div className="text-[10px] font-bold">R</div>
-                  <div className="text-[8px] leading-tight">Réservé</div>
-                </>
-              ) : isOccupied ? (
-                <>
-                  <User className="w-4 h-4" />
-                  <div className="text-[8px] leading-tight text-center px-1 truncate w-full">
-                    Siège {seatNum}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <User className="w-4 h-4" />
-                  <span className="text-[9px] font-medium">{seatNum}</span>
-                </>
+              <motion.button
+                onClick={() => onSeatClick(seatNum, seatData)}
+                className="relative w-11 h-11 rounded-full flex items-center justify-center transition-all"
+                style={{
+                  background: bg,
+                  border,
+                  color: textColor,
+                  fontFamily: "'Playfair Display', serif",
+                  fontWeight: 500,
+                  fontSize: 13,
+                  cursor: isReserved ? "not-allowed" : "pointer",
+                  boxShadow: isActive
+                    ? `0 0 0 4px rgba(201,168,76,0.2)`
+                    : "none",
+                }}
+                whileHover={{ scale: isReserved ? 1 : 1.08 }}
+                whileTap={{ scale: isReserved ? 1 : 0.94 }}
+                disabled={isReserved}
+                aria-label={
+                  fullName
+                    ? `Siège ${seatNum} · ${fullName}`
+                    : isReserved
+                    ? `Siège ${seatNum} réservé`
+                    : `Siège ${seatNum} libre`
+                }
+              >
+                {label}
+                {isActive && (
+                  <span
+                    aria-hidden
+                    className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+                    style={{ background: GOLD }}
+                  />
+                )}
+              </motion.button>
+
+              {/* Hover tooltip — first + last name */}
+              {fullName && (
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-2 pointer-events-none opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap z-20"
+                  style={{
+                    background: NAVY,
+                    color: "white",
+                    borderRadius: 3,
+                    padding: "4px 9px",
+                    fontFamily: "'Playfair Display', serif",
+                    fontWeight: 500,
+                    fontSize: 12,
+                    boxShadow: "0 4px 12px rgba(15,31,61,0.18)",
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    className="absolute left-1/2 -top-1 -translate-x-1/2 w-2 h-2 rotate-45"
+                    style={{ background: NAVY }}
+                  />
+                  <span className="relative italic">{fullName}</span>
+                </div>
               )}
-            </motion.button>
+            </div>
           );
         })}
       </div>

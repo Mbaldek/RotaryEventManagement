@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Clock, Users, X } from "lucide-react";
 
-export default function ReservationForm({ tables, onSubmit, onCancel }) {
+export default function ReservationForm({ tables, events, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
+    event_id: "",
     table_id: "",
     table_number: "",
     reservation_date: "",
@@ -20,31 +21,21 @@ export default function ReservationForm({ tables, onSubmit, onCancel }) {
     notes: "",
   });
 
-  // Get next Wednesdays
-  const getNextWednesdays = () => {
-    const wednesdays = [];
-    const today = new Date();
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + (i * 7));
-      const day = date.getDay();
-      const daysUntilWednesday = (3 - day + 7) % 7;
-      date.setDate(date.getDate() + daysUntilWednesday);
-      if (date >= today) {
-        wednesdays.push(date.toISOString().split('T')[0]);
-      }
-    }
-    return wednesdays;
-  };
-
-  const nextWednesdays = getNextWednesdays();
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.table_id || !formData.reservation_date || !formData.guest_name) {
+    if (!formData.event_id || !formData.table_id || !formData.guest_name) {
       return;
     }
     onSubmit(formData);
+  };
+
+  const handleEventChange = (eventId) => {
+    const selectedEvent = events.find((ev) => ev.id === eventId);
+    setFormData({
+      ...formData,
+      event_id: eventId,
+      reservation_date: selectedEvent?.event_date || "",
+    });
   };
 
   const handleTableChange = (tableId) => {
@@ -54,6 +45,17 @@ export default function ReservationForm({ tables, onSubmit, onCancel }) {
       table_id: tableId,
       table_number: selectedTable?.table_number || 0,
     });
+  };
+
+  const formatEventLabel = (ev) => {
+    const d = new Date(ev.event_date).toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const title = ev.title || ev.speaker_name || "Déjeuner statutaire";
+    return `${d} — ${title}`;
   };
 
   return (
@@ -75,6 +77,31 @@ export default function ReservationForm({ tables, onSubmit, onCancel }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Event Selection — drives reservation_date */}
+          <div className="md:col-span-2">
+            <Label className="text-xs text-stone-500 mb-2 flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              Événement *
+            </Label>
+            <Select value={formData.event_id} onValueChange={handleEventChange}>
+              <SelectTrigger className="border-stone-200">
+                <SelectValue placeholder={events.length === 0 ? "Aucun événement planifié" : "Sélectionner un événement"} />
+              </SelectTrigger>
+              <SelectContent>
+                {events.map((ev) => (
+                  <SelectItem key={ev.id} value={ev.id}>
+                    {formatEventLabel(ev)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {events.length === 0 && (
+              <p className="text-[11px] text-amber-700 mt-1">
+                Aucun événement à venir — créez-en un dans le planning avant de réserver.
+              </p>
+            )}
+          </div>
+
           {/* Table Selection */}
           <div>
             <Label className="text-xs text-stone-500 mb-2 block">Table *</Label>
@@ -86,26 +113,6 @@ export default function ReservationForm({ tables, onSubmit, onCancel }) {
                 {tables.map(table => (
                   <SelectItem key={table.id} value={table.id}>
                     {table.is_presidential ? "Table Présidentielle" : `Table ${table.table_number}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Date - Wednesdays only */}
-          <div>
-            <Label className="text-xs text-stone-500 mb-2 block flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              Date (Mercredi) *
-            </Label>
-            <Select value={formData.reservation_date} onValueChange={(value) => setFormData({ ...formData, reservation_date: value })}>
-              <SelectTrigger className="border-stone-200">
-                <SelectValue placeholder="Sélectionner un mercredi" />
-              </SelectTrigger>
-              <SelectContent>
-                {nextWednesdays.map(date => (
-                  <SelectItem key={date} value={date}>
-                    {new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                   </SelectItem>
                 ))}
               </SelectContent>
