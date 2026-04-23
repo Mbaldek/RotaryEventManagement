@@ -45,6 +45,8 @@ Déroulé de la session :
   • Votre passage : créneau #{RANK} vers {HEURE_PASSAGE}
   • ~20h — fin des pitchs, délibération du jury
 
+Langue : le pitch et le Q&A se déroulent en anglais (jury international). Merci de préparer votre deck et votre présentation orale en anglais.
+
 Bonnes pratiques pitch (5 min, tenez le temps) :
   • Problème & solution en 60 secondes — rendez le pain point tangible
   • Marché visé & dynamique (TAM/SAM/SOM si pertinent)
@@ -92,6 +94,8 @@ Session schedule:
   • Each startup: 5 min pitch + 5 min Q&A with the jury
   • Your slot: #{RANK} around {HEURE_PASSAGE}
   • ~8:00pm — end of pitches, jury deliberation
+
+Language: pitch and Q&A are in English (international jury). Please prepare both your deck and your spoken presentation in English.
 
 Pitch best practices (5 minutes, keep the time):
   • Problem & solution in 60 seconds — make the pain point tangible
