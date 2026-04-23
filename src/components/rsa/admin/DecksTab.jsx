@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Copy, RotateCcw, ExternalLink, Check, Mail, Download, Users } from "lucide-react";
+import { Loader2, Copy, RotateCcw, ExternalLink, Check, Mail, Download, Users, FileText } from "lucide-react";
 import { SESSION_BY_ID, CRITERIA, getCriterion, getSessionLabel } from "@/lib/rsa/constants";
 import { StartupConfirmation, SessionConfig, JuryProfile } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
@@ -131,8 +131,9 @@ Langue : les pitchs et les Q&A se déroulent en anglais (jury international). Vo
 Startups retenues ({N}) :
 {STARTUPS_BLOCK}
 
-Pre-read :
-Merci de parcourir les decks et les executive summaries (FR/DE) avant la session. Les liens sont ci-dessus, startup par startup.
+Pre-read — pack jury consolidé :
+Tous les decks et executive summaries (FR/DE) sont rassemblés dans un unique PDF :
+{JURY_PACK_URL}
 
 Scoring en direct :
 Pendant la session, votez en direct sur :
@@ -173,8 +174,9 @@ Language: pitches and Q&A are held in English (international jury). You may ask 
 Selected startups ({N}):
 {STARTUPS_BLOCK}
 
-Pre-read:
-Please go through the decks and executive summaries (FR/DE) before the session. Links are above, startup by startup.
+Pre-read — consolidated jury pack:
+All decks and executive summaries (FR/DE) are bundled into a single PDF:
+{JURY_PACK_URL}
 
 Live scoring:
 During the session, score live at:
@@ -215,8 +217,9 @@ Sprache: Pitches und Q&A finden auf Englisch statt (internationale Jury). Fragen
 Ausgewählte Startups ({N}):
 {STARTUPS_BLOCK}
 
-Vorab-Lektüre:
-Bitte gehen Sie die Decks und Executive Summaries (FR/DE) vor der Session durch. Die Links finden Sie oben, Startup für Startup.
+Vorab-Lektüre — konsolidiertes Jury-Paket:
+Alle Decks und Executive Summaries (FR/DE) sind in einem einzigen PDF zusammengefasst:
+{JURY_PACK_URL}
 
 Live-Scoring:
 Während der Session bewerten Sie live unter:
@@ -246,9 +249,13 @@ const STARTUP_BLOCK_LABELS = {
   en: { deck: "Deck", preread: "Pre-read FR/DE", notProvided: "not provided" },
   de: { deck: "Deck", preread: "Vorab-Lektüre FR/DE", notProvided: "nicht bereitgestellt" },
 };
-function buildStartupsBlock(rows, lang) {
+function buildStartupsBlock(rows, lang, packed = false) {
   const L = STARTUP_BLOCK_LABELS[lang] || STARTUP_BLOCK_LABELS.en;
   if (!rows.length) return "—";
+  // When a consolidated jury pack exists, no need to repeat all long URLs — names only.
+  if (packed) {
+    return rows.map((row, i) => `  ${i + 1}. ${row.startup_name}`).join("\n");
+  }
   return rows.map((row, i) => {
     const deckPath = row.final_deck_path || row.application_deck_path;
     const deckUrl = deckPath
@@ -338,10 +345,12 @@ export default function DecksTab({ sessionId }) {
   const session = SESSION_BY_ID[sessionId];
   const [rows, setRows] = useState([]);
   const [jurors, setJurors] = useState([]);
+  const [sessionCfg, setSessionCfg] = useState(null); // session_config row (jury_pack_path, etc.)
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(null); // row id currently being mutated
   const [showEmails, setShowEmails] = useState(false);
   const [showJuryEmails, setShowJuryEmails] = useState(false);
+  const [generatingPack, setGeneratingPack] = useState(false);
   // Per-card language overrides (not persisted — transient admin choice)
   const [startupLangOverride, setStartupLangOverride] = useState({}); // { [rowId]: "fr"|"en" }
   const [juryLangOverride, setJuryLangOverride] = useState({}); // { [juryId]: "fr"|"en"|"de" }
@@ -372,6 +381,7 @@ export default function DecksTab({ sessionId }) {
         SessionConfig.filter({ session_id: sessionId }),
         JuryProfile.filter({ validated: true }),
       ]);
+      setSessionCfg(cfg?.[0] || null);
       const savedOrder = Array.isArray(cfg[0]?.session_order) ? cfg[0].session_order : [];
       const byName = new Map(confs.map((r) => [r.startup_name, r]));
       const ordered = [];
@@ -442,6 +452,36 @@ export default function DecksTab({ sessionId }) {
     const m = j?.instructions_sent_at;
     if (!m || typeof m !== "object") return null;
     return m[sessionId] || null;
+  }
+
+  const juryPackUrl = useMemo(() => {
+    const path = sessionCfg?.jury_pack_path;
+    if (!path) return "";
+    return supabase.storage.from("uploads").getPublicUrl(path).data.publicUrl || "";
+  }, [sessionCfg]);
+
+  async function generateJuryPack() {
+    if (!rows.length) { toast.error("Aucune startup pour cette session"); return; }
+    setGeneratingPack(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("consolidate-jury-pack", {
+        body: { session_id: sessionId },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Échec de la génération");
+      const skipped = Array.isArray(data.skipped) ? data.skipped : [];
+      const sizeMb = data.size_bytes ? (data.size_bytes / (1024 * 1024)).toFixed(1) : "?";
+      if (skipped.length) {
+        toast.success(`Pack jury généré (${sizeMb} Mo) · ${skipped.length} fichier(s) ignoré(s) — voir console`);
+        console.warn("[jury pack] skipped files:", skipped);
+      } else {
+        toast.success(`Pack jury généré (${sizeMb} Mo)`);
+      }
+      await load();
+    } catch (e) {
+      toast.error(`Erreur : ${e.message || e}`);
+    }
+    setGeneratingPack(false);
   }
 
   async function resetToken(row) {
@@ -516,21 +556,23 @@ export default function DecksTab({ sessionId }) {
       const tpl = lang === "fr" ? juryTemplateFr : lang === "de" ? juryTemplateDe : juryTemplateEn;
       const label = session ? getSessionLabel(session, lang) : "";
       const dateLong = (SESSION_DATES_LONG[sessionId] || {})[lang] || "";
+      const packed = !!juryPackUrl;
       const vars = {
         JURY_PRENOM: j.prenom || (lang === "fr" ? "à compléter" : lang === "de" ? "zu ergänzen" : "there"),
         SESSION_LABEL: label,
         DATE_LONGUE: dateLong,
         N: rows.length,
         SCORING_URL: scoringUrl,
-        STARTUPS_BLOCK: buildStartupsBlock(rows, lang),
+        STARTUPS_BLOCK: buildStartupsBlock(rows, lang, packed),
         CRITERIA_BLOCK: buildCriteriaBlock(lang),
+        JURY_PACK_URL: juryPackUrl || (lang === "fr" ? "(pack à générer)" : lang === "de" ? "(Paket noch zu erstellen)" : "(pack to be generated)"),
         ORGANISER_NAME: "Mathieu",
       };
       const rendered = renderTemplate(tpl, vars);
       const { subject, body } = splitSubjectBody(rendered);
       return { jury: j, lang, subject, body, to: j.email || "" };
     });
-  }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session, juryLangOverride]);
+  }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session, juryLangOverride, juryPackUrl]);
 
   function gmailLink(e) {
     const u = new URL("https://mail.google.com/mail/");
@@ -782,6 +824,42 @@ export default function DecksTab({ sessionId }) {
             <Copy className="w-3 h-3"/>Lien scoring session
           </button>
         </div>
+
+        {/* Jury pack PDF: generate / display / copy / download */}
+        <div className="mb-3 bg-stone-50 border border-stone-200 rounded-lg p-3">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-start gap-2 min-w-0 flex-1">
+              <FileText className="w-4 h-4 text-stone-500 mt-0.5 flex-shrink-0"/>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-stone-800">Pack jury PDF consolidé</div>
+                <div className="text-xs text-stone-500 mt-0.5">
+                  {juryPackUrl
+                    ? <>Un seul lien court pour l'email jury — tous decks + pre-reads rassemblés. Régénérez après chaque upload de nouveau deck.{sessionCfg?.jury_pack_generated_at && <> <span className="text-stone-400">· dernier build {new Date(sessionCfg.jury_pack_generated_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span></>}</>
+                    : <>Pas encore généré. Cliquez pour assembler un unique PDF (1 cover + 1 séparateur par document) à partir des PDFs déjà uploadés (les non-PDF seront ignorés).</>
+                  }
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {juryPackUrl && (
+                <>
+                  <a href={juryPackUrl} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100 text-stone-700">
+                    <Download className="w-3 h-3"/>Télécharger
+                  </a>
+                  <button onClick={() => copy(juryPackUrl, "URL pack jury copiée")}
+                    className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100">
+                    <Copy className="w-3 h-3"/>Copier URL
+                  </button>
+                </>
+              )}
+              <button onClick={generateJuryPack} disabled={generatingPack || !rows.length}
+                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-stone-800 text-white hover:bg-stone-900 disabled:opacity-40 disabled:cursor-not-allowed">
+                {generatingPack ? <><Loader2 className="w-3 h-3 animate-spin"/>Génération…</> : <><FileText className="w-3 h-3"/>{juryPackUrl ? "Régénérer" : "Générer"} le pack</>}
+              </button>
+            </div>
+          </div>
+        </div>
         <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500">
@@ -860,7 +938,7 @@ export default function DecksTab({ sessionId }) {
             <Users className="w-4 h-4 text-stone-500"/>Brouillons d'emails jury
             <span className="text-[10px] font-normal text-stone-500">· {jurors.length} juré{jurors.length > 1 ? "s" : ""} assigné{jurors.length > 1 ? "s" : ""}</span>
           </h2>
-          <div className="text-xs text-stone-500">Variables : <code className="text-[10px] bg-stone-100 px-1 rounded">{"{JURY_PRENOM}"} {"{SESSION_LABEL}"} {"{DATE_LONGUE}"} {"{N}"} {"{SCORING_URL}"} {"{STARTUPS_BLOCK}"} {"{CRITERIA_BLOCK}"} {"{ORGANISER_NAME}"}</code></div>
+          <div className="text-xs text-stone-500">Variables : <code className="text-[10px] bg-stone-100 px-1 rounded">{"{JURY_PRENOM}"} {"{SESSION_LABEL}"} {"{DATE_LONGUE}"} {"{N}"} {"{SCORING_URL}"} {"{JURY_PACK_URL}"} {"{STARTUPS_BLOCK}"} {"{CRITERIA_BLOCK}"} {"{ORGANISER_NAME}"}</code></div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           <div>
