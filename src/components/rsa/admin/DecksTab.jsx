@@ -323,6 +323,13 @@ export default function DecksTab({ sessionId }) {
     u.searchParams.set("body", e.body);
     return u.toString();
   }
+  function mailtoLink(e) {
+    const params = new URLSearchParams();
+    if (e.subject) params.set("subject", e.subject);
+    if (e.body) params.set("body", e.body);
+    const qs = params.toString();
+    return `mailto:${e.to || ""}${qs ? "?" + qs : ""}`;
+  }
   function fullEmailText(e) {
     return `To: ${e.to}\nSubject: ${e.subject}\n\n${e.body}`;
   }
@@ -512,9 +519,14 @@ export default function DecksTab({ sessionId }) {
                   <div className="text-xs text-stone-600 mb-1 font-medium">{e.subject}</div>
                   <pre className="text-[11px] text-stone-600 whitespace-pre-wrap max-h-32 overflow-y-auto p-2 bg-stone-50 rounded border border-stone-100 font-sans leading-relaxed">{e.body}</pre>
                   <div className="flex gap-1 mt-3 flex-wrap">
-                    <a href={gmailLink(e)} target="_blank" rel="noreferrer"
+                    <a href={mailtoLink(e)}
                       className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-stone-800 text-white hover:bg-stone-900">
-                      <ExternalLink className="w-3 h-3"/>Ouvrir dans Gmail
+                      <ExternalLink className="w-3 h-3"/>Ouvrir (Proton)
+                    </a>
+                    <a href={gmailLink(e)} target="_blank" rel="noreferrer"
+                      title="Alternative Gmail"
+                      className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100 text-stone-600">
+                      Gmail
                     </a>
                     <button onClick={() => copy(fullEmailText(e), "Email copié (TO + Subject + Body)")}
                       className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100">
