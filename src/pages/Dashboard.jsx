@@ -3,6 +3,7 @@ import { RestaurantTable, Seat, getCurrentUser } from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { getTableCapacity } from "@/lib/utils";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Settings, CalendarCheck, LayoutGrid } from "lucide-react";
 import TableCard from "../components/dashboard/TableCard";
@@ -145,7 +146,7 @@ export default function Dashboard() {
 
   const totalOccupied = allSeats.filter((s) => s.first_name).length;
   const totalReserved = allSeats.filter((s) => s.is_reserved).length;
-  const totalCapacity = tables.reduce((sum, t) => sum + (t.is_presidential ? 12 : 8), 0);
+  const totalCapacity = tables.reduce((sum, t) => sum + getTableCapacity(t), 0);
   const totalTaken = totalOccupied + totalReserved;
   const totalFree = Math.max(0, totalCapacity - totalTaken);
 
@@ -260,7 +261,7 @@ export default function Dashboard() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
               {tables.map((table, i) => {
-                const totalSeats = table.is_presidential ? 12 : 8;
+                const totalSeats = getTableCapacity(table);
                 const occupiedCount = getOccupiedSeatsForTable(table.id);
                 const reservedCount = getReservedSeatsForTable(table.id);
                 return (

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { getTableCapacity } from "@/lib/utils";
 import { ArrowLeft, Save, Users, CheckCircle2, Circle, BookmarkCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -135,12 +136,14 @@ export default function FloorPlan() {
                   }`}
                 >
                   {localTables.map((table, index) => {
-                    const totalSeats = table.is_presidential ? 12 : 8;
+                    const totalSeats = getTableCapacity(table);
                     const occupiedCount = getOccupiedSeatsForTable(table.id);
                     const reservedCount = getReservedSeatsForTable(table.id);
                     const freeCount = totalSeats - occupiedCount - reservedCount;
                     const colorClass = colorClasses[table.color || "amber"];
-                    const isRound = (table.shape || "round") === "round";
+                    const shape = table.shape || "round";
+                    const isRound = shape === "round";
+                    const isRectangle = shape === "rectangle";
 
                     return (
                       <Draggable key={table.id} draggableId={table.id} index={index}>
@@ -158,7 +161,7 @@ export default function FloorPlan() {
                             <div className="flex flex-col items-center">
                               {/* Visual Preview */}
                               <div
-                                className={`w-20 h-20 ${isRound ? "rounded-full" : "rounded-xl"} ${colorClass} border-3 shadow-md flex items-center justify-center mb-3`}
+                                className={`${isRectangle ? "w-28 h-14" : "w-20 h-20"} ${isRound ? "rounded-full" : "rounded-xl"} ${colorClass} border-3 shadow-md flex items-center justify-center mb-3`}
                                 style={{ transform: `rotate(${table.rotation || 0}deg)` }}
                               >
                                 <span className="text-xl font-light text-stone-700">

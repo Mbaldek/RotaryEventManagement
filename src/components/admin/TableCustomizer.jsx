@@ -3,13 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { X, Palette, RotateCw, Square } from "lucide-react";
+import { X, Palette, RotateCw, Square, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getTableCapacity, SEAT_COUNT_MIN, SEAT_COUNT_MAX } from "@/lib/utils";
 
 export default function TableCustomizer({ table, onSave, onClose }) {
   const [shape, setShape] = useState(table?.shape || "round");
   const [color, setColor] = useState(table?.color || "amber");
   const [rotation, setRotation] = useState(table?.rotation || 0);
+  const [seatCount, setSeatCount] = useState(getTableCapacity(table));
 
   const colors = [
     { value: "amber", label: "Ambre", class: "bg-amber-200" },
@@ -23,7 +25,7 @@ export default function TableCustomizer({ table, onSave, onClose }) {
   ];
 
   const handleSave = () => {
-    onSave({ shape, color, rotation });
+    onSave({ shape, color, rotation, seat_count: seatCount });
   };
 
   return (
@@ -71,8 +73,29 @@ export default function TableCustomizer({ table, onSave, onClose }) {
                 <SelectContent>
                   <SelectItem value="round">Ronde</SelectItem>
                   <SelectItem value="square">Carrée</SelectItem>
+                  <SelectItem value="rectangle">Rectangulaire</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Seat count */}
+            <div>
+              <Label className="text-sm text-stone-700 mb-2 flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Nombre de sièges ({seatCount})
+              </Label>
+              <Slider
+                value={[seatCount]}
+                onValueChange={(vals) => setSeatCount(vals[0])}
+                min={SEAT_COUNT_MIN}
+                max={SEAT_COUNT_MAX}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-[10px] text-stone-400 mt-1 px-1">
+                <span>{SEAT_COUNT_MIN}</span>
+                <span>{SEAT_COUNT_MAX}</span>
+              </div>
             </div>
 
             {/* Color */}
@@ -128,8 +151,12 @@ export default function TableCustomizer({ table, onSave, onClose }) {
               {/* Table preview */}
               <div className="flex items-center justify-center h-32">
                 <div
-                  className={`w-24 h-24 ${
-                    shape === "round" ? "rounded-full" : "rounded-2xl"
+                  className={`${
+                    shape === "round"
+                      ? "w-24 h-24 rounded-full"
+                      : shape === "rectangle"
+                      ? "w-36 h-20 rounded-2xl"
+                      : "w-24 h-24 rounded-2xl"
                   } bg-gradient-to-br ${
                     colors.find(c => c.value === color)?.class || "bg-amber-200"
                   } border-4 border-stone-300 shadow-lg flex items-center justify-center transition-all`}
@@ -140,6 +167,9 @@ export default function TableCustomizer({ table, onSave, onClose }) {
                   </span>
                 </div>
               </div>
+              <p className="text-[10px] text-stone-400 text-center mt-2">
+                {seatCount} sièges autour
+              </p>
             </div>
           </div>
 

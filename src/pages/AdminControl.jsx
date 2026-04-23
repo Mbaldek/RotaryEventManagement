@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
+import { getTableCapacity } from "@/lib/utils";
 import ConfirmDialog from "../components/admin/ConfirmDialog";
 import TableCustomizer from "../components/admin/TableCustomizer";
 
@@ -633,7 +634,7 @@ export default function AdminControl() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {tables.map(t => {
                   const tableSeats = allSeats.filter(s => s.table_id === t.id && s.first_name);
-                  const maxSeats = t.is_presidential ? 12 : 8;
+                  const maxSeats = getTableCapacity(t);
                   return (
                     <div
                       key={t.id}

@@ -31,7 +31,9 @@ function TableVisual({ table, totalSeats, occupiedCount, reservedCount, tint }) 
   const size = 116;
   const cx = size / 2;
   const cy = size / 2;
-  const isRound = (table.shape || "round") === "round";
+  const shape = table.shape || "round";
+  const isRound = shape === "round";
+  const isRectangle = shape === "rectangle";
   const isPresidential = table.is_presidential;
 
   // Seat placement
@@ -43,16 +45,41 @@ function TableVisual({ table, totalSeats, occupiedCount, reservedCount, tint }) 
       seats.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
     }
   } else {
-    const halfT = 22;
-    const off = halfT + 10;
-    const perSide = Math.ceil(totalSeats / 4);
-    const step = (halfT * 2) / perSide;
-    let n = 0;
-    const push = (x, y) => { if (n < totalSeats) { seats.push({ x, y }); n++; } };
-    for (let i = 0; i < perSide; i++) push(cx - halfT + step * (i + 0.5), cy - off);        // top
-    for (let i = 0; i < perSide; i++) push(cx + off, cy - halfT + step * (i + 0.5));        // right
-    for (let i = 0; i < perSide; i++) push(cx + halfT - step * (i + 0.5), cy + off);        // bottom
-    for (let i = 0; i < perSide; i++) push(cx - off, cy + halfT - step * (i + 0.5));        // left
+    const halfW = isRectangle ? 30 : 22;
+    const halfH = isRectangle ? 15 : 22;
+    const off = 10;
+    let longTotal = Math.round((totalSeats * 2 * halfW) / (2 * halfW + 2 * halfH));
+    if (longTotal % 2 !== 0) {
+      longTotal = longTotal + 1 <= totalSeats ? longTotal + 1 : Math.max(0, longTotal - 1);
+    }
+    longTotal = Math.min(totalSeats, Math.max(0, longTotal));
+    const topCount = longTotal / 2;
+    const bottomCount = longTotal / 2;
+    const shortTotal = totalSeats - longTotal;
+    const rightCount = Math.ceil(shortTotal / 2);
+    const leftCount = shortTotal - rightCount;
+
+    const left = cx - halfW;
+    const right = cx + halfW;
+    const top = cy - halfH;
+    const bottom = cy + halfH;
+
+    for (let i = 0; i < topCount; i++) {
+      const t = (i + 0.5) / topCount;
+      seats.push({ x: left + 2 * halfW * t, y: top - off });
+    }
+    for (let i = 0; i < rightCount; i++) {
+      const t = (i + 0.5) / rightCount;
+      seats.push({ x: right + off, y: top + 2 * halfH * t });
+    }
+    for (let i = 0; i < bottomCount; i++) {
+      const t = (i + 0.5) / bottomCount;
+      seats.push({ x: right - 2 * halfW * t, y: bottom + off });
+    }
+    for (let i = 0; i < leftCount; i++) {
+      const t = (i + 0.5) / leftCount;
+      seats.push({ x: left - off, y: bottom - 2 * halfH * t });
+    }
   }
 
   const stateFor = (i) =>
@@ -100,10 +127,10 @@ function TableVisual({ table, totalSeats, occupiedCount, reservedCount, tint }) 
         />
       ) : (
         <motion.rect
-          x={cx - 22}
-          y={cy - 22}
-          width={44}
-          height={44}
+          x={cx - (isRectangle ? 30 : 22)}
+          y={cy - (isRectangle ? 15 : 22)}
+          width={isRectangle ? 60 : 44}
+          height={isRectangle ? 30 : 44}
           rx={3}
           fill={tint}
           stroke={NAVY}
@@ -178,7 +205,9 @@ export default function TableCard({
   const totalTaken = occupiedCount + reservedCount;
   const freeCount = Math.max(0, totalSeats - totalTaken);
   const tint = TINTS[table.color || "amber"];
-  const isRound = (table.shape || "round") === "round";
+  const shape = table.shape || "round";
+  const shapeLabel =
+    shape === "round" ? "Ronde" : shape === "rectangle" ? "Rectangulaire" : "Carrée";
 
   const occupiedPct = (occupiedCount / totalSeats) * 100;
   const reservedPct = (reservedCount / totalSeats) * 100;
@@ -186,7 +215,7 @@ export default function TableCard({
   const name = table.is_presidential
     ? "Présidentielle"
     : `Table ${table.table_number}`;
-  const typeLabel = `${isRound ? "Ronde" : "Carrée"} · ${totalSeats} sièges`;
+  const typeLabel = `${shapeLabel} · ${totalSeats} sièges`;
 
   return (
     <div

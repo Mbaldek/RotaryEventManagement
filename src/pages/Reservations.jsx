@@ -3,6 +3,7 @@ import { Reservation, RestaurantTable, Seat, UpcomingEvent } from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { getTableCapacity } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -199,7 +200,7 @@ export default function Reservations() {
       const selectedTable = tables.find((t) => t.id === tableId);
       if (!selectedTable) throw new Error("Table introuvable");
 
-      const maxSeats = selectedTable.is_presidential ? 12 : 8;
+      const maxSeats = getTableCapacity(selectedTable);
       const tableSeats = allSeats.filter((s) => s.table_id === tableId);
       const occupiedNumbers = tableSeats.map((s) => s.seat_number);
 
@@ -276,7 +277,7 @@ export default function Reservations() {
     const allSeats = await Seat.list();
     const available = [];
     for (const table of tables) {
-      const maxSeats = table.is_presidential ? 12 : 8;
+      const maxSeats = getTableCapacity(table);
       const tableSeats = allSeats.filter((s) => s.table_id === table.id);
       const occupiedCount = tableSeats.length;
       const freeSeats = maxSeats - occupiedCount;
