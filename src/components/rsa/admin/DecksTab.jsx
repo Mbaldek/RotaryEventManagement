@@ -324,11 +324,12 @@ export default function DecksTab({ sessionId }) {
     return u.toString();
   }
   function mailtoLink(e) {
-    const params = new URLSearchParams();
-    if (e.subject) params.set("subject", e.subject);
-    if (e.body) params.set("body", e.body);
-    const qs = params.toString();
-    return `mailto:${e.to || ""}${qs ? "?" + qs : ""}`;
+    // mailto: requires RFC 3986 percent-encoding (spaces → %20), NOT
+    // URLSearchParams form-encoding (spaces → +, which Proton renders literally).
+    const parts = [];
+    if (e.subject) parts.push(`subject=${encodeURIComponent(e.subject)}`);
+    if (e.body) parts.push(`body=${encodeURIComponent(e.body)}`);
+    return `mailto:${e.to || ""}${parts.length ? "?" + parts.join("&") : ""}`;
   }
   function fullEmailText(e) {
     return `To: ${e.to}\nSubject: ${e.subject}\n\n${e.body}`;
