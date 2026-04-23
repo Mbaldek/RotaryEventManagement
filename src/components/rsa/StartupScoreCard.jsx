@@ -3,6 +3,42 @@ import { ChevronDown, ChevronUp, Check, Loader2 } from "lucide-react";
 import CriterionRating from "./CriterionRating";
 import { CRITERIA, SCORE_FIELDS, weightedScore, criteriaFilledCount, MAX_WEIGHTED } from "@/lib/rsa/constants";
 
+const T = {
+  fr: {
+    submittedTag: "✓ Envoyé · cliquez pour modifier",
+    criteriaRated: "critères notés",
+    commentLabel: "Commentaire",
+    commentOptional: "(optionnel · admin uniquement)",
+    commentPlaceholder: "Notes libres sur cette startup…",
+    criteriaRemaining: "critères restants",
+    weightedTotal: "Total pondéré :",
+    update: "Modifier l'envoi",
+    submit: "Envoyer les notes",
+  },
+  en: {
+    submittedTag: "✓ Submitted · click to edit",
+    criteriaRated: "criteria rated",
+    commentLabel: "Comment",
+    commentOptional: "(optional · admin only)",
+    commentPlaceholder: "Free-form notes on this startup…",
+    criteriaRemaining: "criteria remaining",
+    weightedTotal: "Weighted total:",
+    update: "Update submission",
+    submit: "Submit scores",
+  },
+  de: {
+    submittedTag: "✓ Eingereicht · zum Bearbeiten klicken",
+    criteriaRated: "Kriterien bewertet",
+    commentLabel: "Kommentar",
+    commentOptional: "(optional · nur Admin)",
+    commentPlaceholder: "Freie Notizen zu diesem Startup…",
+    criteriaRemaining: "Kriterien verbleibend",
+    weightedTotal: "Gewichtete Gesamtpunktzahl:",
+    update: "Einreichung aktualisieren",
+    submit: "Bewertungen einreichen",
+  },
+};
+
 export default function StartupScoreCard({
   startup,
   index,
@@ -11,11 +47,13 @@ export default function StartupScoreCard({
   expanded,
   disabled,
   submitting,
+  lang = "fr",
   onToggle,
   onChangeField,
   onChangeComment,
   onSubmit,
 }) {
+  const t = T[lang] || T.fr;
   const filled = criteriaFilledCount(draft);
   const total = CRITERIA.length;
   const weighted = weightedScore(draft);
@@ -45,10 +83,10 @@ export default function StartupScoreCard({
           <div className="font-semibold text-stone-800 truncate">{startup}</div>
           <div className="text-xs text-stone-500 mt-0.5 flex items-center gap-2">
             {isSubmitted ? (
-              <span className="text-emerald-700">✓ Submitted · click to edit</span>
+              <span className="text-emerald-700">{t.submittedTag}</span>
             ) : (
               <span>
-                {filled}/{total} criteria rated
+                {filled}/{total} {t.criteriaRated}
                 {weighted != null && (
                   <span className="ml-2 text-amber-700 font-medium">
                     · {weighted.toFixed(2)}/{MAX_WEIGHTED.toFixed(0)}
@@ -74,19 +112,20 @@ export default function StartupScoreCard({
               value={draft?.[c.id] ?? null}
               onChange={(v) => onChangeField(c.id, v)}
               disabled={disabled}
+              lang={lang}
             />
           ))}
 
           <div>
             <label className="text-xs text-stone-500 mb-1 block">
-              Comment <span className="text-stone-400">(optional · admin only)</span>
+              {t.commentLabel} <span className="text-stone-400">{t.commentOptional}</span>
             </label>
             <textarea
               value={draft?.comment ?? ""}
               onChange={(e) => onChangeComment(e.target.value)}
               disabled={disabled}
               rows={3}
-              placeholder="Free-form notes on this startup…"
+              placeholder={t.commentPlaceholder}
               className="w-full text-base sm:text-sm rounded-md border border-stone-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 disabled:bg-stone-50 disabled:text-stone-400"
             />
           </div>
@@ -94,10 +133,12 @@ export default function StartupScoreCard({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1">
             <div className="text-xs text-stone-500">
               {filled < total ? (
-                <span>{total - filled} criteria remaining</span>
+                <span>
+                  {total - filled} {t.criteriaRemaining}
+                </span>
               ) : (
                 <span className="text-emerald-700">
-                  Weighted total: <strong>{weighted.toFixed(2)}</strong>/{MAX_WEIGHTED.toFixed(0)}
+                  {t.weightedTotal} <strong>{weighted.toFixed(2)}</strong>/{MAX_WEIGHTED.toFixed(0)}
                 </span>
               )}
             </div>
@@ -112,7 +153,7 @@ export default function StartupScoreCard({
               }`}
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitted ? "Update submission" : "Submit scores"}
+              {isSubmitted ? t.update : t.submit}
             </button>
           </div>
         </div>

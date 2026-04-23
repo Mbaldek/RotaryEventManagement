@@ -1,27 +1,36 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
+import { getCriterion } from "@/lib/rsa/constants";
 
-export default function CriterionRating({ criterion, value, onChange, disabled }) {
+const T = {
+  fr: { anchors: "Repères de notation", ariaAnchors: "Afficher les repères de notation" },
+  en: { anchors: "Score anchors", ariaAnchors: "Show rating anchors" },
+  de: { anchors: "Bewertungsanker", ariaAnchors: "Bewertungsanker anzeigen" },
+};
+
+export default function CriterionRating({ criterion, value, onChange, disabled, lang = "fr" }) {
   const [open, setOpen] = useState(false);
-  const weightPct = Math.round(criterion.weight * 100);
+  const t = T[lang] || T.fr;
+  const c = getCriterion(criterion, lang);
+  const weightPct = Math.round(c.weight * 100);
 
   return (
     <div className="border border-stone-200 rounded-lg bg-white">
       <div className="flex items-start justify-between gap-3 p-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-stone-800 text-sm">{criterion.label}</span>
+            <span className="font-medium text-stone-800 text-sm">{c.label}</span>
             <span className="text-[10px] uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
               {weightPct}%
             </span>
           </div>
-          <p className="text-xs text-stone-500 mt-0.5 leading-snug">{criterion.desc}</p>
+          <p className="text-xs text-stone-500 mt-0.5 leading-snug">{c.desc}</p>
         </div>
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           className="text-stone-400 hover:text-stone-700 transition-colors p-1"
-          aria-label="Show rating anchors"
+          aria-label={t.ariaAnchors}
         >
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
@@ -52,7 +61,7 @@ export default function CriterionRating({ criterion, value, onChange, disabled }
       {open && (
         <div className="border-t border-stone-100 bg-stone-50 px-3 py-2 rounded-b-lg">
           <div className="flex items-center gap-1.5 text-[11px] text-stone-500 mb-1.5">
-            <Info className="w-3 h-3" /> Score anchors
+            <Info className="w-3 h-3" /> {t.anchors}
           </div>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
             {[0, 1, 2, 3, 4, 5].map((n) => (
@@ -69,7 +78,7 @@ export default function CriterionRating({ criterion, value, onChange, disabled }
                     value === n ? "text-stone-800" : "text-stone-500"
                   }`}
                 >
-                  {criterion.anchors[n]}
+                  {c.anchors[n]}
                 </dd>
               </React.Fragment>
             ))}
