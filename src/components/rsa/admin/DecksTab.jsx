@@ -876,7 +876,8 @@ export default function DecksTab({ sessionId }) {
               {jurors.map((j, idx) => {
                 const busy = working === j.id;
                 const sentAt = jurySentAt(j);
-                const lang = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
+                const detected = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
+                const lang = juryLangOverride[j.id] || detected;
                 const langClass = lang === "fr"
                   ? "bg-blue-50 text-blue-700 border-blue-200"
                   : lang === "de"
@@ -893,7 +894,15 @@ export default function DecksTab({ sessionId }) {
                       {j.email || <span className="text-stone-400">—</span>}
                     </td>
                     <td className="px-3 py-2">
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${langClass}`}>{lang.toUpperCase()}</span>
+                      <select
+                        value={lang}
+                        onChange={(ev) => setJuryLangOverride((o) => ({ ...o, [j.id]: ev.target.value }))}
+                        title="Langue du template email pour ce juré"
+                        className={`text-[10px] px-1.5 py-0.5 rounded border cursor-pointer focus:outline-none ${langClass}`}>
+                        <option value="fr">FR</option>
+                        <option value="en">EN</option>
+                        <option value="de">DE</option>
+                      </select>
                     </td>
                     <td className="px-3 py-2">
                       {sentAt
@@ -1003,15 +1012,11 @@ export default function DecksTab({ sessionId }) {
                       <div className="text-xs text-stone-500">{e.jury.qualite || "—"}{e.jury.organisation ? ` · ${e.jury.organisation}` : ""}</div>
                       <div className="text-xs text-stone-500">{e.to || <span className="text-rose-500">aucun email</span>}</div>
                     </div>
-                    <select
-                      value={e.lang}
-                      onChange={(ev) => setJuryLangOverride((o) => ({ ...o, [e.jury.id]: ev.target.value }))}
-                      title="Choisir la langue de l'email"
-                      className={`text-[10px] px-1.5 py-0.5 rounded border cursor-pointer focus:outline-none ${langClass}`}>
-                      <option value="fr">FR</option>
-                      <option value="en">EN</option>
-                      <option value="de">DE</option>
-                    </select>
+                    <span
+                      title="Modifier la langue dans le tableau Suivi partage jury ci-dessus"
+                      className={`text-[10px] px-1.5 py-0.5 rounded border ${langClass}`}>
+                      {e.lang.toUpperCase()}
+                    </span>
                   </div>
                   <div className="text-xs text-stone-600 mb-1 font-medium">{e.subject}</div>
                   <pre className="text-[11px] text-stone-600 whitespace-pre-wrap max-h-40 overflow-y-auto p-2 bg-stone-50 rounded border border-stone-100 font-sans leading-relaxed">{e.body}</pre>
