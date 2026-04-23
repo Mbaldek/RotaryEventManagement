@@ -43,9 +43,11 @@ const T = {
     bPublishedB: "Merci d'avoir noté cette session. Le classement final a été publié.",
     whoAreYou: "Qui êtes-vous ?",
     noJurors: "Aucun juré validé n'est assigné à cette session. Merci de contacter l'administrateur.",
-    scoringAs: "Connecté en tant que",
+    scoringAs: "Connecté en tant que juré",
     progress: "Progression",
     switchJuror: "Ce n'est pas vous ? Changer de juré",
+    wrongPersonCta: "Pas vous ?",
+    wrongPersonLong: "Changer de juré",
     autoSaved: "Enregistrement auto — fermez l'onglet et reprenez sur n'importe quel appareil.",
     wTitle: "Bienvenue sur le scoring Rotary Startup Award",
     wCollapse: "Toucher pour réduire",
@@ -96,7 +98,9 @@ const T = {
     bPublishedB: "Thank you for scoring this session. The final ranking has been published.",
     whoAreYou: "Who are you?",
     noJurors: "No validated jurors are assigned to this session yet. Please contact the admin.",
-    scoringAs: "Scoring as",
+    scoringAs: "Signed in as",
+    wrongPersonCta: "Not you?",
+    wrongPersonLong: "Switch juror",
     progress: "Progress",
     switchJuror: "Not you? Switch juror",
     autoSaved: "Auto-saved — close the tab and resume on any device.",
@@ -148,9 +152,11 @@ const T = {
     bPublishedB: "Vielen Dank für Ihre Bewertung dieser Session. Das Endergebnis wurde veröffentlicht.",
     whoAreYou: "Wer sind Sie?",
     noJurors: "Dieser Session sind noch keine validierten Juroren zugewiesen. Bitte wenden Sie sich an den Admin.",
-    scoringAs: "Angemeldet als",
+    scoringAs: "Angemeldet als Juror",
     progress: "Fortschritt",
     switchJuror: "Nicht Sie? Juror wechseln",
+    wrongPersonCta: "Nicht Sie?",
+    wrongPersonLong: "Juror wechseln",
     autoSaved: "Automatisch gespeichert — schließen Sie den Tab und setzen Sie auf einem beliebigen Gerät fort.",
     wTitle: "Willkommen zum Scoring des Rotary Startup Award",
     wCollapse: "Tippen zum Einklappen",
@@ -560,16 +566,39 @@ export default function RsaScore() {
         {/* Scoring */}
         {juryName && (
           <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-stone-500 uppercase tracking-wider">{t.scoringAs}</div>
-                <div className="font-semibold text-stone-800">{juryName}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-stone-500">{t.progress}</div>
-                <div className="font-medium text-stone-800">
-                  {submittedCount}/{startups.length}
+            {/* Prominent identity bar — visible at the top so a juror who sees
+                the wrong name can immediately switch back to the picker */}
+            <div className="rounded-xl border-2 border-amber-300 bg-amber-50 shadow-sm p-3 sm:p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                  {juryName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
                 </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] uppercase tracking-wider text-amber-800 font-medium">
+                    {t.scoringAs}
+                  </div>
+                  <div className="font-semibold text-stone-900 text-base sm:text-lg truncate">
+                    {juryName}
+                  </div>
+                </div>
+                <button
+                  onClick={signOut}
+                  className="flex-shrink-0 inline-flex flex-col sm:flex-row items-end sm:items-center gap-0 sm:gap-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium bg-white border border-amber-400 text-amber-800 hover:bg-amber-100 active:scale-95 transition-all"
+                >
+                  <span className="font-semibold">{t.wrongPersonCta}</span>
+                  <span className="text-[11px] sm:text-xs text-amber-700 whitespace-nowrap">
+                    {t.wrongPersonLong}
+                  </span>
+                </button>
+              </div>
+              <div className="mt-3 pt-3 border-t border-amber-200 flex items-center justify-between gap-3 text-xs">
+                <span className="text-stone-600">
+                  {t.progress}:{" "}
+                  <strong className="text-stone-900">
+                    {submittedCount}/{startups.length}
+                  </strong>
+                </span>
+                <span className="text-stone-500 text-right truncate">{t.autoSaved}</span>
               </div>
             </div>
 
@@ -591,13 +620,6 @@ export default function RsaScore() {
                   onSubmit={() => submitFor(s)}
                 />
               ))}
-            </div>
-
-            <div className="pt-4 flex items-center justify-between text-xs text-stone-400">
-              <button onClick={signOut} className="hover:text-stone-700 underline">
-                {t.switchJuror}
-              </button>
-              <span>{t.autoSaved}</span>
             </div>
           </section>
         )}
