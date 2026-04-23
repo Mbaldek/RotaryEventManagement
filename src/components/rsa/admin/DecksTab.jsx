@@ -411,6 +411,36 @@ export default function DecksTab({ sessionId }) {
     setWorking(null);
   }
 
+  async function markJurySent(j) {
+    setWorking(j.id);
+    try {
+      const current = (j.instructions_sent_at && typeof j.instructions_sent_at === "object") ? j.instructions_sent_at : {};
+      await JuryProfile.update(j.id, { instructions_sent_at: { ...current, [sessionId]: new Date().toISOString() } });
+      toast.success("Invitation jury marquée envoyée");
+      await load();
+    } catch (e) {
+      toast.error("Erreur");
+    }
+    setWorking(null);
+  }
+
+  async function unmarkJurySent(j) {
+    setWorking(j.id);
+    try {
+      const current = (j.instructions_sent_at && typeof j.instructions_sent_at === "object") ? j.instructions_sent_at : {};
+      const { [sessionId]: _, ...rest } = current;
+      await JuryProfile.update(j.id, { instructions_sent_at: rest });
+      await load();
+    } catch (e) {}
+    setWorking(null);
+  }
+
+  function jurySentAt(j) {
+    const m = j?.instructions_sent_at;
+    if (!m || typeof m !== "object") return null;
+    return m[sessionId] || null;
+  }
+
   async function resetToken(row) {
     if (!window.confirm(`Régénérer le lien d'upload pour ${row.startup_name} ? L'ancien lien ne fonctionnera plus.`)) return;
     setWorking(row.id);
@@ -525,6 +555,8 @@ export default function DecksTab({ sessionId }) {
   const nUploaded = rows.filter((r) => !!r.final_deck_path).length;
   const nSent = rows.filter((r) => !!r.instructions_sent_at).length;
   const nExec = rows.filter((r) => Array.isArray(r.executive_summary_files) && r.executive_summary_files.length > 0).length;
+  const nJurySent = jurors.filter((j) => !!jurySentAt(j)).length;
+  const scoringUrl = `${window.location.origin}/RsaScore?s=${sessionId}`;
 
   if (loading) {
     return <div className="flex items-center gap-2 text-sm text-stone-500 p-4"><Loader2 className="w-4 h-4 animate-spin"/>Chargement…</div>;
@@ -533,12 +565,13 @@ export default function DecksTab({ sessionId }) {
   return (
     <div className="space-y-8">
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <KPI label="Startups" value={rows.length}/>
         <KPI label="Décks confirmés" value={`${nConfirmed}/${rows.length}`} accent={nConfirmed === rows.length ? "emerald" : "amber"}/>
         <KPI label="Nouvelles versions uploadées" value={nUploaded}/>
         <KPI label="Exec. summaries (pre-read)" value={`${nExec}/${rows.length}`}/>
         <KPI label="Emails J-7 marqués envoyés" value={`${nSent}/${rows.length}`}/>
+        <KPI label="Invitations jury envoyées" value={`${nJurySent}/${jurors.length}`} accent={jurors.length && nJurySent === jurors.length ? "emerald" : undefined}/>
       </div>
 
       {/* Section A: tracking table */}
@@ -729,7 +762,89 @@ export default function DecksTab({ sessionId }) {
         )}
       </section>
 
-      {/* Section C: emails jury (tri-lingue FR/EN/DE) */}
+      {/* Section C: jury outreach tracking */}
+      <section>
+        <div className="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <h2 className="text-sm font-semibold text-stone-800 inline-flex items-center gap-2">
+            <Users className="w-4 h-4 text-stone-500"/>Suivi partage jury
+          </h2>
+          <button onClick={() => copy(scoringUrl, "Lien scoring copié")}
+            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-stone-200 hover:bg-stone-100 text-stone-600">
+            <Copy className="w-3 h-3"/>Lien scoring session
+          </button>
+        </div>
+        <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500">
+              <tr>
+                <th className="px-3 py-2 text-left w-6">#</th>
+                <th className="px-3 py-2 text-left">Juré</th>
+                <th className="px-3 py-2 text-left">Contact</th>
+                <th className="px-3 py-2 text-left">Langue</th>
+                <th className="px-3 py-2 text-left">Invitation jury</th>
+                <th className="px-3 py-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jurors.map((j, idx) => {
+                const busy = working === j.id;
+                const sentAt = jurySentAt(j);
+                const lang = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
+                const langClass = lang === "fr"
+                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                  : lang === "de"
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : "bg-purple-50 text-purple-700 border-purple-200";
+                return (
+                  <tr key={j.id} className="border-t border-stone-100 hover:bg-stone-50/60">
+                    <td className="px-3 py-2 text-stone-400 text-xs">{idx + 1}</td>
+                    <td className="px-3 py-2 font-medium text-stone-800">
+                      {j.prenom} {j.nom}
+                      {j.qualite && <div className="text-[10px] font-normal text-stone-400">{j.qualite}{j.organisation ? ` · ${j.organisation}` : ""}</div>}
+                    </td>
+                    <td className="px-3 py-2 text-stone-600 text-xs">
+                      {j.email || <span className="text-stone-400">—</span>}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${langClass}`}>{lang.toUpperCase()}</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      {sentAt
+                        ? <button onClick={() => unmarkJurySent(j)} disabled={busy}
+                            className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">
+                            <Check className="w-3 h-3"/>envoyé {new Date(sentAt).toLocaleDateString("fr-FR", {day:"2-digit", month:"short"})}
+                          </button>
+                        : <span className="inline-flex text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">⏳ en attente</span>
+                      }
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex gap-1 justify-end flex-wrap">
+                        <button onClick={() => copy(scoringUrl, "Lien scoring copié")}
+                          title="Copier le lien scoring de cette session"
+                          className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-stone-200 hover:bg-stone-100">
+                          <Copy className="w-3 h-3"/>scoring
+                        </button>
+                        {!sentAt && (
+                          <button onClick={() => markJurySent(j)} disabled={busy}
+                            title="Marquer l'invitation comme envoyée (sans ouvrir de brouillon)"
+                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-stone-200 hover:bg-stone-100 text-stone-600">
+                            <Check className="w-3 h-3"/>marquer envoyé
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {jurors.length === 0 && (
+                <tr><td colSpan={6} className="px-3 py-6 text-center text-stone-400 text-sm italic">Aucun juré validé assigné à cette session. Assignez-les dans l'onglet Setup.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Section D: emails jury (tri-lingue FR/EN/DE) */}
       <section>
         <div className="flex items-baseline justify-between mb-2 flex-wrap gap-2">
           <h2 className="text-sm font-semibold text-stone-800 inline-flex items-center gap-2">
@@ -792,8 +907,9 @@ export default function DecksTab({ sessionId }) {
                 : e.lang === "de"
                 ? "bg-amber-50 text-amber-700 border-amber-200"
                 : "bg-purple-50 text-purple-700 border-purple-200";
+              const sent = !!jurySentAt(e.jury);
               return (
-                <div key={e.jury.id} className="rounded-lg border p-4 bg-white border-stone-200">
+                <div key={e.jury.id} className={`rounded-lg border p-4 ${sent ? "bg-stone-50 border-stone-200 opacity-70" : "bg-white border-stone-200"}`}>
                   <div className="flex items-start justify-between mb-2 gap-2">
                     <div>
                       <div className="text-sm font-semibold text-stone-800">{e.jury.prenom} {e.jury.nom}</div>
@@ -819,6 +935,10 @@ export default function DecksTab({ sessionId }) {
                     <button onClick={() => copy(fullEmailText(e), "Email copié (TO + Subject + Body)")}
                       className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100">
                       <Copy className="w-3 h-3"/>Copier
+                    </button>
+                    <button onClick={() => sent ? unmarkJurySent(e.jury) : markJurySent(e.jury)}
+                      className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border ${sent ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "border-stone-200 hover:bg-stone-100"}`}>
+                      {sent ? <><Check className="w-3 h-3"/>envoyé</> : "Marquer envoyé"}
                     </button>
                   </div>
                 </div>
