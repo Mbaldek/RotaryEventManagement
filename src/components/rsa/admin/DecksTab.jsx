@@ -36,18 +36,18 @@ const DEFAULT_TEMPLATE_FR = `Sujet : Rotary Startup Award — préparation pitch
 
 Bonjour {CONTACT_PRENOM},
 
-Votre pitch pour la session « {SESSION_LABEL} » aura lieu le {DATE_LONGUE} (visio Teams, ~2h). Vous faites partie des {N} startups retenues.
+Votre pitch pour la session « {SESSION_LABEL} » aura lieu le {DATE_LONGUE} (visio Teams, ~2h30). Vous faites partie des {N} startups retenues.
 
 Déroulé de la session :
   • 18h00 — accueil et introduction (5 min)
   • 18h05 — début des pitchs
-  • Chaque startup : 5 min de pitch + 5 min de Q&A avec le jury
+  • Chaque startup : 10 à 12 min de pitch + 8 à 10 min de Q&A avec le jury
   • Votre passage : créneau #{RANK} vers {HEURE_PASSAGE}
-  • ~20h — fin des pitchs, délibération du jury
+  • Fin des pitchs, puis délibération du jury
 
 Langue : le pitch et le Q&A se déroulent en anglais (jury international). Merci de préparer votre deck et votre présentation orale en anglais.
 
-Bonnes pratiques pour votre pitch (5 minutes strictes, chronométrées) :
+Bonnes pratiques pour votre pitch (10 à 12 minutes, chronométrées) :
   • Problème & solution en 60 secondes — rendez le pain point tangible
   • Marché visé & dynamique (TAM/SAM/SOM si pertinent)
   • Business model : comment vous gagnez de l'argent, unit economics
@@ -86,18 +86,18 @@ const DEFAULT_TEMPLATE_EN = `Subject: Rotary Startup Award — pitch preparation
 
 Hello {CONTACT_PRENOM},
 
-Your pitch for the « {SESSION_LABEL} » session will take place on {DATE_LONGUE} (Teams call, ~2h). You are one of the {N} selected startups.
+Your pitch for the « {SESSION_LABEL} » session will take place on {DATE_LONGUE} (Teams call, ~2h30). You are one of the {N} selected startups.
 
 Session schedule:
   • 6:00pm — welcome and introduction (5 min)
   • 6:05pm — pitches start
-  • Each startup: 5 min pitch + 5 min Q&A with the jury
+  • Each startup: 10 to 12 min pitch + 8 to 10 min Q&A with the jury
   • Your slot: #{RANK} around {HEURE_PASSAGE}
-  • ~8:00pm — end of pitches, jury deliberation
+  • End of pitches, then jury deliberation
 
 Language: pitch and Q&A are in English (international jury). Please prepare both your deck and your spoken presentation in English.
 
-Pitch best practices (strict 5-minute limit, timed):
+Pitch best practices (10 to 12 minutes, timed):
   • Problem & solution in 60 seconds — make the pain point tangible
   • Target market & dynamics (TAM/SAM/SOM if relevant)
   • Business model: how you make money, unit economics
@@ -136,17 +136,18 @@ function detectLang(country) {
   return FR_COUNTRIES.has((country || "").trim()) ? "fr" : "en";
 }
 
+// Pitches start 18h05, 20 min slots (10-12 min pitch + 8-10 min Q&A)
+const SLOT_MIN = 20;
 function rankToHour(rank) {
-  // Pitches start 18h05, 10 min slots (5 pitch + 5 Q&A)
   const startMin = 18 * 60 + 5;
-  const t = startMin + (rank - 1) * 10;
+  const t = startMin + (rank - 1) * SLOT_MIN;
   const h = Math.floor(t / 60);
   const m = t % 60;
   return `${h}h${m.toString().padStart(2, "0")}`;
 }
 function rankToHourEn(rank) {
   const startMin = 18 * 60 + 5;
-  const t = startMin + (rank - 1) * 10;
+  const t = startMin + (rank - 1) * SLOT_MIN;
   const h12 = ((Math.floor(t / 60) - 1) % 12) + 1;
   const m = t % 60;
   return `${h12}:${m.toString().padStart(2, "0")}pm`;
