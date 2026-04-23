@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Plus, Trash2, Megaphone, Download, MessageSquareX, Settings, ExternalLink, Home, Palette, LayoutGrid, Archive, CalendarCheck, BookOpen, Shield, Calendar, FileUp
+  Plus, Trash2, Megaphone, Download, MessageSquareX, Settings, ExternalLink, Home, Palette, LayoutGrid, Archive, CalendarCheck, BookOpen, Shield, Calendar, FileUp, Pencil, X
 } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
@@ -169,6 +169,46 @@ export default function AdminControl() {
       title: "Diffuser un message",
       message: `Vous êtes sur le point de diffuser un message à ${target}. Cette action est irréversible.`
     });
+  };
+
+  // Active broadcasts (global + per table with non-empty message)
+  const activeBroadcasts = React.useMemo(() => {
+    const list = [];
+    if (settings?.global_broadcast?.trim()) {
+      list.push({ id: "all", label: "Toutes les tables", message: settings.global_broadcast });
+    }
+    tables.forEach(t => {
+      if (t.broadcast_message?.trim()) {
+        list.push({
+          id: t.id,
+          label: t.is_presidential ? "★ Table Présidentielle" : `Table ${t.table_number}`,
+          message: t.broadcast_message,
+        });
+      }
+    });
+    return list;
+  }, [settings, tables]);
+
+  const clearBroadcastMutation = useMutation({
+    mutationFn: async (targetId) => {
+      if (targetId === "all") {
+        if (settings?.id) {
+          await GlobalSettings.update(settings.id, { global_broadcast: "" });
+        }
+      } else {
+        await RestaurantTable.update(targetId, { broadcast_message: "" });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["globalSettings"] });
+      queryClient.invalidateQueries({ queryKey: ["allTables"] });
+      toast.success("Message supprimé");
+    },
+  });
+
+  const handleEditBroadcast = (b) => {
+    setBroadcastTarget(b.id);
+    setBroadcastMsg(b.message);
   };
 
 
@@ -437,6 +477,39 @@ export default function AdminControl() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {activeBroadcasts.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">
+                    Messages actifs
+                  </p>
+                  {activeBroadcasts.map(b => (
+                    <div
+                      key={b.id}
+                      className="flex items-start gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-amber-700">{b.label}</p>
+                        <p className="text-sm text-stone-700 break-words">{b.message}</p>
+                      </div>
+                      <button
+                        onClick={() => handleEditBroadcast(b)}
+                        className="p-1 text-stone-500 hover:text-stone-700 shrink-0"
+                        title="Modifier"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => clearBroadcastMutation.mutate(b.id)}
+                        disabled={clearBroadcastMutation.isPending}
+                        className="p-1 text-stone-500 hover:text-red-600 shrink-0 disabled:opacity-50"
+                        title="Supprimer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <Select value={broadcastTarget} onValueChange={setBroadcastTarget}>
                 <SelectTrigger className="border-stone-200">
                   <SelectValue />
