@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Copy, RotateCcw, ExternalLink, Check, Mail, Download } from "lucide-react";
-import { SESSION_BY_ID } from "@/lib/rsa/constants";
-import { StartupConfirmation, SessionConfig } from "@/lib/db";
+import { Loader2, Copy, RotateCcw, ExternalLink, Check, Mail, Download, Users } from "lucide-react";
+import { SESSION_BY_ID, CRITERIA, getCriterion, getSessionLabel } from "@/lib/rsa/constants";
+import { StartupConfirmation, SessionConfig, JuryProfile } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 
 // J-3 deadlines (matches RsaDashboard.SESSION_DEADLINES)
@@ -14,11 +14,11 @@ const SESSION_DEADLINES = {
   s5_greentech: {iso:"2026-05-18", label:"18 mai",    labelEn:"18 May"},
 };
 const SESSION_DATES_LONG = {
-  s1_foodtech:  {fr:"jeudi 30 avril 2026, 18h", en:"Thursday 30 April 2026, 6pm"},
-  s2_social:    {fr:"mercredi 6 mai 2026, 18h", en:"Wednesday 6 May 2026, 6pm"},
-  s3_tech:      {fr:"mercredi 13 mai 2026, 18h", en:"Wednesday 13 May 2026, 6pm"},
-  s4_health:    {fr:"mardi 19 mai 2026, 18h", en:"Tuesday 19 May 2026, 6pm"},
-  s5_greentech: {fr:"jeudi 21 mai 2026, 18h", en:"Thursday 21 May 2026, 6pm"},
+  s1_foodtech:  {fr:"jeudi 30 avril 2026, 18h",  en:"Thursday 30 April 2026, 6pm",    de:"Donnerstag, 30. April 2026, 18 Uhr"},
+  s2_social:    {fr:"mercredi 6 mai 2026, 18h",  en:"Wednesday 6 May 2026, 6pm",      de:"Mittwoch, 6. Mai 2026, 18 Uhr"},
+  s3_tech:      {fr:"mercredi 13 mai 2026, 18h", en:"Wednesday 13 May 2026, 6pm",     de:"Mittwoch, 13. Mai 2026, 18 Uhr"},
+  s4_health:    {fr:"mardi 19 mai 2026, 18h",    en:"Tuesday 19 May 2026, 6pm",       de:"Dienstag, 19. Mai 2026, 18 Uhr"},
+  s5_greentech: {fr:"jeudi 21 mai 2026, 18h",    en:"Thursday 21 May 2026, 6pm",      de:"Donnerstag, 21. Mai 2026, 18 Uhr"},
 };
 const SESSION_LABELS_EN = {
   s1_foodtech: "FoodTech & Circular Economy",
@@ -132,6 +132,164 @@ For this session, I am your direct point of contact. Feel free to reach me by em
 Best regards,
 Mathieu`;
 
+const DEFAULT_JURY_TEMPLATE_FR = `Sujet : Rotary Startup Award — session {DATE_LONGUE} · dossier jury
+
+Bonjour {JURY_PRENOM},
+
+Merci d'avoir accepté de faire partie du jury pour la session « {SESSION_LABEL} » du {DATE_LONGUE} (visio Teams, ~2h30). Voici votre dossier de préparation.
+
+Déroulé de la session :
+  • 18h00 — accueil et introduction (5 min)
+  • 18h05 — début des pitchs
+  • Chaque startup : 10 à 12 min de pitch + 8 à 10 min de Q&A
+  • Fin des pitchs, puis délibération du jury
+
+Langue : les pitchs et les Q&A se déroulent en anglais (jury international). Vous pouvez poser vos questions dans la langue de votre choix si elle est partagée avec la startup.
+
+Startups retenues ({N}) :
+{STARTUPS_BLOCK}
+
+Pre-read :
+Merci de parcourir les decks et les executive summaries (FR/DE) avant la session. Les liens sont ci-dessus, startup par startup.
+
+Scoring en direct :
+Pendant la session, votez en direct sur :
+{SCORING_URL}
+
+Fonctionnement du scoring :
+  • 6 critères pondérés, note de 0 à 5 par critère
+  • Sauvegarde automatique à chaque clic, reprise possible sur tout appareil
+  • Commentaire libre optionnel par startup (visible uniquement par l'organisateur)
+  • Vous pouvez modifier vos notes tant que la session n'est pas verrouillée
+
+Grille d'évaluation (6 critères) :
+{CRITERIA_BLOCK}
+
+Lien Teams :
+Le lien de connexion sera envoyé au maximum 48h avant la session.
+
+Contact :
+Je suis votre point de contact pour cette session. Vous pouvez me joindre par email, téléphone ou WhatsApp en cas de besoin.
+
+Bien cordialement,
+{ORGANISER_NAME}`;
+
+const DEFAULT_JURY_TEMPLATE_EN = `Subject: Rotary Startup Award — {DATE_LONGUE} session · jury pack
+
+Hello {JURY_PRENOM},
+
+Thank you for agreeing to join the jury for the « {SESSION_LABEL} » session on {DATE_LONGUE} (Teams call, ~2h30). Here is your preparation pack.
+
+Session schedule:
+  • 6:00pm — welcome and introduction (5 min)
+  • 6:05pm — pitches start
+  • Each startup: 10 to 12 min pitch + 8 to 10 min Q&A
+  • End of pitches, then jury deliberation
+
+Language: pitches and Q&A are held in English (international jury). You may ask questions in any language you share with the startup.
+
+Selected startups ({N}):
+{STARTUPS_BLOCK}
+
+Pre-read:
+Please go through the decks and executive summaries (FR/DE) before the session. Links are above, startup by startup.
+
+Live scoring:
+During the session, score live at:
+{SCORING_URL}
+
+How scoring works:
+  • 6 weighted criteria, 0 to 5 per criterion
+  • Auto-save on every click, resume on any device
+  • Optional free-form comment per startup (visible only to the organiser)
+  • You can edit your scores until the session is locked
+
+Scoring grid (6 criteria):
+{CRITERIA_BLOCK}
+
+Teams link:
+The connection link will be sent at the latest 48h before the session.
+
+Contact:
+I am your point of contact for this session. Feel free to reach me by email, phone or WhatsApp whenever needed.
+
+Best regards,
+{ORGANISER_NAME}`;
+
+const DEFAULT_JURY_TEMPLATE_DE = `Betreff: Rotary Startup Award — Session {DATE_LONGUE} · Jury-Unterlagen
+
+Guten Tag {JURY_PRENOM},
+
+vielen Dank, dass Sie Teil der Jury für die Session „{SESSION_LABEL}" am {DATE_LONGUE} (Teams-Videokonferenz, ~2h30) sind. Anbei Ihre Vorbereitungsunterlagen.
+
+Ablauf der Session:
+  • 18:00 Uhr — Begrüßung und Einführung (5 Min)
+  • 18:05 Uhr — Beginn der Pitches
+  • Pro Startup: 10 bis 12 Min Pitch + 8 bis 10 Min Q&A
+  • Ende der Pitches, anschließend Jury-Beratung
+
+Sprache: Pitches und Q&A finden auf Englisch statt (internationale Jury). Fragen dürfen Sie in jeder Sprache stellen, die Sie mit dem Startup teilen.
+
+Ausgewählte Startups ({N}):
+{STARTUPS_BLOCK}
+
+Vorab-Lektüre:
+Bitte gehen Sie die Decks und Executive Summaries (FR/DE) vor der Session durch. Die Links finden Sie oben, Startup für Startup.
+
+Live-Scoring:
+Während der Session bewerten Sie live unter:
+{SCORING_URL}
+
+Funktionsweise des Scorings:
+  • 6 gewichtete Kriterien, Bewertung 0 bis 5 pro Kriterium
+  • Automatisches Speichern bei jedem Klick, Fortsetzung auf jedem Gerät möglich
+  • Optionaler Freitextkommentar pro Startup (nur für den Organisator sichtbar)
+  • Änderungen möglich, solange die Session nicht gesperrt ist
+
+Bewertungsraster (6 Kriterien):
+{CRITERIA_BLOCK}
+
+Teams-Link:
+Der Verbindungslink wird spätestens 48h vor der Session versandt.
+
+Kontakt:
+Ich bin Ihr Ansprechpartner für diese Session. Sie erreichen mich bei Bedarf per E-Mail, Telefon oder WhatsApp.
+
+Mit freundlichen Grüßen,
+{ORGANISER_NAME}`;
+
+// --- Helpers for jury template rendering ---
+const STARTUP_BLOCK_LABELS = {
+  fr: { deck: "Deck", preread: "Pre-read FR/DE", notProvided: "non fourni" },
+  en: { deck: "Deck", preread: "Pre-read FR/DE", notProvided: "not provided" },
+  de: { deck: "Deck", preread: "Vorab-Lektüre FR/DE", notProvided: "nicht bereitgestellt" },
+};
+function buildStartupsBlock(rows, lang) {
+  const L = STARTUP_BLOCK_LABELS[lang] || STARTUP_BLOCK_LABELS.en;
+  if (!rows.length) return "—";
+  return rows.map((row, i) => {
+    const deckPath = row.final_deck_path || row.application_deck_path;
+    const deckUrl = deckPath
+      ? supabase.storage.from("uploads").getPublicUrl(deckPath).data.publicUrl
+      : null;
+    const execs = Array.isArray(row.executive_summary_files) ? row.executive_summary_files : [];
+    const execUrls = execs
+      .map((ef) => (ef?.path ? supabase.storage.from("uploads").getPublicUrl(ef.path).data.publicUrl : null))
+      .filter(Boolean);
+    const lines = [`${i + 1}. ${row.startup_name}`];
+    lines.push(`   ${L.deck} : ${deckUrl || L.notProvided}`);
+    lines.push(`   ${L.preread} : ${execUrls.length ? execUrls.join(" · ") : L.notProvided}`);
+    return lines.join("\n");
+  }).join("\n\n");
+}
+function buildCriteriaBlock(lang) {
+  return CRITERIA.map((c) => {
+    const tr = getCriterion(c, lang);
+    const pct = Math.round(c.weight * 100);
+    return `  • ${tr.label} (${pct}%) — ${tr.desc}`;
+  }).join("\n");
+}
+
 function detectLang(country) {
   return FR_COUNTRIES.has((country || "").trim()) ? "fr" : "en";
 }
@@ -197,25 +355,37 @@ function StatusPill({ row }) {
 export default function DecksTab({ sessionId }) {
   const session = SESSION_BY_ID[sessionId];
   const [rows, setRows] = useState([]);
+  const [jurors, setJurors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(null); // row id currently being mutated
   const [showEmails, setShowEmails] = useState(false);
+  const [showJuryEmails, setShowJuryEmails] = useState(false);
   const [templateFr, setTemplateFr] = useState(() => localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
   const [templateEn, setTemplateEn] = useState(() => localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
+  const [juryTemplateFr, setJuryTemplateFr] = useState(() => localStorage.getItem(`rsa_jury_tpl_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
+  const [juryTemplateEn, setJuryTemplateEn] = useState(() => localStorage.getItem(`rsa_jury_tpl_en_${sessionId}`) || DEFAULT_JURY_TEMPLATE_EN);
+  const [juryTemplateDe, setJuryTemplateDe] = useState(() => localStorage.getItem(`rsa_jury_tpl_de_${sessionId}`) || DEFAULT_JURY_TEMPLATE_DE);
 
   useEffect(() => {
     setTemplateFr(localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
     setTemplateEn(localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
+    setJuryTemplateFr(localStorage.getItem(`rsa_jury_tpl_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
+    setJuryTemplateEn(localStorage.getItem(`rsa_jury_tpl_en_${sessionId}`) || DEFAULT_JURY_TEMPLATE_EN);
+    setJuryTemplateDe(localStorage.getItem(`rsa_jury_tpl_de_${sessionId}`) || DEFAULT_JURY_TEMPLATE_DE);
   }, [sessionId]);
   useEffect(() => { localStorage.setItem(`rsa_tpl_fr_${sessionId}`, templateFr); }, [sessionId, templateFr]);
   useEffect(() => { localStorage.setItem(`rsa_tpl_en_${sessionId}`, templateEn); }, [sessionId, templateEn]);
+  useEffect(() => { localStorage.setItem(`rsa_jury_tpl_fr_${sessionId}`, juryTemplateFr); }, [sessionId, juryTemplateFr]);
+  useEffect(() => { localStorage.setItem(`rsa_jury_tpl_en_${sessionId}`, juryTemplateEn); }, [sessionId, juryTemplateEn]);
+  useEffect(() => { localStorage.setItem(`rsa_jury_tpl_de_${sessionId}`, juryTemplateDe); }, [sessionId, juryTemplateDe]);
 
   async function load() {
     setLoading(true);
     try {
-      const [confs, cfg] = await Promise.all([
+      const [confs, cfg, juryAll] = await Promise.all([
         StartupConfirmation.filter({ session_id: sessionId }),
         SessionConfig.filter({ session_id: sessionId }),
+        JuryProfile.filter({ validated: true }),
       ]);
       const savedOrder = Array.isArray(cfg[0]?.session_order) ? cfg[0].session_order : [];
       const byName = new Map(confs.map((r) => [r.startup_name, r]));
@@ -223,6 +393,13 @@ export default function DecksTab({ sessionId }) {
       for (const n of savedOrder) if (byName.has(n)) ordered.push(n);
       for (const r of confs) if (!ordered.includes(r.startup_name)) ordered.push(r.startup_name);
       setRows(ordered.map((n) => byName.get(n)).filter(Boolean));
+
+      // Jurés : assigned_sessions stocke le label FR de la session (voir SetupTab)
+      const sessionLabelFr = session?.label;
+      const sessionJurors = (Array.isArray(juryAll) ? juryAll : []).filter(
+        (j) => Array.isArray(j.assigned_sessions) && j.assigned_sessions.includes(sessionLabelFr)
+      );
+      setJurors(sessionJurors);
     } catch (e) {
       toast.error("Impossible de charger les decks");
     } finally {
@@ -313,6 +490,31 @@ export default function DecksTab({ sessionId }) {
       return { row, lang, subject, body, to: row.startup_contact_email || "" };
     });
   }, [rows, templateFr, templateEn, sessionId, session]);
+
+  // --- Jury email rendering ---
+  const juryEmails = useMemo(() => {
+    if (!jurors.length) return [];
+    const scoringUrl = `${window.location.origin}/RsaScore?s=${sessionId}`;
+    return jurors.map((j) => {
+      const lang = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
+      const tpl = lang === "fr" ? juryTemplateFr : lang === "de" ? juryTemplateDe : juryTemplateEn;
+      const label = session ? getSessionLabel(session, lang) : "";
+      const dateLong = (SESSION_DATES_LONG[sessionId] || {})[lang] || "";
+      const vars = {
+        JURY_PRENOM: j.prenom || (lang === "fr" ? "à compléter" : lang === "de" ? "zu ergänzen" : "there"),
+        SESSION_LABEL: label,
+        DATE_LONGUE: dateLong,
+        N: rows.length,
+        SCORING_URL: scoringUrl,
+        STARTUPS_BLOCK: buildStartupsBlock(rows, lang),
+        CRITERIA_BLOCK: buildCriteriaBlock(lang),
+        ORGANISER_NAME: "Mathieu",
+      };
+      const rendered = renderTemplate(tpl, vars);
+      const { subject, body } = splitSubjectBody(rendered);
+      return { jury: j, lang, subject, body, to: j.email || "" };
+    });
+  }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session]);
 
   function gmailLink(e) {
     const u = new URL("https://mail.google.com/mail/");
@@ -536,6 +738,105 @@ export default function DecksTab({ sessionId }) {
                     <button onClick={() => sent ? unmarkSent(e.row) : markSent(e.row)}
                       className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border ${sent ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "border-stone-200 hover:bg-stone-100"}`}>
                       {sent ? <><Check className="w-3 h-3"/>envoyé</> : "Marquer envoyé"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Section C: emails jury (tri-lingue FR/EN/DE) */}
+      <section>
+        <div className="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <h2 className="text-sm font-semibold text-stone-800 inline-flex items-center gap-2">
+            <Users className="w-4 h-4 text-stone-500"/>Brouillons d'emails jury
+            <span className="text-[10px] font-normal text-stone-500">· {jurors.length} juré{jurors.length > 1 ? "s" : ""} assigné{jurors.length > 1 ? "s" : ""}</span>
+          </h2>
+          <div className="text-xs text-stone-500">Variables : <code className="text-[10px] bg-stone-100 px-1 rounded">{"{JURY_PRENOM}"} {"{SESSION_LABEL}"} {"{DATE_LONGUE}"} {"{N}"} {"{SCORING_URL}"} {"{STARTUPS_BLOCK}"} {"{CRITERIA_BLOCK}"} {"{ORGANISER_NAME}"}</code></div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="text-xs text-stone-500 block mb-1">Template FR</label>
+            <textarea className="w-full font-mono text-xs p-3 rounded border border-stone-200 focus:border-stone-400 focus:outline-none"
+              rows={16} value={juryTemplateFr} onChange={(e) => setJuryTemplateFr(e.target.value)}/>
+          </div>
+          <div>
+            <label className="text-xs text-stone-500 block mb-1">Template EN</label>
+            <textarea className="w-full font-mono text-xs p-3 rounded border border-stone-200 focus:border-stone-400 focus:outline-none"
+              rows={16} value={juryTemplateEn} onChange={(e) => setJuryTemplateEn(e.target.value)}/>
+          </div>
+          <div>
+            <label className="text-xs text-stone-500 block mb-1">Template DE</label>
+            <textarea className="w-full font-mono text-xs p-3 rounded border border-stone-200 focus:border-stone-400 focus:outline-none"
+              rows={16} value={juryTemplateDe} onChange={(e) => setJuryTemplateDe(e.target.value)}/>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <button onClick={() => setShowJuryEmails((s) => !s)}
+            disabled={!jurors.length}
+            className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded bg-stone-800 text-white hover:bg-stone-900 disabled:opacity-40 disabled:cursor-not-allowed">
+            <Mail className="w-4 h-4"/>{showJuryEmails ? "Masquer" : "Générer"} les brouillons ({jurors.length})
+          </button>
+          {showJuryEmails && jurors.length > 0 && (
+            <>
+              <button onClick={() => {
+                const txt = juryEmails.map((e) => `=== ${e.jury.prenom} ${e.jury.nom} (${e.lang.toUpperCase()}) ===\nTo: ${e.to}\nSubject: ${e.subject}\n\n${e.body}\n\n`).join("\n");
+                copy(txt, "Tous les emails jury copiés");
+              }} className="text-sm px-3 py-2 rounded border border-stone-200 hover:bg-stone-100">
+                Copier tout (vrac)
+              </button>
+              <button onClick={() => {
+                setJuryTemplateFr(DEFAULT_JURY_TEMPLATE_FR);
+                setJuryTemplateEn(DEFAULT_JURY_TEMPLATE_EN);
+                setJuryTemplateDe(DEFAULT_JURY_TEMPLATE_DE);
+                toast.success("Templates jury réinitialisés");
+              }} className="text-xs text-stone-500 hover:text-stone-700">
+                Réinitialiser les templates
+              </button>
+            </>
+          )}
+          {!jurors.length && (
+            <span className="text-xs text-stone-400 italic">Aucun juré validé assigné à cette session. Assignez-les dans l'onglet Setup.</span>
+          )}
+        </div>
+
+        {showJuryEmails && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {juryEmails.map((e) => {
+              const langClass = e.lang === "fr"
+                ? "bg-blue-50 text-blue-700 border-blue-200"
+                : e.lang === "de"
+                ? "bg-amber-50 text-amber-700 border-amber-200"
+                : "bg-purple-50 text-purple-700 border-purple-200";
+              return (
+                <div key={e.jury.id} className="rounded-lg border p-4 bg-white border-stone-200">
+                  <div className="flex items-start justify-between mb-2 gap-2">
+                    <div>
+                      <div className="text-sm font-semibold text-stone-800">{e.jury.prenom} {e.jury.nom}</div>
+                      <div className="text-xs text-stone-500">{e.jury.qualite || "—"}{e.jury.organisation ? ` · ${e.jury.organisation}` : ""}</div>
+                      <div className="text-xs text-stone-500">{e.to || <span className="text-rose-500">aucun email</span>}</div>
+                    </div>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${langClass}`}>
+                      {e.lang.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="text-xs text-stone-600 mb-1 font-medium">{e.subject}</div>
+                  <pre className="text-[11px] text-stone-600 whitespace-pre-wrap max-h-40 overflow-y-auto p-2 bg-stone-50 rounded border border-stone-100 font-sans leading-relaxed">{e.body}</pre>
+                  <div className="flex gap-1 mt-3 flex-wrap">
+                    <a href={mailtoLink(e)}
+                      className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-stone-800 text-white hover:bg-stone-900">
+                      <ExternalLink className="w-3 h-3"/>Ouvrir (Proton)
+                    </a>
+                    <a href={gmailLink(e)} target="_blank" rel="noreferrer"
+                      title="Alternative Gmail"
+                      className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100 text-stone-600">
+                      Gmail
+                    </a>
+                    <button onClick={() => copy(fullEmailText(e), "Email copié (TO + Subject + Body)")}
+                      className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100">
+                      <Copy className="w-3 h-3"/>Copier
                     </button>
                   </div>
                 </div>
