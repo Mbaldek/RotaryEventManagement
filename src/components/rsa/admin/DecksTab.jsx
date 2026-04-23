@@ -47,15 +47,6 @@ Déroulé de la session :
 
 Langue : le pitch et le Q&A se déroulent en anglais (jury international). Merci de préparer votre deck et votre présentation orale en anglais.
 
-Bonnes pratiques pour votre pitch (10 à 12 minutes, chronométrées) :
-  • Problème & solution en 60 secondes — rendez le pain point tangible
-  • Marché visé & dynamique (TAM/SAM/SOM si pertinent)
-  • Business model : comment vous gagnez de l'argent, unit economics
-  • Traction : clients, revenus, partenariats, pilotes
-  • Équipe : qui vous êtes, pourquoi vous
-  • Ask : ce que vous recherchez (levée, partenariats, mentorat)
-Conseil : entraînez-vous en conditions réelles (timer + partage d'écran). Privilégiez un message clair à l'exhaustivité. Le Q&A compte autant que le pitch — préparez les objections.
-
 Comment le jury vous évalue (6 critères, note pondérée sur 5) :
   • Proposition de valeur (20%) — clarté du problème, unicité de la solution
   • Marché & scalabilité (20%) — taille, accessibilité, potentiel d'expansion
@@ -96,15 +87,6 @@ Session schedule:
   • End of pitches, then jury deliberation
 
 Language: pitch and Q&A are in English (international jury). Please prepare both your deck and your spoken presentation in English.
-
-Pitch best practices (10 to 12 minutes, timed):
-  • Problem & solution in 60 seconds — make the pain point tangible
-  • Target market & dynamics (TAM/SAM/SOM if relevant)
-  • Business model: how you make money, unit economics
-  • Traction: customers, revenue, partnerships, pilots
-  • Team: who you are, why you
-  • Ask: what you are looking for (funding, partnerships, mentoring)
-Tip: rehearse in real conditions (timer + screen share). Prefer a sharp message over exhaustiveness. Q&A counts as much as the pitch itself — prepare for objections.
 
 How the jury scores you (6 criteria, weighted out of 5):
   • Value Proposition (20%) — clarity of the problem, uniqueness of the solution
