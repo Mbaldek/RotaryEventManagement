@@ -342,6 +342,9 @@ export default function DecksTab({ sessionId }) {
   const [working, setWorking] = useState(null); // row id currently being mutated
   const [showEmails, setShowEmails] = useState(false);
   const [showJuryEmails, setShowJuryEmails] = useState(false);
+  // Per-card language overrides (not persisted — transient admin choice)
+  const [startupLangOverride, setStartupLangOverride] = useState({}); // { [rowId]: "fr"|"en" }
+  const [juryLangOverride, setJuryLangOverride] = useState({}); // { [juryId]: "fr"|"en"|"de" }
   const [templateFr, setTemplateFr] = useState(() => localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
   const [templateEn, setTemplateEn] = useState(() => localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
   const [juryTemplateFr, setJuryTemplateFr] = useState(() => localStorage.getItem(`rsa_jury_tpl_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
@@ -481,7 +484,7 @@ export default function DecksTab({ sessionId }) {
     if (!rows.length) return [];
     return rows.map((row, idx) => {
       const rank = idx + 1;
-      const lang = detectLang(row.startup_country);
+      const lang = startupLangOverride[row.id] || detectLang(row.startup_country);
       const tpl = lang === "fr" ? templateFr : templateEn;
       const label = lang === "fr" ? session.label : (SESSION_LABELS_EN[sessionId] || session.label);
       const dateLong = (SESSION_DATES_LONG[sessionId] || {})[lang] || "";
@@ -501,14 +504,15 @@ export default function DecksTab({ sessionId }) {
       const { subject, body } = splitSubjectBody(rendered);
       return { row, lang, subject, body, to: row.startup_contact_email || "" };
     });
-  }, [rows, templateFr, templateEn, sessionId, session]);
+  }, [rows, templateFr, templateEn, sessionId, session, startupLangOverride]);
 
   // --- Jury email rendering ---
   const juryEmails = useMemo(() => {
     if (!jurors.length) return [];
     const scoringUrl = `${window.location.origin}/RsaScore?s=${sessionId}`;
     return jurors.map((j) => {
-      const lang = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
+      const detected = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
+      const lang = juryLangOverride[j.id] || detected;
       const tpl = lang === "fr" ? juryTemplateFr : lang === "de" ? juryTemplateDe : juryTemplateEn;
       const label = session ? getSessionLabel(session, lang) : "";
       const dateLong = (SESSION_DATES_LONG[sessionId] || {})[lang] || "";
@@ -526,7 +530,7 @@ export default function DecksTab({ sessionId }) {
       const { subject, body } = splitSubjectBody(rendered);
       return { jury: j, lang, subject, body, to: j.email || "" };
     });
-  }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session]);
+  }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session, juryLangOverride]);
 
   function gmailLink(e) {
     const u = new URL("https://mail.google.com/mail/");
@@ -730,9 +734,14 @@ export default function DecksTab({ sessionId }) {
                       <div className="text-sm font-semibold text-stone-800">{e.row.startup_name}</div>
                       <div className="text-xs text-stone-500">{e.row.startup_contact_prenom || "—"} · {e.to || <span className="text-rose-500">aucun email</span>}</div>
                     </div>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${e.lang === "fr" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`}>
-                      {e.lang.toUpperCase()}
-                    </span>
+                    <select
+                      value={e.lang}
+                      onChange={(ev) => setStartupLangOverride((o) => ({ ...o, [e.row.id]: ev.target.value }))}
+                      title="Choisir la langue de l'email"
+                      className={`text-[10px] px-1.5 py-0.5 rounded border cursor-pointer focus:outline-none ${e.lang === "fr" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`}>
+                      <option value="fr">FR</option>
+                      <option value="en">EN</option>
+                    </select>
                   </div>
                   <div className="text-xs text-stone-600 mb-1 font-medium">{e.subject}</div>
                   <pre className="text-[11px] text-stone-600 whitespace-pre-wrap max-h-32 overflow-y-auto p-2 bg-stone-50 rounded border border-stone-100 font-sans leading-relaxed">{e.body}</pre>
@@ -916,9 +925,15 @@ export default function DecksTab({ sessionId }) {
                       <div className="text-xs text-stone-500">{e.jury.qualite || "—"}{e.jury.organisation ? ` · ${e.jury.organisation}` : ""}</div>
                       <div className="text-xs text-stone-500">{e.to || <span className="text-rose-500">aucun email</span>}</div>
                     </div>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${langClass}`}>
-                      {e.lang.toUpperCase()}
-                    </span>
+                    <select
+                      value={e.lang}
+                      onChange={(ev) => setJuryLangOverride((o) => ({ ...o, [e.jury.id]: ev.target.value }))}
+                      title="Choisir la langue de l'email"
+                      className={`text-[10px] px-1.5 py-0.5 rounded border cursor-pointer focus:outline-none ${langClass}`}>
+                      <option value="fr">FR</option>
+                      <option value="en">EN</option>
+                      <option value="de">DE</option>
+                    </select>
                   </div>
                   <div className="text-xs text-stone-600 mb-1 font-medium">{e.subject}</div>
                   <pre className="text-[11px] text-stone-600 whitespace-pre-wrap max-h-40 overflow-y-auto p-2 bg-stone-50 rounded border border-stone-100 font-sans leading-relaxed">{e.body}</pre>
