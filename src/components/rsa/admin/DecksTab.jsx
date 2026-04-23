@@ -277,6 +277,10 @@ export default function DecksTab({ sessionId }) {
     if (!path) return null;
     return supabase.storage.from("uploads").getPublicUrl(path).data.publicUrl;
   }
+  function execUrl(path) {
+    if (!path) return null;
+    return supabase.storage.from("uploads").getPublicUrl(path).data.publicUrl;
+  }
 
   async function copy(text, msg = "Copié") {
     try { await navigator.clipboard.writeText(text); toast.success(msg); }
@@ -328,6 +332,7 @@ export default function DecksTab({ sessionId }) {
   const nConfirmed = rows.filter((r) => !!r.deck_confirmed_at).length;
   const nUploaded = rows.filter((r) => !!r.final_deck_path).length;
   const nSent = rows.filter((r) => !!r.instructions_sent_at).length;
+  const nExec = rows.filter((r) => Array.isArray(r.executive_summary_files) && r.executive_summary_files.length > 0).length;
 
   if (loading) {
     return <div className="flex items-center gap-2 text-sm text-stone-500 p-4"><Loader2 className="w-4 h-4 animate-spin"/>Chargement…</div>;
@@ -336,10 +341,11 @@ export default function DecksTab({ sessionId }) {
   return (
     <div className="space-y-8">
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <KPI label="Startups" value={rows.length}/>
         <KPI label="Décks confirmés" value={`${nConfirmed}/${rows.length}`} accent={nConfirmed === rows.length ? "emerald" : "amber"}/>
         <KPI label="Nouvelles versions uploadées" value={nUploaded}/>
+        <KPI label="Exec. summaries (pre-read)" value={`${nExec}/${rows.length}`}/>
         <KPI label="Emails J-7 marqués envoyés" value={`${nSent}/${rows.length}`}/>
       </div>
 
@@ -365,6 +371,7 @@ export default function DecksTab({ sessionId }) {
                 <th className="px-3 py-2 text-left">Startup</th>
                 <th className="px-3 py-2 text-left">Contact</th>
                 <th className="px-3 py-2 text-left">Statut deck</th>
+                <th className="px-3 py-2 text-left">Pre-read (FR/DE)</th>
                 <th className="px-3 py-2 text-left">J-7 email</th>
                 <th className="px-3 py-2 text-right">Actions</th>
               </tr>
@@ -386,6 +393,26 @@ export default function DecksTab({ sessionId }) {
                       <StatusPill row={row}/>
                       {row.final_deck_uploaded_at && (
                         <div className="text-[10px] text-stone-400 mt-0.5">{new Date(row.final_deck_uploaded_at).toLocaleDateString("fr-FR", {day:"2-digit", month:"short"})}</div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      {Array.isArray(row.executive_summary_files) && row.executive_summary_files.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 self-start">
+                            ✓ {row.executive_summary_files.length} fichier{row.executive_summary_files.length > 1 ? "s" : ""}
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {row.executive_summary_files.map((ef, i) => (
+                              <a key={i} href={execUrl(ef.path)} target="_blank" rel="noreferrer"
+                                title={ef.filename || ef.path}
+                                className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-stone-200 text-stone-600 hover:bg-stone-100">
+                                <Download className="w-2.5 h-2.5"/>{ef.filename ? ef.filename.length > 22 ? ef.filename.slice(0, 20) + "…" : ef.filename : `fichier ${i + 1}`}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-medium bg-stone-100 text-stone-500 border border-stone-200">—</span>
                       )}
                     </td>
                     <td className="px-3 py-2">
@@ -419,7 +446,7 @@ export default function DecksTab({ sessionId }) {
                 );
               })}
               {rows.length === 0 && (
-                <tr><td colSpan={6} className="px-3 py-6 text-center text-stone-400 text-sm italic">Aucune startup pour cette session.</td></tr>
+                <tr><td colSpan={7} className="px-3 py-6 text-center text-stone-400 text-sm italic">Aucune startup pour cette session.</td></tr>
               )}
             </tbody>
           </table>

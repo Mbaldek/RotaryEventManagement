@@ -82,6 +82,17 @@ def find_application_pdf(session_slug, startup_name):
             return os.path.join(folder, fn)
     return None
 
+def find_exec_summaries(session_slug, startup_name):
+    """Return list of local exec summary file paths (exec.pdf or exec_1.pdf, exec_2.pdf...)."""
+    folder = os.path.join(PITCH_DIR, session_slug, slugify(startup_name))
+    if not os.path.isdir(folder): return []
+    out = []
+    for fn in sorted(os.listdir(folder)):
+        low = fn.lower()
+        if low.startswith("exec") and (low.endswith(".pdf") or low.endswith(".docx") or low.endswith(".doc")):
+            out.append(os.path.join(folder, fn))
+    return out
+
 def storage_upload(path, file_path, mime="application/pdf"):
     """Upload a local file to Supabase Storage at uploads/{path}. Overwrites."""
     with open(file_path, "rb") as f:
@@ -151,10 +162,34 @@ def main():
             skipped_no_pdf += 1
             print(f"  WARN no local PDF for {name} [{session_slug}]")
 
+        # Exec summaries (0..N files). Upload each and collect {path, filename}.
+        exec_local = find_exec_summaries(session_slug, name)
+        airtable_execs = f.get("Executive Summary in French & German") or []
+        exec_files = []
+        for i, local_path in enumerate(exec_local, 1):
+            ext = os.path.splitext(local_path)[1].lower() or ".pdf"
+            suffix = f"_{i}" if len(exec_local) > 1 else ""
+            storage_path = f"executive_summaries/{session_slug}_{slugify(name)}{suffix}{ext}"
+            mime = "application/pdf" if ext == ".pdf" else "application/octet-stream"
+            try:
+                storage_upload(storage_path, local_path, mime=mime)
+                # Match Airtable original filename by index when possible
+                orig = None
+                if i - 1 < len(airtable_execs):
+                    orig = airtable_execs[i - 1].get("filename")
+                exec_files.append({
+                    "path": storage_path,
+                    "filename": orig or os.path.basename(local_path),
+                })
+            except Exception as e:
+                print(f"  ERR exec upload {name} #{i}: {e}")
+                errors += 1
+
         patch = {
             "startup_contact_prenom": prenom,
             "startup_contact_email": email,
             "startup_country": country,
+            "executive_summary_files": exec_files,
         }
         if deck_path:
             patch["application_deck_path"] = deck_path
