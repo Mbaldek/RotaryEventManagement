@@ -38,13 +38,31 @@ Bonjour {CONTACT_PRENOM},
 
 Votre pitch pour la session « {SESSION_LABEL} » aura lieu le {DATE_LONGUE} (visio Teams, ~2h). Vous faites partie des {N} startups retenues.
 
-Déroulé :
+Déroulé de la session :
   • 18h00 — accueil et introduction (5 min)
   • 18h05 — début des pitchs
-  • Chaque startup : 5 min de présentation + 5 min de Q&A avec le jury
+  • Chaque startup : 5 min de pitch + 5 min de Q&A avec le jury
   • Votre passage : créneau #{RANK} vers {HEURE_PASSAGE}
+  • ~20h — fin des pitchs, délibération du jury
 
-Important — présentation autonome :
+Bonnes pratiques pitch (5 min, tenez le temps) :
+  • Problème & solution en 60 secondes — rendez le pain point tangible
+  • Marché visé & dynamique (TAM/SAM/SOM si pertinent)
+  • Business model : comment vous gagnez de l'argent, unit economics
+  • Traction : clients, revenus, partenariats, pilotes
+  • Équipe : qui vous êtes, pourquoi vous
+  • Ask : ce que vous recherchez (levée, partenariats, mentorat)
+Conseil : entraînez-vous en conditions réelles (timer + partage d'écran). Privilégiez un message clair à l'exhaustivité. Le Q&A compte autant que le pitch — préparez les objections.
+
+Comment le jury vous évalue (6 critères, note pondérée sur 5) :
+  • Proposition de valeur (20%) — clarté du problème, unicité de la solution
+  • Marché & scalabilité (20%) — taille, accessibilité, potentiel d'expansion
+  • Business model (20%) — logique de revenus, unit economics, rentabilité
+  • Équipe — exécution & capacité (20%) — parcours, complémentarité, capacité à exécuter
+  • Qualité du pitch (10%) — structure, storytelling, gestion du Q&A, respect du temps
+  • Impact sociétal & environnemental (10%) — valeur créée au-delà du financier, alignement avec les valeurs Rotary
+
+Présentation autonome :
 Vous partagerez votre écran vous-même pendant votre pitch pour garder la main sur le rythme et les animations. Merci de tester le partage Teams en amont (menu « Partager » → fenêtre PowerPoint).
 
 Deck final :
@@ -53,7 +71,11 @@ Merci de déposer la version finale de votre deck (PowerPoint recommandé ou PDF
 
 Si votre deck de candidature est la bonne version, vous pouvez le confirmer en un clic sur la même page.
 
-Le lien Teams sera envoyé 48h avant. Je reste à disposition pour toute question.
+Lien Teams :
+Le lien de connexion sera envoyé au maximum 48h avant la session.
+
+Contact :
+Pour cette session, je suis directement votre point de contact. Vous pouvez me joindre par email, téléphone ou WhatsApp — n'hésitez pas, même en dernière minute.
 
 Bien cordialement,
 Mathieu`;
@@ -64,13 +86,31 @@ Hello {CONTACT_PRENOM},
 
 Your pitch for the « {SESSION_LABEL} » session will take place on {DATE_LONGUE} (Teams call, ~2h). You are one of the {N} selected startups.
 
-Schedule:
+Session schedule:
   • 6:00pm — welcome and introduction (5 min)
   • 6:05pm — pitches start
   • Each startup: 5 min pitch + 5 min Q&A with the jury
   • Your slot: #{RANK} around {HEURE_PASSAGE}
+  • ~8:00pm — end of pitches, jury deliberation
 
-Important — self-presentation:
+Pitch best practices (5 minutes, keep the time):
+  • Problem & solution in 60 seconds — make the pain point tangible
+  • Target market & dynamics (TAM/SAM/SOM if relevant)
+  • Business model: how you make money, unit economics
+  • Traction: customers, revenue, partnerships, pilots
+  • Team: who you are, why you
+  • Ask: what you are looking for (funding, partnerships, mentoring)
+Tip: rehearse in real conditions (timer + screen share). Prefer a sharp message over exhaustiveness. Q&A counts as much as the pitch itself — prepare for objections.
+
+How the jury scores you (6 criteria, weighted out of 5):
+  • Value Proposition (20%) — clarity of the problem, uniqueness of the solution
+  • Market & Scalability (20%) — size, accessibility, expansion potential
+  • Business Model (20%) — revenue logic, unit economics, path to profitability
+  • Team — Execution & Capability (20%) — background, complementarity, ability to execute
+  • Pitch Quality (10%) — structure, storytelling, Q&A handling, time discipline
+  • Societal & Environmental Impact (10%) — value beyond financials, alignment with Rotary values
+
+Self-presentation:
 You will share your own screen during your pitch to keep control over pacing and animations. Please test Teams screen-sharing beforehand (Share menu → PowerPoint window).
 
 Final deck:
@@ -79,7 +119,11 @@ Please upload the final version of your deck (PowerPoint recommended, or PDF, ma
 
 If your application deck is the right version, you can confirm it in one click on the same page.
 
-The Teams link will be sent 48h before the session. I'm at your disposal.
+Teams link:
+The connection link will be sent at the latest 48h before the session.
+
+Contact:
+For this session, I am your direct point of contact. Feel free to reach me by email, phone or WhatsApp — don't hesitate, even last-minute.
 
 Best regards,
 Mathieu`;
