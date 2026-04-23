@@ -47,7 +47,7 @@ Déroulé de la session :
 
 Langue : le pitch et le Q&A se déroulent en anglais (jury international). Merci de préparer votre deck et votre présentation orale en anglais.
 
-Bonnes pratiques pitch (5 min, tenez le temps) :
+Bonnes pratiques pour votre pitch (5 minutes strictes, chronométrées) :
   • Problème & solution en 60 secondes — rendez le pain point tangible
   • Marché visé & dynamique (TAM/SAM/SOM si pertinent)
   • Business model : comment vous gagnez de l'argent, unit economics
@@ -97,7 +97,7 @@ Session schedule:
 
 Language: pitch and Q&A are in English (international jury). Please prepare both your deck and your spoken presentation in English.
 
-Pitch best practices (5 minutes, keep the time):
+Pitch best practices (strict 5-minute limit, timed):
   • Problem & solution in 60 seconds — make the pain point tangible
   • Target market & dynamics (TAM/SAM/SOM if relevant)
   • Business model: how you make money, unit economics
