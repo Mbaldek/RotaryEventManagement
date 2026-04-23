@@ -23,6 +23,25 @@ const SC = {
 };
 const SK = Object.keys(SC);
 
+// J-3 deadline per session (3 days before pitch date) — used for deck upload countdown
+const SESSION_DEADLINES = {
+  s1_foodtech:  {iso:"2026-04-27", label:"27 avril"},
+  s2_social:    {iso:"2026-05-03", label:"3 mai"},
+  s3_tech:      {iso:"2026-05-10", label:"10 mai"},
+  s4_health:    {iso:"2026-05-16", label:"16 mai"},
+  s5_greentech: {iso:"2026-05-18", label:"18 mai"},
+};
+function daysUntil(iso) {
+  const d = new Date(iso + "T23:59:59");
+  const now = new Date();
+  return Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+}
+function shortDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString("fr-FR", {day:"2-digit", month:"short"});
+}
+
 function sessMatch(as, sk) {
   const asL = (as||"").toLowerCase().trim();
   const skL = sk.toLowerCase();
@@ -245,7 +264,7 @@ export default function RsaDashboard() {
     try {
       const [cfgRows, confRows, profRows, actRows] = await Promise.all([
         sbGet("session_config", "?select=session_id,teams_link,airtable_link,notes,checklist"),
-        sbGet("startup_confirmations", "?select=startup_name,session_id,status,note"),
+        sbGet("startup_confirmations", "?select=startup_name,session_id,status,note,deck_upload_token,startup_contact_prenom,startup_contact_email,application_deck_path,application_deck_filename,deck_confirmed_at,final_deck_path,final_deck_uploaded_at,final_deck_original_filename,instructions_sent_at"),
         sbGet("jury_profiles", "?select=id,prenom,nom,qualite,organisation,email,sessions,assigned_sessions,validated,grande_finale,photo_base64,lang,created_at&order=created_at.desc"),
         sbGet("rsa_actions", "?select=id,title,due_date,done,pos,notes,link,created_at&order=done.asc,pos.asc,created_at.asc")
       ]);
@@ -253,7 +272,22 @@ export default function RsaDashboard() {
       (cfgRows||[]).forEach(r => { cfg[r.session_id] = {teams_link:r.teams_link||"",airtable_link:r.airtable_link||"",notes:r.notes||"",checklist:r.checklist||{}}; });
       setSessConf(cfg);
       const cf = {};
-      (confRows||[]).forEach(r => { cf[r.startup_name+"__"+r.session_id] = {status:r.status,note:r.note||""}; });
+      (confRows||[]).forEach(r => {
+        cf[r.startup_name+"__"+r.session_id] = {
+          status: r.status,
+          note: r.note||"",
+          deck_upload_token: r.deck_upload_token,
+          startup_contact_prenom: r.startup_contact_prenom,
+          startup_contact_email: r.startup_contact_email,
+          application_deck_path: r.application_deck_path,
+          application_deck_filename: r.application_deck_filename,
+          deck_confirmed_at: r.deck_confirmed_at,
+          final_deck_path: r.final_deck_path,
+          final_deck_uploaded_at: r.final_deck_uploaded_at,
+          final_deck_original_filename: r.final_deck_original_filename,
+          instructions_sent_at: r.instructions_sent_at,
+        };
+      });
       setConfs(cf);
       setProfiles(profRows||[]);
       setActions(actRows||[]);
@@ -583,13 +617,24 @@ export default function RsaDashboard() {
               const s = SC[sk]; const sid = s.id;
               const cfg = sessConf[sid]||{};
               const cl = cfg.checklist||{};
-              const stConfs = s.startups.map(name => ({
-                name,
-                status: (confs[name+"__"+sid]||{}).status||"pending",
-                note: (confs[name+"__"+sid]||{}).note||""
-              }));
+              const stConfs = s.startups.map(name => {
+                const c = confs[name+"__"+sid]||{};
+                return {
+                  name,
+                  status: c.status||"pending",
+                  note: c.note||"",
+                  deck_upload_token: c.deck_upload_token,
+                  deck_confirmed_at: c.deck_confirmed_at,
+                  final_deck_path: c.final_deck_path,
+                  final_deck_uploaded_at: c.final_deck_uploaded_at,
+                  final_deck_original_filename: c.final_deck_original_filename,
+                  application_deck_path: c.application_deck_path,
+                  application_deck_filename: c.application_deck_filename,
+                };
+              });
               const nConf = stConfs.filter(x=>x.status==="confirmed").length;
               const nDecl = stConfs.filter(x=>x.status==="declined").length;
+              const nDeckDone = stConfs.filter(x=>!!x.deck_confirmed_at).length;
               const sessJurorsCount = profiles.filter(p=>p.validated && (p.assigned_sessions||[]).some(as=>sessMatch(as,sk))).length;
               const autoCheck = (cid) => cid==="jurys_3" && sessJurorsCount>=3;
               const isCheckDone = (cid) => autoCheck(cid) || !!cl[cid];
@@ -687,6 +732,68 @@ export default function RsaDashboard() {
                           ));
                         })()}
                       </div>
+
+                      {/* Decks finaux */}
+                      {(()=>{
+                        const dl = SESSION_DEADLINES[sid];
+                        const daysLeft = dl ? daysUntil(dl.iso) : null;
+                        const overdue = daysLeft != null && daysLeft < 0;
+                        return (
+                          <div style={{marginBottom:12}}>
+                            <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:7,gap:8}}>
+                              <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500}}>Decks finaux</div>
+                              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                                <span style={{fontSize:10,color:nDeckDone===s.startups.length?"#1d6b4f":"#9090a8"}}>{nDeckDone}/{s.startups.length}</span>
+                                {dl && (
+                                  <span style={{fontSize:10,padding:"1px 7px",borderRadius:6,background:overdue?"#fbe8ee":daysLeft<=3?"#fdf6e8":CREAM,color:overdue?"#8a2040":daysLeft<=3?"#9a6400":"#6a6a8a",border:"1px solid "+(overdue?"#e8a8bc":daysLeft<=3?"#e8d090":CREAM2),whiteSpace:"nowrap"}}>
+                                    {overdue ? `deadline dépassée (${dl.label})` : daysLeft === 0 ? `deadline aujourd'hui (${dl.label})` : `${dl.label} · J-${daysLeft}`}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {stConfs.map(st => {
+                              const uploaded = !!st.final_deck_path;
+                              const kept = !!st.deck_confirmed_at && !uploaded;
+                              const pending = !st.deck_confirmed_at;
+                              const color = uploaded?"#1d6b4f":kept?"#6a6a8a":"#9a6400";
+                              const bg = uploaded?"#e8f5ee":kept?"white":"#fdf6e8";
+                              const border = uploaded?"#b0d8c4":kept?CREAM2:"#e8d090";
+                              const lbl = uploaded?"✓ uploadé":kept?"✓ garde cand.":"⏳ attente";
+                              const ext = uploaded && st.final_deck_original_filename ? (st.final_deck_original_filename.split(".").pop()||"").toUpperCase() : "";
+                              const fileLabel = uploaded
+                                ? (st.final_deck_original_filename || "deck")
+                                : kept ? (st.application_deck_filename || "deck candidature")
+                                : "";
+                              const downloadPath = uploaded ? st.final_deck_path : kept ? st.application_deck_path : null;
+                              const downloadUrl = downloadPath ? `${SB_URL}/storage/v1/object/public/uploads/${downloadPath}` : null;
+                              const uploadLink = st.deck_upload_token ? `${window.location.origin}/StartupUpload?t=${st.deck_upload_token}` : "";
+                              return (
+                                <div key={st.name} style={{display:"flex",alignItems:"center",gap:7,padding:"5px 8px",borderRadius:8,background:bg,border:"1px solid "+border,marginBottom:3}}>
+                                  <span style={{fontSize:9.5,padding:"2px 8px",borderRadius:8,background:color,color:"white",fontWeight:500,flexShrink:0,minWidth:86,textAlign:"center"}}>{lbl}</span>
+                                  <div style={{flex:1,minWidth:0,fontSize:11.5,color:NAVY}}>
+                                    <div style={{fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{st.name}</div>
+                                    {fileLabel && (
+                                      <div style={{fontSize:10,color:"#8a8aaa",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                                        {ext && <span style={{display:"inline-block",fontSize:8.5,padding:"0 4px",borderRadius:3,background:uploaded?"#b0d8c4":CREAM2,color:uploaded?"#1d6b4f":"#6a6a8a",marginRight:5,fontWeight:600}}>{ext}</span>}
+                                        {fileLabel}{st.final_deck_uploaded_at ? ` · ${shortDate(st.final_deck_uploaded_at)}` : st.deck_confirmed_at && kept ? ` · confirmé ${shortDate(st.deck_confirmed_at)}` : ""}
+                                      </div>
+                                    )}
+                                  </div>
+                                  {downloadUrl && (
+                                    <a href={downloadUrl} target="_blank" rel="noreferrer" title="Télécharger le deck"
+                                      style={{fontSize:10,padding:"3px 8px",borderRadius:6,background:"white",color:NAVY,border:"1px solid "+CREAM2,textDecoration:"none",flexShrink:0}}>↓</a>
+                                  )}
+                                  {pending && uploadLink && (
+                                    <button className="btn" title="Copier le lien d'upload pour cette startup"
+                                      onClick={()=>{navigator.clipboard.writeText(uploadLink).catch(()=>{});}}
+                                      style={{fontSize:10,padding:"3px 8px",borderRadius:6,background:"white",color:NAVY,border:"1px solid "+CREAM2,flexShrink:0}}>📋 lien</button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
 
                       {/* Confirmations */}
                       <div>

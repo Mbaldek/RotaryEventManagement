@@ -363,6 +363,13 @@ function DangerZone({ sessionId, sessionLabel }) {
         .eq("session_id", sessionId);
       if (e1) throw e1;
 
+      // Delete server-side drafts (keystroke-level auto-save, resume-across-devices)
+      const { error: e3, count: draftsDeleted } = await supabase
+        .from("jury_score_drafts")
+        .delete({ count: "exact" })
+        .eq("session_id", sessionId);
+      if (e3) throw e3;
+
       // Delete scoring session markers
       const { error: e2 } = await supabase
         .from("jury_scoring_sessions")
@@ -374,15 +381,18 @@ function DangerZone({ sessionId, sessionLabel }) {
       await SessionConfig.updateBySessionId(sessionId, {
         status: JURY_STATUS.DRAFT,
         session_active: false,
+        activated_at: null,
         locked_at: null,
         published_at: null,
         admin_overrides: {},
         final_ranking: [],
       });
 
-      setSummary({ scoresDeleted: scoresDeleted ?? 0 });
+      setSummary({ scoresDeleted: scoresDeleted ?? 0, draftsDeleted: draftsDeleted ?? 0 });
       setConfirmText("");
-      toast.success(`${sessionId} reset · ${scoresDeleted ?? 0} scores deleted`);
+      toast.success(
+        `${sessionId} reset · ${scoresDeleted ?? 0} scores + ${draftsDeleted ?? 0} drafts deleted`
+      );
     } catch (err) {
       console.error(err);
       toast.error("Reset failed: " + (err?.message || err));
@@ -418,7 +428,8 @@ function DangerZone({ sessionId, sessionLabel }) {
               </p>
               {summary && (
                 <div className="mt-3 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-3 py-2">
-                  Last reset: <strong>{summary.scoresDeleted}</strong> scores deleted · status back to DRAFT.
+                  Last reset: <strong>{summary.scoresDeleted}</strong> scores +{" "}
+                  <strong>{summary.draftsDeleted ?? 0}</strong> drafts deleted · status back to DRAFT.
                 </div>
               )}
               <div className="mt-3 flex flex-col sm:flex-row gap-2">

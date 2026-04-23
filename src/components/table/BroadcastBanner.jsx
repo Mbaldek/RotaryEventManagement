@@ -3,23 +3,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Megaphone, CalendarDays, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function BroadcastBanner({ message, planningUrl }) {
-  if (!message && !planningUrl) return null;
+export default function BroadcastBanner({ messages = [], planningUrl }) {
+  const list = messages.filter(Boolean);
+  if (list.length === 0 && !planningUrl) return null;
 
   return (
     <div className="space-y-2">
       <AnimatePresence>
-        {message && (
+        {list.map((msg, i) => (
           <motion.div
+            key={`${i}-${msg}`}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3"
           >
             <Megaphone className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-amber-900 leading-relaxed">{message}</p>
+            <p className="text-sm text-amber-900 leading-relaxed">{msg}</p>
           </motion.div>
-        )}
+        ))}
       </AnimatePresence>
 
       {planningUrl && (
