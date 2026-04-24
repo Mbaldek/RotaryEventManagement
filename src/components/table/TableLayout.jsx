@@ -149,10 +149,11 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
             style={{
               color: MUTED,
               maxWidth: 120,
-              overflowWrap: "anywhere",
-              wordBreak: "break-all",
+              whiteSpace: "nowrap",
               overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
+            title={seat.reserved_by}
           >
             {seat.reserved_by}
           </div>
@@ -180,10 +181,11 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
           fontWeight: 500,
           lineHeight: 1.15,
           maxWidth: 120,
-          overflowWrap: "anywhere",
-          wordBreak: "break-all",
+          whiteSpace: "nowrap",
           overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
+        title={`${seat.first_name} ${seat.last_name}`}
       >
         {seat.first_name} {seat.last_name}
       </div>
