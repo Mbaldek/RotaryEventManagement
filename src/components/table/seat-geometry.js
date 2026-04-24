@@ -6,14 +6,16 @@
 //   - align:    "left" | "center" | "right"  text alignment of the label
 //   - side:     "top" | "right" | "bottom" | "left" | null   for rect/square only
 //
-// Round tables: pin sits just inside the table edge, label just outside.
-// Offsets are derived from the actual table radius (halfR) so presidential and
-// standard tables stay visually consistent.
-// Square / rectangle distribute seats around the perimeter, with more on the
-// long sides (rectangle 2:1). Rotation rotates all positions around (50, 50).
+// Two concentric rings centered on the table: pin ring (small diameter) just
+// outside the edge, label ring (bigger diameter) further outside. Both offsets
+// are derived from the actual table radius (halfR) so presidential and standard
+// tables stay visually consistent regardless of size.
+// Square / rectangle distribute seats around the perimeter with the same
+// outward offsets, more seats on the long sides. Rotation rotates all
+// positions around (50, 50).
 
-const ROUND_PIN_INSET = 3;     // pin this many % inside the table edge
-const ROUND_LABEL_OUT = 8;     // label this many % outside the table edge
+const ROUND_PIN_OUT = 2;       // pin this many % outside the table edge (round)
+const ROUND_LABEL_OUT = 11;    // label this many % outside the table edge (round)
 const RECT_PIN_OFF = 6;        // pin offset outside the table edge (rect/square)
 const RECT_LABEL_OFF = 17;     // label offset further out
 
@@ -53,7 +55,7 @@ function alignFromAngle(deg) {
 }
 
 function roundLayout(seatCount, halfR, rotationDeg = 0) {
-  const pinR = Math.max(0, halfR - ROUND_PIN_INSET);
+  const pinR = halfR + ROUND_PIN_OUT;
   const labelR = halfR + ROUND_LABEL_OUT;
   const layouts = [];
   for (let i = 0; i < seatCount; i++) {
