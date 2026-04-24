@@ -142,8 +142,15 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
         </span>
         {seat?.reserved_by && (
           <span
-            className="text-[10px] mt-0.5 max-w-[120px] [overflow-wrap:anywhere]"
-            style={{ color: MUTED }}
+            className="text-[10px] mt-0.5"
+            style={{
+              color: MUTED,
+              display: "block",
+              maxWidth: 120,
+              overflowWrap: "anywhere",
+              wordBreak: "break-word",
+              overflow: "hidden",
+            }}
           >
             {seat.reserved_by}
           </span>
@@ -164,12 +171,17 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
         </span>
       )}
       <span
-        className="text-[12px] md:text-[12.5px] mt-0.5 max-w-[120px] [overflow-wrap:anywhere]"
+        className="text-[12px] md:text-[12.5px] mt-0.5"
         style={{
           fontFamily: "'Playfair Display', serif",
           color: NAVY,
           fontWeight: 500,
           lineHeight: 1.15,
+          display: "block",
+          maxWidth: 120,
+          overflowWrap: "anywhere",
+          wordBreak: "break-word",
+          overflow: "hidden",
         }}
       >
         {seat.first_name} {seat.last_name}
