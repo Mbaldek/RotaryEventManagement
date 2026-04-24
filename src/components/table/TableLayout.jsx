@@ -392,7 +392,10 @@ export default function TableLayout({
   seatRefs,
 }) {
   const totalSeats = seatCount ?? (isPresidential ? 12 : 8);
-  const layouts = computeSeatLayouts(totalSeats, shape);
+  const layouts = computeSeatLayouts(totalSeats, shape, {
+    isPresidential,
+    rotationDeg: rotation,
+  });
   const tint = TINTS[color] || TINTS.amber;
   const surface = tableSurfaceSize(shape, isPresidential);
 

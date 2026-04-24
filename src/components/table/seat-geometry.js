@@ -6,12 +6,16 @@
 //   - align:    "left" | "center" | "right"  text alignment of the label
 //   - side:     "top" | "right" | "bottom" | "left" | null   for rect/square only
 //
-// Round tables use two concentric polar rings (R_PIN inner, R_LABEL outer).
+// Round tables: pin sits just inside the table edge, label just outside.
+// Offsets are derived from the actual table radius (halfR) so presidential and
+// standard tables stay visually consistent.
 // Square / rectangle distribute seats around the perimeter, with more on the
-// long sides (rectangle 2:1).
+// long sides (rectangle 2:1). Rotation rotates all positions around (50, 50).
 
-const R_PIN = 24;     // pin ring radius (% from center) — round tables
-const R_LABEL = 36;   // label ring radius (% from center) — round tables
+const ROUND_PIN_INSET = 3;     // pin this many % inside the table edge
+const ROUND_LABEL_OUT = 8;     // label this many % outside the table edge
+const RECT_PIN_OFF = 6;        // pin offset outside the table edge (rect/square)
+const RECT_LABEL_OFF = 17;     // label offset further out
 
 function polar(angleDeg, r) {
   const a = ((angleDeg - 90) * Math.PI) / 180; // start at 12 o'clock, clockwise
@@ -21,9 +25,26 @@ function polar(angleDeg, r) {
   };
 }
 
+function rotatePointDeg(pt, deg) {
+  if (!deg) return pt;
+  const rad = (deg * Math.PI) / 180;
+  const dx = pt.leftPct - 50;
+  const dy = pt.topPct - 50;
+  return {
+    leftPct: 50 + dx * Math.cos(rad) - dy * Math.sin(rad),
+    topPct: 50 + dx * Math.sin(rad) + dy * Math.cos(rad),
+  };
+}
+
+function angleFromCenter(pt) {
+  // Angle in degrees measured from 12 o'clock, clockwise positive.
+  const dx = pt.leftPct - 50;
+  const dy = pt.topPct - 50;
+  const deg = (Math.atan2(dx, -dy) * 180) / Math.PI;
+  return (deg + 360) % 360;
+}
+
 function alignFromAngle(deg) {
-  // deg measured from 12 o'clock, clockwise.
-  // top arc → center, right arc → left-aligned, bottom → center, left → right.
   const a = ((deg % 360) + 360) % 360;
   if (a < 22.5 || a > 337.5) return "center";
   if (a < 157.5) return "left";
@@ -31,13 +52,15 @@ function alignFromAngle(deg) {
   return "right";
 }
 
-function roundLayout(seatCount) {
+function roundLayout(seatCount, halfR, rotationDeg = 0) {
+  const pinR = Math.max(0, halfR - ROUND_PIN_INSET);
+  const labelR = halfR + ROUND_LABEL_OUT;
   const layouts = [];
   for (let i = 0; i < seatCount; i++) {
-    const angleDeg = (i / seatCount) * 360; // 0° = top
+    const angleDeg = ((i / seatCount) * 360 + rotationDeg) % 360;
     layouts.push({
-      pinPos: polar(angleDeg, R_PIN),
-      labelPos: polar(angleDeg, R_LABEL),
+      pinPos: polar(angleDeg, pinR),
+      labelPos: polar(angleDeg, labelR),
       align: alignFromAngle(angleDeg),
       side: null,
     });
@@ -45,7 +68,7 @@ function roundLayout(seatCount) {
   return layouts;
 }
 
-function rectLayout(seatCount, halfW, halfH) {
+function rectLayout(seatCount, halfW, halfH, rotationDeg = 0) {
   const W = halfW * 2;
   const H = halfH * 2;
 
@@ -62,9 +85,6 @@ function rectLayout(seatCount, halfW, halfH) {
   const rightCount = Math.ceil(shortTotal / 2);
   const leftCount = shortTotal - rightCount;
 
-  const PIN_OFF = 6;     // pin offset outside the table edge
-  const LABEL_OFF = 17;  // label offset further out
-
   const left = 50 - halfW;
   const right = 50 + halfW;
   const top = 50 - halfH;
@@ -72,55 +92,63 @@ function rectLayout(seatCount, halfW, halfH) {
 
   const layouts = [];
 
+  const pushSeat = (pinBase, labelBase, side) => {
+    const pinPos = rotatePointDeg(pinBase, rotationDeg);
+    const labelPos = rotatePointDeg(labelBase, rotationDeg);
+    // Recompute align from the rotated pin angle so labels stay readable
+    // regardless of table orientation.
+    const align = alignFromAngle(angleFromCenter(pinPos));
+    layouts.push({ pinPos, labelPos, align, side });
+  };
+
   for (let i = 0; i < topCount; i++) {
     const t = (i + 0.5) / topCount;
     const x = left + W * t;
-    layouts.push({
-      pinPos: { leftPct: x, topPct: top - PIN_OFF },
-      labelPos: { leftPct: x, topPct: top - LABEL_OFF },
-      align: "center",
-      side: "top",
-    });
+    pushSeat(
+      { leftPct: x, topPct: top - RECT_PIN_OFF },
+      { leftPct: x, topPct: top - RECT_LABEL_OFF },
+      "top"
+    );
   }
   for (let i = 0; i < rightCount; i++) {
     const t = (i + 0.5) / rightCount;
     const y = top + H * t;
-    layouts.push({
-      pinPos: { leftPct: right + PIN_OFF, topPct: y },
-      labelPos: { leftPct: right + LABEL_OFF, topPct: y },
-      align: "left",
-      side: "right",
-    });
+    pushSeat(
+      { leftPct: right + RECT_PIN_OFF, topPct: y },
+      { leftPct: right + RECT_LABEL_OFF, topPct: y },
+      "right"
+    );
   }
   for (let i = 0; i < bottomCount; i++) {
     const t = (i + 0.5) / bottomCount;
     const x = right - W * t;
-    layouts.push({
-      pinPos: { leftPct: x, topPct: bottom + PIN_OFF },
-      labelPos: { leftPct: x, topPct: bottom + LABEL_OFF },
-      align: "center",
-      side: "bottom",
-    });
+    pushSeat(
+      { leftPct: x, topPct: bottom + RECT_PIN_OFF },
+      { leftPct: x, topPct: bottom + RECT_LABEL_OFF },
+      "bottom"
+    );
   }
   for (let i = 0; i < leftCount; i++) {
     const t = (i + 0.5) / leftCount;
     const y = bottom - H * t;
-    layouts.push({
-      pinPos: { leftPct: left - PIN_OFF, topPct: y },
-      labelPos: { leftPct: left - LABEL_OFF, topPct: y },
-      align: "right",
-      side: "left",
-    });
+    pushSeat(
+      { leftPct: left - RECT_PIN_OFF, topPct: y },
+      { leftPct: left - RECT_LABEL_OFF, topPct: y },
+      "left"
+    );
   }
 
   return layouts;
 }
 
-export function computeSeatLayouts(seatCount, shape) {
+export function computeSeatLayouts(seatCount, shape, options = {}) {
   if (!seatCount || seatCount <= 0) return [];
-  if (shape === "rectangle") return rectLayout(seatCount, 32, 16);
-  if (shape === "square") return rectLayout(seatCount, 24, 24);
-  return roundLayout(seatCount);
+  const { isPresidential = false, rotationDeg = 0 } = options;
+  if (shape === "rectangle") return rectLayout(seatCount, 32, 16, rotationDeg);
+  if (shape === "square") return rectLayout(seatCount, 24, 24, rotationDeg);
+  // Round — halfR mirrors tableSurfaceSize below so pin/label stay on the edge.
+  const halfR = isPresidential ? 31 : 28;
+  return roundLayout(seatCount, halfR, rotationDeg);
 }
 
 // Visual table dimensions in percent (matches the geometry above so seats
