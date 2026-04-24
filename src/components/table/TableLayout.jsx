@@ -105,10 +105,12 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
     align === "right" ? "items-end text-right" :
     "items-center text-center";
 
-  // Uniform label-box width across states so adjacent labels around the table
-  // never overlap — even with long first/last names, the label wraps to a
-  // second line instead of extending horizontally into its neighbour.
-  const boxClass = `flex flex-col ${alignClass} leading-tight w-[120px]`;
+  // Label box caps width at 120px so long first/last names wrap to a second
+  // line instead of extending horizontally into the neighbouring seat's label.
+  // Uses `max-w` (not `w`) so short labels keep their natural content-sized
+  // width — the calibrated label offsets depend on the text-anchor position
+  // relative to the wrapper, which moves if the wrapper grows beyond content.
+  const boxClass = `flex flex-col ${alignClass} leading-tight max-w-[120px]`;
 
   if (status === "empty") {
     return (
@@ -170,7 +172,7 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
         {seat.first_name} {seat.last_name}
       </span>
       {seat.job && (
-        <span className="text-[10px] mt-0.5 truncate w-full" style={{ color: MUTED }}>
+        <span className="text-[10px] mt-0.5 truncate max-w-[120px]" style={{ color: MUTED }}>
           {seat.job}
         </span>
       )}
