@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { RestaurantTable, Seat, GlobalSettings } from "@/lib/db";
+import { RestaurantTable, Seat, GlobalSettings, UpcomingEvent } from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight, CalendarDays, Users } from "lucide-react";
+import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { getTableCapacity } from "@/lib/utils";
 
@@ -230,6 +231,26 @@ export default function TableView() {
     },
   });
 
+  // Current statutaire lunch — same logic as Index.jsx: today's if any, else
+  // the next one. Needed because `seats.event_id` is NOT NULL at the DB level
+  // (FK → upcoming_events.id), so a seat can't be inserted without it.
+  const { data: currentEvent } = useQuery({
+    queryKey: ["currentEvent"],
+    queryFn: async () => {
+      const events = await UpcomingEvent.list("event_date");
+      const today = new Date().toISOString().slice(0, 10);
+      return (
+        events.find(
+          (e) => e.event_date === today && e.event_type === "dejeuner_statutaire"
+        ) ||
+        events.find(
+          (e) => e.event_date >= today && e.event_type === "dejeuner_statutaire"
+        ) ||
+        null
+      );
+    },
+  });
+
   const saveSeatMutation = useMutation({
     mutationFn: async ({ seatNumber, data }) => {
       const existing = seats.find((s) => s.seat_number === seatNumber);
@@ -238,11 +259,17 @@ export default function TableView() {
         await Seat.update(existing.id, data);
         return existing.id;
       } else {
+        if (!currentEvent?.id) {
+          throw new Error(
+            "Aucun déjeuner statutaire programmé — impossible d'enregistrer un siège."
+          );
+        }
         const newSeat = await Seat.create({
           ...data,
           table_id: tableId,
           seat_number: seatNumber,
           guest_token: token,
+          event_id: currentEvent.id,
         });
         return newSeat.id;
       }
@@ -254,6 +281,10 @@ export default function TableView() {
       queryClient.invalidateQueries({ queryKey: ["allSeats"] });
       setPickingSeat(null);
       setPickingSeatData(null);
+    },
+    onError: (err) => {
+      console.error("[TableView:saveSeat]", err);
+      toast.error(err?.message || "Erreur lors de l'enregistrement du siège.");
     },
   });
 
@@ -279,6 +310,10 @@ export default function TableView() {
       queryClient.invalidateQueries({ queryKey: ["allSeats"] });
       setPickingSeat(null);
       setPickingSeatData(null);
+    },
+    onError: (err) => {
+      console.error("[TableView:removeSeat]", err);
+      toast.error(err?.message || "Erreur lors de la libération du siège.");
     },
   });
 
