@@ -148,6 +148,7 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
             className="text-[10px] mt-0.5"
             style={{
               color: MUTED,
+              minWidth: 0,
               maxWidth: 120,
               whiteSpace: "nowrap",
               overflow: "hidden",
@@ -180,6 +181,7 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
           color: NAVY,
           fontWeight: 500,
           lineHeight: 1.15,
+          minWidth: 0,
           maxWidth: 120,
           whiteSpace: "nowrap",
           overflow: "hidden",
