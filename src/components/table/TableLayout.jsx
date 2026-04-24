@@ -1,31 +1,105 @@
-import React, { forwardRef, useMemo } from "react";
+import React, { forwardRef, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { computeSeatLayouts, tableSurfaceSize } from "./seat-geometry";
 
-// Live geometry calibration via URL query: ?pr=<n>&lr=<n>&ox=<n>&oy=<n>
-//   pr = pin radius (% from table center)
-//   lr = label radius (% from table center)
+// Live geometry calibration. Initial values come from URL query (so you can
+// bookmark a setup), then the inline sliders let you iterate in real time.
+//   pr = pin radius (% from center)
+//   lr = label radius (% from center)
 //   ox = horizontal offset of the whole ring system (%)
 //   oy = vertical offset of the whole ring system (%)
-// When any param is present, a tiny debug strip appears at the bottom of the
-// canvas showing the active values so you can iterate with confidence.
-function readGeometryOverrides() {
-  if (typeof window === "undefined") {
-    return { pinRadius: undefined, labelRadius: undefined, offsetX: 0, offsetY: 0 };
-  }
+function readInitialOverrides(defaultHalfR) {
+  const fallback = {
+    pinRadius: defaultHalfR,
+    labelRadius: defaultHalfR + 9,
+    offsetX: 0,
+    offsetY: 0,
+  };
+  if (typeof window === "undefined") return fallback;
   const p = new URLSearchParams(window.location.search);
-  const parseNum = (k) => {
+  const parseNum = (k, def) => {
     const v = p.get(k);
-    if (v === null || v === "") return undefined;
+    if (v === null || v === "") return def;
     const n = parseFloat(v);
-    return Number.isFinite(n) ? n : undefined;
+    return Number.isFinite(n) ? n : def;
   };
   return {
-    pinRadius: parseNum("pr"),
-    labelRadius: parseNum("lr"),
-    offsetX: parseNum("ox") ?? 0,
-    offsetY: parseNum("oy") ?? 0,
+    pinRadius: parseNum("pr", fallback.pinRadius),
+    labelRadius: parseNum("lr", fallback.labelRadius),
+    offsetX: parseNum("ox", 0),
+    offsetY: parseNum("oy", 0),
   };
+}
+
+function GeometryTuner({ halfR, pinR, labelR, offsetX, offsetY, onChange }) {
+  const row = (label, hint, value, min, max, step, onValue) => (
+    <div className="flex items-center gap-3 py-1">
+      <div className="w-[170px] shrink-0">
+        <div className="text-[12px] font-medium" style={{ color: "#0f1f3d" }}>{label}</div>
+        <div className="text-[10px]" style={{ color: "#9090a8" }}>{hint}</div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onValue(parseFloat(e.target.value))}
+        className="flex-1 accent-[#c9a84c]"
+      />
+      <div className="w-[60px] text-right text-[12px] font-mono" style={{ color: "#0f1f3d" }}>
+        {value}%
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      className="mt-6 mx-auto max-w-[560px] rounded-lg border px-4 py-3"
+      style={{ background: "#faf7f2", borderColor: "#e8e3d9" }}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-[11px] uppercase tracking-[0.15em] font-medium" style={{ color: "#c9a84c" }}>
+          Calibration géométrie · ronde
+        </div>
+        <div className="text-[10px]" style={{ color: "#9090a8" }}>
+          bord de la table = <span className="font-mono">{halfR}%</span>
+        </div>
+      </div>
+
+      {row(
+        "Rayon des PINS",
+        `distance pin → centre · ${halfR}% = pile sur le bord`,
+        pinR, 0, 50, 0.5,
+        (v) => onChange({ pinRadius: v })
+      )}
+      {row(
+        "Rayon des LABELS",
+        `distance label → centre (normalement > pins)`,
+        labelR, 0, 50, 0.5,
+        (v) => onChange({ labelRadius: v })
+      )}
+      {row(
+        "Décalage horizontal",
+        `négatif = vers la gauche · positif = vers la droite`,
+        offsetX, -10, 10, 0.5,
+        (v) => onChange({ offsetX: v })
+      )}
+      {row(
+        "Décalage vertical",
+        `négatif = vers le haut · positif = vers le bas`,
+        offsetY, -10, 10, 0.5,
+        (v) => onChange({ offsetY: v })
+      )}
+
+      <div className="mt-2 pt-2 border-t text-[10px]" style={{ borderColor: "#e8e3d9", color: "#9090a8" }}>
+        URL figée :{" "}
+        <span className="font-mono">
+          ?pr={pinR}&amp;lr={labelR}&amp;ox={offsetX}&amp;oy={offsetY}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 // Design tokens — "Elysée"
@@ -418,17 +492,18 @@ export default function TableLayout({
   seatRefs,
 }) {
   const totalSeats = seatCount ?? (isPresidential ? 12 : 8);
-  const overrides = useMemo(() => readGeometryOverrides(), []);
   const defaultHalfR = isPresidential ? 31 : 28;
-  const effectivePinR = Number.isFinite(overrides.pinRadius) ? overrides.pinRadius : defaultHalfR;
-  const effectiveLabelR = Number.isFinite(overrides.labelRadius) ? overrides.labelRadius : defaultHalfR + 9;
+  const initialOverrides = useMemo(() => readInitialOverrides(defaultHalfR), [defaultHalfR]);
+  const [tune, setTune] = useState(initialOverrides);
+  const updateTune = (patch) => setTune((t) => ({ ...t, ...patch }));
+
   const layouts = computeSeatLayouts(totalSeats, shape, {
     isPresidential,
     rotationDeg: rotation,
-    pinRadius: overrides.pinRadius,
-    labelRadius: overrides.labelRadius,
-    offsetX: overrides.offsetX,
-    offsetY: overrides.offsetY,
+    pinRadius: tune.pinRadius,
+    labelRadius: tune.labelRadius,
+    offsetX: tune.offsetX,
+    offsetY: tune.offsetY,
   });
   const tint = TINTS[color] || TINTS.amber;
   const surface = tableSurfaceSize(shape, isPresidential);
@@ -544,12 +619,14 @@ export default function TableLayout({
         </span>
       </div>
 
-      <div
-        className="mt-3 text-center text-[10px] font-mono"
-        style={{ color: MUTED }}
-      >
-        geom: pr={effectivePinR} · lr={effectiveLabelR} · ox={overrides.offsetX} · oy={overrides.offsetY} · halfR={defaultHalfR}
-      </div>
+      <GeometryTuner
+        halfR={defaultHalfR}
+        pinR={tune.pinRadius}
+        labelR={tune.labelRadius}
+        offsetX={tune.offsetX}
+        offsetY={tune.offsetY}
+        onChange={updateTune}
+      />
     </div>
   );
 }
