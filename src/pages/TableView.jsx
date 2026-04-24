@@ -3,7 +3,7 @@ import { RestaurantTable, Seat, GlobalSettings, UpcomingEvent } from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, ArrowUpRight, CalendarDays, Users } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CalendarDays, Users, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { getTableCapacity } from "@/lib/utils";
@@ -175,6 +175,7 @@ export default function TableView() {
     () => localStorage.getItem("mySeatId") || null
   );
   const [chatTarget, setChatTarget] = useState(null);
+  const [tableChatOpen, setTableChatOpen] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [salonOpen, setSalonOpen] = useState(false);
 
@@ -935,14 +936,43 @@ export default function TableView() {
         onChat={mySeatId ? handleStartChatFromSalon : undefined}
       />
 
-      {/* Chat — floating panel bottom-right */}
+      {/* Table chat trigger — floating button bottom-right when seated and no panel open */}
+      {mySeat && !chatTarget && !tableChatOpen && (
+        <button
+          onClick={() => setTableChatOpen(true)}
+          aria-label="Chat de la table"
+          className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 px-4 py-3 text-[11px] uppercase tracking-[0.15em] font-medium transition-all hover:-translate-y-[1px]"
+          style={{
+            background: NAVY,
+            color: "white",
+            borderRadius: 4,
+            boxShadow: "0 8px 20px rgba(15,31,61,0.22)",
+          }}
+        >
+          <MessageSquare className="w-4 h-4" style={{ color: GOLD }} />
+          <span>Chat table</span>
+        </button>
+      )}
+
+      {/* Chat — floating panel bottom-right (DM takes precedence over table) */}
       <AnimatePresence>
-        {chatTarget && mySeatId && (
+        {chatTarget && mySeat && (
           <div className="fixed bottom-4 right-4 z-50">
             <ChatPanel
-              mySeatId={mySeatId}
+              mySeat={mySeat}
               targetSeat={chatTarget}
+              mode="dm"
               onClose={() => setChatTarget(null)}
+            />
+          </div>
+        )}
+        {!chatTarget && tableChatOpen && mySeat && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <ChatPanel
+              mySeat={mySeat}
+              mode="table"
+              tableNumber={table?.table_number}
+              onClose={() => setTableChatOpen(false)}
             />
           </div>
         )}
