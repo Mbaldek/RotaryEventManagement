@@ -14,8 +14,8 @@
 // outward offsets, more seats on the long sides. Rotation rotates all
 // positions around (50, 50).
 
-const ROUND_PIN_OUT = 2;       // pin this many % outside the table edge (round)
-const ROUND_LABEL_OUT = 11;    // label this many % outside the table edge (round)
+const ROUND_PIN_OUT = 0;       // pin straddles the table edge (round)
+const ROUND_LABEL_OUT = 9;     // label this many % outside the table edge (round)
 const RECT_PIN_OFF = 6;        // pin offset outside the table edge (rect/square)
 const RECT_LABEL_OFF = 17;     // label offset further out
 

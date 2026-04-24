@@ -403,7 +403,7 @@ export default function TableLayout({
     <div className="relative w-full max-w-[820px] mx-auto pb-4">
       {/* Padded wrapper so side markers can sit outside the seat canvas */}
       <div className="relative mx-auto" style={{ paddingLeft: 80, paddingRight: 80 }}>
-        <div className="relative w-full pb-[100%]">
+        <div className="relative w-full aspect-square">
           {/* Warm ambient glow */}
           <div
             aria-hidden
