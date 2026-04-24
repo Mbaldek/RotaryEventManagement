@@ -110,11 +110,14 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
   // Uses `max-w` (not `w`) so short labels keep their natural content-sized
   // width — the calibrated label offsets depend on the text-anchor position
   // relative to the wrapper, which moves if the wrapper grows beyond content.
-  const boxClass = `flex flex-col ${alignClass} leading-tight max-w-[120px]`;
+  // max-width in inline style (not Tailwind arbitrary) so it's guaranteed to
+  // apply regardless of JIT context.
+  const boxClass = `flex flex-col ${alignClass} leading-tight`;
+  const boxStyle = { maxWidth: 120 };
 
   if (status === "empty") {
     return (
-      <div className={boxClass}>
+      <div className={boxClass} style={boxStyle}>
         <span className="text-[9px] uppercase tracking-[0.18em] font-medium" style={{ color: MUTED }}>
           Siège {seatNumber}
         </span>
@@ -130,7 +133,7 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
 
   if (status === "reserved") {
     return (
-      <div className={boxClass}>
+      <div className={boxClass} style={boxStyle}>
         <span className="text-[9px] uppercase tracking-[0.18em] font-medium" style={{ color: GOLD }}>
           Siège {seatNumber}
         </span>
@@ -141,26 +144,25 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
           Réservé
         </span>
         {seat?.reserved_by && (
-          <span
+          <div
             className="text-[10px] mt-0.5"
             style={{
               color: MUTED,
-              display: "block",
               maxWidth: 120,
               overflowWrap: "anywhere",
-              wordBreak: "break-word",
+              wordBreak: "break-all",
               overflow: "hidden",
             }}
           >
             {seat.reserved_by}
-          </span>
+          </div>
         )}
       </div>
     );
   }
 
   return (
-    <div className={boxClass}>
+    <div className={boxClass} style={boxStyle}>
       {status === "me" ? (
         <span className="text-[9px] uppercase tracking-[0.18em] font-medium" style={{ color: GOLD }}>
           Vous · {seatNumber}
@@ -170,22 +172,21 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
           Siège {seatNumber}
         </span>
       )}
-      <span
+      <div
         className="text-[12px] md:text-[12.5px] mt-0.5"
         style={{
           fontFamily: "'Playfair Display', serif",
           color: NAVY,
           fontWeight: 500,
           lineHeight: 1.15,
-          display: "block",
           maxWidth: 120,
           overflowWrap: "anywhere",
-          wordBreak: "break-word",
+          wordBreak: "break-all",
           overflow: "hidden",
         }}
       >
         {seat.first_name} {seat.last_name}
-      </span>
+      </div>
       {seat.job && (
         <span className="text-[10px] mt-0.5 truncate max-w-[120px]" style={{ color: MUTED }}>
           {seat.job}
