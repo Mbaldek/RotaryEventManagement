@@ -10,7 +10,9 @@ import { computeSeatLayouts, tableSurfaceSize } from "./seat-geometry";
 // When any param is present, a tiny debug strip appears at the bottom of the
 // canvas showing the active values so you can iterate with confidence.
 function readGeometryOverrides() {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") {
+    return { pinRadius: undefined, labelRadius: undefined, offsetX: 0, offsetY: 0 };
+  }
   const p = new URLSearchParams(window.location.search);
   const parseNum = (k) => {
     const v = p.get(k);
@@ -18,16 +20,11 @@ function readGeometryOverrides() {
     const n = parseFloat(v);
     return Number.isFinite(n) ? n : undefined;
   };
-  const pr = parseNum("pr");
-  const lr = parseNum("lr");
-  const ox = parseNum("ox");
-  const oy = parseNum("oy");
-  if (pr === undefined && lr === undefined && ox === undefined && oy === undefined) return null;
   return {
-    pinRadius: pr,
-    labelRadius: lr,
-    offsetX: ox ?? 0,
-    offsetY: oy ?? 0,
+    pinRadius: parseNum("pr"),
+    labelRadius: parseNum("lr"),
+    offsetX: parseNum("ox") ?? 0,
+    offsetY: parseNum("oy") ?? 0,
   };
 }
 
@@ -422,13 +419,16 @@ export default function TableLayout({
 }) {
   const totalSeats = seatCount ?? (isPresidential ? 12 : 8);
   const overrides = useMemo(() => readGeometryOverrides(), []);
+  const defaultHalfR = isPresidential ? 31 : 28;
+  const effectivePinR = Number.isFinite(overrides.pinRadius) ? overrides.pinRadius : defaultHalfR;
+  const effectiveLabelR = Number.isFinite(overrides.labelRadius) ? overrides.labelRadius : defaultHalfR + 9;
   const layouts = computeSeatLayouts(totalSeats, shape, {
     isPresidential,
     rotationDeg: rotation,
-    pinRadius: overrides?.pinRadius,
-    labelRadius: overrides?.labelRadius,
-    offsetX: overrides?.offsetX ?? 0,
-    offsetY: overrides?.offsetY ?? 0,
+    pinRadius: overrides.pinRadius,
+    labelRadius: overrides.labelRadius,
+    offsetX: overrides.offsetX,
+    offsetY: overrides.offsetY,
   });
   const tint = TINTS[color] || TINTS.amber;
   const surface = tableSurfaceSize(shape, isPresidential);
@@ -544,14 +544,12 @@ export default function TableLayout({
         </span>
       </div>
 
-      {overrides && (
-        <div
-          className="mt-3 text-center text-[10px] font-mono"
-          style={{ color: MUTED }}
-        >
-          geom: pr={overrides.pinRadius ?? "auto"} · lr={overrides.labelRadius ?? "auto"} · ox={overrides.offsetX} · oy={overrides.offsetY}
-        </div>
-      )}
+      <div
+        className="mt-3 text-center text-[10px] font-mono"
+        style={{ color: MUTED }}
+      >
+        geom: pr={effectivePinR} · lr={effectiveLabelR} · ox={overrides.offsetX} · oy={overrides.offsetY} · halfR={defaultHalfR}
+      </div>
     </div>
   );
 }
