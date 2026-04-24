@@ -54,15 +54,15 @@ function alignFromAngle(deg) {
   return "right";
 }
 
-function roundLayout(seatCount, halfR, rotationDeg = 0) {
-  const pinR = halfR + ROUND_PIN_OUT;
-  const labelR = halfR + ROUND_LABEL_OUT;
+function roundLayout(seatCount, halfR, rotationDeg = 0, pinR, labelR) {
+  const resolvedPinR = Number.isFinite(pinR) ? pinR : halfR + ROUND_PIN_OUT;
+  const resolvedLabelR = Number.isFinite(labelR) ? labelR : halfR + ROUND_LABEL_OUT;
   const layouts = [];
   for (let i = 0; i < seatCount; i++) {
     const angleDeg = ((i / seatCount) * 360 + rotationDeg) % 360;
     layouts.push({
-      pinPos: polar(angleDeg, pinR),
-      labelPos: polar(angleDeg, labelR),
+      pinPos: polar(angleDeg, resolvedPinR),
+      labelPos: polar(angleDeg, resolvedLabelR),
       align: alignFromAngle(angleDeg),
       side: null,
     });
@@ -143,14 +143,39 @@ function rectLayout(seatCount, halfW, halfH, rotationDeg = 0) {
   return layouts;
 }
 
+function applyOffset(layouts, offsetX, offsetY) {
+  if (!offsetX && !offsetY) return layouts;
+  return layouts.map((l) => ({
+    ...l,
+    pinPos: { leftPct: l.pinPos.leftPct + offsetX, topPct: l.pinPos.topPct + offsetY },
+    labelPos: { leftPct: l.labelPos.leftPct + offsetX, topPct: l.labelPos.topPct + offsetY },
+  }));
+}
+
 export function computeSeatLayouts(seatCount, shape, options = {}) {
   if (!seatCount || seatCount <= 0) return [];
-  const { isPresidential = false, rotationDeg = 0 } = options;
-  if (shape === "rectangle") return rectLayout(seatCount, 32, 16, rotationDeg);
-  if (shape === "square") return rectLayout(seatCount, 24, 24, rotationDeg);
-  // Round — halfR mirrors tableSurfaceSize below so pin/label stay on the edge.
-  const halfR = isPresidential ? 31 : 28;
-  return roundLayout(seatCount, halfR, rotationDeg);
+  const {
+    isPresidential = false,
+    rotationDeg = 0,
+    pinRadius,        // absolute % from center, overrides round default
+    labelRadius,      // absolute % from center, overrides round default
+    offsetX = 0,      // shift entire ring system horizontally (%)
+    offsetY = 0,      // shift entire ring system vertically (%)
+  } = options;
+
+  let layouts;
+  if (shape === "rectangle") {
+    layouts = rectLayout(seatCount, 32, 16, rotationDeg);
+  } else if (shape === "square") {
+    layouts = rectLayout(seatCount, 24, 24, rotationDeg);
+  } else {
+    // Round — halfR mirrors tableSurfaceSize so pin/label stay on the edge.
+    const halfR = isPresidential ? 31 : 28;
+    const pinR = Number.isFinite(pinRadius) ? pinRadius : halfR + ROUND_PIN_OUT;
+    const labelR = Number.isFinite(labelRadius) ? labelRadius : halfR + ROUND_LABEL_OUT;
+    layouts = roundLayout(seatCount, halfR, rotationDeg, pinR, labelR);
+  }
+  return applyOffset(layouts, offsetX, offsetY);
 }
 
 // Visual table dimensions in percent (matches the geometry above so seats

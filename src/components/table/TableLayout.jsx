@@ -1,6 +1,35 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { computeSeatLayouts, tableSurfaceSize } from "./seat-geometry";
+
+// Live geometry calibration via URL query: ?pr=<n>&lr=<n>&ox=<n>&oy=<n>
+//   pr = pin radius (% from table center)
+//   lr = label radius (% from table center)
+//   ox = horizontal offset of the whole ring system (%)
+//   oy = vertical offset of the whole ring system (%)
+// When any param is present, a tiny debug strip appears at the bottom of the
+// canvas showing the active values so you can iterate with confidence.
+function readGeometryOverrides() {
+  if (typeof window === "undefined") return null;
+  const p = new URLSearchParams(window.location.search);
+  const parseNum = (k) => {
+    const v = p.get(k);
+    if (v === null || v === "") return undefined;
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const pr = parseNum("pr");
+  const lr = parseNum("lr");
+  const ox = parseNum("ox");
+  const oy = parseNum("oy");
+  if (pr === undefined && lr === undefined && ox === undefined && oy === undefined) return null;
+  return {
+    pinRadius: pr,
+    labelRadius: lr,
+    offsetX: ox ?? 0,
+    offsetY: oy ?? 0,
+  };
+}
 
 // Design tokens — "Elysée"
 const NAVY = "#0f1f3d";
@@ -392,9 +421,14 @@ export default function TableLayout({
   seatRefs,
 }) {
   const totalSeats = seatCount ?? (isPresidential ? 12 : 8);
+  const overrides = useMemo(() => readGeometryOverrides(), []);
   const layouts = computeSeatLayouts(totalSeats, shape, {
     isPresidential,
     rotationDeg: rotation,
+    pinRadius: overrides?.pinRadius,
+    labelRadius: overrides?.labelRadius,
+    offsetX: overrides?.offsetX ?? 0,
+    offsetY: overrides?.offsetY ?? 0,
   });
   const tint = TINTS[color] || TINTS.amber;
   const surface = tableSurfaceSize(shape, isPresidential);
@@ -509,6 +543,15 @@ export default function TableLayout({
           Libre
         </span>
       </div>
+
+      {overrides && (
+        <div
+          className="mt-3 text-center text-[10px] font-mono"
+          style={{ color: MUTED }}
+        >
+          geom: pr={overrides.pinRadius ?? "auto"} · lr={overrides.labelRadius ?? "auto"} · ox={overrides.offsetX} · oy={overrides.offsetY}
+        </div>
+      )}
     </div>
   );
 }
