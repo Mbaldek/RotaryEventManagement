@@ -64,15 +64,32 @@ function alignFromAngle(deg) {
   return "right";
 }
 
+// Extra outward label radius for seats sitting on the horizontal axis
+// (≈ 90° = right, ≈ 270° = left — e.g. seat 3 and seat 7 on a 8-seat round).
+// These labels would otherwise drift toward the table with long names because
+// the uniform label offset (X in particular) helps the left side but hurts the
+// right side. Pushing them radially compensates on both sides symmetrically.
+const SIDE_AXIS_LABEL_BOOST = 8;       // % extra radius for ≈90°/270° seats
+const SIDE_AXIS_ANGLE_RANGE = 10;      // ± degrees of tolerance
+
+function isSideAxisAngle(deg) {
+  const a = ((deg % 360) + 360) % 360;
+  return (
+    Math.abs(a - 90) < SIDE_AXIS_ANGLE_RANGE ||
+    Math.abs(a - 270) < SIDE_AXIS_ANGLE_RANGE
+  );
+}
+
 function roundLayout(seatCount, halfR, rotationDeg = 0, pinR, labelR) {
   const resolvedPinR = Number.isFinite(pinR) ? pinR : halfR + ROUND_PIN_OUT;
   const resolvedLabelR = Number.isFinite(labelR) ? labelR : halfR + ROUND_LABEL_OUT;
   const layouts = [];
   for (let i = 0; i < seatCount; i++) {
     const angleDeg = ((i / seatCount) * 360 + rotationDeg) % 360;
+    const effectiveLabelR = resolvedLabelR + (isSideAxisAngle(angleDeg) ? SIDE_AXIS_LABEL_BOOST : 0);
     layouts.push({
       pinPos: polar(angleDeg, resolvedPinR),
-      labelPos: polar(angleDeg, resolvedLabelR),
+      labelPos: polar(angleDeg, effectiveLabelR),
       align: alignFromAngle(angleDeg),
       side: null,
     });
