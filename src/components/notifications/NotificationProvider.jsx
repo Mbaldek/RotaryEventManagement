@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { Seat, ChatMessage, GlobalSettings, RestaurantTable, Reservation } from "@/lib/db";
+import { Seat, Chat, GlobalSettings, RestaurantTable, Reservation } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { UserCheck, MessageCircle, Megaphone, CalendarCheck, CalendarX } from "lucide-react";
 
@@ -7,11 +8,70 @@ const NotificationContext = createContext();
 
 export const useNotifications = () => useContext(NotificationContext);
 
+// chat_messages is locked by RLS — Supabase Realtime won't deliver its rows to
+// anon. We poll the SECURITY DEFINER `chat_recent_for` RPC every few seconds.
+const CHAT_POLL_MS = 6000;
+
 export default function NotificationProvider({ children }) {
   const [lastSeenTimestamp] = useState(Date.now());
+  const [myToken, setMyToken] = useState(null);
+
+  // Resolve the current seat's guest_token once on mount from localStorage.
+  useEffect(() => {
+    const mySeatId = localStorage.getItem("mySeatId");
+    if (!mySeatId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("seats")
+        .select("guest_token")
+        .eq("id", mySeatId)
+        .maybeSingle();
+      if (!cancelled && !error && data?.guest_token) {
+        setMyToken(data.guest_token);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Chat toast polling — replaces the old realtime subscription.
+  useEffect(() => {
+    if (!myToken) return;
+    let since = new Date(lastSeenTimestamp).toISOString();
+    let stopped = false;
+
+    const tick = async () => {
+      try {
+        const msgs = await Chat.recent(myToken, since);
+        for (const m of msgs) {
+          const label =
+            m.scope === "table"
+              ? `Table · ${m.from_name || "Convive"}`
+              : `Nouveau message de ${m.from_name || "Convive"}`;
+          toast.info(label, {
+            icon: <MessageCircle className="w-5 h-5 text-blue-600" />,
+            duration: 3000,
+          });
+          if (m.created_date > since) since = m.created_date;
+        }
+      } catch (err) {
+        console.warn("[NotificationProvider:chat poll]", err);
+      }
+    };
+
+    const iv = setInterval(() => {
+      if (!stopped) tick();
+    }, CHAT_POLL_MS);
+
+    return () => {
+      stopped = true;
+      clearInterval(iv);
+    };
+  }, [myToken, lastSeenTimestamp]);
 
   useEffect(() => {
-    // Subscribe to Seat changes (occupation)
     const unsubscribeSeat = Seat.subscribe((event) => {
       if (event.type === "update" && event.data?.first_name) {
         const seatData = event.data;
@@ -27,23 +87,6 @@ export default function NotificationProvider({ children }) {
       }
     });
 
-    // Subscribe to ChatMessage changes
-    const unsubscribeChat = ChatMessage.subscribe((event) => {
-      if (event.type === "create") {
-        const msgData = event.data;
-        if (new Date(msgData.created_date).getTime() > lastSeenTimestamp) {
-          toast.info(
-            `Nouveau message de ${msgData.from_name}`,
-            {
-              icon: <MessageCircle className="w-5 h-5 text-blue-600" />,
-              duration: 3000,
-            }
-          );
-        }
-      }
-    });
-
-    // Subscribe to GlobalSettings changes (broadcast)
     const unsubscribeSettings = GlobalSettings.subscribe((event) => {
       if (event.type === "update" && event.data?.global_broadcast) {
         if (new Date(event.data.updated_date).getTime() > lastSeenTimestamp) {
@@ -58,7 +101,6 @@ export default function NotificationProvider({ children }) {
       }
     });
 
-    // Subscribe to RestaurantTable changes (broadcast)
     const unsubscribeTable = RestaurantTable.subscribe((event) => {
       if (event.type === "update" && event.data?.broadcast_message) {
         if (new Date(event.data.updated_date).getTime() > lastSeenTimestamp) {
@@ -73,7 +115,6 @@ export default function NotificationProvider({ children }) {
       }
     });
 
-    // Subscribe to Reservation changes
     const unsubscribeReservation = Reservation.subscribe((event) => {
       if (event.type === "update" && event.data?.status) {
         if (new Date(event.data.updated_date).getTime() > lastSeenTimestamp) {
@@ -100,7 +141,6 @@ export default function NotificationProvider({ children }) {
 
     return () => {
       unsubscribeSeat();
-      unsubscribeChat();
       unsubscribeSettings();
       unsubscribeTable();
       unsubscribeReservation();

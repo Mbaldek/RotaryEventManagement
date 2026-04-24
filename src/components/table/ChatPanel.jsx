@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, MessageCircle } from "lucide-react";
-import { ChatMessage } from "@/lib/db";
+import { X, Send, MessageCircle, Users } from "lucide-react";
+import { Chat } from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 const NAVY = "#0f1f3d";
 const GOLD = "#c9a84c";
@@ -17,24 +18,37 @@ function getInitials(first, last) {
   return (a + b).toUpperCase() || "·";
 }
 
-export default function ChatPanel({ mySeatId, targetSeat, onClose }) {
+export default function ChatPanel({ mySeat, targetSeat, mode, onClose, tableNumber }) {
+  // Resolve the mode: explicit prop wins, else infer from targetSeat presence.
+  const effectiveMode = mode || (targetSeat ? "dm" : "table");
+  const isTable = effectiveMode === "table";
+
+  const token = mySeat?.guest_token;
+  const mySeatId = mySeat?.id;
+
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);
   const queryClient = useQueryClient();
 
-  const { data: messages = [] } = useQuery({
-    queryKey: ["chat", mySeatId, targetSeat?.id],
-    queryFn: async () => {
-      const all = await ChatMessage.list("-created_date", 200);
-      return all.filter(
-        (m) =>
-          (m.from_seat_id === mySeatId && m.to_seat_id === targetSeat?.id) ||
-          (m.from_seat_id === targetSeat?.id && m.to_seat_id === mySeatId)
-      ).reverse();
-    },
+  const queryKey = isTable
+    ? ["chat-table", mySeat?.table_id]
+    : ["chat-dm", mySeatId, targetSeat?.id];
+
+  const { data: messages = [], error: loadError } = useQuery({
+    queryKey,
+    queryFn: () =>
+      isTable ? Chat.listTable(token) : Chat.listDm(token, targetSeat.id),
     refetchInterval: 3000,
-    enabled: !!mySeatId && !!targetSeat?.id,
+    enabled:
+      !!token &&
+      (isTable ? !!mySeat?.table_id : !!targetSeat?.id),
   });
+
+  useEffect(() => {
+    if (loadError) {
+      console.error("[ChatPanel:load]", loadError);
+    }
+  }, [loadError]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,17 +56,16 @@ export default function ChatPanel({ mySeatId, targetSeat, onClose }) {
 
   const sendMutation = useMutation({
     mutationFn: (content) =>
-      ChatMessage.create({
-        from_seat_id: mySeatId,
-        to_seat_id: targetSeat.id,
-        from_name: "Moi",
-        to_name: targetSeat.first_name || "Convive",
-        content,
-        table_id: targetSeat.table_id,
-      }),
+      isTable
+        ? Chat.sendTable(token, content)
+        : Chat.sendDm(token, targetSeat.id, content),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chat", mySeatId, targetSeat?.id] });
+      queryClient.invalidateQueries({ queryKey });
       setMessage("");
+    },
+    onError: (err) => {
+      console.error("[ChatPanel:send]", err);
+      toast.error("Message non envoyé");
     },
   });
 
@@ -62,11 +75,21 @@ export default function ChatPanel({ mySeatId, targetSeat, onClose }) {
     sendMutation.mutate(message.trim());
   };
 
-  if (!targetSeat) return null;
+  // Nothing to render if we have no identity or (in DM mode) no target.
+  if (!mySeat || (!isTable && !targetSeat)) return null;
 
-  const headerEyebrow = targetSeat.table_number
+  const headerEyebrow = isTable
+    ? "Chat de table"
+    : targetSeat.table_number
     ? `Table ${targetSeat.table_number}`
     : `Siège ${targetSeat.seat_number ?? ""}`;
+
+  const headerTitle = isTable
+    ? tableNumber
+      ? `Table ${tableNumber}`
+      : "Ma table"
+    : `${targetSeat.first_name || ""} ${targetSeat.last_name || ""}`.trim() ||
+      "Convive";
 
   return (
     <AnimatePresence>
@@ -97,7 +120,11 @@ export default function ChatPanel({ mySeatId, targetSeat, onClose }) {
               fontSize: 12,
             }}
           >
-            {getInitials(targetSeat.first_name, targetSeat.last_name)}
+            {isTable ? (
+              <Users className="w-4 h-4" style={{ color: GOLD }} />
+            ) : (
+              getInitials(targetSeat.first_name, targetSeat.last_name)
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div
@@ -114,7 +141,7 @@ export default function ChatPanel({ mySeatId, targetSeat, onClose }) {
                 fontWeight: 500,
               }}
             >
-              {targetSeat.first_name} {targetSeat.last_name}
+              {headerTitle}
             </div>
           </div>
           <button
@@ -138,7 +165,7 @@ export default function ChatPanel({ mySeatId, targetSeat, onClose }) {
                 className="text-[12px] italic"
                 style={{ fontFamily: "'Playfair Display', serif" }}
               >
-                Démarrez la conversation
+                {isTable ? "Aucun message pour le moment" : "Démarrez la conversation"}
               </p>
             </div>
           )}
@@ -170,6 +197,14 @@ export default function ChatPanel({ mySeatId, targetSeat, onClose }) {
                         }
                   }
                 >
+                  {isTable && !isMine && msg.from_name && (
+                    <div
+                      className="text-[10px] uppercase tracking-[0.12em] mb-1"
+                      style={{ color: GOLD }}
+                    >
+                      {msg.from_name}
+                    </div>
+                  )}
                   {msg.content}
                   <div
                     className="text-[9px] uppercase tracking-[0.12em] mt-1"
@@ -192,7 +227,7 @@ export default function ChatPanel({ mySeatId, targetSeat, onClose }) {
           <input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Écrire un mot…"
+            placeholder={isTable ? "Écrire à la table…" : "Écrire un mot…"}
             className="flex-1 bg-transparent text-[13px] px-3 py-2 outline-none"
             style={{
               color: NAVY,

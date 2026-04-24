@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { RestaurantTable, Seat, GlobalSettings, EventHistory, Reservation, ChatMessage, getCurrentUser, uploadFile } from "@/lib/db";
+import { RestaurantTable, Seat, GlobalSettings, EventHistory, Reservation, Chat, getCurrentUser, uploadFile } from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -214,16 +214,15 @@ export default function AdminControl() {
 
 
 
-  // Clear all chat
+  // Clear all chat — chat_messages is locked by RLS, so go through the RPC.
   const clearChatMutation = useMutation({
-    mutationFn: async () => {
-      const messages = await ChatMessage.list();
-      for (const msg of messages) {
-        await ChatMessage.delete(msg.id);
-      }
-    },
+    mutationFn: () => Chat.adminClearAll(),
     onSuccess: () => {
       toast.success("Messagerie nettoyée");
+    },
+    onError: (err) => {
+      console.error("[AdminControl:clearChat]", err);
+      toast.error("Échec du nettoyage de la messagerie");
     },
   });
 
