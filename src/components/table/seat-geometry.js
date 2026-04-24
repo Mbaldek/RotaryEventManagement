@@ -14,8 +14,18 @@
 // outward offsets, more seats on the long sides. Rotation rotates all
 // positions around (50, 50).
 
-const ROUND_PIN_OUT = 0;       // pin straddles the table edge (round)
-const ROUND_LABEL_OUT = 9;     // label this many % outside the table edge (round)
+// Visual-calibration defaults (measured 2026-04-24). Derived from halfR:
+const ROUND_PIN_OUT = 2;       // pin 2% outside the table edge (halfR + 2)
+const ROUND_LABEL_OUT = 10;    // label 10% outside the table edge (halfR + 10)
+
+// Systematic offsets the table canvas needs to visually align pin/label rings
+// with the actual table center in the rendered page (which is not quite at
+// (50, 50) of the canvas once side markers and paddings settle in).
+const ROUND_PIN_OFFSET_X = -1.5;
+const ROUND_PIN_OFFSET_Y = -1;
+const ROUND_LABEL_OFFSET_X = -7.5;
+const ROUND_LABEL_OFFSET_Y = -3;
+
 const RECT_PIN_OFF = 6;        // pin offset outside the table edge (rect/square)
 const RECT_LABEL_OFF = 17;     // label offset further out
 
@@ -165,13 +175,18 @@ export function computeSeatLayouts(seatCount, shape, options = {}) {
     rotationDeg = 0,
     pinRadius,          // absolute % from center, overrides round default
     labelRadius,        // absolute % from center, overrides round default
-    pinOffsetX = 0,     // shift pins only (%)
-    pinOffsetY = 0,
-    labelOffsetX = 0,   // shift labels only (%)
-    labelOffsetY = 0,
+    pinOffsetX,         // shift pins only (%)
+    pinOffsetY,
+    labelOffsetX,       // shift labels only (%)
+    labelOffsetY,
   } = options;
 
   let layouts;
+  let defaultPinOX = 0;
+  let defaultPinOY = 0;
+  let defaultLabelOX = 0;
+  let defaultLabelOY = 0;
+
   if (shape === "rectangle") {
     layouts = rectLayout(seatCount, 32, 16, rotationDeg);
   } else if (shape === "square") {
@@ -182,8 +197,17 @@ export function computeSeatLayouts(seatCount, shape, options = {}) {
     const pinR = Number.isFinite(pinRadius) ? pinRadius : halfR + ROUND_PIN_OUT;
     const labelR = Number.isFinite(labelRadius) ? labelRadius : halfR + ROUND_LABEL_OUT;
     layouts = roundLayout(seatCount, halfR, rotationDeg, pinR, labelR);
+    defaultPinOX = ROUND_PIN_OFFSET_X;
+    defaultPinOY = ROUND_PIN_OFFSET_Y;
+    defaultLabelOX = ROUND_LABEL_OFFSET_X;
+    defaultLabelOY = ROUND_LABEL_OFFSET_Y;
   }
-  return applyOffsets(layouts, pinOffsetX, pinOffsetY, labelOffsetX, labelOffsetY);
+
+  const pox = Number.isFinite(pinOffsetX) ? pinOffsetX : defaultPinOX;
+  const poy = Number.isFinite(pinOffsetY) ? pinOffsetY : defaultPinOY;
+  const lox = Number.isFinite(labelOffsetX) ? labelOffsetX : defaultLabelOX;
+  const loy = Number.isFinite(labelOffsetY) ? labelOffsetY : defaultLabelOY;
+  return applyOffsets(layouts, pox, poy, lox, loy);
 }
 
 // Visual table dimensions in percent (matches the geometry above so seats
