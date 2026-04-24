@@ -105,9 +105,14 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
     align === "right" ? "items-end text-right" :
     "items-center text-center";
 
+  // Uniform label-box width across states so adjacent labels around the table
+  // never overlap — even with long first/last names, the label wraps to a
+  // second line instead of extending horizontally into its neighbour.
+  const boxClass = `flex flex-col ${alignClass} leading-tight w-[120px]`;
+
   if (status === "empty") {
     return (
-      <div className={`flex flex-col ${alignClass} leading-tight max-w-[110px]`}>
+      <div className={boxClass}>
         <span className="text-[9px] uppercase tracking-[0.18em] font-medium" style={{ color: MUTED }}>
           Siège {seatNumber}
         </span>
@@ -123,7 +128,7 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
 
   if (status === "reserved") {
     return (
-      <div className={`flex flex-col ${alignClass} leading-tight max-w-[110px]`}>
+      <div className={boxClass}>
         <span className="text-[9px] uppercase tracking-[0.18em] font-medium" style={{ color: GOLD }}>
           Siège {seatNumber}
         </span>
@@ -134,14 +139,16 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
           Réservé
         </span>
         {seat?.reserved_by && (
-          <span className="text-[10px] mt-0.5" style={{ color: MUTED }}>{seat.reserved_by}</span>
+          <span className="text-[10px] mt-0.5 break-words" style={{ color: MUTED }}>
+            {seat.reserved_by}
+          </span>
         )}
       </div>
     );
   }
 
   return (
-    <div className={`flex flex-col ${alignClass} leading-tight`}>
+    <div className={boxClass}>
       {status === "me" ? (
         <span className="text-[9px] uppercase tracking-[0.18em] font-medium" style={{ color: GOLD }}>
           Vous · {seatNumber}
@@ -152,7 +159,7 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
         </span>
       )}
       <span
-        className="text-[12px] md:text-[12.5px] mt-0.5"
+        className="text-[12px] md:text-[12.5px] mt-0.5 break-words hyphens-auto"
         style={{
           fontFamily: "'Playfair Display', serif",
           color: NAVY,
@@ -163,7 +170,7 @@ function SeatLabel({ seat, status, seatNumber, align = "center" }) {
         {seat.first_name} {seat.last_name}
       </span>
       {seat.job && (
-        <span className="text-[10px] mt-0.5 truncate max-w-[120px]" style={{ color: MUTED }}>
+        <span className="text-[10px] mt-0.5 truncate w-full" style={{ color: MUTED }}>
           {seat.job}
         </span>
       )}
