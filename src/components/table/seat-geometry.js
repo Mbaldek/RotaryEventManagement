@@ -143,12 +143,18 @@ function rectLayout(seatCount, halfW, halfH, rotationDeg = 0) {
   return layouts;
 }
 
-function applyOffset(layouts, offsetX, offsetY) {
-  if (!offsetX && !offsetY) return layouts;
+function applyOffsets(layouts, pinOX, pinOY, labelOX, labelOY) {
+  if (!pinOX && !pinOY && !labelOX && !labelOY) return layouts;
   return layouts.map((l) => ({
     ...l,
-    pinPos: { leftPct: l.pinPos.leftPct + offsetX, topPct: l.pinPos.topPct + offsetY },
-    labelPos: { leftPct: l.labelPos.leftPct + offsetX, topPct: l.labelPos.topPct + offsetY },
+    pinPos: {
+      leftPct: l.pinPos.leftPct + pinOX,
+      topPct: l.pinPos.topPct + pinOY,
+    },
+    labelPos: {
+      leftPct: l.labelPos.leftPct + labelOX,
+      topPct: l.labelPos.topPct + labelOY,
+    },
   }));
 }
 
@@ -157,10 +163,12 @@ export function computeSeatLayouts(seatCount, shape, options = {}) {
   const {
     isPresidential = false,
     rotationDeg = 0,
-    pinRadius,        // absolute % from center, overrides round default
-    labelRadius,      // absolute % from center, overrides round default
-    offsetX = 0,      // shift entire ring system horizontally (%)
-    offsetY = 0,      // shift entire ring system vertically (%)
+    pinRadius,          // absolute % from center, overrides round default
+    labelRadius,        // absolute % from center, overrides round default
+    pinOffsetX = 0,     // shift pins only (%)
+    pinOffsetY = 0,
+    labelOffsetX = 0,   // shift labels only (%)
+    labelOffsetY = 0,
   } = options;
 
   let layouts;
@@ -175,7 +183,7 @@ export function computeSeatLayouts(seatCount, shape, options = {}) {
     const labelR = Number.isFinite(labelRadius) ? labelRadius : halfR + ROUND_LABEL_OUT;
     layouts = roundLayout(seatCount, halfR, rotationDeg, pinR, labelR);
   }
-  return applyOffset(layouts, offsetX, offsetY);
+  return applyOffsets(layouts, pinOffsetX, pinOffsetY, labelOffsetX, labelOffsetY);
 }
 
 // Visual table dimensions in percent (matches the geometry above so seats

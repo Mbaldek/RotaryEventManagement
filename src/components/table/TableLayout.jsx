@@ -12,8 +12,10 @@ function readInitialOverrides(defaultHalfR) {
   const fallback = {
     pinRadius: defaultHalfR,
     labelRadius: defaultHalfR + 9,
-    offsetX: 0,
-    offsetY: 0,
+    pinOffsetX: 0,
+    pinOffsetY: 0,
+    labelOffsetX: 0,
+    labelOffsetY: 0,
   };
   if (typeof window === "undefined") return fallback;
   const p = new URLSearchParams(window.location.search);
@@ -23,18 +25,30 @@ function readInitialOverrides(defaultHalfR) {
     const n = parseFloat(v);
     return Number.isFinite(n) ? n : def;
   };
+  // Backwards-compat: ?ox / ?oy used to shift both pin & label uniformly → now
+  // maps to pin offset (the user's first calibration target).
+  const legacyPinOX = parseNum("ox", 0);
+  const legacyPinOY = parseNum("oy", 0);
   return {
     pinRadius: parseNum("pr", fallback.pinRadius),
     labelRadius: parseNum("lr", fallback.labelRadius),
-    offsetX: parseNum("ox", 0),
-    offsetY: parseNum("oy", 0),
+    pinOffsetX: parseNum("pox", legacyPinOX),
+    pinOffsetY: parseNum("poy", legacyPinOY),
+    labelOffsetX: parseNum("lox", 0),
+    labelOffsetY: parseNum("loy", 0),
   };
 }
 
-function GeometryTuner({ halfR, pinR, labelR, offsetX, offsetY, onChange }) {
+function GeometryTuner({
+  halfR,
+  pinR, labelR,
+  pinOX, pinOY,
+  labelOX, labelOY,
+  onChange,
+}) {
   const row = (label, hint, value, min, max, step, onValue) => (
     <div className="flex items-center gap-3 py-1">
-      <div className="w-[170px] shrink-0">
+      <div className="w-[180px] shrink-0">
         <div className="text-[12px] font-medium" style={{ color: "#0f1f3d" }}>{label}</div>
         <div className="text-[10px]" style={{ color: "#9090a8" }}>{hint}</div>
       </div>
@@ -47,18 +61,27 @@ function GeometryTuner({ halfR, pinR, labelR, offsetX, offsetY, onChange }) {
         onChange={(e) => onValue(parseFloat(e.target.value))}
         className="flex-1 accent-[#c9a84c]"
       />
-      <div className="w-[60px] text-right text-[12px] font-mono" style={{ color: "#0f1f3d" }}>
+      <div className="w-[55px] text-right text-[12px] font-mono" style={{ color: "#0f1f3d" }}>
         {value}%
       </div>
     </div>
   );
 
+  const sectionHeader = (text, color) => (
+    <div
+      className="text-[10px] uppercase tracking-[0.18em] font-semibold mt-2 mb-0.5"
+      style={{ color }}
+    >
+      {text}
+    </div>
+  );
+
   return (
     <div
-      className="mt-6 mx-auto max-w-[560px] rounded-lg border px-4 py-3"
+      className="mt-6 mx-auto max-w-[620px] rounded-lg border px-4 py-3"
       style={{ background: "#faf7f2", borderColor: "#e8e3d9" }}
     >
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-1">
         <div className="text-[11px] uppercase tracking-[0.15em] font-medium" style={{ color: "#c9a84c" }}>
           Calibration géométrie · ronde
         </div>
@@ -67,35 +90,52 @@ function GeometryTuner({ halfR, pinR, labelR, offsetX, offsetY, onChange }) {
         </div>
       </div>
 
+      {sectionHeader("Rayons (distance au centre)", "#3a3a52")}
       {row(
         "Rayon des PINS",
-        `distance pin → centre · ${halfR}% = pile sur le bord`,
+        `${halfR}% = pile sur le bord · +2 = dehors · −2 = dedans`,
         pinR, 0, 50, 0.5,
         (v) => onChange({ pinRadius: v })
       )}
       {row(
         "Rayon des LABELS",
-        `distance label → centre (normalement > pins)`,
+        `normalement plus grand que le rayon pins`,
         labelR, 0, 50, 0.5,
         (v) => onChange({ labelRadius: v })
       )}
+
+      {sectionHeader("Décalage des PINS uniquement", "#b28a2a")}
       {row(
-        "Décalage horizontal",
-        `négatif = vers la gauche · positif = vers la droite`,
-        offsetX, -10, 10, 0.5,
-        (v) => onChange({ offsetX: v })
+        "Pins · horizontal",
+        `négatif = gauche · positif = droite`,
+        pinOX, -10, 10, 0.5,
+        (v) => onChange({ pinOffsetX: v })
       )}
       {row(
-        "Décalage vertical",
-        `négatif = vers le haut · positif = vers le bas`,
-        offsetY, -10, 10, 0.5,
-        (v) => onChange({ offsetY: v })
+        "Pins · vertical",
+        `négatif = haut · positif = bas`,
+        pinOY, -10, 10, 0.5,
+        (v) => onChange({ pinOffsetY: v })
       )}
 
-      <div className="mt-2 pt-2 border-t text-[10px]" style={{ borderColor: "#e8e3d9", color: "#9090a8" }}>
+      {sectionHeader("Décalage des LABELS uniquement", "#5a7a99")}
+      {row(
+        "Labels · horizontal",
+        `indépendant des pins`,
+        labelOX, -10, 10, 0.5,
+        (v) => onChange({ labelOffsetX: v })
+      )}
+      {row(
+        "Labels · vertical",
+        `indépendant des pins`,
+        labelOY, -10, 10, 0.5,
+        (v) => onChange({ labelOffsetY: v })
+      )}
+
+      <div className="mt-3 pt-2 border-t text-[10px]" style={{ borderColor: "#e8e3d9", color: "#9090a8" }}>
         URL figée :{" "}
         <span className="font-mono">
-          ?pr={pinR}&amp;lr={labelR}&amp;ox={offsetX}&amp;oy={offsetY}
+          ?pr={pinR}&amp;lr={labelR}&amp;pox={pinOX}&amp;poy={pinOY}&amp;lox={labelOX}&amp;loy={labelOY}
         </span>
       </div>
     </div>
@@ -502,8 +542,10 @@ export default function TableLayout({
     rotationDeg: rotation,
     pinRadius: tune.pinRadius,
     labelRadius: tune.labelRadius,
-    offsetX: tune.offsetX,
-    offsetY: tune.offsetY,
+    pinOffsetX: tune.pinOffsetX,
+    pinOffsetY: tune.pinOffsetY,
+    labelOffsetX: tune.labelOffsetX,
+    labelOffsetY: tune.labelOffsetY,
   });
   const tint = TINTS[color] || TINTS.amber;
   const surface = tableSurfaceSize(shape, isPresidential);
@@ -623,8 +665,10 @@ export default function TableLayout({
         halfR={defaultHalfR}
         pinR={tune.pinRadius}
         labelR={tune.labelRadius}
-        offsetX={tune.offsetX}
-        offsetY={tune.offsetY}
+        pinOX={tune.pinOffsetX}
+        pinOY={tune.pinOffsetY}
+        labelOX={tune.labelOffsetX}
+        labelOY={tune.labelOffsetY}
         onChange={updateTune}
       />
     </div>
