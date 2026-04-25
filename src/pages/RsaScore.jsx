@@ -215,6 +215,9 @@ export default function RsaScore() {
   const [sessionRow, setSessionRow] = useState(null);
   const [jurors, setJurors] = useState([]);
   const [startups, setStartups] = useState([]);
+  // For finale startups only: map of startup_name → source qualifier session id.
+  // Empty for qualifying sessions; populated when session.isFinal.
+  const [startupSources, setStartupSources] = useState({});
   const [scores, setScores] = useState([]); // my submitted rows
   const [juryName, setJuryName] = useState("");
   const [drafts, setDrafts] = useState({}); // { [startup]: { score_*, comment } }
@@ -267,6 +270,18 @@ export default function RsaScore() {
           ? order
           : allStartups.map((s) => s.startup_name).sort((a, b) => a.localeCompare(b));
         setStartups(orderedNames);
+
+        // Map source_session_id per startup — only meaningful on the finale,
+        // where it traces each finalist back to the qualifier they won.
+        if (session?.isFinal) {
+          const sources = {};
+          for (const s of allStartups) {
+            if (s.source_session_id) sources[s.startup_name] = s.source_session_id;
+          }
+          setStartupSources(sources);
+        } else {
+          setStartupSources({});
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -641,6 +656,7 @@ export default function RsaScore() {
                   disabled={!scoringOpen}
                   submitting={submittingFor === s}
                   lang={lang}
+                  sourceSessionId={startupSources[s]}
                   onToggle={() => setExpandedStartup((prev) => (prev === s ? null : s))}
                   onChangeField={(field, v) => updateDraft(s, { [field]: v })}
                   onChangeComment={(v) => updateDraft(s, { comment: v })}

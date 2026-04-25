@@ -1,7 +1,7 @@
 import React from "react";
-import { ChevronDown, ChevronUp, Check, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, Loader2, Trophy } from "lucide-react";
 import CriterionRating from "./CriterionRating";
-import { CRITERIA, SCORE_FIELDS, weightedScore, criteriaFilledCount, MAX_WEIGHTED } from "@/lib/rsa/constants";
+import { CRITERIA, SCORE_FIELDS, weightedScore, criteriaFilledCount, MAX_WEIGHTED, SESSION_BY_ID, getSessionLabel } from "@/lib/rsa/constants";
 
 const T = {
   fr: {
@@ -48,6 +48,7 @@ export default function StartupScoreCard({
   disabled,
   submitting,
   lang = "fr",
+  sourceSessionId,
   onToggle,
   onChangeField,
   onChangeComment,
@@ -59,6 +60,12 @@ export default function StartupScoreCard({
   const weighted = weightedScore(draft);
   const isSubmitted = !!submittedAt;
   const canSubmit = filled === total && !disabled && !submitting;
+
+  // For grande finale cards, show which qualifying session this finalist won.
+  const sourceSession = sourceSessionId ? SESSION_BY_ID[sourceSessionId] : null;
+  const winnerBadge = sourceSession
+    ? `${lang === "en" ? "Winner of" : lang === "de" ? "Sieger von" : "Vainqueur de"} ${getSessionLabel(sourceSession, lang)}`
+    : null;
 
   return (
     <div
@@ -80,7 +87,23 @@ export default function StartupScoreCard({
           {isSubmitted ? <Check className="w-4 h-4" /> : index + 1}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-stone-800 truncate">{startup}</div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="font-semibold text-stone-800 truncate">{startup}</div>
+            {winnerBadge && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded"
+                style={{
+                  background: sourceSession.light,
+                  color: sourceSession.color,
+                  border: `1px solid ${sourceSession.border}`,
+                }}
+                title={winnerBadge}
+              >
+                <Trophy className="w-3 h-3" />
+                {sourceSession.emoji}
+              </span>
+            )}
+          </div>
           <div className="text-xs text-stone-500 mt-0.5 flex items-center gap-2">
             {isSubmitted ? (
               <span className="text-emerald-700">{t.submittedTag}</span>

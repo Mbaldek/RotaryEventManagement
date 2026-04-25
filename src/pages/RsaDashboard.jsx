@@ -243,6 +243,7 @@ export default function RsaDashboard() {
   const [tab, setTab] = useState("calendar");
   const [sessConf, setSessConf] = useState({});
   const [confs, setConfs] = useState({});
+  const [finalists, setFinalists] = useState([]); // grande finale lineup, derived in loadAll
   const [profiles, setProfiles] = useState([]);
   const [juryView, setJuryView] = useState("pool");
   const [assignView, setAssignView] = useState("byJury");
@@ -263,19 +264,31 @@ export default function RsaDashboard() {
     setLoading(true);
     try {
       const [cfgRows, confRows, profRows, actRows] = await Promise.all([
-        sbGet("session_config", "?select=session_id,teams_link,airtable_link,notes,checklist"),
-        sbGet("startup_confirmations", "?select=startup_name,session_id,status,note,deck_upload_token,startup_contact_prenom,startup_contact_email,application_deck_path,application_deck_filename,deck_confirmed_at,final_deck_path,final_deck_uploaded_at,final_deck_original_filename,instructions_sent_at"),
+        sbGet("session_config", "?select=session_id,teams_link,airtable_link,notes,checklist,status,final_ranking,is_final"),
+        sbGet("startup_confirmations", "?select=startup_name,session_id,source_session_id,status,note,deck_upload_token,startup_contact_prenom,startup_contact_email,application_deck_path,application_deck_filename,deck_confirmed_at,final_deck_path,final_deck_uploaded_at,final_deck_original_filename,instructions_sent_at"),
         sbGet("jury_profiles", "?select=id,prenom,nom,qualite,organisation,email,sessions,assigned_sessions,validated,grande_finale,photo_base64,lang,created_at&order=created_at.desc"),
         sbGet("rsa_actions", "?select=id,title,due_date,done,pos,notes,link,created_at&order=done.asc,pos.asc,created_at.asc")
       ]);
       const cfg = {};
-      (cfgRows||[]).forEach(r => { cfg[r.session_id] = {teams_link:r.teams_link||"",airtable_link:r.airtable_link||"",notes:r.notes||"",checklist:r.checklist||{}}; });
+      (cfgRows||[]).forEach(r => {
+        cfg[r.session_id] = {
+          teams_link: r.teams_link || "",
+          airtable_link: r.airtable_link || "",
+          notes: r.notes || "",
+          checklist: r.checklist || {},
+          status: r.status || "draft",
+          final_ranking: Array.isArray(r.final_ranking) ? r.final_ranking : [],
+          is_final: !!r.is_final,
+        };
+      });
       setSessConf(cfg);
       const cf = {};
+      const finalists = []; // { startup_name, source_session_id }
       (confRows||[]).forEach(r => {
         cf[r.startup_name+"__"+r.session_id] = {
           status: r.status,
           note: r.note||"",
+          source_session_id: r.source_session_id||null,
           deck_upload_token: r.deck_upload_token,
           startup_contact_prenom: r.startup_contact_prenom,
           startup_contact_email: r.startup_contact_email,
@@ -287,8 +300,12 @@ export default function RsaDashboard() {
           final_deck_original_filename: r.final_deck_original_filename,
           instructions_sent_at: r.instructions_sent_at,
         };
+        if (r.session_id === "final_grande") {
+          finalists.push({ startup_name: r.startup_name, source_session_id: r.source_session_id||null });
+        }
       });
       setConfs(cf);
+      setFinalists(finalists);
       setProfiles(profRows||[]);
       setActions(actRows||[]);
     } catch(e) { console.error(e); }
@@ -412,27 +429,84 @@ export default function RsaDashboard() {
 
         {/* CALENDAR */}
         {tab==="calendar" && (
-          <div className="card fade card-pad-mob" style={{padding:"20px 22px"}}>
-            <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:600,color:NAVY,marginBottom:20}}>Calendrier de la compétition</div>
-            <div className="cal-timeline" style={{position:"relative",paddingLeft:80}}>
-              <div className="cal-rail" style={{position:"absolute",left:62,top:14,bottom:14,width:2,background:CREAM2,borderRadius:1}}/>
-              {TIMELINE.map((item,i) => {
-                const isF=item.type==="finale"; const isC=item.type==="ceremony";
-                return (
-                  <div key={i} className="fade" style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:18,animationDelay:i*.05+"s"}}>
-                    <div className="cal-date-col" style={{width:80,flexShrink:0,textAlign:"right",paddingRight:18,position:"relative"}}>
-                      <div style={{fontSize:13,fontWeight:500,color:NAVY}}>{item.date}</div>
-                      <div style={{fontSize:10,color:"#9090a8"}}>{item.day}</div>
-                      <div style={{position:"absolute",right:-6,top:"50%",transform:"translateY(-50%)",width:isF||isC?14:10,height:isF||isC?14:10,borderRadius:"50%",background:item.color,border:"2px solid white",boxShadow:`0 0 0 2px ${item.color}40`}}/>
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            <div className="card fade card-pad-mob" style={{padding:"20px 22px"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:600,color:NAVY,marginBottom:20}}>Calendrier de la compétition</div>
+              <div className="cal-timeline" style={{position:"relative",paddingLeft:80}}>
+                <div className="cal-rail" style={{position:"absolute",left:62,top:14,bottom:14,width:2,background:CREAM2,borderRadius:1}}/>
+                {TIMELINE.map((item,i) => {
+                  const isF=item.type==="finale"; const isC=item.type==="ceremony";
+                  return (
+                    <div key={i} className="fade" style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:18,animationDelay:i*.05+"s"}}>
+                      <div className="cal-date-col" style={{width:80,flexShrink:0,textAlign:"right",paddingRight:18,position:"relative"}}>
+                        <div style={{fontSize:13,fontWeight:500,color:NAVY}}>{item.date}</div>
+                        <div style={{fontSize:10,color:"#9090a8"}}>{item.day}</div>
+                        <div style={{position:"absolute",right:-6,top:"50%",transform:"translateY(-50%)",width:isF||isC?14:10,height:isF||isC?14:10,borderRadius:"50%",background:item.color,border:"2px solid white",boxShadow:`0 0 0 2px ${item.color}40`}}/>
+                      </div>
+                      <div style={{flex:1,padding:"9px 13px",borderRadius:10,border:"1px solid "+(isF?GOLD+"50":isC?NAVY+"20":"rgba(15,31,61,.07)"),background:isF?"#fdf6e8":isC?"#f0f2f8":"white"}}>
+                        <div style={{fontSize:13,fontWeight:isF||isC?600:400,color:NAVY,fontFamily:isF||isC?"'Playfair Display',serif":"Inter,sans-serif"}}>{item.label}</div>
+                        {item.note&&<div style={{fontSize:10.5,color:isF?"#9a6400":"#4a5a7a",marginTop:2}}>{item.note}</div>}
+                      </div>
                     </div>
-                    <div style={{flex:1,padding:"9px 13px",borderRadius:10,border:"1px solid "+(isF?GOLD+"50":isC?NAVY+"20":"rgba(15,31,61,.07)"),background:isF?"#fdf6e8":isC?"#f0f2f8":"white"}}>
-                      <div style={{fontSize:13,fontWeight:isF||isC?600:400,color:NAVY,fontFamily:isF||isC?"'Playfair Display',serif":"Inter,sans-serif"}}>{item.label}</div>
-                      {item.note&&<div style={{fontSize:10.5,color:isF?"#9a6400":"#4a5a7a",marginTop:2}}>{item.note}</div>}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
+
+            {/* "Vers la Finale" — qualifying winners snapshot + finalist count */}
+            {(() => {
+              const finalistsBySource = new Map(finalists.filter(f=>f.source_session_id).map(f=>[f.source_session_id, f]));
+              const filledCount = SK.filter(sk=>finalistsBySource.has(SC[sk].id)).length;
+              return (
+                <div className="card fade" style={{padding:"18px 22px",borderColor:"#e8d090",borderWidth:1,borderStyle:"solid",background:"linear-gradient(180deg,#fdf6e8 0%,white 60%)"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:14}}>
+                    <div>
+                      <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:600,color:NAVY,display:"flex",alignItems:"center",gap:8}}>
+                        🏆 Vers la Finale
+                        <span style={{fontSize:11,padding:"2px 9px",borderRadius:8,background:"white",border:"1px solid #e8d090",color:"#9a6400",fontWeight:500,fontFamily:"Inter,sans-serif"}}>{filledCount}/5 finalistes</span>
+                      </div>
+                      <div style={{fontSize:11,color:"#9090a8",marginTop:3}}>Vainqueur de chaque session qualificative — passe en Grande Finale du 26 mai</div>
+                    </div>
+                    <a href="/RsaAdmin?session=final_grande" className="btn" style={{fontSize:11,padding:"6px 12px",borderRadius:8,background:NAVY,color:"white",border:"none",fontFamily:"Inter,sans-serif",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:6}}>
+                      Gérer la finale →
+                    </a>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:8}}>
+                    {SK.map(sk=>{
+                      const s = SC[sk];
+                      const cfg = sessConf[s.id] || {};
+                      const status = cfg.status || "draft";
+                      const isPublished = status === "published";
+                      const ranking = Array.isArray(cfg.final_ranking) ? cfg.final_ranking : [];
+                      const winner = isPublished ? ranking.find(r=>r.final_rank===1) : null;
+                      const inFinal = finalistsBySource.has(s.id);
+                      return (
+                        <div key={sk} style={{padding:"10px 12px",borderRadius:8,background:"white",border:"1px solid "+s.border,position:"relative"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+                            <span style={{fontSize:14}}>{s.emoji}</span>
+                            <span style={{fontSize:10,color:s.color,fontWeight:600,textTransform:"uppercase",letterSpacing:".05em"}}>{s.short}</span>
+                          </div>
+                          {winner ? (
+                            <div>
+                              <div style={{fontSize:12.5,fontWeight:600,color:NAVY,fontFamily:"'Playfair Display',serif",lineHeight:1.25}}>{winner.startup_name}</div>
+                              <div style={{fontSize:10,marginTop:3,color:inFinal?"#1d6b4f":"#9a6400",fontWeight:500}}>
+                                {inFinal ? "✓ Inscrit en finale" : "À ajouter à la finale"}
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{fontSize:11,color:"#9090a8",fontStyle:"italic",lineHeight:1.3}}>
+                              {status === "locked" ? "Verrouillé, à publier" :
+                               status === "live" ? "Scoring en cours" :
+                               "Pas encore commencé"}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
