@@ -4,6 +4,7 @@ import { Loader2, Copy, Plus, Trash2, ChevronUp, ChevronDown, Check, AlertTriang
 import { SESSION_BY_ID, JURY_STATUS } from "@/lib/rsa/constants";
 import { JuryProfile, SessionConfig, StartupConfirmation, JuryScore, JuryScoringSession } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
+import FinalistsPicker from "./FinalistsPicker";
 
 export default function SetupTab({ sessionId }) {
   const session = SESSION_BY_ID[sessionId];
@@ -13,6 +14,7 @@ export default function SetupTab({ sessionId }) {
   const [sessionRow, setSessionRow] = useState(null);
   const [newStartup, setNewStartup] = useState("");
   const [working, setWorking] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,7 +48,7 @@ export default function SetupTab({ sessionId }) {
       }
     }
     load();
-  }, [sessionId]);
+  }, [sessionId, reloadKey]);
 
   async function toggleAssignment(juror) {
     setWorking(true);
@@ -233,10 +235,19 @@ export default function SetupTab({ sessionId }) {
         </div>
       </Section>
 
+      {/* Finalists picker — only on the grande finale session */}
+      {session.isFinal && (
+        <FinalistsPicker onChanged={() => setReloadKey((k) => k + 1)} />
+      )}
+
       {/* Startups */}
       <Section
         title={`Startups in presentation order (${startups.length})`}
-        subtitle="Reorder with arrows · order saved immediately"
+        subtitle={
+          session.isFinal
+            ? "Auto-géré par le sélecteur de finalistes ci-dessus · réordonnable manuellement"
+            : "Reorder with arrows · order saved immediately"
+        }
       >
         <div className="space-y-2">
           {startups.map((s, i) => (
