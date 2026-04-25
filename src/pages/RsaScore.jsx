@@ -251,9 +251,11 @@ export default function RsaScore() {
         if (cancelled) return;
         setSessionRow(cfgRow[0] ?? null);
 
-        // Jurors assigned to this session (match by label or id), validated only
+        // Jurors assigned to this session (match by label or id), validated only.
+        // For the grande finale, jurors are filtered by the dedicated flag instead.
         const validated = allJury.filter((j) => {
           if (!j.validated) return false;
+          if (session?.isFinal) return j.grande_finale === true;
           const assigned = j.assigned_sessions || [];
           return assigned.includes(sessionLabel) || assigned.includes(sessionInternalId);
         });

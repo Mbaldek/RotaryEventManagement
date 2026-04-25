@@ -68,10 +68,28 @@ export const SESSIONS = [
     light: "#e8f5ee",
     border: "#b0d8c4",
   },
+  {
+    id: "final_grande",
+    label: "Grande Finale",
+    labelEn: "Grand Final",
+    labelDe: "Großes Finale",
+    emoji: "🏆",
+    date: "À définir",
+    dateEn: "TBD",
+    dateDe: "TBD",
+    color: "#c9a84c",
+    light: "#fdf6e8",
+    border: "#e8d090",
+    isFinal: true,
+  },
 ];
+
+export const FINAL_SESSION_ID = "final_grande";
 
 export const SESSION_BY_ID = Object.fromEntries(SESSIONS.map((s) => [s.id, s]));
 export const SESSION_BY_LABEL = Object.fromEntries(SESSIONS.map((s) => [s.label, s]));
+
+export const QUALIFYING_SESSIONS = SESSIONS.filter((s) => !s.isFinal);
 
 export function getSessionLabel(session, lang = "fr") {
   if (!session) return "";

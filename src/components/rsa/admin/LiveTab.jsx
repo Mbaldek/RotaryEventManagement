@@ -33,6 +33,7 @@ export default function LiveTab({ sessionId, onResultsReady }) {
         setSessionRow(cfgRow);
         const validated = allJury.filter((j) => {
           if (!j.validated) return false;
+          if (session.isFinal) return j.grande_finale === true;
           const a = j.assigned_sessions || [];
           return a.includes(session.label) || a.includes(session.id);
         });

@@ -51,6 +51,16 @@ export default function SetupTab({ sessionId }) {
   async function toggleAssignment(juror) {
     setWorking(true);
     try {
+      // For the grande finale, the boolean flag is the source of truth — the
+      // assigned_sessions array stays scoped to the 5 qualifiers.
+      if (session.isFinal) {
+        const next = !juror.grande_finale;
+        await JuryProfile.update(juror.id, { grande_finale: next });
+        setJurors((prev) =>
+          prev.map((j) => (j.id === juror.id ? { ...j, grande_finale: next } : j))
+        );
+        return;
+      }
       const assigned = juror.assigned_sessions || [];
       const hasLabel = assigned.includes(session.label);
       const hasId = assigned.includes(session.id);
@@ -171,11 +181,11 @@ export default function SetupTab({ sessionId }) {
     return <Loader2 className="w-5 h-5 animate-spin text-stone-400 mx-auto my-12" />;
   }
 
-  const assignedJurors = jurors.filter(
-    (j) =>
-      (j.assigned_sessions || []).includes(session.label) ||
-      (j.assigned_sessions || []).includes(session.id)
-  );
+  const assignedJurors = jurors.filter((j) => {
+    if (session.isFinal) return j.grande_finale === true;
+    const a = j.assigned_sessions || [];
+    return a.includes(session.label) || a.includes(session.id);
+  });
 
   return (
     <div className="space-y-6">
@@ -286,9 +296,10 @@ export default function SetupTab({ sessionId }) {
       >
         <div className="space-y-2">
           {jurors.map((j) => {
-            const assigned =
-              (j.assigned_sessions || []).includes(session.label) ||
-              (j.assigned_sessions || []).includes(session.id);
+            const assigned = session.isFinal
+              ? j.grande_finale === true
+              : (j.assigned_sessions || []).includes(session.label) ||
+                (j.assigned_sessions || []).includes(session.id);
             return (
               <div
                 key={j.id}

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Download, Save, Rocket, AlertTriangle } from "lucide-react";
 import { SESSION_BY_ID, weightedScore, JURY_STATUS } from "@/lib/rsa/constants";
+import { buildRanking } from "@/lib/rsa/ranking";
 import { JuryScore, SessionConfig } from "@/lib/db";
 import StatusPill from "./StatusPill";
 
@@ -299,68 +300,6 @@ export default function ResultsTab({ sessionId }) {
       )}
     </div>
   );
-}
-
-function buildRanking(scores, overrides) {
-  // Group scores by startup
-  const byStartup = new Map();
-  for (const row of scores) {
-    const w = weightedScore(row);
-    if (w == null) continue;
-    if (!byStartup.has(row.startup_name)) byStartup.set(row.startup_name, []);
-    byStartup.get(row.startup_name).push(w);
-  }
-  // Build rows
-  const rows = [];
-  for (const [startup, ws] of byStartup) {
-    const avg = ws.reduce((a, b) => a + b, 0) / ws.length;
-    const o = overrides[startup] || {};
-    const bonus = Number(o.bonus) || 0;
-    rows.push({
-      startup,
-      avg,
-      n: ws.length,
-      bonus,
-      final_score: avg + bonus,
-      fixed_rank: o.final_rank || null,
-      note: o.note || "",
-    });
-  }
-  // Sort by final_score desc
-  rows.sort((a, b) => b.final_score - a.final_score);
-  // Apply final_rank: if any have a fixed rank, honor it
-  const fixed = rows.filter((r) => r.fixed_rank != null);
-  const auto = rows.filter((r) => r.fixed_rank == null);
-  if (fixed.length > 0) {
-    // Build a rank array
-    const totalCount = rows.length;
-    const result = new Array(totalCount).fill(null);
-    // Place fixed first
-    for (const r of fixed.sort((a, b) => a.fixed_rank - b.fixed_rank)) {
-      const idx = Math.max(0, Math.min(totalCount - 1, r.fixed_rank - 1));
-      if (result[idx] == null) {
-        result[idx] = { ...r, final_rank: r.fixed_rank };
-      } else {
-        // collision: push to next empty slot
-        for (let i = 0; i < totalCount; i++) {
-          if (result[i] == null) {
-            result[i] = { ...r, final_rank: i + 1 };
-            break;
-          }
-        }
-      }
-    }
-    // Fill auto rows
-    let ai = 0;
-    for (let i = 0; i < totalCount; i++) {
-      if (result[i] == null) {
-        const r = auto[ai++];
-        if (r) result[i] = { ...r, final_rank: i + 1 };
-      }
-    }
-    return result.filter(Boolean);
-  }
-  return rows.map((r, i) => ({ ...r, final_rank: i + 1 }));
 }
 
 function csvField(s) {
