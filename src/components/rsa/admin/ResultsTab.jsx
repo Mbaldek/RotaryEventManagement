@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Download, Save, Rocket, AlertTriangle } from "lucide-react";
+import { Loader2, Download, Save, Rocket, AlertTriangle, Trophy, Sparkles } from "lucide-react";
 import { SESSION_BY_ID, weightedScore, JURY_STATUS } from "@/lib/rsa/constants";
 import { buildRanking } from "@/lib/rsa/ranking";
 import { JuryScore, SessionConfig } from "@/lib/db";
@@ -143,6 +143,9 @@ export default function ResultsTab({ sessionId }) {
     return <Loader2 className="w-5 h-5 animate-spin text-stone-400 mx-auto my-12" />;
   }
 
+  const winner = rankedRows.find((r) => r.final_rank === 1);
+  const podium = rankedRows.filter((r) => r.final_rank <= 3);
+
   return (
     <div className="space-y-5">
       <div
@@ -158,6 +161,129 @@ export default function ResultsTab({ sessionId }) {
           <p className="text-xs text-stone-600 mt-0.5">{session.date}</p>
         </div>
       </div>
+
+      {/* 🏆 Grand Final laureate reveal — shown when the finale is published. */}
+      {session.isFinal && published && winner && (
+        <div
+          className="rounded-2xl border-2 p-6 md:p-8 relative overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #fdf6e8 0%, #fbeec1 50%, #fdf6e8 100%)",
+            borderColor: "#c9a84c",
+            boxShadow: "0 10px 30px rgba(201,168,76,0.18)",
+          }}
+        >
+          <div
+            aria-hidden
+            className="absolute -top-10 -right-10 opacity-10"
+            style={{ fontSize: 200, lineHeight: 1 }}
+          >
+            🏆
+          </div>
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4" style={{ color: "#9a6400" }} />
+              <span
+                className="text-[11px] uppercase tracking-[0.2em] font-medium"
+                style={{ color: "#9a6400" }}
+              >
+                Lauréat — Rotary Startup Award 2026
+              </span>
+            </div>
+            <h3
+              className="text-3xl md:text-5xl leading-tight"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                color: "#0f1f3d",
+                fontWeight: 600,
+              }}
+            >
+              {winner.startup}
+            </h3>
+            <div className="mt-3 flex items-center gap-4 flex-wrap text-sm">
+              <span style={{ color: "#5a5a7a" }}>
+                Score final{" "}
+                <strong style={{ color: "#9a6400" }}>
+                  {winner.final_score.toFixed(2)}/5
+                </strong>
+              </span>
+              <span style={{ color: "#9090a8" }}>·</span>
+              <span style={{ color: "#5a5a7a" }}>
+                Moyenne jury {winner.avg.toFixed(2)} sur {winner.n} évaluations
+              </span>
+              {winner.bonus > 0 && (
+                <>
+                  <span style={{ color: "#9090a8" }}>·</span>
+                  <span style={{ color: "#5a5a7a" }}>
+                    Bonus admin <strong>+{winner.bonus}</strong>
+                  </span>
+                </>
+              )}
+            </div>
+            {winner.note && (
+              <p
+                className="mt-3 text-sm italic"
+                style={{ color: "#3a3a52", fontFamily: "'Playfair Display', serif" }}
+              >
+                « {winner.note} »
+              </p>
+            )}
+
+            {podium.length > 1 && (
+              <div className="mt-5 pt-4 border-t" style={{ borderColor: "rgba(201,168,76,0.3)" }}>
+                <div
+                  className="text-[10px] uppercase tracking-[0.18em] font-medium mb-2"
+                  style={{ color: "#9a6400" }}
+                >
+                  Podium
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {podium.map((r) => (
+                    <div
+                      key={r.startup}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded"
+                      style={{
+                        background: "white",
+                        border: "1px solid rgba(201,168,76,0.4)",
+                      }}
+                    >
+                      <Trophy
+                        className="w-3.5 h-3.5"
+                        style={{
+                          color:
+                            r.final_rank === 1
+                              ? "#c9a84c"
+                              : r.final_rank === 2
+                              ? "#9090a8"
+                              : "#a87a4a",
+                        }}
+                      />
+                      <span
+                        className="text-[11px] font-semibold"
+                        style={{ color: "#9a6400" }}
+                      >
+                        #{r.final_rank}
+                      </span>
+                      <span
+                        className="text-sm"
+                        style={{
+                          fontFamily: "'Playfair Display', serif",
+                          color: "#0f1f3d",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {r.startup}
+                      </span>
+                      <span className="text-[11px] tabular-nums" style={{ color: "#5a5a7a" }}>
+                        {r.final_score.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {status === JURY_STATUS.DRAFT || status === JURY_STATUS.LIVE ? (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3">
