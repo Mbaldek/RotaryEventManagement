@@ -45,6 +45,7 @@ const T = {
     copiedFor: (lbl) => `Emails ${lbl} copiés :`,
     finaleTitle: "🏆 Grande Finale",
     finaleDate: "Mardi 26 mai · 16h–19h · Cyrus Conseil",
+    finaleShort: "26 mai · 16h",
     juror: "Juré",
     total: "Total",
     finaleCol: "Finale",
@@ -77,6 +78,7 @@ const T = {
     copiedFor: (lbl) => `${lbl} emails copied:`,
     finaleTitle: "🏆 Grand Final",
     finaleDate: "Tuesday May 26 · 4–7pm · Cyrus Conseil",
+    finaleShort: "May 26 · 4pm",
     juror: "Juror",
     total: "Total",
     finaleCol: "Final",
@@ -109,6 +111,7 @@ const T = {
     copiedFor: (lbl) => `${lbl} E-Mails kopiert:`,
     finaleTitle: "🏆 Großes Finale",
     finaleDate: "Dienstag, 26. Mai · 16–19 Uhr · Cyrus Conseil",
+    finaleShort: "26. Mai · 16 Uhr",
     juror: "Juror",
     total: "Gesamt",
     finaleCol: "Finale",
@@ -159,7 +162,7 @@ body{font-family:'Inter',sans-serif;background:${CREAM};min-height:100vh}
   .nav-actions{gap:6px !important}
   .lb{padding:3px 7px !important;font-size:9.5px !important}
   .main-pad{padding:12px !important}
-  .sess-count{grid-template-columns:repeat(3,1fr) !important}
+  .sess-count{grid-template-columns:repeat(3,1fr) !important;gap:6px !important}
   .by-jury-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .by-jury-grid{min-width:640px}
   .sess-card-head{flex-wrap:wrap !important}
@@ -268,7 +271,7 @@ export default function RsaJuryView() {
         </div>
 
         {/* Compteur par session */}
-        <div className="sess-count" style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}}>
+        <div className="sess-count" style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8,marginBottom:16}}>
           {SK.map(sk=>{
             const s=SC[sk];
             const assigned=validated.filter(p=>(p.assigned_sessions||[]).some(as=>sessMatch(as,sk))).length;
@@ -281,6 +284,18 @@ export default function RsaJuryView() {
               </div>
             );
           })}
+          {(()=>{
+            const finaleCount = validated.filter(p=>p.grande_finale).length;
+            const ok = finaleCount>=3;
+            return(
+              <div key="finale-count" style={{background:ok?"#fdf6e8":CREAM,border:"1px solid "+(ok?"#e8d090":CREAM2),borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+                <div style={{fontSize:12,marginBottom:3}}>🏆</div>
+                <div style={{fontSize:22,fontWeight:600,color:ok?"#9a6400":"#9090a8",fontFamily:"'Playfair Display',serif"}}>{finaleCount}</div>
+                <div style={{fontSize:9,color:ok?"#9a6400":"#9090a8",marginTop:2}}>{t.finaleShort}</div>
+                {finaleCount<3&&<div style={{fontSize:9,color:"#c03010",marginTop:1}}>⚠ {t.minWarn}</div>}
+              </div>
+            );
+          })()}
         </div>
 
         {/* View toggle */}
