@@ -153,15 +153,33 @@ body{font-family:'Inter',sans-serif;background:${CREAM};min-height:100vh}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#1d6b4f;animation:pulseDot 1.6s ease-in-out infinite;display:inline-block}
 .lb{font-family:'Inter',sans-serif;cursor:pointer;font-size:10.5px;font-weight:500;padding:4px 10px;border-radius:7px;border:1px solid;letter-spacing:.05em;transition:all .15s;text-transform:uppercase}
 @media (max-width:768px){
-  .nav-row{padding:0 12px !important;height:52px !important}
-  .nav-title{font-size:13px !important}
+  .nav-row{padding:0 12px !important;height:52px !important;gap:8px !important}
+  .nav-title{font-size:12.5px !important}
   .nav-sub{font-size:8.5px !important}
+  .nav-actions{gap:6px !important}
+  .lb{padding:3px 7px !important;font-size:9.5px !important}
   .main-pad{padding:12px !important}
+  .sess-count{grid-template-columns:repeat(3,1fr) !important}
   .by-jury-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .by-jury-grid{min-width:640px}
+  .sess-card-head{flex-wrap:wrap !important}
+  .sess-card-head .copy-btn{order:3 !important;margin-left:0 !important;margin-top:2px !important}
+  .modal-pad{padding:14px 16px !important}
+  .modal-head{padding:14px 16px !important;gap:10px !important}
+  .modal-head .name-h{font-size:15px !important}
+  .juror-row{gap:7px !important;padding:5px 7px !important}
+  .juror-row .meta-q{font-size:9.5px !important}
+  .juror-row .meta-e{font-size:9px !important}
+  .banner-info{font-size:11px !important;padding:8px 11px !important}
 }
 @media (max-width:480px){
   .nav-sub{display:none !important}
+  .sess-count{grid-template-columns:repeat(2,1fr) !important}
+  .lb{padding:3px 6px !important;font-size:9px !important}
+  .live-label{display:none !important}
+  .footer-pad{padding:1.2rem 1rem !important}
+  .footer-title{font-size:12.5px !important}
+  .footer-sub{font-size:10px !important}
 }
 `;
 
@@ -225,7 +243,7 @@ export default function RsaJuryView() {
               <div className="nav-sub" style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:".1em",textTransform:"uppercase"}}>{t.navSub}</div>
             </div>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+          <div className="nav-actions" style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
             <div style={{display:"flex",gap:4}}>
               {["fr","en","de"].map(l=>{const on=lang===l;return (
                 <button key={l} className="lb" onClick={()=>setLang(l)}
@@ -233,7 +251,7 @@ export default function RsaJuryView() {
               );})}
             </div>
             <span style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:10.5,color:"rgba(255,255,255,.55)"}}>
-              <span className="live-dot"/>{t.live}
+              <span className="live-dot"/><span className="live-label">{t.live}</span>
             </span>
           </div>
         </div>
@@ -242,7 +260,7 @@ export default function RsaJuryView() {
       <div className="main-pad" style={{padding:"22px 24px 60px",maxWidth:1200,margin:"0 auto"}}>
 
         {/* Bandeau d'info read-only */}
-        <div style={{background:"#fdf6e8",border:"1px solid #e8d090",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#7a5a00",display:"flex",alignItems:"center",gap:9}}>
+        <div className="banner-info" style={{background:"#fdf6e8",border:"1px solid #e8d090",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#7a5a00",display:"flex",alignItems:"center",gap:9}}>
           <span style={{fontSize:14}}>👁</span>
           <div style={{flex:1}}>
             <strong>{t.bannerStrong}</strong> {t.bannerBody}
@@ -250,7 +268,7 @@ export default function RsaJuryView() {
         </div>
 
         {/* Compteur par session */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}}>
+        <div className="sess-count" style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}}>
           {SK.map(sk=>{
             const s=SC[sk];
             const assigned=validated.filter(p=>(p.assigned_sessions||[]).some(as=>sessMatch(as,sk))).length;
@@ -293,11 +311,11 @@ export default function RsaJuryView() {
               const sessJurors=validated.filter(p=>(p.assigned_sessions||[]).some(as=>sessMatch(as,sk)));
               return(
                 <div key={sk} className="card" style={{overflow:"hidden"}}>
-                  <div style={{background:s.color,padding:"9px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                  <div className="sess-card-head" style={{background:s.color,padding:"9px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                     <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:"white"}}>{s.emoji} {s.label[lang]}</div>
                     <div style={{fontSize:10,color:"rgba(255,255,255,.6)"}}>{s.dateL[lang]}</div>
                     {sessJurors.filter(j=>j.email).length>0&&(
-                      <button className="btn" onClick={()=>copyEmails(sessJurors, s.label[lang], t)}
+                      <button className="btn copy-btn" onClick={()=>copyEmails(sessJurors, s.label[lang], t)}
                         style={{marginLeft:"auto",fontSize:10,padding:"3px 9px",borderRadius:7,background:"rgba(255,255,255,.18)",color:"white",border:"1px solid rgba(255,255,255,.28)",fontFamily:"Inter,sans-serif"}}>{t.copyEmails}</button>
                     )}
                     <div style={{marginLeft:sessJurors.filter(j=>j.email).length>0?0:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.18)",fontWeight:500}}>{sessJurors.length} {sessJurors.length>1?t.minPlural:t.minSingular}{sessJurors.length<3?" ⚠ "+t.minWarn:""}</div>
@@ -305,15 +323,15 @@ export default function RsaJuryView() {
                   <div style={{padding:"10px 14px"}}>
                     {sessJurors.length===0&&<div style={{fontSize:11.5,color:"#c0c0d0",fontStyle:"italic",padding:"6px 0"}}>{t.noJurorsYet}</div>}
                     {sessJurors.map(p=>(
-                      <div key={p.id} style={{display:"flex",alignItems:"center",gap:9,padding:"6px 9px",background:s.light,border:"1px solid "+s.border,borderRadius:8,marginBottom:4,cursor:"pointer"}} onClick={()=>setDetailJuror(p)}>
+                      <div key={p.id} className="juror-row" style={{display:"flex",alignItems:"center",gap:9,padding:"6px 9px",background:s.light,border:"1px solid "+s.border,borderRadius:8,marginBottom:4,cursor:"pointer"}} onClick={()=>setDetailJuror(p)}>
                         {p.photo_base64
                           ?<img src={p.photo_base64} alt="" style={{width:28,height:28,borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
                           :<div style={{width:28,height:28,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9.5,fontWeight:600,color:GOLD,flexShrink:0}}>{(p.prenom||"?")[0]}{(p.nom||"?")[0]}</div>
                         }
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:12,fontWeight:500,color:NAVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.prenom} {p.nom}</div>
-                          <div style={{fontSize:10,color:"#6a6a8a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
-                          {p.email&&<div style={{fontSize:9.5,color:"#8a8aa8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>✉ {p.email}</div>}
+                          <div className="meta-q" style={{fontSize:10,color:"#6a6a8a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
+                          {p.email&&<div className="meta-e" style={{fontSize:9.5,color:"#8a8aa8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>✉ {p.email}</div>}
                         </div>
                         {p.grande_finale&&<span title={t.finaleTitle} style={{fontSize:11,flexShrink:0}}>🏆</span>}
                         <span style={{fontSize:11,color:NAVY,flexShrink:0,opacity:.4}}>ⓘ</span>
@@ -330,11 +348,11 @@ export default function RsaJuryView() {
               const finaleJurors=validated.filter(p=>p.grande_finale);
               return(
                 <div className="card" style={{overflow:"hidden"}}>
-                  <div style={{background:GOLD,padding:"9px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                  <div className="sess-card-head" style={{background:GOLD,padding:"9px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                     <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:"white"}}>{t.finaleTitle}</div>
                     <div style={{fontSize:10,color:"rgba(255,255,255,.75)"}}>{t.finaleDate}</div>
                     {finaleJurors.filter(j=>j.email).length>0&&(
-                      <button className="btn" onClick={()=>copyEmails(finaleJurors, t.finaleTitle, t)}
+                      <button className="btn copy-btn" onClick={()=>copyEmails(finaleJurors, t.finaleTitle, t)}
                         style={{marginLeft:"auto",fontSize:10,padding:"3px 9px",borderRadius:7,background:"rgba(255,255,255,.22)",color:"white",border:"1px solid rgba(255,255,255,.35)",fontFamily:"Inter,sans-serif"}}>{t.copyEmails}</button>
                     )}
                     <div style={{marginLeft:finaleJurors.filter(j=>j.email).length>0?0:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.22)",fontWeight:500}}>{finaleJurors.length} {finaleJurors.length>1?t.minPlural:t.minSingular}{finaleJurors.length<3?" ⚠ "+t.minWarn:""}</div>
@@ -349,8 +367,8 @@ export default function RsaJuryView() {
                         }
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:12,fontWeight:500,color:NAVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.prenom} {p.nom}</div>
-                          <div style={{fontSize:10,color:"#6a6a8a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
-                          {p.email&&<div style={{fontSize:9.5,color:"#8a8aa8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>✉ {p.email}</div>}
+                          <div className="meta-q" style={{fontSize:10,color:"#6a6a8a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
+                          {p.email&&<div className="meta-e" style={{fontSize:9.5,color:"#8a8aa8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>✉ {p.email}</div>}
                         </div>
                         <span style={{fontSize:11,color:NAVY,flexShrink:0,opacity:.4}}>ⓘ</span>
                       </div>
@@ -434,19 +452,19 @@ export default function RsaJuryView() {
       {detailJuror&&(
         <div onClick={()=>setDetailJuror(null)} style={{position:"fixed",inset:0,background:"rgba(10,15,30,.55)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,padding:16}}>
           <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:14,maxWidth:460,width:"100%",maxHeight:"90vh",overflow:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.25)"}}>
-            <div style={{padding:"18px 22px",borderBottom:"1px solid "+CREAM2,display:"flex",alignItems:"center",gap:14}}>
+            <div className="modal-head" style={{padding:"18px 22px",borderBottom:"1px solid "+CREAM2,display:"flex",alignItems:"center",gap:14}}>
               {detailJuror.photo_base64
                 ?<img src={detailJuror.photo_base64} alt="" style={{width:54,height:54,borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
                 :<div style={{width:54,height:54,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:600,color:GOLD,flexShrink:0}}>{(detailJuror.prenom||"?")[0]}{(detailJuror.nom||"?")[0]}</div>
               }
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:600,color:NAVY}}>{detailJuror.prenom} {detailJuror.nom}</div>
+                <div className="name-h" style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:600,color:NAVY}}>{detailJuror.prenom} {detailJuror.nom}</div>
                 <div style={{fontSize:12,color:"#6a6a8a",marginTop:2}}>{detailJuror.qualite||"—"}</div>
                 {detailJuror.organisation&&<div style={{fontSize:11,color:"#9090a8",marginTop:1}}>{detailJuror.organisation}</div>}
               </div>
               <button onClick={()=>setDetailJuror(null)} className="btn" style={{width:30,height:30,borderRadius:8,background:CREAM,color:"#9090a8",border:"1px solid "+CREAM2,fontSize:14,padding:0,flexShrink:0}}>✕</button>
             </div>
-            <div style={{padding:"16px 22px"}}>
+            <div className="modal-pad" style={{padding:"16px 22px"}}>
               {detailJuror.email&&(
                 <div style={{marginBottom:12}}>
                   <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>{t.email}</div>
@@ -477,9 +495,9 @@ export default function RsaJuryView() {
         </div>
       )}
 
-      <footer style={{background:NAVY,padding:"1.5rem 2rem",marginTop:"2rem",textAlign:"center"}}>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:14,color:"white",marginBottom:4}}>Rotary Startup Award 2026</div>
-        <div style={{fontSize:11,color:"rgba(255,255,255,.3)"}}>{t.footerLine}</div>
+      <footer className="footer-pad" style={{background:NAVY,padding:"1.5rem 2rem",marginTop:"2rem",textAlign:"center"}}>
+        <div className="footer-title" style={{fontFamily:"'Playfair Display',serif",fontSize:14,color:"white",marginBottom:4}}>Rotary Startup Award 2026</div>
+        <div className="footer-sub" style={{fontSize:11,color:"rgba(255,255,255,.3)"}}>{t.footerLine}</div>
       </footer>
     </div>
   );
