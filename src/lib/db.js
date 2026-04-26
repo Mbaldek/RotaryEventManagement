@@ -120,8 +120,8 @@ export const Chat = {
     if (error) throw error;
     return data || [];
   },
-  async adminClearAll() {
-    const { error } = await supabase.rpc('admin_clear_all_chats');
+  async adminClearAll(secret) {
+    const { error } = await supabase.rpc('admin_clear_all_chats', { p_secret: secret });
     if (error) throw error;
   },
 };

@@ -214,15 +214,18 @@ export default function AdminControl() {
 
 
 
-  // Clear all chat — chat_messages is locked by RLS, so go through the RPC.
+  // Clear all chat — locked by RLS; RPC requires a PIN verified server-side.
   const clearChatMutation = useMutation({
-    mutationFn: () => Chat.adminClearAll(),
+    mutationFn: (secret) => Chat.adminClearAll(secret),
     onSuccess: () => {
       toast.success("Messagerie nettoyée");
     },
     onError: (err) => {
       console.error("[AdminControl:clearChat]", err);
-      toast.error("Échec du nettoyage de la messagerie");
+      const msg = /forbidden/i.test(err?.message || "")
+        ? "PIN incorrect"
+        : "Échec du nettoyage de la messagerie";
+      toast.error(msg);
     },
   });
 
@@ -308,9 +311,11 @@ export default function AdminControl() {
   };
 
   const handleClearChat = () => {
+    const secret = window.prompt("Code admin pour nettoyer la messagerie :");
+    if (!secret) return;
     setConfirmDialog({
       isOpen: true,
-      action: () => clearChatMutation.mutate(),
+      action: () => clearChatMutation.mutate(secret),
       title: "Nettoyer toutes les messageries",
       message: "Vous êtes sur le point de supprimer tous les messages de chat. Cette action est irréversible."
     });

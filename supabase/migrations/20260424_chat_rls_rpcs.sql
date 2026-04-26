@@ -60,7 +60,8 @@ begin
   end if;
   return s;
 end $$;
-revoke all on function _seat_for_token(text) from public;
+-- Helper bypasses RLS on seats; must never be callable from the API.
+revoke all on function _seat_for_token(text) from public, anon, authenticated;
 
 create or replace function send_dm(p_token text, p_to_seat_id uuid, p_content text)
 returns chat_messages
@@ -198,7 +199,9 @@ begin
 end $$;
 grant execute on function chat_recent_for(text, timestamptz) to anon, authenticated;
 
--- UI-gated admin wipe (trust level matches today's clear-all button).
+-- Admin wipe — this signature is superseded by `admin_clear_all_chats(text)`
+-- in migration 20260424_chat_admin_secret.sql (secret-gated). Kept here for
+-- historical reference; the zero-arg version is dropped by the follow-up.
 create or replace function admin_clear_all_chats()
 returns void
 language sql
