@@ -7,18 +7,124 @@ const CREAM = "#f7f4ef";
 const CREAM2 = "#ede9e1";
 
 const SC = {
-  "Foodtech & économie circulaire": { id:"s1_foodtech", color:"#5a7a1a", light:"#eef5e0", border:"#c0d890", emoji:"🌾", short:"FoodTech", dateL:"Jeudi 30 avril · 18h",
-    startups:["DATUS","GREEN OFF GRID SAS","KIDIPOWER","KUZOG FRANCE","Kyol","Midow"]},
-  "Impact social & Edtech": { id:"s2_social", color:"#8a2040", light:"#fbe8ee", border:"#e8a8bc", emoji:"🤝", short:"Social", dateL:"Mercredi 6 mai · 18h",
-    startups:["Buddy","Clover","Hormur","Krewzer","SightKick"]},
-  "Tech, AI, Fintech & Mobilité": { id:"s3_tech", color:"#4a2a7a", light:"#f0eaf8", border:"#c8b0e8", emoji:"💻", short:"Tech", dateL:"Mercredi 13 mai · 18h",
-    startups:["Boonty","DealMatrix","EVIMO","ex9","FollowTech"]},
-  "Healthtech & Biotech": { id:"s4_health", color:"#1a5fa8", light:"#e8f0fb", border:"#a8c8f0", emoji:"🏥", short:"Health", dateL:"Mardi 19 mai · 18h",
-    startups:["Femnov","InFocus Therapeutics","IPCURE","PEGMATISS BIOTECH","VAir","Virtuosis Health SAS","wilo"]},
-  "Greentech & Environnement": { id:"s5_greentech", color:"#1d6b4f", light:"#e8f5ee", border:"#b0d8c4", emoji:"🌱", short:"Greentech", dateL:"Jeudi 21 mai · 18h",
-    startups:["Maa Biodiversity","reLi Energy","SafyPower","Sycon","Vergora"]}
+  "Foodtech & économie circulaire": { id:"s1_foodtech", color:"#5a7a1a", light:"#eef5e0", border:"#c0d890", emoji:"🌾", short:"FoodTech",
+    label:{fr:"Foodtech & économie circulaire",en:"FoodTech & Circular Economy",de:"FoodTech & Kreislaufwirtschaft"},
+    dateL:{fr:"Jeudi 30 avril · 18h",en:"Thursday April 30 · 6pm",de:"Donnerstag, 30. April · 18 Uhr"} },
+  "Impact social & Edtech": { id:"s2_social", color:"#8a2040", light:"#fbe8ee", border:"#e8a8bc", emoji:"🤝", short:"Social",
+    label:{fr:"Impact social & Edtech",en:"Social Impact & Edtech",de:"Soziale Wirkung & Edtech"},
+    dateL:{fr:"Mercredi 6 mai · 18h",en:"Wednesday May 6 · 6pm",de:"Mittwoch, 6. Mai · 18 Uhr"} },
+  "Tech, AI, Fintech & Mobilité": { id:"s3_tech", color:"#4a2a7a", light:"#f0eaf8", border:"#c8b0e8", emoji:"💻", short:"Tech",
+    label:{fr:"Tech, AI, Fintech & Mobilité",en:"Tech, AI, Fintech & Mobility",de:"Tech, KI, Fintech & Mobilität"},
+    dateL:{fr:"Mercredi 13 mai · 18h",en:"Wednesday May 13 · 6pm",de:"Mittwoch, 13. Mai · 18 Uhr"} },
+  "Healthtech & Biotech": { id:"s4_health", color:"#1a5fa8", light:"#e8f0fb", border:"#a8c8f0", emoji:"🏥", short:"Health",
+    label:{fr:"Healthtech & Biotech",en:"Healthtech & Biotech",de:"Healthtech & Biotech"},
+    dateL:{fr:"Mardi 19 mai · 18h",en:"Tuesday May 19 · 6pm",de:"Dienstag, 19. Mai · 18 Uhr"} },
+  "Greentech & Environnement": { id:"s5_greentech", color:"#1d6b4f", light:"#e8f5ee", border:"#b0d8c4", emoji:"🌱", short:"Greentech",
+    label:{fr:"Greentech & Environnement",en:"Greentech & Environment",de:"Greentech & Umwelt"},
+    dateL:{fr:"Jeudi 21 mai · 18h",en:"Thursday May 21 · 6pm",de:"Donnerstag, 21. Mai · 18 Uhr"} }
 };
 const SK = Object.keys(SC);
+
+const T = {
+  fr: {
+    navTitle: "Rotary Startup Award 2026 — Jurys",
+    navSub: "Vue lecture seule · Mise à jour en direct",
+    live: "EN DIRECT",
+    bannerStrong: "Vue consultation",
+    bannerBody: "— affichage lecture seule de l'allocation des jurys aux sessions. Mise à jour automatique en temps réel quand l'organisateur modifie les affectations.",
+    bySession: "Vue par session",
+    byJury: "Vue par juré",
+    loading: "Chargement…",
+    noValidated: "Aucun juré validé pour l'instant.",
+    noJurorsYet: "Aucun juré assigné pour l'instant.",
+    noFinaleYet: "Aucun juré pour la Grande Finale pour l'instant.",
+    minWarn: "min. 3",
+    minPlural: "jurés",
+    minSingular: "juré",
+    copyEmails: "📋 Copier emails",
+    copiedFor: (lbl) => `Emails ${lbl} copiés :`,
+    finaleTitle: "🏆 Grande Finale",
+    finaleDate: "Mardi 26 mai · 16h–19h · Cyrus Conseil",
+    juror: "Juré",
+    total: "Total",
+    finaleCol: "Finale",
+    totalRow: "Total / session",
+    email: "Email",
+    sessionsAssigned: "Sessions assignées",
+    none: "Aucune",
+    sendEmail: "✉ Envoyer un email",
+    close: "Fermer",
+    copy: "📋 Copier",
+    lastUpdate: (t) => `Dernière mise à jour : ${t}`,
+    footerLine: "Vue lecture seule · Commission Paris",
+  },
+  en: {
+    navTitle: "Rotary Startup Award 2026 — Jury",
+    navSub: "Read-only view · Live updates",
+    live: "LIVE",
+    bannerStrong: "Public view",
+    bannerBody: "— read-only display of jury allocation per session. Updates automatically in real time when the organiser changes assignments.",
+    bySession: "By session",
+    byJury: "By juror",
+    loading: "Loading…",
+    noValidated: "No validated jurors yet.",
+    noJurorsYet: "No jurors assigned yet.",
+    noFinaleYet: "No jurors for the Grand Final yet.",
+    minWarn: "min. 3",
+    minPlural: "jurors",
+    minSingular: "juror",
+    copyEmails: "📋 Copy emails",
+    copiedFor: (lbl) => `${lbl} emails copied:`,
+    finaleTitle: "🏆 Grand Final",
+    finaleDate: "Tuesday May 26 · 4–7pm · Cyrus Conseil",
+    juror: "Juror",
+    total: "Total",
+    finaleCol: "Final",
+    totalRow: "Total / session",
+    email: "Email",
+    sessionsAssigned: "Assigned sessions",
+    none: "None",
+    sendEmail: "✉ Send email",
+    close: "Close",
+    copy: "📋 Copy",
+    lastUpdate: (t) => `Last update: ${t}`,
+    footerLine: "Read-only view · Paris Commission",
+  },
+  de: {
+    navTitle: "Rotary Startup Award 2026 — Jury",
+    navSub: "Nur-Lesen-Ansicht · Live-Aktualisierung",
+    live: "LIVE",
+    bannerStrong: "Öffentliche Ansicht",
+    bannerBody: "— Nur-Lesen-Anzeige der Jury-Zuordnung pro Session. Aktualisiert sich automatisch in Echtzeit, wenn der Organisator Zuweisungen ändert.",
+    bySession: "Nach Session",
+    byJury: "Nach Juror",
+    loading: "Lädt…",
+    noValidated: "Noch keine validierten Juroren.",
+    noJurorsYet: "Noch keine Juroren zugewiesen.",
+    noFinaleYet: "Noch keine Juroren für das Große Finale.",
+    minWarn: "min. 3",
+    minPlural: "Juroren",
+    minSingular: "Juror",
+    copyEmails: "📋 E-Mails kopieren",
+    copiedFor: (lbl) => `${lbl} E-Mails kopiert:`,
+    finaleTitle: "🏆 Großes Finale",
+    finaleDate: "Dienstag, 26. Mai · 16–19 Uhr · Cyrus Conseil",
+    juror: "Juror",
+    total: "Gesamt",
+    finaleCol: "Finale",
+    totalRow: "Gesamt / Session",
+    email: "E-Mail",
+    sessionsAssigned: "Zugewiesene Sessions",
+    none: "Keine",
+    sendEmail: "✉ E-Mail senden",
+    close: "Schließen",
+    copy: "📋 Kopieren",
+    lastUpdate: (t) => `Letzte Aktualisierung: ${t}`,
+    footerLine: "Nur-Lesen-Ansicht · Pariser Kommission",
+  },
+};
+
+const LS_LANG = "rsa_jury_view_lang";
 
 function sessMatch(as, sk) {
   const asL = (as||"").toLowerCase().trim();
@@ -45,6 +151,7 @@ body{font-family:'Inter',sans-serif;background:${CREAM};min-height:100vh}
 .btn:hover{filter:brightness(.91)}
 .btn:active{transform:scale(.97)}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#1d6b4f;animation:pulseDot 1.6s ease-in-out infinite;display:inline-block}
+.lb{font-family:'Inter',sans-serif;cursor:pointer;font-size:10.5px;font-weight:500;padding:4px 10px;border-radius:7px;border:1px solid;letter-spacing:.05em;transition:all .15s;text-transform:uppercase}
 @media (max-width:768px){
   .nav-row{padding:0 12px !important;height:52px !important}
   .nav-title{font-size:13px !important}
@@ -58,11 +165,11 @@ body{font-family:'Inter',sans-serif;background:${CREAM};min-height:100vh}
 }
 `;
 
-function copyEmails(jurors, label) {
+function copyEmails(jurors, label, t) {
   const emails = jurors.filter(j=>j.email).map(j=>j.email).join(", ");
   if (!emails) return;
   navigator.clipboard.writeText(emails);
-  alert(`Emails ${label} copiés :\n${emails}`);
+  alert(`${t.copiedFor(label)}\n${emails}`);
 }
 
 export default function RsaJuryView() {
@@ -71,6 +178,13 @@ export default function RsaJuryView() {
   const [view, setView] = useState("bySession");
   const [detailJuror, setDetailJuror] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [lang, setLang] = useState(() => {
+    try { const saved = localStorage.getItem(LS_LANG); if (saved && T[saved]) return saved; } catch {}
+    const nav = (typeof navigator !== "undefined" && navigator.language || "fr").slice(0,2).toLowerCase();
+    return T[nav] ? nav : "fr";
+  });
+  const t = T[lang];
+  useEffect(()=>{ try { localStorage.setItem(LS_LANG, lang); } catch {} }, [lang]);
 
   async function loadProfiles() {
     const { data, error } = await supabase
@@ -107,13 +221,19 @@ export default function RsaJuryView() {
           <div style={{display:"flex",alignItems:"center",gap:11,minWidth:0}}>
             <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${GOLD},#a07828)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:NAVY,flexShrink:0}}>R</div>
             <div style={{minWidth:0}}>
-              <div className="nav-title" style={{fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:600,color:"white",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>Rotary Startup Award 2026 — Jurys</div>
-              <div className="nav-sub" style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:".1em",textTransform:"uppercase"}}>Vue lecture seule · Mise à jour en direct</div>
+              <div className="nav-title" style={{fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:600,color:"white",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.navTitle}</div>
+              <div className="nav-sub" style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:".1em",textTransform:"uppercase"}}>{t.navSub}</div>
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+            <div style={{display:"flex",gap:4}}>
+              {["fr","en","de"].map(l=>{const on=lang===l;return (
+                <button key={l} className="lb" onClick={()=>setLang(l)}
+                  style={{background:on?GOLD:"transparent",color:on?NAVY:"rgba(255,255,255,.45)",borderColor:on?GOLD:"rgba(255,255,255,.2)"}}>{l}</button>
+              );})}
+            </div>
             <span style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:10.5,color:"rgba(255,255,255,.55)"}}>
-              <span className="live-dot"/>LIVE
+              <span className="live-dot"/>{t.live}
             </span>
           </div>
         </div>
@@ -125,7 +245,7 @@ export default function RsaJuryView() {
         <div style={{background:"#fdf6e8",border:"1px solid #e8d090",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#7a5a00",display:"flex",alignItems:"center",gap:9}}>
           <span style={{fontSize:14}}>👁</span>
           <div style={{flex:1}}>
-            <strong>Vue consultation</strong> — affichage lecture seule de l'allocation des jurys aux sessions. Mise à jour automatique en temps réel quand l'organisateur modifie les affectations.
+            <strong>{t.bannerStrong}</strong> {t.bannerBody}
           </div>
         </div>
 
@@ -138,8 +258,8 @@ export default function RsaJuryView() {
               <div key={sk} style={{background:assigned>=3?s.light:CREAM,border:"1px solid "+(assigned>=3?s.border:CREAM2),borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
                 <div style={{fontSize:12,marginBottom:3}}>{s.emoji}</div>
                 <div style={{fontSize:22,fontWeight:600,color:assigned>=3?s.color:"#9090a8",fontFamily:"'Playfair Display',serif"}}>{assigned}</div>
-                <div style={{fontSize:9,color:assigned>=3?s.color:"#9090a8",marginTop:2}}>{s.dateL}</div>
-                {assigned<3&&<div style={{fontSize:9,color:"#c03010",marginTop:1}}>⚠ min. 3</div>}
+                <div style={{fontSize:9,color:assigned>=3?s.color:"#9090a8",marginTop:2}}>{s.dateL[lang]}</div>
+                {assigned<3&&<div style={{fontSize:9,color:"#c03010",marginTop:1}}>⚠ {t.minWarn}</div>}
               </div>
             );
           })}
@@ -147,7 +267,7 @@ export default function RsaJuryView() {
 
         {/* View toggle */}
         <div style={{display:"flex",gap:6,marginBottom:14,background:"white",padding:"4px",borderRadius:10,border:"1px solid "+CREAM2,width:"fit-content"}}>
-          {[["bySession","Vue par session"],["byJury","Vue par juré"]].map(([id,lbl])=>(
+          {[["bySession",t.bySession],["byJury",t.byJury]].map(([id,lbl])=>(
             <button key={id} className="btn" onClick={()=>setView(id)}
               style={{fontSize:11,padding:"6px 14px",borderRadius:7,background:view===id?NAVY:"transparent",color:view===id?"white":"#9090a8",border:"none",fontFamily:"Inter,sans-serif",fontWeight:view===id?500:400}}>
               {lbl}
@@ -156,12 +276,12 @@ export default function RsaJuryView() {
         </div>
 
         {loading && (
-          <div style={{textAlign:"center",padding:"3rem",color:"#a0a0b8",fontSize:13}}>Chargement…</div>
+          <div style={{textAlign:"center",padding:"3rem",color:"#a0a0b8",fontSize:13}}>{t.loading}</div>
         )}
 
         {!loading && validated.length === 0 && (
           <div style={{padding:"3rem",textAlign:"center",color:"#c0c0d0",fontStyle:"italic",fontSize:13,background:"white",borderRadius:12,border:"1px solid "+CREAM2}}>
-            Aucun juré validé pour l'instant.
+            {t.noValidated}
           </div>
         )}
 
@@ -174,16 +294,16 @@ export default function RsaJuryView() {
               return(
                 <div key={sk} className="card" style={{overflow:"hidden"}}>
                   <div style={{background:s.color,padding:"9px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                    <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:"white"}}>{s.emoji} {sk}</div>
-                    <div style={{fontSize:10,color:"rgba(255,255,255,.6)"}}>{s.dateL}</div>
+                    <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:"white"}}>{s.emoji} {s.label[lang]}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,.6)"}}>{s.dateL[lang]}</div>
                     {sessJurors.filter(j=>j.email).length>0&&(
-                      <button className="btn" onClick={()=>copyEmails(sessJurors, sk)}
-                        style={{marginLeft:"auto",fontSize:10,padding:"3px 9px",borderRadius:7,background:"rgba(255,255,255,.18)",color:"white",border:"1px solid rgba(255,255,255,.28)",fontFamily:"Inter,sans-serif"}}>📋 Copier emails</button>
+                      <button className="btn" onClick={()=>copyEmails(sessJurors, s.label[lang], t)}
+                        style={{marginLeft:"auto",fontSize:10,padding:"3px 9px",borderRadius:7,background:"rgba(255,255,255,.18)",color:"white",border:"1px solid rgba(255,255,255,.28)",fontFamily:"Inter,sans-serif"}}>{t.copyEmails}</button>
                     )}
-                    <div style={{marginLeft:sessJurors.filter(j=>j.email).length>0?0:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.18)",fontWeight:500}}>{sessJurors.length} {sessJurors.length>1?"jurés":"juré"}{sessJurors.length<3?" ⚠ min 3":""}</div>
+                    <div style={{marginLeft:sessJurors.filter(j=>j.email).length>0?0:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.18)",fontWeight:500}}>{sessJurors.length} {sessJurors.length>1?t.minPlural:t.minSingular}{sessJurors.length<3?" ⚠ "+t.minWarn:""}</div>
                   </div>
                   <div style={{padding:"10px 14px"}}>
-                    {sessJurors.length===0&&<div style={{fontSize:11.5,color:"#c0c0d0",fontStyle:"italic",padding:"6px 0"}}>Aucun juré assigné pour l'instant.</div>}
+                    {sessJurors.length===0&&<div style={{fontSize:11.5,color:"#c0c0d0",fontStyle:"italic",padding:"6px 0"}}>{t.noJurorsYet}</div>}
                     {sessJurors.map(p=>(
                       <div key={p.id} style={{display:"flex",alignItems:"center",gap:9,padding:"6px 9px",background:s.light,border:"1px solid "+s.border,borderRadius:8,marginBottom:4,cursor:"pointer"}} onClick={()=>setDetailJuror(p)}>
                         {p.photo_base64
@@ -195,7 +315,7 @@ export default function RsaJuryView() {
                           <div style={{fontSize:10,color:"#6a6a8a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.qualite}{p.organisation?" · "+p.organisation:""}</div>
                           {p.email&&<div style={{fontSize:9.5,color:"#8a8aa8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>✉ {p.email}</div>}
                         </div>
-                        {p.grande_finale&&<span title="Grande Finale" style={{fontSize:11,flexShrink:0}}>🏆</span>}
+                        {p.grande_finale&&<span title={t.finaleTitle} style={{fontSize:11,flexShrink:0}}>🏆</span>}
                         <span style={{fontSize:11,color:NAVY,flexShrink:0,opacity:.4}}>ⓘ</span>
                       </div>
                     ))}
@@ -211,16 +331,16 @@ export default function RsaJuryView() {
               return(
                 <div className="card" style={{overflow:"hidden"}}>
                   <div style={{background:GOLD,padding:"9px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                    <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:"white"}}>🏆 Grande Finale</div>
-                    <div style={{fontSize:10,color:"rgba(255,255,255,.75)"}}>Mardi 26 mai · 16h–19h · Cyrus Conseil</div>
+                    <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:600,color:"white"}}>{t.finaleTitle}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,.75)"}}>{t.finaleDate}</div>
                     {finaleJurors.filter(j=>j.email).length>0&&(
-                      <button className="btn" onClick={()=>copyEmails(finaleJurors, "Grande Finale")}
-                        style={{marginLeft:"auto",fontSize:10,padding:"3px 9px",borderRadius:7,background:"rgba(255,255,255,.22)",color:"white",border:"1px solid rgba(255,255,255,.35)",fontFamily:"Inter,sans-serif"}}>📋 Copier emails</button>
+                      <button className="btn" onClick={()=>copyEmails(finaleJurors, t.finaleTitle, t)}
+                        style={{marginLeft:"auto",fontSize:10,padding:"3px 9px",borderRadius:7,background:"rgba(255,255,255,.22)",color:"white",border:"1px solid rgba(255,255,255,.35)",fontFamily:"Inter,sans-serif"}}>{t.copyEmails}</button>
                     )}
-                    <div style={{marginLeft:finaleJurors.filter(j=>j.email).length>0?0:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.22)",fontWeight:500}}>{finaleJurors.length} {finaleJurors.length>1?"jurés":"juré"}{finaleJurors.length<3?" ⚠ min 3":""}</div>
+                    <div style={{marginLeft:finaleJurors.filter(j=>j.email).length>0?0:"auto",fontSize:11,color:"white",padding:"2px 9px",borderRadius:10,background:"rgba(255,255,255,.22)",fontWeight:500}}>{finaleJurors.length} {finaleJurors.length>1?t.minPlural:t.minSingular}{finaleJurors.length<3?" ⚠ "+t.minWarn:""}</div>
                   </div>
                   <div style={{padding:"10px 14px"}}>
-                    {finaleJurors.length===0&&<div style={{fontSize:11.5,color:"#c0c0d0",fontStyle:"italic",padding:"6px 0"}}>Aucun juré pour la Grande Finale pour l'instant.</div>}
+                    {finaleJurors.length===0&&<div style={{fontSize:11.5,color:"#c0c0d0",fontStyle:"italic",padding:"6px 0"}}>{t.noFinaleYet}</div>}
                     {finaleJurors.map(p=>(
                       <div key={p.id} style={{display:"flex",alignItems:"center",gap:9,padding:"6px 9px",background:FINALE_LIGHT,border:"1px solid "+FINALE_BORDER,borderRadius:8,marginBottom:4,cursor:"pointer"}} onClick={()=>setDetailJuror(p)}>
                         {p.photo_base64
@@ -247,10 +367,10 @@ export default function RsaJuryView() {
           <div className="by-jury-wrap" style={{background:"white",border:"1px solid "+CREAM2,borderRadius:12,overflow:"auto",WebkitOverflowScrolling:"touch"}}>
             <div className="by-jury-grid">
               <div style={{display:"grid",gridTemplateColumns:"220px repeat(5,1fr) 50px 60px",background:NAVY,padding:"8px 14px",gap:4}}>
-                <div style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>Juré</div>
+                <div style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>{t.juror}</div>
                 {SK.map(sk=><div key={sk} style={{fontSize:9.5,color:"rgba(255,255,255,.5)",textAlign:"center"}}>{SC[sk].emoji} {SC[sk].short}</div>)}
-                <div style={{fontSize:9.5,color:"rgba(255,255,255,.5)",textAlign:"center"}}>Total</div>
-                <div style={{fontSize:9.5,color:"rgba(255,255,255,.4)",textAlign:"center"}}>Finale</div>
+                <div style={{fontSize:9.5,color:"rgba(255,255,255,.5)",textAlign:"center"}}>{t.total}</div>
+                <div style={{fontSize:9.5,color:"rgba(255,255,255,.4)",textAlign:"center"}}>{t.finaleCol}</div>
               </div>
               {validated.map((p,i)=>{
                 const assignedSess = p.assigned_sessions||[];
@@ -289,7 +409,7 @@ export default function RsaJuryView() {
                 const totFin=validated.filter(p=>p.grande_finale).length;
                 return(
                   <div style={{display:"grid",gridTemplateColumns:"220px repeat(5,1fr) 50px 60px",padding:"8px 14px",gap:4,borderTop:"2px solid "+NAVY,background:CREAM,alignItems:"center"}}>
-                    <div style={{fontSize:10,color:NAVY,fontWeight:600,letterSpacing:".06em",textTransform:"uppercase"}}>Total / session</div>
+                    <div style={{fontSize:10,color:NAVY,fontWeight:600,letterSpacing:".06em",textTransform:"uppercase"}}>{t.totalRow}</div>
                     {totSess.map((n,k)=>{
                       const s=SC[SK[k]];
                       return(
@@ -306,7 +426,7 @@ export default function RsaJuryView() {
         )}
 
         <div style={{textAlign:"center",fontSize:10.5,color:"#a8a8c0",marginTop:18}}>
-          {lastUpdate && `Dernière mise à jour : ${lastUpdate.toLocaleTimeString("fr-FR")}`}
+          {lastUpdate && t.lastUpdate(lastUpdate.toLocaleTimeString(lang==="fr"?"fr-FR":lang==="de"?"de-DE":"en-GB"))}
         </div>
       </div>
 
@@ -329,27 +449,28 @@ export default function RsaJuryView() {
             <div style={{padding:"16px 22px"}}>
               {detailJuror.email&&(
                 <div style={{marginBottom:12}}>
-                  <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>Email</div>
+                  <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>{t.email}</div>
                   <div style={{display:"flex",gap:6,alignItems:"center"}}>
                     <a href={"mailto:"+detailJuror.email} style={{fontSize:12.5,color:NAVY,textDecoration:"none",flex:1,wordBreak:"break-all"}}>{detailJuror.email}</a>
-                    <button onClick={()=>{navigator.clipboard.writeText(detailJuror.email);}} className="btn" style={{fontSize:10,padding:"4px 9px",borderRadius:7,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif",flexShrink:0}}>📋 Copier</button>
+                    <button onClick={()=>{navigator.clipboard.writeText(detailJuror.email);}} className="btn" style={{fontSize:10,padding:"4px 9px",borderRadius:7,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif",flexShrink:0}}>{t.copy}</button>
                   </div>
                 </div>
               )}
               <div style={{marginBottom:12}}>
-                <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>Sessions assignées</div>
+                <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>{t.sessionsAssigned}</div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                  {(detailJuror.assigned_sessions||[]).length===0&&<span style={{fontSize:11,color:"#c0c0d0",fontStyle:"italic"}}>Aucune</span>}
+                  {(detailJuror.assigned_sessions||[]).length===0&&<span style={{fontSize:11,color:"#c0c0d0",fontStyle:"italic"}}>{t.none}</span>}
                   {(detailJuror.assigned_sessions||[]).map(as=>{
                     const fk=SK.find(k=>sessMatch(as,k));const f=fk?SC[fk]:null;
-                    return <span key={as} style={{fontSize:11,padding:"3px 9px",borderRadius:8,background:f?f.light:CREAM,color:f?f.color:"#888",border:"1px solid "+(f?f.border:CREAM2)}}>{f?f.emoji:""} {as.split("&")[0].trim()}</span>;
+                    const lblTxt = f ? f.label[lang].split("&")[0].trim() : as.split("&")[0].trim();
+                    return <span key={as} style={{fontSize:11,padding:"3px 9px",borderRadius:8,background:f?f.light:CREAM,color:f?f.color:"#888",border:"1px solid "+(f?f.border:CREAM2)}}>{f?f.emoji:""} {lblTxt}</span>;
                   })}
-                  {detailJuror.grande_finale&&<span style={{fontSize:11,padding:"3px 9px",borderRadius:8,background:"#fdf6e8",color:"#9a6400",border:"1px solid #e8d090"}}>🏆 Grande Finale</span>}
+                  {detailJuror.grande_finale&&<span style={{fontSize:11,padding:"3px 9px",borderRadius:8,background:"#fdf6e8",color:"#9a6400",border:"1px solid #e8d090"}}>{t.finaleTitle}</span>}
                 </div>
               </div>
               <div style={{display:"flex",gap:8,marginTop:16,paddingTop:14,borderTop:"1px solid "+CREAM2}}>
-                {detailJuror.email&&<a href={"mailto:"+detailJuror.email} className="btn" style={{fontSize:11.5,padding:"7px 14px",borderRadius:8,background:NAVY,color:GOLD,border:"none",fontFamily:"Inter,sans-serif",fontWeight:500,textDecoration:"none",flex:1,textAlign:"center"}}>✉ Envoyer un email</a>}
-                <button onClick={()=>setDetailJuror(null)} className="btn" style={{fontSize:11.5,padding:"7px 14px",borderRadius:8,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}>Fermer</button>
+                {detailJuror.email&&<a href={"mailto:"+detailJuror.email} className="btn" style={{fontSize:11.5,padding:"7px 14px",borderRadius:8,background:NAVY,color:GOLD,border:"none",fontFamily:"Inter,sans-serif",fontWeight:500,textDecoration:"none",flex:1,textAlign:"center"}}>{t.sendEmail}</a>}
+                <button onClick={()=>setDetailJuror(null)} className="btn" style={{fontSize:11.5,padding:"7px 14px",borderRadius:8,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}>{t.close}</button>
               </div>
             </div>
           </div>
@@ -358,7 +479,7 @@ export default function RsaJuryView() {
 
       <footer style={{background:NAVY,padding:"1.5rem 2rem",marginTop:"2rem",textAlign:"center"}}>
         <div style={{fontFamily:"'Playfair Display',serif",fontSize:14,color:"white",marginBottom:4}}>Rotary Startup Award 2026</div>
-        <div style={{fontSize:11,color:"rgba(255,255,255,.3)"}}>Vue lecture seule · Commission Paris</div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,.3)"}}>{t.footerLine}</div>
       </footer>
     </div>
   );
