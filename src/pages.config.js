@@ -59,6 +59,7 @@ import Reservations from './pages/Reservations';
 import RsaAdmin from './pages/RsaAdmin';
 import RsaDashboard from './pages/RsaDashboard';
 import RsaJuryForm from './pages/RsaJuryForm';
+import RsaJuryView from './pages/RsaJuryView';
 import RsaScore from './pages/RsaScore';
 import StartupUpload from './pages/StartupUpload';
 import TableView from './pages/TableView';
@@ -80,6 +81,7 @@ export const PAGES = {
     "RsaAdmin": RsaAdmin,
     "RsaDashboard": RsaDashboard,
     "RsaJuryForm": RsaJuryForm,
+    "RsaJuryView": RsaJuryView,
     "RsaScore": RsaScore,
     "StartupUpload": StartupUpload,
     "TableView": TableView,
