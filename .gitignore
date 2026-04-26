@@ -34,3 +34,8 @@ dist-ssr
 # RSA jury materials (heavy PDFs, contains startup-private content)
 pitch_decks/
 briefings/
+
+# Local-only secrets (admin PINs, etc.) — never commit
+pin admi
+secrets/
+*.secret
