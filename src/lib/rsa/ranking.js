@@ -8,6 +8,8 @@ import { weightedScore } from "./constants";
 //   overrides: { [startup_name]: { bonus, final_rank, note } }
 // Returns rows sorted by final_rank, each shaped:
 //   { startup, avg, n, bonus, final_score, fixed_rank, note, final_rank }
+// Startups with zero scores from any juror are silently excluded (they are
+// effectively absent — no UI flag needed).
 export function buildRanking(scores, overrides = {}) {
   const byStartup = new Map();
   for (const row of scores) {

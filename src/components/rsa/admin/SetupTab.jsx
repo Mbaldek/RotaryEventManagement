@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Copy, Plus, Trash2, ChevronUp, ChevronDown, Check, AlertTriangle, RotateCcw } from "lucide-react";
+import { Loader2, Copy, Plus, Trash2, ChevronUp, ChevronDown, Check, AlertTriangle, RotateCcw, Printer, QrCode } from "lucide-react";
 import { SESSION_BY_ID, JURY_STATUS } from "@/lib/rsa/constants";
 import { JuryProfile, SessionConfig, StartupConfirmation, JuryScore, JuryScoringSession } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 import FinalistsPicker from "./FinalistsPicker";
+import JurorLinkQR from "./JurorLinkQR";
 
 export default function SetupTab({ sessionId }) {
   const session = SESSION_BY_ID[sessionId];
@@ -15,6 +16,7 @@ export default function SetupTab({ sessionId }) {
   const [newStartup, setNewStartup] = useState("");
   const [working, setWorking] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [qrOpen, setQrOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -206,6 +208,22 @@ export default function SetupTab({ sessionId }) {
         >
           <Copy className="w-3.5 h-3.5" /> Juror link
         </button>
+        <button
+          onClick={() => setQrOpen(true)}
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-stone-300 bg-white hover:bg-stone-50"
+          title="Affiche un QR code à projeter en intro de session ou à coller dans un email"
+        >
+          <QrCode className="w-3.5 h-3.5" /> QR code
+        </button>
+        <a
+          href={`/RsaPrintSheets?s=${sessionId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-stone-300 bg-white hover:bg-stone-50"
+          title="Imprime une feuille A4 par juré × startup pour un scoring papier de secours"
+        >
+          <Printer className="w-3.5 h-3.5" /> Feuilles papier
+        </a>
       </div>
 
       {/* Session metadata */}
@@ -360,6 +378,14 @@ export default function SetupTab({ sessionId }) {
 
       {/* Danger zone — reset session for testing */}
       <DangerZone sessionId={sessionId} sessionLabel={session.label} />
+
+      <JurorLinkQR
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        sessionId={sessionId}
+        sessionLabel={session.label}
+        sessionEmoji={session.emoji}
+      />
     </div>
   );
 }

@@ -60,6 +60,7 @@ import RsaAdmin from './pages/RsaAdmin';
 import RsaDashboard from './pages/RsaDashboard';
 import RsaJuryForm from './pages/RsaJuryForm';
 import RsaJuryView from './pages/RsaJuryView';
+import RsaPrintSheets from './pages/RsaPrintSheets';
 import RsaScore from './pages/RsaScore';
 import StartupUpload from './pages/StartupUpload';
 import TableView from './pages/TableView';
@@ -82,6 +83,7 @@ export const PAGES = {
     "RsaDashboard": RsaDashboard,
     "RsaJuryForm": RsaJuryForm,
     "RsaJuryView": RsaJuryView,
+    "RsaPrintSheets": RsaPrintSheets,
     "RsaScore": RsaScore,
     "StartupUpload": StartupUpload,
     "TableView": TableView,

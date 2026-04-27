@@ -9,28 +9,48 @@ const GOLD = "#c9a84c";
 const CREAM = "#f7f4ef";
 const CREAM2 = "#ede9e1";
 
+// `iso` = session start (Europe/Paris). Registration auto-locks `lockDays`
+// before that date so the admin has time to send brief / pre-read decks
+// without late additions.
+const QUALIF_LOCK_DAYS = 3;
+const FINALE_LOCK_DAYS = 10;
+
 const SESSIONS = [
   {id:"foodtech",color:"#5a7a1a",light:"#eef5e0",border:"#c0d890",emoji:"🌾",
+    iso:"2026-04-30T18:00:00+02:00", lockDays:QUALIF_LOCK_DAYS,
     label:{fr:"FoodTech & Économie circulaire",en:"FoodTech & Circular Economy",de:"FoodTech & Kreislaufwirtschaft"},
     date:{fr:"Jeudi 30 avril · 18h",en:"Thursday April 30 · 6pm",de:"Donnerstag, 30. April · 18 Uhr"}},
   {id:"social",color:"#8a2040",light:"#fbe8ee",border:"#e8a8bc",emoji:"🤝",
+    iso:"2026-05-06T18:00:00+02:00", lockDays:QUALIF_LOCK_DAYS,
     label:{fr:"Impact social & Edtech",en:"Social Impact & Edtech",de:"Soziale Wirkung & Edtech"},
     date:{fr:"Mercredi 6 mai · 18h",en:"Wednesday May 6 · 6pm",de:"Mittwoch, 6. Mai · 18 Uhr"}},
   {id:"tech",color:"#4a2a7a",light:"#f0eaf8",border:"#c8b0e8",emoji:"💻",
+    iso:"2026-05-13T18:00:00+02:00", lockDays:QUALIF_LOCK_DAYS,
     label:{fr:"Tech, AI, Fintech & Mobilité",en:"Tech, AI, Fintech & Mobility",de:"Tech, KI, Fintech & Mobilität"},
     date:{fr:"Mercredi 13 mai · 18h",en:"Wednesday May 13 · 6pm",de:"Mittwoch, 13. Mai · 18 Uhr"}},
   {id:"health",color:"#1a5fa8",light:"#e8f0fb",border:"#a8c8f0",emoji:"🏥",
+    iso:"2026-05-19T18:00:00+02:00", lockDays:QUALIF_LOCK_DAYS,
     label:{fr:"Healthtech & Biotech",en:"Healthtech & Biotech",de:"Healthtech & Biotech"},
     date:{fr:"Mardi 19 mai · 18h",en:"Tuesday May 19 · 6pm",de:"Dienstag, 19. Mai · 18 Uhr"}},
   {id:"greentech",color:"#1d6b4f",light:"#e8f5ee",border:"#b0d8c4",emoji:"🌱",
+    iso:"2026-05-21T18:00:00+02:00", lockDays:QUALIF_LOCK_DAYS,
     label:{fr:"Greentech & Environnement",en:"Greentech & Environment",de:"Greentech & Umwelt"},
     date:{fr:"Jeudi 21 mai · 18h",en:"Thursday May 21 · 6pm",de:"Donnerstag, 21. Mai · 18 Uhr"}},
 ];
 
+const FINALE_ISO = "2026-05-26T16:00:00+02:00";
+
+function isRegistrationClosed(iso, lockDays) {
+  if (!iso) return false;
+  const sessionDate = new Date(iso);
+  const lockAt = sessionDate.getTime() - lockDays * 24 * 60 * 60 * 1000;
+  return Date.now() >= lockAt;
+}
+
 const T = {
-  fr:{navSub:"Formulaire juré · Profil & disponibilités",heroTitle:"Bienvenue au jury",heroDesc:"Merci d'accepter de rejoindre le jury du Rotary Startup Award Paris–Berlin. Renseignez votre profil ci-dessous — il servira à préparer les supports de présentation des sessions.",sId:"Identité",sPhoto:"Photo professionnelle",sSess:"Disponibilités",sessDesc:"Sélectionnez les sessions pour lesquelles vous êtes disponible (visio, ~2h, 2h30 max)",fFirst:"Prénom *",fLast:"Nom *",fTitle:"Titre / Qualité * (ex : Directeur Innovation, BNP Paribas)",fOrg:"Organisation / Entreprise (optionnel)",fEmail:"Email *",photoLabel:"Déposez votre photo ici",photoSub:"ou cliquez · JPG, PNG · max 5 Mo",photoHint:"Utilisée dans les slides de présentation",changePhoto:"Changer",sessSub:"visio · ~2h (2h30 max)",finaleLabel:"🏆 Grande Finale — mardi 26 mai, 16h–19h",finaleLoc:"En présentiel · Cyrus Conseil, 50 bd Haussmann, Paris 75009",finaleNote:"Sous réserve de validation par le comité d'organisation",submitBtn:"Confirmer ma participation →",submitting:"Envoi en cours…",legal:"Données utilisées exclusivement pour le Rotary Startup Award 2026.",okTitle:"Merci,",okDesc:"Votre profil a bien été enregistré. L'équipe vous contactera très prochainement.",recap:"Récapitulatif",eFirst:"Requis",eLast:"Requis",eTitle:"Requis",eEmail:"Email valide requis",eSess:"Sélectionnez au moins une session",eServer:"Erreur lors de l'envoi. Merci de réessayer.",finaleShort:"Grande Finale 26 mai"},
-  en:{navSub:"Jury form · Profile & availability",heroTitle:"Welcome to the jury",heroDesc:"Thank you for joining the jury of the Rotary Startup Award Paris–Berlin. Please fill in your profile below — it will be used to prepare the session presentation materials.",sId:"Identity",sPhoto:"Professional photo",sSess:"Availability",sessDesc:"Select the sessions for which you are available (remote, ~2h, 2h30 max)",fFirst:"First name *",fLast:"Last name *",fTitle:"Title / Role * (e.g. Head of Innovation, BNP Paribas)",fOrg:"Organisation / Company (optional)",fEmail:"Email *",photoLabel:"Drop your photo here",photoSub:"or click · JPG, PNG · max 5 MB",photoHint:"Used in session presentation slides",changePhoto:"Change",sessSub:"remote · ~2h (2h30 max)",finaleLabel:"🏆 Grand Final — Tuesday May 26, 4–7pm",finaleLoc:"In person · Cyrus Conseil, 50 bd Haussmann, Paris 75009",finaleNote:"Subject to validation by the organising committee",submitBtn:"Confirm my participation →",submitting:"Sending…",legal:"Data used exclusively for the Rotary Startup Award 2026.",okTitle:"Thank you,",okDesc:"Your profile has been recorded. The team will contact you very soon.",recap:"Summary",eFirst:"Required",eLast:"Required",eTitle:"Required",eEmail:"A valid email is required",eSess:"Please select at least one session",eServer:"An error occurred. Please try again.",finaleShort:"Grand Final May 26"},
-  de:{navSub:"Jurymitglied-Formular · Profil & Verfügbarkeit",heroTitle:"Willkommen in der Jury",heroDesc:"Vielen Dank, dass Sie der Jury des Rotary Startup Award Paris–Berlin beitreten. Bitte füllen Sie Ihr Profil aus — es dient zur Vorbereitung der Präsentationsunterlagen.",sId:"Identität",sPhoto:"Professionelles Foto",sSess:"Verfügbarkeit",sessDesc:"Wählen Sie die Sessions aus, für die Sie verfügbar sind (online, ~2 Std., max. 2,5 Std.)",fFirst:"Vorname *",fLast:"Nachname *",fTitle:"Titel / Funktion * (z.B. Innovationsleiter, BNP Paribas)",fOrg:"Organisation / Unternehmen (optional)",fEmail:"E-Mail *",photoLabel:"Foto hier ablegen",photoSub:"oder klicken · JPG, PNG · max. 5 MB",photoHint:"Wird in den Präsentationsfolien verwendet",changePhoto:"Ändern",sessSub:"Online · ~2 Std. (max. 2,5 Std.)",finaleLabel:"🏆 Großes Finale — Dienstag, 26. Mai, 16–19 Uhr",finaleLoc:"Vor Ort · Cyrus Conseil, 50 bd Haussmann, Paris 75009",finaleNote:"Vorbehaltlich der Bestätigung durch das Organisationskomitee",submitBtn:"Teilnahme bestätigen →",submitting:"Wird gesendet…",legal:"Daten werden ausschließlich für den Rotary Startup Award 2026 verwendet.",okTitle:"Vielen Dank,",okDesc:"Ihr Profil wurde gespeichert. Das Team wird sich in Kürze bei Ihnen melden.",recap:"Zusammenfassung",eFirst:"Pflichtfeld",eLast:"Pflichtfeld",eTitle:"Pflichtfeld",eEmail:"Gültige E-Mail erforderlich",eSess:"Bitte wählen Sie mindestens eine Session",eServer:"Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",finaleShort:"Großes Finale 26. Mai"},
+  fr:{navSub:"Formulaire juré · Profil & disponibilités",heroTitle:"Bienvenue au jury",heroDesc:"Merci d'accepter de rejoindre le jury du Rotary Startup Award Paris–Berlin. Renseignez votre profil ci-dessous — il servira à préparer les supports de présentation des sessions.",sId:"Identité",sPhoto:"Photo professionnelle",sSess:"Disponibilités",sessDesc:"Sélectionnez les sessions pour lesquelles vous êtes disponible (visio, ~2h, 2h30 max)",fFirst:"Prénom *",fLast:"Nom *",fTitle:"Titre / Qualité * (ex : Directeur Innovation, BNP Paribas)",fOrg:"Organisation / Entreprise (optionnel)",fEmail:"Email *",photoLabel:"Déposez votre photo ici",photoSub:"ou cliquez · JPG, PNG · max 5 Mo",photoHint:"Utilisée dans les slides de présentation",changePhoto:"Changer",sessSub:"visio · ~2h (2h30 max)",finaleLabel:"🏆 Grande Finale — mardi 26 mai, 16h–19h",finaleLoc:"En présentiel · Cyrus Conseil, 50 bd Haussmann, Paris 75009",finaleNote:"Sous réserve de validation par le comité d'organisation",submitBtn:"Confirmer ma participation →",submitting:"Envoi en cours…",legal:"Données utilisées exclusivement pour le Rotary Startup Award 2026.",okTitle:"Merci,",okDesc:"Votre profil a bien été enregistré. L'équipe vous contactera très prochainement.",recap:"Récapitulatif",eFirst:"Requis",eLast:"Requis",eTitle:"Requis",eEmail:"Email valide requis",eSess:"Sélectionnez au moins une session",eServer:"Erreur lors de l'envoi. Merci de réessayer.",finaleShort:"Grande Finale 26 mai",closedTag:"Inscriptions fermées",closedNote:"Brief envoyé · contactez l'admin si besoin"},
+  en:{navSub:"Jury form · Profile & availability",heroTitle:"Welcome to the jury",heroDesc:"Thank you for joining the jury of the Rotary Startup Award Paris–Berlin. Please fill in your profile below — it will be used to prepare the session presentation materials.",sId:"Identity",sPhoto:"Professional photo",sSess:"Availability",sessDesc:"Select the sessions for which you are available (remote, ~2h, 2h30 max)",fFirst:"First name *",fLast:"Last name *",fTitle:"Title / Role * (e.g. Head of Innovation, BNP Paribas)",fOrg:"Organisation / Company (optional)",fEmail:"Email *",photoLabel:"Drop your photo here",photoSub:"or click · JPG, PNG · max 5 MB",photoHint:"Used in session presentation slides",changePhoto:"Change",sessSub:"remote · ~2h (2h30 max)",finaleLabel:"🏆 Grand Final — Tuesday May 26, 4–7pm",finaleLoc:"In person · Cyrus Conseil, 50 bd Haussmann, Paris 75009",finaleNote:"Subject to validation by the organising committee",submitBtn:"Confirm my participation →",submitting:"Sending…",legal:"Data used exclusively for the Rotary Startup Award 2026.",okTitle:"Thank you,",okDesc:"Your profile has been recorded. The team will contact you very soon.",recap:"Summary",eFirst:"Required",eLast:"Required",eTitle:"Required",eEmail:"A valid email is required",eSess:"Please select at least one session",eServer:"An error occurred. Please try again.",finaleShort:"Grand Final May 26",closedTag:"Registration closed",closedNote:"Brief sent · contact the admin if needed"},
+  de:{navSub:"Jurymitglied-Formular · Profil & Verfügbarkeit",heroTitle:"Willkommen in der Jury",heroDesc:"Vielen Dank, dass Sie der Jury des Rotary Startup Award Paris–Berlin beitreten. Bitte füllen Sie Ihr Profil aus — es dient zur Vorbereitung der Präsentationsunterlagen.",sId:"Identität",sPhoto:"Professionelles Foto",sSess:"Verfügbarkeit",sessDesc:"Wählen Sie die Sessions aus, für die Sie verfügbar sind (online, ~2 Std., max. 2,5 Std.)",fFirst:"Vorname *",fLast:"Nachname *",fTitle:"Titel / Funktion * (z.B. Innovationsleiter, BNP Paribas)",fOrg:"Organisation / Unternehmen (optional)",fEmail:"E-Mail *",photoLabel:"Foto hier ablegen",photoSub:"oder klicken · JPG, PNG · max. 5 MB",photoHint:"Wird in den Präsentationsfolien verwendet",changePhoto:"Ändern",sessSub:"Online · ~2 Std. (max. 2,5 Std.)",finaleLabel:"🏆 Großes Finale — Dienstag, 26. Mai, 16–19 Uhr",finaleLoc:"Vor Ort · Cyrus Conseil, 50 bd Haussmann, Paris 75009",finaleNote:"Vorbehaltlich der Bestätigung durch das Organisationskomitee",submitBtn:"Teilnahme bestätigen →",submitting:"Wird gesendet…",legal:"Daten werden ausschließlich für den Rotary Startup Award 2026 verwendet.",okTitle:"Vielen Dank,",okDesc:"Ihr Profil wurde gespeichert. Das Team wird sich in Kürze bei Ihnen melden.",recap:"Zusammenfassung",eFirst:"Pflichtfeld",eLast:"Pflichtfeld",eTitle:"Pflichtfeld",eEmail:"Gültige E-Mail erforderlich",eSess:"Bitte wählen Sie mindestens eine Session",eServer:"Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",finaleShort:"Großes Finale 26. Mai",closedTag:"Anmeldung geschlossen",closedNote:"Brief versendet · bei Bedarf Admin kontaktieren"},
 };
 
 async function compress(file) {
@@ -212,29 +232,45 @@ export default function RsaJuryForm() {
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {SESSIONS.map(function(s){
                 const sel=form.sessions.includes(s.id);
+                const closed=isRegistrationClosed(s.iso, s.lockDays);
+                const handleClick=closed?function(){}:function(){togSess(s.id);};
                 return (
-                  <div key={s.id} className="btn" onClick={function(){togSess(s.id);}}
-                    style={{display:"flex",alignItems:"center",gap:13,padding:"12px 15px",borderRadius:11,border:"1.5px solid "+(sel?s.color:CREAM2),background:sel?s.light:"white",transition:"all .18s"}}>
-                    <div style={{width:19,height:19,borderRadius:4,flexShrink:0,border:sel?"none":"1.5px solid #d0d0e0",background:sel?s.color:"white",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}}>
-                      {sel&&<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  <div key={s.id} className={closed?"":"btn"} onClick={handleClick}
+                    style={{display:"flex",alignItems:"center",gap:13,padding:"12px 15px",borderRadius:11,border:"1.5px solid "+(closed?"#e8e0d8":(sel?s.color:CREAM2)),background:closed?"#f5f3ee":(sel?s.light:"white"),transition:"all .18s",opacity:closed?.55:1,cursor:closed?"not-allowed":"pointer"}}>
+                    <div style={{width:19,height:19,borderRadius:4,flexShrink:0,border:closed?"1.5px dashed #c0c0c0":(sel?"none":"1.5px solid #d0d0e0"),background:closed?"transparent":(sel?s.color:"white"),display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}}>
+                      {sel&&!closed&&<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      {closed&&<span style={{fontSize:9,lineHeight:1}}>🔒</span>}
                     </div>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:sel?500:400,color:sel?s.color:NAVY}}>{s.emoji} {s.label[lang]}</div>
-                      <div style={{fontSize:11,color:sel?s.color:"#9090a8",marginTop:1,opacity:.85}}>{s.date[lang]} · {t.sessSub}</div>
+                      <div style={{fontSize:13,fontWeight:sel?500:400,color:closed?"#a0a0a8":(sel?s.color:NAVY)}}>
+                        {s.emoji} {s.label[lang]}
+                        {closed&&<span style={{marginLeft:8,fontSize:10,padding:"2px 7px",borderRadius:8,background:"#e8e0d8",color:"#7a6048",fontWeight:500,letterSpacing:".03em"}}>{t.closedTag}</span>}
+                      </div>
+                      <div style={{fontSize:11,color:closed?"#a0a0a8":(sel?s.color:"#9090a8"),marginTop:1,opacity:.85}}>{s.date[lang]} · {closed?t.closedNote:t.sessSub}</div>
                     </div>
                   </div>
                 );
               })}
-              <div className="btn" onClick={function(){setForm(function(p){return Object.assign({},p,{finale:!p.finale});});setErrors(function(e){return Object.assign({},e,{sessions:null});});}}
-                style={{display:"flex",alignItems:"flex-start",gap:13,padding:"13px 15px",borderRadius:11,border:"1.5px solid "+(form.finale?GOLD:CREAM2),background:form.finale?"#fdf6e8":"white",transition:"all .18s"}}>
-                <div style={{width:19,height:19,borderRadius:4,flexShrink:0,marginTop:2,border:form.finale?"none":"1.5px solid #d0d0e0",background:form.finale?GOLD:"white",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}}>
-                  {form.finale&&<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:form.finale?500:400,color:form.finale?"#9a6400":NAVY}}>{t.finaleLabel}</div>
-                  <div style={{fontSize:11,color:form.finale?"#9a6400":"#9090a8",marginTop:3,lineHeight:1.55,opacity:.85}}>{t.finaleLoc}<br/><em style={{fontStyle:"italic"}}>{t.finaleNote}</em></div>
-                </div>
-              </div>
+              {(()=>{
+                const finaleClosed=isRegistrationClosed(FINALE_ISO, FINALE_LOCK_DAYS);
+                const handleFinale=finaleClosed?function(){}:function(){setForm(function(p){return Object.assign({},p,{finale:!p.finale});});setErrors(function(e){return Object.assign({},e,{sessions:null});});};
+                return (
+                  <div className={finaleClosed?"":"btn"} onClick={handleFinale}
+                    style={{display:"flex",alignItems:"flex-start",gap:13,padding:"13px 15px",borderRadius:11,border:"1.5px solid "+(finaleClosed?"#e8e0d8":(form.finale?GOLD:CREAM2)),background:finaleClosed?"#f5f3ee":(form.finale?"#fdf6e8":"white"),transition:"all .18s",opacity:finaleClosed?.55:1,cursor:finaleClosed?"not-allowed":"pointer"}}>
+                    <div style={{width:19,height:19,borderRadius:4,flexShrink:0,marginTop:2,border:finaleClosed?"1.5px dashed #c0c0c0":(form.finale?"none":"1.5px solid #d0d0e0"),background:finaleClosed?"transparent":(form.finale?GOLD:"white"),display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}}>
+                      {form.finale&&!finaleClosed&&<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      {finaleClosed&&<span style={{fontSize:9,lineHeight:1}}>🔒</span>}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:form.finale?500:400,color:finaleClosed?"#a0a0a8":(form.finale?"#9a6400":NAVY)}}>
+                        {t.finaleLabel}
+                        {finaleClosed&&<span style={{marginLeft:8,fontSize:10,padding:"2px 7px",borderRadius:8,background:"#e8e0d8",color:"#7a6048",fontWeight:500,letterSpacing:".03em"}}>{t.closedTag}</span>}
+                      </div>
+                      <div style={{fontSize:11,color:finaleClosed?"#a0a0a8":(form.finale?"#9a6400":"#9090a8"),marginTop:3,lineHeight:1.55,opacity:.85}}>{t.finaleLoc}<br/><em style={{fontStyle:"italic"}}>{finaleClosed?t.closedNote:t.finaleNote}</em></div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
