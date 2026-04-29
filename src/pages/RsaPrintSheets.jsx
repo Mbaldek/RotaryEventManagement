@@ -1,7 +1,7 @@
-// Printable score sheet — ONE blank A4 template per session, FR.
-// The organiser prints it once and photocopies it as needed (jury × startup).
-// Earlier versions generated a personalised sheet per (juror × startup) — that
-// produced 30-50 identical pages and was just noise to print.
+// Printable score sheet — three blank A4 templates per session (FR, EN, DE).
+// The organiser prints once and photocopies as needed; jurors pick the page
+// in their language. Earlier versions produced a personalised sheet per
+// (juror × startup), 30-50 duplicated pages that nobody wanted to print.
 //
 // Open via /RsaPrintSheets?s=<session_id>. Browser Print (Ctrl/Cmd+P) → A4 PDF.
 
@@ -16,11 +16,51 @@ const NAVY = "#0f1f3d";
 const GOLD = "#c9a84c";
 const INK = "#3a3a52";
 
+// Per-language strings for the static frame around the criteria block.
+const I18N = {
+  fr: {
+    title: "Feuille de scoring",
+    juror: "Juré :",
+    startup: "Startup :",
+    instructions: (
+      <>Pour chaque critère, entourez votre note <strong>de 0 à 5</strong>. Pondération indiquée à droite. Total max = 5,00.</>
+    ),
+    weight: (w) => `poids ×${w.toFixed(1)}`,
+    commentLabel: "Commentaire (optionnel) :",
+    signature: "Signature :",
+    total: "Total pondéré /5 :",
+  },
+  en: {
+    title: "Score sheet",
+    juror: "Juror:",
+    startup: "Startup:",
+    instructions: (
+      <>For each criterion, circle your score <strong>from 0 to 5</strong>. Weight on the right. Max total = 5.00.</>
+    ),
+    weight: (w) => `weight ×${w.toFixed(1)}`,
+    commentLabel: "Comment (optional):",
+    signature: "Signature:",
+    total: "Weighted total /5:",
+  },
+  de: {
+    title: "Bewertungsbogen",
+    juror: "Juror:",
+    startup: "Startup:",
+    instructions: (
+      <>Markieren Sie für jedes Kriterium Ihre Bewertung <strong>von 0 bis 5</strong>. Gewichtung rechts. Maximum = 5,00.</>
+    ),
+    weight: (w) => `Gewicht ×${w.toFixed(1)}`,
+    commentLabel: "Kommentar (optional):",
+    signature: "Unterschrift:",
+    total: "Gewichtete Gesamtnote /5:",
+  },
+};
+const LANGS = ["fr", "en", "de"];
+
 export default function RsaPrintSheets() {
   const [params] = useSearchParams();
   const sessionId = params.get("s");
   const session = sessionId ? SESSION_BY_ID[sessionId] : null;
-  const lang = "fr";
 
   if (!sessionId || !session) {
     return (
@@ -277,8 +317,8 @@ export default function RsaPrintSheets() {
           <ArrowLeft style={{ width: 14, height: 14 }} /> Retour admin
         </Link>
         <div style={{ fontSize: 13, color: INK }}>
-          {session.emoji} <strong>{getSessionLabel(session, lang)}</strong> ·{" "}
-          template vierge à photocopier
+          {session.emoji} <strong>{getSessionLabel(session, "fr")}</strong> ·{" "}
+          template vierge FR / EN / DE (3 pages)
         </div>
         <button
           onClick={() => window.print()}
@@ -303,13 +343,16 @@ export default function RsaPrintSheets() {
       </div>
 
       <div className="sheets">
-        <Sheet session={session} lang={lang} />
+        {LANGS.map((lang) => (
+          <Sheet key={lang} session={session} lang={lang} />
+        ))}
       </div>
     </div>
   );
 }
 
 function Sheet({ session, lang }) {
+  const t = I18N[lang];
   return (
     <div className="sheet">
       <header>
@@ -317,27 +360,27 @@ function Sheet({ session, lang }) {
           <div className="eyebrow">
             Rotary Startup Award 2026 · {session.emoji} {getSessionLabel(session, lang)}
           </div>
-          <h1>Feuille de scoring</h1>
+          <h1>{t.title}</h1>
         </div>
         <div style={{ textAlign: "right", fontSize: 9, color: INK }}>
           {session.date}
+          <div style={{ marginTop: 2, opacity: 0.6, letterSpacing: "0.1em" }}>{lang.toUpperCase()}</div>
         </div>
       </header>
 
       <div className="meta">
         <div className="field">
-          <span className="field-label">Juré :</span>
+          <span className="field-label">{t.juror}</span>
           <span className="field-value">&nbsp;</span>
         </div>
         <div className="field">
-          <span className="field-label">Startup :</span>
+          <span className="field-label">{t.startup}</span>
           <span className="field-value startup-name">&nbsp;</span>
         </div>
       </div>
 
       <div style={{ fontSize: 9, color: INK, marginBottom: 6 }}>
-        Pour chaque critère, entourez votre note <strong>de 0 à 5</strong>.
-        Pondération indiquée à droite. Total max = 5,00.
+        {t.instructions}
       </div>
 
       {CRITERIA.map((c) => {
@@ -346,7 +389,7 @@ function Sheet({ session, lang }) {
           <div key={c.id} className="crit">
             <div className="crit-head">
               <span className="crit-title">{tc.label}</span>
-              <span className="crit-weight">poids ×{c.weight.toFixed(1)}</span>
+              <span className="crit-weight">{t.weight(c.weight)}</span>
             </div>
             <div className="crit-desc">{tc.desc}</div>
             <div className="scale">
@@ -362,13 +405,13 @@ function Sheet({ session, lang }) {
       })}
 
       <div className="comment">
-        <div className="comment-label">Commentaire (optionnel) :</div>
+        <div className="comment-label">{t.commentLabel}</div>
         <div className="comment-box" />
       </div>
 
       <div className="footer-tot">
         <div>
-          Signature :{" "}
+          {t.signature}{" "}
           <span
             style={{
               borderBottom: "1px dotted #999",
@@ -379,7 +422,7 @@ function Sheet({ session, lang }) {
           />
         </div>
         <div className="total-box">
-          <span>Total pondéré /5 :</span>
+          <span>{t.total}</span>
           <span className="total-num">&nbsp;</span>
         </div>
       </div>
