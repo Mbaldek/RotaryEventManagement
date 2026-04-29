@@ -174,6 +174,9 @@ export default function TableView() {
   const [mySeatId, setMySeatId] = useState(
     () => localStorage.getItem("mySeatId") || null
   );
+  const [myToken, setMyToken] = useState(
+    () => localStorage.getItem("mySeatToken") || null
+  );
   const [chatTarget, setChatTarget] = useState(null);
   const [tableChatOpen, setTableChatOpen] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -209,6 +212,19 @@ export default function TableView() {
     queryFn: () => Seat.filter({ table_id: tableId }),
     enabled: !!tableId,
     refetchInterval: 10000,
+  });
+
+  // Resolve my seat by id directly — independent of `tableId`. Lets the chat
+  // panel work when browsing a table other than mine (e.g. via the Salon).
+  const { data: mySeatRemote } = useQuery({
+    queryKey: ["mySeat", mySeatId],
+    queryFn: async () => {
+      const rows = await Seat.filter({ id: mySeatId });
+      return rows[0] || null;
+    },
+    enabled: !!mySeatId,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
   });
 
   const { data: allTables = [] } = useQuery({
@@ -255,16 +271,16 @@ export default function TableView() {
   const saveSeatMutation = useMutation({
     mutationFn: async ({ seatNumber, data }) => {
       const existing = seats.find((s) => s.seat_number === seatNumber);
-      const token = crypto.randomUUID().slice(0, 8);
       if (existing) {
         await Seat.update(existing.id, data);
-        return existing.id;
+        return { id: existing.id, token: existing.guest_token };
       } else {
         if (!currentEvent?.id) {
           throw new Error(
             "Aucun déjeuner statutaire programmé — impossible d'enregistrer un siège."
           );
         }
+        const token = crypto.randomUUID().slice(0, 8);
         const newSeat = await Seat.create({
           ...data,
           table_id: tableId,
@@ -272,14 +288,19 @@ export default function TableView() {
           guest_token: token,
           event_id: currentEvent.id,
         });
-        return newSeat.id;
+        return { id: newSeat.id, token };
       }
     },
-    onSuccess: (seatId) => {
-      localStorage.setItem("mySeatId", seatId);
-      setMySeatId(seatId);
+    onSuccess: ({ id, token }) => {
+      localStorage.setItem("mySeatId", id);
+      setMySeatId(id);
+      if (token) {
+        localStorage.setItem("mySeatToken", token);
+        setMyToken(token);
+      }
       queryClient.invalidateQueries({ queryKey: ["seats", tableId] });
       queryClient.invalidateQueries({ queryKey: ["allSeats"] });
+      queryClient.invalidateQueries({ queryKey: ["mySeat", id] });
       setPickingSeat(null);
       setPickingSeatData(null);
     },
@@ -303,12 +324,15 @@ export default function TableView() {
       });
       if (mySeatId === seatData.id) {
         localStorage.removeItem("mySeatId");
+        localStorage.removeItem("mySeatToken");
         setMySeatId(null);
+        setMyToken(null);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["seats", tableId] });
       queryClient.invalidateQueries({ queryKey: ["allSeats"] });
+      queryClient.invalidateQueries({ queryKey: ["mySeat"] });
       setPickingSeat(null);
       setPickingSeatData(null);
     },
@@ -423,10 +447,25 @@ export default function TableView() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [tableId]);
 
+  // Prefer the local list (fresher, refreshes every 10 s) when I'm on my own
+  // table; fall back to the remote lookup when browsing another table.
   const mySeat = useMemo(
-    () => seats.find((s) => s.id === mySeatId) || null,
-    [seats, mySeatId]
+    () => seats.find((s) => s.id === mySeatId) || mySeatRemote || null,
+    [seats, mySeatId, mySeatRemote]
   );
+
+  // Anti-usurpation: if the seat I think I own has a different (or empty)
+  // guest_token than the one we cached at sign-up time, my session is stale.
+  // This happens when someone else takes over the same seat after I left.
+  useEffect(() => {
+    if (!mySeatId || !myToken || !mySeatRemote) return;
+    if (mySeatRemote.guest_token !== myToken) {
+      localStorage.removeItem("mySeatId");
+      localStorage.removeItem("mySeatToken");
+      setMySeatId(null);
+      setMyToken(null);
+    }
+  }, [mySeatId, myToken, mySeatRemote]);
 
   const stats = useMemo(() => {
     const total = getTableCapacity(table);
@@ -936,8 +975,10 @@ export default function TableView() {
         onChat={mySeatId ? handleStartChatFromSalon : undefined}
       />
 
-      {/* Table chat trigger — floating button bottom-right when seated and no panel open */}
-      {mySeat && !chatTarget && !tableChatOpen && (
+      {/* Table chat trigger — floating button bottom-right when seated and no
+          panel open. Only on my own table: the panel reads `me.table_id`
+          server-side, so showing it elsewhere would mismatch the header. */}
+      {mySeat && mySeat.table_id === tableId && !chatTarget && !tableChatOpen && (
         <button
           onClick={() => setTableChatOpen(true)}
           aria-label="Chat de la table"

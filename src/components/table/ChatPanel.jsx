@@ -38,7 +38,8 @@ export default function ChatPanel({ mySeat, targetSeat, mode, onClose, tableNumb
     queryKey,
     queryFn: () =>
       isTable ? Chat.listTable(token) : Chat.listDm(token, targetSeat.id),
-    refetchInterval: 3000,
+    refetchInterval: 1500,
+    refetchIntervalInBackground: false,
     enabled:
       !!token &&
       (isTable ? !!mySeat?.table_id : !!targetSeat?.id),
@@ -59,13 +60,41 @@ export default function ChatPanel({ mySeat, targetSeat, mode, onClose, tableNumb
       isTable
         ? Chat.sendTable(token, content)
         : Chat.sendDm(token, targetSeat.id, content),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+    // Optimistic write — the message lands in the bubble list before the
+    // server round-trip resolves. Refetch (every 1.5 s) replaces it with the
+    // canonical row; if the call fails, onError rolls back.
+    onMutate: async (content) => {
+      await queryClient.cancelQueries({ queryKey });
+      const prev = queryClient.getQueryData(queryKey) || [];
+      const fromName =
+        `${mySeat?.first_name || ""} ${mySeat?.last_name || ""}`.trim() ||
+        "Convive";
+      const optimistic = {
+        id: `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        scope: isTable ? "table" : "dm",
+        from_seat_id: mySeatId,
+        to_seat_id: isTable ? null : targetSeat.id,
+        from_name: fromName,
+        to_name: isTable
+          ? null
+          : `${targetSeat?.first_name || ""} ${targetSeat?.last_name || ""}`.trim() ||
+            "Convive",
+        content,
+        table_id: isTable ? mySeat?.table_id : targetSeat?.table_id,
+        created_date: new Date().toISOString(),
+        _optimistic: true,
+      };
+      queryClient.setQueryData(queryKey, [...prev, optimistic]);
       setMessage("");
+      return { prev };
     },
-    onError: (err) => {
+    onError: (err, _content, ctx) => {
       console.error("[ChatPanel:send]", err);
+      if (ctx?.prev) queryClient.setQueryData(queryKey, ctx.prev);
       toast.error("Message non envoyé");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -80,6 +109,8 @@ export default function ChatPanel({ mySeat, targetSeat, mode, onClose, tableNumb
 
   const headerEyebrow = isTable
     ? "Chat de table"
+    : targetSeat.is_presidential
+    ? "Présidentielle"
     : targetSeat.table_number
     ? `Table ${targetSeat.table_number}`
     : `Siège ${targetSeat.seat_number ?? ""}`;

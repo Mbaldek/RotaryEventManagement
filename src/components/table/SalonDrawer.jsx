@@ -38,9 +38,13 @@ export default function SalonDrawer({ open, onClose, allSeats, allTables, onChat
       .filter((s) => s.first_name)
       .map((s) => {
         const t = tableMap.get(s.table_id);
+        // Keep `table_number` numeric (downstream consumers like ChatPanel
+        // rely on it). `table_label` is the display string only.
         return {
           ...s,
-          table_number: t?.is_presidential ? "Prés." : t?.table_number,
+          table_number: t?.table_number,
+          table_label: t?.is_presidential ? "Prés." : t?.table_number,
+          is_presidential: !!t?.is_presidential,
           gold: !!t?.is_presidential,
         };
       })
@@ -60,7 +64,7 @@ export default function SalonDrawer({ open, onClose, allSeats, allTables, onChat
     return (
       `${g.first_name} ${g.last_name}`.toLowerCase().includes(q) ||
       (g.job || "").toLowerCase().includes(q) ||
-      String(g.table_number).toLowerCase().includes(q)
+      String(g.table_label ?? "").toLowerCase().includes(q)
     );
   });
 
@@ -206,7 +210,7 @@ export default function SalonDrawer({ open, onClose, allSeats, allTables, onChat
                         borderRadius: 2,
                       }}
                     >
-                      {g.table_number === "Prés." ? "★" : `T. ${g.table_number}`}
+                      {g.is_presidential ? "★" : `T. ${g.table_label}`}
                     </span>
                     {onChat && (
                       <button
