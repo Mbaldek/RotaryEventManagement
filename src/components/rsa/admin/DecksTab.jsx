@@ -505,6 +505,64 @@ export default function DecksTab({ sessionId }) {
     return supabase.storage.from("uploads").getPublicUrl(path).data.publicUrl || "";
   }, [sessionCfg]);
 
+  const organiserSupportUrl = useMemo(() => {
+    const path = sessionCfg?.organiser_support_path;
+    if (!path) return "";
+    return supabase.storage.from("uploads").getPublicUrl(path).data.publicUrl || "";
+  }, [sessionCfg]);
+  const [uploadingSupport, setUploadingSupport] = useState(false);
+
+  async function uploadOrganiserSupport(ev) {
+    const file = ev.target.files?.[0];
+    ev.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+    setUploadingSupport(true);
+    try {
+      const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+      const path = `session_kits/${sessionId}_organiser_support.${ext}`;
+      const { error: upErr } = await supabase.storage.from("uploads").upload(path, file, {
+        upsert: true,
+        contentType: file.type || "application/octet-stream",
+      });
+      if (upErr) throw upErr;
+      const { error: dbErr } = await supabase.from("session_config").upsert({
+        session_id: sessionId,
+        organiser_support_path: path,
+        organiser_support_filename: file.name,
+        organiser_support_uploaded_at: new Date().toISOString(),
+      }, { onConflict: "session_id" });
+      if (dbErr) throw dbErr;
+      toast.success(`Support uploadé : ${file.name}`);
+      await load();
+    } catch (e) {
+      toast.error(`Échec upload : ${e.message || e}`);
+    }
+    setUploadingSupport(false);
+  }
+
+  async function removeOrganiserSupport() {
+    if (!sessionCfg?.organiser_support_path) return;
+    if (!window.confirm("Supprimer le support de présentation ? Le fichier sera effacé du stockage.")) return;
+    setUploadingSupport(true);
+    try {
+      // Best-effort delete; even if storage delete fails (already gone, perms…)
+      // we still want to clear the DB pointer so the UI reflects reality.
+      await supabase.storage.from("uploads").remove([sessionCfg.organiser_support_path]);
+      const { error: dbErr } = await supabase.from("session_config").upsert({
+        session_id: sessionId,
+        organiser_support_path: null,
+        organiser_support_filename: null,
+        organiser_support_uploaded_at: null,
+      }, { onConflict: "session_id" });
+      if (dbErr) throw dbErr;
+      toast.success("Support supprimé");
+      await load();
+    } catch (e) {
+      toast.error(`Échec : ${e.message || e}`);
+    }
+    setUploadingSupport(false);
+  }
+
   async function generateJuryPack() {
     if (!rows.length) { toast.error("Aucune startup pour cette session"); return; }
     setGeneratingPack(true);
@@ -969,6 +1027,52 @@ export default function DecksTab({ sessionId }) {
             </div>
           </div>
         </div>
+
+        {/* Organiser support: own intro/outro slides, stored alongside the kit */}
+        <div className="mb-3 bg-stone-50 border border-stone-200 rounded-lg p-3">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-start gap-2 min-w-0 flex-1">
+              <FileText className="w-4 h-4 text-stone-500 mt-0.5 flex-shrink-0"/>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-stone-800">Support de présentation (organisateur)</div>
+                <div className="text-xs text-stone-500 mt-0.5">
+                  {organiserSupportUrl
+                    ? <>{sessionCfg?.organiser_support_filename || "Support uploadé"} · prêt à partager pendant la session.{sessionCfg?.organiser_support_uploaded_at && <> <span className="text-stone-400">· uploadé {new Date(sessionCfg.organiser_support_uploaded_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span></>}</>
+                    : <>Pas encore uploadé. Vos slides d'intro/outro à partager en direct (PDF, PPTX, KEY…). Stocké avec le pack pre-reads pour avoir tout le kit au même endroit.</>
+                  }
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {organiserSupportUrl && (
+                <>
+                  <a href={organiserSupportUrl} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100 text-stone-700">
+                    <Download className="w-3 h-3"/>Télécharger
+                  </a>
+                  <button onClick={removeOrganiserSupport} disabled={uploadingSupport}
+                    className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100 text-stone-500">
+                    Supprimer
+                  </button>
+                </>
+              )}
+              <label className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-stone-800 text-white hover:bg-stone-900 ${uploadingSupport ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.pptx,.ppt,.key,.odp"
+                  onChange={uploadOrganiserSupport}
+                  disabled={uploadingSupport}
+                />
+                {uploadingSupport
+                  ? <><Loader2 className="w-3 h-3 animate-spin"/>Upload…</>
+                  : <><FileText className="w-3 h-3"/>{organiserSupportUrl ? "Remplacer" : "Uploader"}</>
+                }
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500">
