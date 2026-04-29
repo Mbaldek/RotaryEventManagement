@@ -118,7 +118,12 @@ const DEFAULT_JURY_TEMPLATE_FR = `Sujet : Rotary Startup Award — session {DATE
 
 Bonjour {JURY_PRENOM},
 
-Merci d'avoir accepté de faire partie du jury pour la session « {SESSION_LABEL} » du {DATE_LONGUE} (visio Teams, ~2h30). Voici votre dossier de préparation.
+Voici votre dossier de préparation pour la session « {SESSION_LABEL} » du {DATE_LONGUE}, ~2h30 sur Teams.
+
+Lien Teams :
+{TEAMS_URL}
+
+L'invitation Teams a normalement été déposée directement dans votre calendrier. Si vous ne la voyez pas, faites-moi signe.
 
 Déroulé de la session :
   • 18h00 — accueil et introduction (5 min)
@@ -126,7 +131,7 @@ Déroulé de la session :
   • Chaque startup : 10 à 12 min de pitch + 8 à 10 min de Q&A
   • Fin des pitchs, puis délibération du jury
 
-Langue : les pitchs et les Q&A se déroulent en anglais (jury international). Vous pouvez poser vos questions dans la langue de votre choix si elle est partagée avec la startup.
+Langue : pitchs et Q&A en anglais (jury international). Vous pouvez poser vos questions dans la langue de votre choix si elle est partagée avec la startup.
 
 Pre-read — à lire avant la session :
 Le PDF joint à cet email rassemble les executive summaries (FR/DE) des {N} startups. Sauvegardez-le pour le retrouver pendant la session.
@@ -135,24 +140,16 @@ Le PDF joint à cet email rassemble les executive summaries (FR/DE) des {N} star
 Pitch decks — liens individuels (volumineux, à ouvrir en ligne) :
 {STARTUPS_BLOCK}
 
-Scoring en direct :
-Pendant la session, votez en direct sur :
-{SCORING_URL}
-
-Fonctionnement du scoring :
-  • 6 critères pondérés, note de 0 à 5 par critère
-  • Sauvegarde automatique à chaque clic, reprise possible sur tout appareil
-  • Commentaire libre optionnel par startup (visible uniquement par l'organisateur)
-  • Vous pouvez modifier vos notes tant que la session n'est pas verrouillée
+Scoring en direct — petit guide :
+  1. Le jour J, ouvrez ce lien sur smartphone, tablette ou laptop : {SCORING_URL}
+  2. À l'arrivée, choisissez votre nom dans la liste « Qui êtes-vous ? » (jurés validés uniquement). Si vous n'êtes pas listé, prévenez-moi.
+  3. Pour chaque startup : touchez la carte, notez les 6 critères (0 à 5), ajoutez un commentaire si vous voulez (visible uniquement par l'organisateur), envoyez.
+  4. Tout est sauvegardé en continu — vous pouvez fermer l'onglet, reprendre sur un autre appareil, modifier vos notes tant que la session n'est pas verrouillée.
 
 Grille d'évaluation (6 critères) :
 {CRITERIA_BLOCK}
 
-Lien Teams :
-Le lien de connexion sera envoyé au maximum 48h avant la session.
-
-Contact :
-Je suis votre point de contact pour cette session. Vous pouvez me joindre par email, téléphone ou WhatsApp en cas de besoin.
+En cas de problème (lien Teams manquant, accès scoring, deck illisible…), un email, téléphone ou WhatsApp suffit.
 
 Bien cordialement,
 {ORGANISER_NAME}`;
@@ -161,7 +158,12 @@ const DEFAULT_JURY_TEMPLATE_EN = `Subject: Rotary Startup Award — {DATE_LONGUE
 
 Hello {JURY_PRENOM},
 
-Thank you for agreeing to join the jury for the « {SESSION_LABEL} » session on {DATE_LONGUE} (Teams call, ~2h30). Here is your preparation pack.
+Here is your preparation pack for the « {SESSION_LABEL} » session on {DATE_LONGUE}, ~2h30 on Teams.
+
+Teams link:
+{TEAMS_URL}
+
+The Teams invitation should already be in your calendar. If it isn't, let me know.
 
 Session schedule:
   • 6:00pm — welcome and introduction (5 min)
@@ -169,7 +171,7 @@ Session schedule:
   • Each startup: 10 to 12 min pitch + 8 to 10 min Q&A
   • End of pitches, then jury deliberation
 
-Language: pitches and Q&A are held in English (international jury). You may ask questions in any language you share with the startup.
+Language: pitches and Q&A in English (international jury). You may ask questions in any language you share with the startup.
 
 Pre-read — to read before the session:
 The PDF attached to this email bundles the executive summaries (FR/DE) of all {N} startups. Save it so you can refer back during the session.
@@ -178,24 +180,16 @@ The PDF attached to this email bundles the executive summaries (FR/DE) of all {N
 Pitch decks — individual links (large, open online):
 {STARTUPS_BLOCK}
 
-Live scoring:
-During the session, score live at:
-{SCORING_URL}
-
-How scoring works:
-  • 6 weighted criteria, 0 to 5 per criterion
-  • Auto-save on every click, resume on any device
-  • Optional free-form comment per startup (visible only to the organiser)
-  • You can edit your scores until the session is locked
+Live scoring — quick guide:
+  1. On the day, open this link on phone, tablet or laptop: {SCORING_URL}
+  2. Pick your name in the "Who are you?" list (validated jurors only). If you're not listed, let me know.
+  3. For each startup: tap the card, score the 6 criteria (0 to 5), add a comment if you want (visible to the organiser only), submit.
+  4. Everything saves continuously — close the tab, resume on another device, edit your scores until the session is locked.
 
 Scoring grid (6 criteria):
 {CRITERIA_BLOCK}
 
-Teams link:
-The connection link will be sent at the latest 48h before the session.
-
-Contact:
-I am your point of contact for this session. Feel free to reach me by email, phone or WhatsApp whenever needed.
+For anything (missing Teams link, scoring access, unreadable deck…), email, phone or WhatsApp works.
 
 Best regards,
 {ORGANISER_NAME}`;
@@ -204,7 +198,12 @@ const DEFAULT_JURY_TEMPLATE_DE = `Betreff: Rotary Startup Award — Session {DAT
 
 Guten Tag {JURY_PRENOM},
 
-vielen Dank, dass Sie Teil der Jury für die Session „{SESSION_LABEL}" am {DATE_LONGUE} (Teams-Videokonferenz, ~2h30) sind. Anbei Ihre Vorbereitungsunterlagen.
+anbei Ihre Vorbereitungsunterlagen für die Session „{SESSION_LABEL}" am {DATE_LONGUE}, etwa 2h30 auf Teams.
+
+Teams-Link:
+{TEAMS_URL}
+
+Die Teams-Einladung wurde direkt in Ihren Kalender eingetragen. Sollte sie nicht erscheinen, geben Sie mir bitte Bescheid.
 
 Ablauf der Session:
   • 18:00 Uhr — Begrüßung und Einführung (5 Min)
@@ -212,7 +211,7 @@ Ablauf der Session:
   • Pro Startup: 10 bis 12 Min Pitch + 8 bis 10 Min Q&A
   • Ende der Pitches, anschließend Jury-Beratung
 
-Sprache: Pitches und Q&A finden auf Englisch statt (internationale Jury). Fragen dürfen Sie in jeder Sprache stellen, die Sie mit dem Startup teilen.
+Sprache: Pitches und Q&A auf Englisch (internationale Jury). Fragen dürfen Sie in jeder Sprache stellen, die Sie mit dem Startup teilen.
 
 Vorab-Lektüre — vor der Session zu lesen:
 Das angehängte PDF bündelt die Executive Summaries (FR/DE) aller {N} Startups. Speichern Sie es, um es während der Session zur Hand zu haben.
@@ -221,24 +220,16 @@ Das angehängte PDF bündelt die Executive Summaries (FR/DE) aller {N} Startups.
 Pitch Decks — einzelne Links (groß, im Browser öffnen):
 {STARTUPS_BLOCK}
 
-Live-Scoring:
-Während der Session bewerten Sie live unter:
-{SCORING_URL}
-
-Funktionsweise des Scorings:
-  • 6 gewichtete Kriterien, Bewertung 0 bis 5 pro Kriterium
-  • Automatisches Speichern bei jedem Klick, Fortsetzung auf jedem Gerät möglich
-  • Optionaler Freitextkommentar pro Startup (nur für den Organisator sichtbar)
-  • Änderungen möglich, solange die Session nicht gesperrt ist
+Live-Scoring — kurze Anleitung:
+  1. Am Tag der Session: diesen Link auf Smartphone, Tablet oder Laptop öffnen: {SCORING_URL}
+  2. Wählen Sie Ihren Namen in der Liste „Wer sind Sie?" (nur validierte Jurymitglieder). Falls Sie nicht aufgeführt sind, bitte kurz Bescheid geben.
+  3. Pro Startup: Karte antippen, die 6 Kriterien bewerten (0 bis 5), optional ein Kommentar (nur für den Organisator sichtbar), absenden.
+  4. Alles wird laufend gespeichert — Tab schließen, auf anderem Gerät fortsetzen, Bewertungen ändern bis zur Sperrung der Session.
 
 Bewertungsraster (6 Kriterien):
 {CRITERIA_BLOCK}
 
-Teams-Link:
-Der Verbindungslink wird spätestens 48h vor der Session versandt.
-
-Kontakt:
-Ich bin Ihr Ansprechpartner für diese Session. Sie erreichen mich bei Bedarf per E-Mail, Telefon oder WhatsApp.
+Bei Fragen (fehlender Teams-Link, Scoring-Zugang, unleserliches Deck…) genügt eine E-Mail, ein Anruf oder WhatsApp.
 
 Mit freundlichen Grüßen,
 {ORGANISER_NAME}`;
@@ -564,6 +555,7 @@ export default function DecksTab({ sessionId }) {
       const tpl = lang === "fr" ? juryTemplateFr : lang === "de" ? juryTemplateDe : juryTemplateEn;
       const label = session ? getSessionLabel(session, lang) : "";
       const dateLong = (SESSION_DATES_LONG[sessionId] || {})[lang] || "";
+      const teamsUrl = (sessionCfg?.teams_link || "").trim();
       const vars = {
         JURY_PRENOM: j.prenom || (lang === "fr" ? "à compléter" : lang === "de" ? "zu ergänzen" : "there"),
         SESSION_LABEL: label,
@@ -573,13 +565,14 @@ export default function DecksTab({ sessionId }) {
         STARTUPS_BLOCK: buildStartupsBlock(rows, lang),
         CRITERIA_BLOCK: buildCriteriaBlock(lang),
         JURY_PACK_URL: juryPackUrl || (lang === "fr" ? "(pack à générer)" : lang === "de" ? "(Paket noch zu erstellen)" : "(pack to be generated)"),
+        TEAMS_URL: teamsUrl || (lang === "fr" ? "(à coller depuis Setup)" : lang === "de" ? "(aus Setup einfügen)" : "(paste from Setup)"),
         ORGANISER_NAME: "Mathieu",
       };
       const rendered = renderTemplate(tpl, vars);
       const { subject, body } = splitSubjectBody(rendered);
       return { jury: j, lang, subject, body, to: j.email || "" };
     });
-  }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session, juryLangOverride, juryPackUrl]);
+  }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session, juryLangOverride, juryPackUrl, sessionCfg?.teams_link]);
 
   function gmailLink(e) {
     const u = new URL("https://mail.google.com/mail/");
@@ -954,7 +947,7 @@ export default function DecksTab({ sessionId }) {
             <Users className="w-4 h-4 text-stone-500"/>Brouillons d'emails jury
             <span className="text-[10px] font-normal text-stone-500">· {jurors.length} juré{jurors.length > 1 ? "s" : ""} assigné{jurors.length > 1 ? "s" : ""}</span>
           </h2>
-          <div className="text-xs text-stone-500">Variables : <code className="text-[10px] bg-stone-100 px-1 rounded">{"{JURY_PRENOM}"} {"{SESSION_LABEL}"} {"{DATE_LONGUE}"} {"{N}"} {"{SCORING_URL}"} {"{JURY_PACK_URL}"} {"{STARTUPS_BLOCK}"} {"{CRITERIA_BLOCK}"} {"{ORGANISER_NAME}"}</code></div>
+          <div className="text-xs text-stone-500">Variables : <code className="text-[10px] bg-stone-100 px-1 rounded">{"{JURY_PRENOM}"} {"{SESSION_LABEL}"} {"{DATE_LONGUE}"} {"{N}"} {"{SCORING_URL}"} {"{JURY_PACK_URL}"} {"{TEAMS_URL}"} {"{STARTUPS_BLOCK}"} {"{CRITERIA_BLOCK}"} {"{ORGANISER_NAME}"}</code></div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           <div>
