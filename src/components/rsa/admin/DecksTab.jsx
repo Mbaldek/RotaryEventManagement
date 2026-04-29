@@ -295,12 +295,62 @@ function splitSubjectBody(rendered) {
   const first = (lines[0] || "").trim();
   let subject = "";
   let body = rendered;
-  const m = first.match(/^(?:sujet|subject)\s*:\s*(.*)$/i);
+  // German "Betreff:" was previously not detected → DE drafts had no subject pre-filled.
+  const m = first.match(/^(?:sujet|subject|betreff)\s*:\s*(.*)$/i);
   if (m) {
     subject = m[1].trim();
     body = lines.slice(1).join("\n").replace(/^\n+/, "");
   }
   return { subject, body };
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+// Per-language anchor labels so the HTML version of the email has short
+// human-readable links instead of 200-char Supabase storage URLs.
+const HTML_LINK_LABELS = {
+  fr: { deck: "Voir le deck", teams: "Rejoindre le Teams", pack: "Télécharger le pack pre-read (PDF)", scoring: "Ouvrir le scoring" },
+  en: { deck: "Open the deck", teams: "Join Teams",       pack: "Download the pre-read pack (PDF)",   scoring: "Open the scoring" },
+  de: { deck: "Deck öffnen",   teams: "Teams beitreten",  pack: "Vorab-Lektüre-Paket (PDF) öffnen",     scoring: "Scoring öffnen" },
+};
+function buildStartupsBlockHtml(rows, lang) {
+  const L = STARTUP_BLOCK_LABELS[lang] || STARTUP_BLOCK_LABELS.en;
+  const HL = HTML_LINK_LABELS[lang] || HTML_LINK_LABELS.en;
+  if (!rows.length) return "—";
+  return rows.map((row, i) => {
+    const deckPath = row.final_deck_path || row.application_deck_path;
+    const deckUrl = deckPath
+      ? supabase.storage.from("uploads").getPublicUrl(deckPath).data.publicUrl
+      : null;
+    const linkPart = deckUrl
+      ? `<a href="${escapeHtml(deckUrl)}">${escapeHtml(HL.deck)}</a>`
+      : `<em>${escapeHtml(L.notProvided)}</em>`;
+    return `${i + 1}. <strong>${escapeHtml(row.startup_name)}</strong> — ${linkPart}`;
+  }).join("<br>");
+}
+// Render a template body to HTML: escape the static template text, then splice
+// in already-HTML-safe values (link tags, escaped strings), then turn newlines
+// into <br>. Subject line is stripped — that's plain-text only via mailto/gmail.
+function renderTemplateHtml(tpl, varsHtml) {
+  // Strip the subject line from the template before rendering — the body is
+  // what gets pasted, not the subject.
+  const lines = tpl.split("\n");
+  const first = (lines[0] || "").trim();
+  const stripFirst = /^(?:sujet|subject|betreff)\s*:\s*/i.test(first);
+  const bodyTpl = stripFirst
+    ? lines.slice(1).join("\n").replace(/^\n+/, "")
+    : tpl;
+  let out = escapeHtml(bodyTpl);
+  for (const [k, v] of Object.entries(varsHtml)) {
+    out = out.split(`{${k}}`).join(v ?? "");
+  }
+  return out.replace(/\n/g, "<br>");
 }
 
 function daysUntil(iso) {
@@ -517,6 +567,27 @@ export default function DecksTab({ sessionId }) {
     try { await navigator.clipboard.writeText(text); toast.success(msg); }
     catch { toast.error("Impossible de copier"); }
   }
+  // Writes both text/html and text/plain so pasting into Gmail/Proton/Outlook
+  // compose preserves the hyperlinks (HTML), while still working in plain-text
+  // editors (Notes, Slack threads…) via the text/plain fallback.
+  async function copyRich(html, plain, msg = "Copié (HTML + texte)") {
+    try {
+      if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([plain], { type: "text/plain" }),
+          }),
+        ]);
+        toast.success(msg);
+      } else {
+        await navigator.clipboard.writeText(plain);
+        toast.success("Copié (texte simple — HTML non supporté)");
+      }
+    } catch {
+      toast.error("Impossible de copier");
+    }
+  }
 
   // --- Email rendering ---
   const emails = useMemo(() => {
@@ -570,7 +641,33 @@ export default function DecksTab({ sessionId }) {
       };
       const rendered = renderTemplate(tpl, vars);
       const { subject, body } = splitSubjectBody(rendered);
-      return { jury: j, lang, subject, body, to: j.email || "" };
+
+      // HTML body: same template, but URLs are wrapped in <a> tags with short
+      // anchor text so when pasted into Gmail/Proton compose the email shows
+      // "Voir le deck" / "Rejoindre le Teams" instead of 200-char URLs.
+      const HL = HTML_LINK_LABELS[lang] || HTML_LINK_LABELS.en;
+      const teamsHtml = teamsUrl
+        ? `<a href="${escapeHtml(teamsUrl)}">${escapeHtml(HL.teams)}</a>`
+        : escapeHtml(vars.TEAMS_URL);
+      const packHtml = juryPackUrl
+        ? `<a href="${escapeHtml(juryPackUrl)}">${escapeHtml(HL.pack)}</a>`
+        : escapeHtml(vars.JURY_PACK_URL);
+      const scoringHtml = `<a href="${escapeHtml(scoringUrl)}">${escapeHtml(HL.scoring)}</a>`;
+      const varsHtml = {
+        JURY_PRENOM: escapeHtml(vars.JURY_PRENOM),
+        SESSION_LABEL: escapeHtml(vars.SESSION_LABEL),
+        DATE_LONGUE: escapeHtml(vars.DATE_LONGUE),
+        N: String(vars.N),
+        SCORING_URL: scoringHtml,
+        STARTUPS_BLOCK: buildStartupsBlockHtml(rows, lang),
+        CRITERIA_BLOCK: escapeHtml(vars.CRITERIA_BLOCK).replace(/\n/g, "<br>"),
+        JURY_PACK_URL: packHtml,
+        TEAMS_URL: teamsHtml,
+        ORGANISER_NAME: escapeHtml(vars.ORGANISER_NAME),
+      };
+      const bodyHtml = renderTemplateHtml(tpl, varsHtml);
+
+      return { jury: j, lang, subject, body, bodyHtml, to: j.email || "" };
     });
   }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session, juryLangOverride, juryPackUrl, sessionCfg?.teams_link]);
 
@@ -1030,9 +1127,11 @@ export default function DecksTab({ sessionId }) {
                       className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100 text-stone-600">
                       Gmail
                     </a>
-                    <button onClick={() => copy(fullEmailText(e), "Email copié (TO + Subject + Body)")}
+                    <button
+                      onClick={() => copyRich(e.bodyHtml, fullEmailText(e), "Email copié (HTML + texte) — collez dans Gmail/Proton compose")}
+                      title="Copie HTML + texte. Collez dans un brouillon Gmail/Proton vide pour récupérer les hyperliens cliquables."
                       className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-stone-200 hover:bg-stone-100">
-                      <Copy className="w-3 h-3"/>Copier
+                      <Copy className="w-3 h-3"/>Copier (HTML)
                     </button>
                     <button onClick={() => sent ? unmarkJurySent(e.jury) : markJurySent(e.jury)}
                       className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded border ${sent ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "border-stone-200 hover:bg-stone-100"}`}>
