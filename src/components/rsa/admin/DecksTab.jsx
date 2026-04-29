@@ -140,11 +140,15 @@ Le PDF joint à cet email rassemble les executive summaries (FR/DE) des {N} star
 Pitch decks — liens individuels (volumineux, à ouvrir en ligne) :
 {STARTUPS_BLOCK}
 
-Scoring en direct — petit guide :
-  1. Le jour J, ouvrez ce lien sur smartphone, tablette ou laptop : {SCORING_URL}
-  2. À l'arrivée, choisissez votre nom dans la liste « Qui êtes-vous ? » (jurés validés uniquement). Si vous n'êtes pas listé, prévenez-moi.
-  3. Pour chaque startup : touchez la carte, notez les 6 critères (0 à 5), ajoutez un commentaire si vous voulez (visible uniquement par l'organisateur), envoyez.
-  4. Tout est sauvegardé en continu — vous pouvez fermer l'onglet, reprendre sur un autre appareil, modifier vos notes tant que la session n'est pas verrouillée.
+Scoring en direct — pas-à-pas :
+
+1. Le jour J, ouvrez ce lien sur smartphone, tablette ou laptop : {SCORING_URL}
+
+2. Choisir votre nom — à l'ouverture, une liste « Qui êtes-vous ? » s'affiche. Sélectionnez le vôtre (seuls les jurés validés y figurent). C'est cette identité qui enregistre TOUTES vos notes — choisissez bien du premier coup. Vous n'y apparaissez pas ? Prévenez-moi avant le début de la session.
+
+3. Noter chaque startup — touchez la carte de la startup en cours pour la déplier. Notez les 6 critères de 0 à 5 (les ancres et descriptions sont affichées sous chaque critère, et la grille complète est rappelée plus bas dans cet email). Ajoutez si vous le souhaitez un commentaire libre (visible uniquement par l'organisateur). Touchez « Envoyer » une fois les 6 notes posées — c'est ce bouton qui valide la startup.
+
+4. Reprendre / corriger — chaque clic est sauvegardé en continu, sans bouton à actionner. Vous pouvez fermer l'onglet, basculer sur un autre appareil, revenir modifier vos envois. Tout reste éditable jusqu'à ce que je verrouille la session à la fin du jury (à partir de là, plus de modification possible).
 
 Grille d'évaluation (6 critères) :
 {CRITERIA_BLOCK}
@@ -180,11 +184,15 @@ The PDF attached to this email bundles the executive summaries (FR/DE) of all {N
 Pitch decks — individual links (large, open online):
 {STARTUPS_BLOCK}
 
-Live scoring — quick guide:
-  1. On the day, open this link on phone, tablet or laptop: {SCORING_URL}
-  2. Pick your name in the "Who are you?" list (validated jurors only). If you're not listed, let me know.
-  3. For each startup: tap the card, score the 6 criteria (0 to 5), add a comment if you want (visible to the organiser only), submit.
-  4. Everything saves continuously — close the tab, resume on another device, edit your scores until the session is locked.
+Live scoring — step by step:
+
+1. On the day, open this link on phone, tablet or laptop: {SCORING_URL}
+
+2. Pick your name — a "Who are you?" list shows on first load. Select yours (only validated jurors appear). This identity records ALL your scores — choose carefully on the first try. Not in the list? Let me know before the session starts.
+
+3. Score each startup — tap the startup card to expand it. Rate the 6 criteria from 0 to 5 (anchors and descriptions are shown under each criterion on the page, and the full grid is recalled further down in this email). Optionally add a free-form comment (visible to the organiser only). Tap "Submit" once all 6 scores are in — that's the button that validates the startup.
+
+4. Resume / edit — every click auto-saves, no manual save button. You can close the tab, switch to another device, come back and edit your submissions. Everything stays editable until I lock the session at the end of the jury (after that, no more changes).
 
 Scoring grid (6 criteria):
 {CRITERIA_BLOCK}
@@ -220,11 +228,15 @@ Das angehängte PDF bündelt die Executive Summaries (FR/DE) aller {N} Startups.
 Pitch Decks — einzelne Links (groß, im Browser öffnen):
 {STARTUPS_BLOCK}
 
-Live-Scoring — kurze Anleitung:
-  1. Am Tag der Session: diesen Link auf Smartphone, Tablet oder Laptop öffnen: {SCORING_URL}
-  2. Wählen Sie Ihren Namen in der Liste „Wer sind Sie?" (nur validierte Jurymitglieder). Falls Sie nicht aufgeführt sind, bitte kurz Bescheid geben.
-  3. Pro Startup: Karte antippen, die 6 Kriterien bewerten (0 bis 5), optional ein Kommentar (nur für den Organisator sichtbar), absenden.
-  4. Alles wird laufend gespeichert — Tab schließen, auf anderem Gerät fortsetzen, Bewertungen ändern bis zur Sperrung der Session.
+Live-Scoring — Schritt für Schritt:
+
+1. Am Tag der Session diesen Link auf Smartphone, Tablet oder Laptop öffnen: {SCORING_URL}
+
+2. Namen auswählen — beim Öffnen erscheint eine Liste „Wer sind Sie?". Wählen Sie Ihren Namen (nur validierte Jurymitglieder erscheinen). Diese Identität speichert ALLE Ihre Bewertungen — wählen Sie sorgfältig beim ersten Mal. Nicht aufgeführt? Bitte vor Beginn der Session melden.
+
+3. Pro Startup bewerten — Startup-Karte antippen, um sie aufzuklappen. Die 6 Kriterien von 0 bis 5 bewerten (Anker und Beschreibungen sind unter jedem Kriterium angezeigt, und das vollständige Raster steht weiter unten in dieser E-Mail). Optional ein freier Kommentar (nur für den Organisator sichtbar). „Absenden" antippen, sobald alle 6 Bewertungen gesetzt sind — dieser Button bestätigt das Startup.
+
+4. Fortsetzen / korrigieren — jeder Klick wird automatisch gespeichert, kein manueller Speicher-Button. Sie können den Tab schließen, auf ein anderes Gerät wechseln, Ihre Eingaben nachträglich anpassen. Alles bleibt editierbar, bis ich am Ende der Jury die Session sperre (danach keine Änderungen mehr möglich).
 
 Bewertungsraster (6 Kriterien):
 {CRITERIA_BLOCK}
@@ -389,22 +401,22 @@ export default function DecksTab({ sessionId }) {
   const [juryLangOverride, setJuryLangOverride] = useState({}); // { [juryId]: "fr"|"en"|"de" }
   const [templateFr, setTemplateFr] = useState(() => localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
   const [templateEn, setTemplateEn] = useState(() => localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
-  const [juryTemplateFr, setJuryTemplateFr] = useState(() => localStorage.getItem(`rsa_jury_tpl_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
-  const [juryTemplateEn, setJuryTemplateEn] = useState(() => localStorage.getItem(`rsa_jury_tpl_en_${sessionId}`) || DEFAULT_JURY_TEMPLATE_EN);
-  const [juryTemplateDe, setJuryTemplateDe] = useState(() => localStorage.getItem(`rsa_jury_tpl_de_${sessionId}`) || DEFAULT_JURY_TEMPLATE_DE);
+  const [juryTemplateFr, setJuryTemplateFr] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
+  const [juryTemplateEn, setJuryTemplateEn] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_en_${sessionId}`) || DEFAULT_JURY_TEMPLATE_EN);
+  const [juryTemplateDe, setJuryTemplateDe] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_de_${sessionId}`) || DEFAULT_JURY_TEMPLATE_DE);
 
   useEffect(() => {
     setTemplateFr(localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
     setTemplateEn(localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
-    setJuryTemplateFr(localStorage.getItem(`rsa_jury_tpl_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
-    setJuryTemplateEn(localStorage.getItem(`rsa_jury_tpl_en_${sessionId}`) || DEFAULT_JURY_TEMPLATE_EN);
-    setJuryTemplateDe(localStorage.getItem(`rsa_jury_tpl_de_${sessionId}`) || DEFAULT_JURY_TEMPLATE_DE);
+    setJuryTemplateFr(localStorage.getItem(`rsa_jury_tpl_v2_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
+    setJuryTemplateEn(localStorage.getItem(`rsa_jury_tpl_v2_en_${sessionId}`) || DEFAULT_JURY_TEMPLATE_EN);
+    setJuryTemplateDe(localStorage.getItem(`rsa_jury_tpl_v2_de_${sessionId}`) || DEFAULT_JURY_TEMPLATE_DE);
   }, [sessionId]);
   useEffect(() => { localStorage.setItem(`rsa_tpl_fr_${sessionId}`, templateFr); }, [sessionId, templateFr]);
   useEffect(() => { localStorage.setItem(`rsa_tpl_en_${sessionId}`, templateEn); }, [sessionId, templateEn]);
-  useEffect(() => { localStorage.setItem(`rsa_jury_tpl_fr_${sessionId}`, juryTemplateFr); }, [sessionId, juryTemplateFr]);
-  useEffect(() => { localStorage.setItem(`rsa_jury_tpl_en_${sessionId}`, juryTemplateEn); }, [sessionId, juryTemplateEn]);
-  useEffect(() => { localStorage.setItem(`rsa_jury_tpl_de_${sessionId}`, juryTemplateDe); }, [sessionId, juryTemplateDe]);
+  useEffect(() => { localStorage.setItem(`rsa_jury_tpl_v2_fr_${sessionId}`, juryTemplateFr); }, [sessionId, juryTemplateFr]);
+  useEffect(() => { localStorage.setItem(`rsa_jury_tpl_v2_en_${sessionId}`, juryTemplateEn); }, [sessionId, juryTemplateEn]);
+  useEffect(() => { localStorage.setItem(`rsa_jury_tpl_v2_de_${sessionId}`, juryTemplateDe); }, [sessionId, juryTemplateDe]);
 
   async function load() {
     setLoading(true);
