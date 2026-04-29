@@ -1,26 +1,20 @@
-// Printable score sheets — one A4 page per (juror × startup) so jurors who
-// can't / won't use the digital scoring page can fill them by hand.
-// The admin then transcribes back into the system.
+// Printable score sheet — ONE blank A4 template per session, FR.
+// The organiser prints it once and photocopies it as needed (jury × startup).
+// Earlier versions generated a personalised sheet per (juror × startup) — that
+// produced 30-50 identical pages and was just noise to print.
 //
-// Open via /RsaPrintSheets?s=<session_id>. The page auto-loads, the user
-// hits browser Print (Ctrl/Cmd+P) — the @media print CSS strips the chrome
-// and forces page breaks between sheets.
+// Open via /RsaPrintSheets?s=<session_id>. Browser Print (Ctrl/Cmd+P) → A4 PDF.
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { Loader2, Printer, ArrowLeft } from "lucide-react";
+import { Printer, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { SESSION_BY_ID, CRITERIA, getCriterion, getSessionLabel } from "@/lib/rsa/constants";
-import { JuryProfile, SessionConfig, StartupConfirmation } from "@/lib/db";
 
 const NAVY = "#0f1f3d";
 const GOLD = "#c9a84c";
 const INK = "#3a3a52";
-
-function fullName(j) {
-  return `${j.prenom || ""} ${j.nom || ""}`.trim();
-}
 
 export default function RsaPrintSheets() {
   const [params] = useSearchParams();
@@ -28,60 +22,10 @@ export default function RsaPrintSheets() {
   const session = sessionId ? SESSION_BY_ID[sessionId] : null;
   const lang = "fr";
 
-  const [loading, setLoading] = useState(true);
-  const [jurors, setJurors] = useState([]);
-  const [startups, setStartups] = useState([]);
-
-  useEffect(() => {
-    if (!sessionId || !session) return;
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const [allJury, startupRows, cfg] = await Promise.all([
-          JuryProfile.list("nom"),
-          StartupConfirmation.filter({ session_id: sessionId }),
-          SessionConfig.filter({ session_id: sessionId }),
-        ]);
-        if (cancelled) return;
-
-        const validated = allJury.filter((j) => {
-          if (!j.validated) return false;
-          if (session.isFinal) return j.grande_finale === true;
-          const a = j.assigned_sessions || [];
-          return a.includes(session.label) || a.includes(session.id);
-        });
-        setJurors(validated);
-
-        const order = cfg[0]?.session_order;
-        const orderedNames =
-          Array.isArray(order) && order.length > 0
-            ? order
-            : startupRows.map((s) => s.startup_name).sort((a, b) => a.localeCompare(b));
-        setStartups(orderedNames);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionId, session]);
-
   if (!sessionId || !session) {
     return (
       <div style={{ padding: 40, color: NAVY, fontFamily: "Inter, sans-serif" }}>
         URL manquante : ajoute <code>?s=&lt;session_id&gt;</code>.
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div style={{ padding: 40, color: NAVY }}>
-        <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-        Chargement…
       </div>
     );
   }
@@ -334,10 +278,7 @@ export default function RsaPrintSheets() {
         </Link>
         <div style={{ fontSize: 13, color: INK }}>
           {session.emoji} <strong>{getSessionLabel(session, lang)}</strong> ·{" "}
-          {jurors.length} juré{jurors.length > 1 ? "s" : ""} ×{" "}
-          {startups.length} startup{startups.length > 1 ? "s" : ""} ={" "}
-          <strong>{jurors.length * startups.length}</strong> feuille
-          {jurors.length * startups.length > 1 ? "s" : ""}
+          template vierge à photocopier
         </div>
         <button
           onClick={() => window.print()}
@@ -362,36 +303,13 @@ export default function RsaPrintSheets() {
       </div>
 
       <div className="sheets">
-        {jurors.length === 0 || startups.length === 0 ? (
-          <div
-            style={{
-              padding: 40,
-              color: INK,
-              fontFamily: "Inter, sans-serif",
-              fontSize: 13,
-            }}
-          >
-            Aucun juré validé ou aucune startup confirmée pour cette session.
-          </div>
-        ) : (
-          jurors.flatMap((juror) =>
-            startups.map((startup) => (
-              <Sheet
-                key={`${juror.id}::${startup}`}
-                session={session}
-                juror={juror}
-                startup={startup}
-                lang={lang}
-              />
-            ))
-          )
-        )}
+        <Sheet session={session} lang={lang} />
       </div>
     </div>
   );
 }
 
-function Sheet({ session, juror, startup, lang }) {
+function Sheet({ session, lang }) {
   return (
     <div className="sheet">
       <header>
@@ -409,11 +327,11 @@ function Sheet({ session, juror, startup, lang }) {
       <div className="meta">
         <div className="field">
           <span className="field-label">Juré :</span>
-          <span className="field-value">{fullName(juror)}</span>
+          <span className="field-value">&nbsp;</span>
         </div>
         <div className="field">
           <span className="field-label">Startup :</span>
-          <span className="field-value startup-name">{startup}</span>
+          <span className="field-value startup-name">&nbsp;</span>
         </div>
       </div>
 

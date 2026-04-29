@@ -467,7 +467,23 @@ export default function DecksTab({ sessionId }) {
       const { data, error } = await supabase.functions.invoke("consolidate-jury-pack", {
         body: { session_id: sessionId },
       });
-      if (error) throw error;
+      if (error) {
+        // FunctionsHttpError stashes the raw Response on .context — the SDK's
+        // own message is generic ("non-2xx status code"). Read the body so the
+        // toast shows what actually failed (OOM, missing env, parse error, …).
+        let detail = error.message || "Échec de la génération";
+        const ctx = error.context;
+        try {
+          if (ctx && typeof ctx.text === "function") {
+            const txt = await ctx.text();
+            if (txt) {
+              try { const j = JSON.parse(txt); detail = j?.error || txt; }
+              catch { detail = txt; }
+            }
+          }
+        } catch { /* keep generic */ }
+        throw new Error(detail);
+      }
       if (!data?.ok) throw new Error(data?.error || "Échec de la génération");
       const skipped = Array.isArray(data.skipped) ? data.skipped : [];
       const sizeMb = data.size_bytes ? (data.size_bytes / (1024 * 1024)).toFixed(1) : "?";

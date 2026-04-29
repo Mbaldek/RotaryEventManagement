@@ -9,6 +9,10 @@ const CORS: Record<string, string> = {
 };
 
 const A4: [number, number] = [595.28, 841.89];
+// pdf-lib decompresses every stream in memory; on Supabase Edge Functions
+// (~256 MB RAM) merging much beyond this risks an OOM kill that bypasses
+// our try/catch and returns a generic 5xx with no JSON body.
+const MAX_INPUT_BYTES = 35 * 1024 * 1024;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -61,15 +65,46 @@ Deno.serve(async (req: Request) => {
     const skipped: string[] = [];
     const included: Array<{ startup: string; deck: boolean; execs: number }> = [];
 
+    function publicUrlFor(path: string): string {
+      const { data } = admin.storage.from("uploads").getPublicUrl(path);
+      return data.publicUrl || "";
+    }
+
+    function drawPlaceholder(title: string, subtitle: string, reason: string, link: string) {
+      const page = out.addPage(A4);
+      page.drawText(title, { x: 50, y: 600, size: 24, font: helvBold });
+      page.drawText(subtitle, { x: 50, y: 570, size: 13, font: helv });
+      page.drawText("Document non fusionné dans ce pack:", { x: 50, y: 510, size: 11, font: helvBold });
+      page.drawText(reason, { x: 50, y: 490, size: 10, font: helv });
+      if (link) {
+        page.drawText("Lien direct:", { x: 50, y: 460, size: 10, font: helvBold });
+        // pdf-lib has no auto-wrap; the URL is long but a single line is fine for jury reading.
+        page.drawText(link, { x: 50, y: 442, size: 8, font: helv });
+      }
+    }
+
     async function appendPdf(path: string, title: string, subtitle: string): Promise<boolean> {
       if (!path.toLowerCase().endsWith(".pdf")) {
         skipped.push(`${title} — non-PDF skipped (${path})`);
+        drawPlaceholder(title, subtitle, `Format non supporté (${path.split(".").pop()?.toUpperCase() || "?"}). Le PDF est requis pour la fusion.`, publicUrlFor(path));
         return false;
       }
       const { data, error } = await admin.storage.from("uploads").download(path);
-      if (error) { skipped.push(`${title} — download failed (${path}): ${error.message}`); return false; }
+      if (error) {
+        skipped.push(`${title} — download failed (${path}): ${error.message}`);
+        drawPlaceholder(title, subtitle, `Téléchargement impossible: ${error.message}`, publicUrlFor(path));
+        return false;
+      }
+      const blob = data!;
+      if (blob.size > MAX_INPUT_BYTES) {
+        const mb = (blob.size / 1024 / 1024).toFixed(1);
+        const cap = (MAX_INPUT_BYTES / 1024 / 1024).toFixed(0);
+        skipped.push(`${title} — too large skipped (${path}, ${mb} MB > ${cap} MB)`);
+        drawPlaceholder(title, subtitle, `Fichier trop volumineux pour la fusion (${mb} Mo, limite ${cap} Mo).`, publicUrlFor(path));
+        return false;
+      }
       try {
-        const src = await PDFDocument.load(await data!.arrayBuffer(), { ignoreEncryption: true });
+        const src = await PDFDocument.load(await blob.arrayBuffer(), { ignoreEncryption: true });
         const sep = out.addPage(A4);
         sep.drawText(title, { x: 50, y: 420, size: 26, font: helvBold });
         sep.drawText(subtitle, { x: 50, y: 385, size: 13, font: helv });
@@ -77,7 +112,9 @@ Deno.serve(async (req: Request) => {
         pages.forEach((p) => out.addPage(p));
         return true;
       } catch (e) {
-        skipped.push(`${title} — parse failed (${path}): ${(e as Error).message}`);
+        const msg = (e as Error).message;
+        skipped.push(`${title} — parse failed (${path}): ${msg}`);
+        drawPlaceholder(title, subtitle, `Lecture du PDF impossible: ${msg}`, publicUrlFor(path));
         return false;
       }
     }
@@ -85,9 +122,15 @@ Deno.serve(async (req: Request) => {
     for (const row of ordered) {
       const name = row.startup_name as string;
       const rec = { startup: name, deck: false, execs: 0 };
-      const deckPath = (row.final_deck_path || row.application_deck_path) as string | null;
+      // Prefer final_deck if it's a PDF; otherwise fall back to application_deck.
+      // (Without this fallback, a .pptx "final" deck silently dropped the entire startup deck.)
+      const finalPath = (row.final_deck_path as string | null) || null;
+      const appPath = (row.application_deck_path as string | null) || null;
+      const finalIsPdf = !!finalPath && finalPath.toLowerCase().endsWith(".pdf");
+      const deckPath = finalIsPdf ? finalPath : appPath;
+      const deckSubtitle = !finalIsPdf && finalPath && appPath ? "Deck (application — final non-PDF)" : "Deck";
       if (deckPath) {
-        rec.deck = await appendPdf(deckPath, name, "Deck");
+        rec.deck = await appendPdf(deckPath, name, deckSubtitle);
       }
       const execs = Array.isArray(row.executive_summary_files) ? (row.executive_summary_files as Array<{ path: string; filename?: string }>) : [];
       for (let i = 0; i < execs.length; i++) {
