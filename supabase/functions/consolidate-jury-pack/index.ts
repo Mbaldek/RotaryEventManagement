@@ -9,10 +9,13 @@ const CORS: Record<string, string> = {
 };
 
 const A4: [number, number] = [595.28, 841.89];
-// pdf-lib decompresses every stream in memory; on Supabase Edge Functions
-// (~256 MB RAM) merging much beyond this risks an OOM kill that bypasses
-// our try/catch and returns a generic 5xx with no JSON body.
-const MAX_INPUT_BYTES = 35 * 1024 * 1024;
+// Two limits to respect:
+//  - Supabase Edge Functions ~256 MB RAM (pdf-lib decompresses every stream in memory)
+//  - Supabase Storage upload cap (default 50 MB per object on Pro plan)
+// 15 MB / file keeps both the merge step and the final upload comfortably
+// below those ceilings even with 6-10 startups; oversized files get a
+// placeholder page with a direct download link.
+const MAX_INPUT_BYTES = 15 * 1024 * 1024;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
