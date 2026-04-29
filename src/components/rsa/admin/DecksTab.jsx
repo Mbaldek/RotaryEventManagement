@@ -128,12 +128,12 @@ Déroulé de la session :
 
 Langue : les pitchs et les Q&A se déroulent en anglais (jury international). Vous pouvez poser vos questions dans la langue de votre choix si elle est partagée avec la startup.
 
-Startups retenues ({N}) :
-{STARTUPS_BLOCK}
+Pre-read — à lire avant la session :
+Le PDF joint à cet email rassemble les executive summaries (FR/DE) des {N} startups. Sauvegardez-le pour le retrouver pendant la session.
+(Lien direct si besoin : {JURY_PACK_URL})
 
-Pre-read — pack jury consolidé :
-Tous les decks et executive summaries (FR/DE) sont rassemblés dans un unique PDF :
-{JURY_PACK_URL}
+Pitch decks — liens individuels (volumineux, à ouvrir en ligne) :
+{STARTUPS_BLOCK}
 
 Scoring en direct :
 Pendant la session, votez en direct sur :
@@ -171,12 +171,12 @@ Session schedule:
 
 Language: pitches and Q&A are held in English (international jury). You may ask questions in any language you share with the startup.
 
-Selected startups ({N}):
-{STARTUPS_BLOCK}
+Pre-read — to read before the session:
+The PDF attached to this email bundles the executive summaries (FR/DE) of all {N} startups. Save it so you can refer back during the session.
+(Direct link if needed: {JURY_PACK_URL})
 
-Pre-read — consolidated jury pack:
-All decks and executive summaries (FR/DE) are bundled into a single PDF:
-{JURY_PACK_URL}
+Pitch decks — individual links (large, open online):
+{STARTUPS_BLOCK}
 
 Live scoring:
 During the session, score live at:
@@ -214,12 +214,12 @@ Ablauf der Session:
 
 Sprache: Pitches und Q&A finden auf Englisch statt (internationale Jury). Fragen dürfen Sie in jeder Sprache stellen, die Sie mit dem Startup teilen.
 
-Ausgewählte Startups ({N}):
-{STARTUPS_BLOCK}
+Vorab-Lektüre — vor der Session zu lesen:
+Das angehängte PDF bündelt die Executive Summaries (FR/DE) aller {N} Startups. Speichern Sie es, um es während der Session zur Hand zu haben.
+(Direkter Link bei Bedarf: {JURY_PACK_URL})
 
-Vorab-Lektüre — konsolidiertes Jury-Paket:
-Alle Decks und Executive Summaries (FR/DE) sind in einem einzigen PDF zusammengefasst:
-{JURY_PACK_URL}
+Pitch Decks — einzelne Links (groß, im Browser öffnen):
+{STARTUPS_BLOCK}
 
 Live-Scoring:
 Während der Session bewerten Sie live unter:
@@ -244,31 +244,23 @@ Mit freundlichen Grüßen,
 {ORGANISER_NAME}`;
 
 // --- Helpers for jury template rendering ---
+// Pre-reads now live in the attached jury_pack PDF, so the email body only
+// needs to surface deck URLs per startup. Earlier versions also rendered
+// pre-read URLs here, which became redundant once the pack carried them.
 const STARTUP_BLOCK_LABELS = {
-  fr: { deck: "Deck", preread: "Pre-read FR/DE", notProvided: "non fourni" },
-  en: { deck: "Deck", preread: "Pre-read FR/DE", notProvided: "not provided" },
-  de: { deck: "Deck", preread: "Vorab-Lektüre FR/DE", notProvided: "nicht bereitgestellt" },
+  fr: { deck: "Deck", notProvided: "non fourni" },
+  en: { deck: "Deck", notProvided: "not provided" },
+  de: { deck: "Deck", notProvided: "nicht bereitgestellt" },
 };
-function buildStartupsBlock(rows, lang, packed = false) {
+function buildStartupsBlock(rows, lang) {
   const L = STARTUP_BLOCK_LABELS[lang] || STARTUP_BLOCK_LABELS.en;
   if (!rows.length) return "—";
-  // When a consolidated jury pack exists, no need to repeat all long URLs — names only.
-  if (packed) {
-    return rows.map((row, i) => `  ${i + 1}. ${row.startup_name}`).join("\n");
-  }
   return rows.map((row, i) => {
     const deckPath = row.final_deck_path || row.application_deck_path;
     const deckUrl = deckPath
       ? supabase.storage.from("uploads").getPublicUrl(deckPath).data.publicUrl
       : null;
-    const execs = Array.isArray(row.executive_summary_files) ? row.executive_summary_files : [];
-    const execUrls = execs
-      .map((ef) => (ef?.path ? supabase.storage.from("uploads").getPublicUrl(ef.path).data.publicUrl : null))
-      .filter(Boolean);
-    const lines = [`${i + 1}. ${row.startup_name}`];
-    lines.push(`   ${L.deck} : ${deckUrl || L.notProvided}`);
-    lines.push(`   ${L.preread} : ${execUrls.length ? execUrls.join(" · ") : L.notProvided}`);
-    return lines.join("\n");
+    return `${i + 1}. ${row.startup_name}\n   ${L.deck} : ${deckUrl || L.notProvided}`;
   }).join("\n\n");
 }
 function buildCriteriaBlock(lang) {
@@ -572,14 +564,13 @@ export default function DecksTab({ sessionId }) {
       const tpl = lang === "fr" ? juryTemplateFr : lang === "de" ? juryTemplateDe : juryTemplateEn;
       const label = session ? getSessionLabel(session, lang) : "";
       const dateLong = (SESSION_DATES_LONG[sessionId] || {})[lang] || "";
-      const packed = !!juryPackUrl;
       const vars = {
         JURY_PRENOM: j.prenom || (lang === "fr" ? "à compléter" : lang === "de" ? "zu ergänzen" : "there"),
         SESSION_LABEL: label,
         DATE_LONGUE: dateLong,
         N: rows.length,
         SCORING_URL: scoringUrl,
-        STARTUPS_BLOCK: buildStartupsBlock(rows, lang, packed),
+        STARTUPS_BLOCK: buildStartupsBlock(rows, lang),
         CRITERIA_BLOCK: buildCriteriaBlock(lang),
         JURY_PACK_URL: juryPackUrl || (lang === "fr" ? "(pack à générer)" : lang === "de" ? "(Paket noch zu erstellen)" : "(pack to be generated)"),
         ORGANISER_NAME: "Mathieu",
@@ -847,11 +838,11 @@ export default function DecksTab({ sessionId }) {
             <div className="flex items-start gap-2 min-w-0 flex-1">
               <FileText className="w-4 h-4 text-stone-500 mt-0.5 flex-shrink-0"/>
               <div className="min-w-0">
-                <div className="text-sm font-medium text-stone-800">Pack jury PDF consolidé</div>
+                <div className="text-sm font-medium text-stone-800">Pack pre-reads (PDF à joindre à l'email jury)</div>
                 <div className="text-xs text-stone-500 mt-0.5">
                   {juryPackUrl
-                    ? <>Un seul lien court pour l'email jury — tous decks + pre-reads rassemblés. Régénérez après chaque upload de nouveau deck.{sessionCfg?.jury_pack_generated_at && <> <span className="text-stone-400">· dernier build {new Date(sessionCfg.jury_pack_generated_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span></>}</>
-                    : <>Pas encore généré. Cliquez pour assembler un unique PDF (1 cover + 1 séparateur par document) à partir des PDFs déjà uploadés (les non-PDF seront ignorés).</>
+                    ? <>PDF consolidé des executive summaries uniquement — joindre directement à l'email. Les decks restent en lien individuel par startup dans le corps du mail.{sessionCfg?.jury_pack_generated_at && <> <span className="text-stone-400">· dernier build {new Date(sessionCfg.jury_pack_generated_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span></>}</>
+                    : <>Pas encore généré. Assemble un PDF unique des pre-reads (executive summaries) que vous joindrez à l'email jury. Les decks ne sont pas inclus — trop volumineux — et restent partagés en liens individuels.</>
                   }
                 </div>
               </div>
@@ -871,7 +862,7 @@ export default function DecksTab({ sessionId }) {
               )}
               <button onClick={generateJuryPack} disabled={generatingPack || !rows.length}
                 className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-stone-800 text-white hover:bg-stone-900 disabled:opacity-40 disabled:cursor-not-allowed">
-                {generatingPack ? <><Loader2 className="w-3 h-3 animate-spin"/>Génération…</> : <><FileText className="w-3 h-3"/>{juryPackUrl ? "Régénérer" : "Générer"} le pack</>}
+                {generatingPack ? <><Loader2 className="w-3 h-3 animate-spin"/>Génération…</> : <><FileText className="w-3 h-3"/>{juryPackUrl ? "Régénérer" : "Générer"} le pack pre-reads</>}
               </button>
             </div>
           </div>

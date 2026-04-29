@@ -51,15 +51,18 @@ Deno.serve(async (req: Request) => {
 
     const cover = out.addPage(A4);
     cover.drawText("Rotary Startup Award 2026", { x: 50, y: 780, size: 22, font: helvBold });
-    cover.drawText(`Jury pack — ${session_id}`, { x: 50, y: 750, size: 14, font: helv });
-    cover.drawText(`${ordered.length} startups · generated ${new Date().toISOString().slice(0, 10)}`,
+    cover.drawText(`Pre-read pack — ${session_id}`, { x: 50, y: 750, size: 14, font: helv });
+    cover.drawText(`${ordered.length} startups · pre-reads only · generated ${new Date().toISOString().slice(0, 10)}`,
       { x: 50, y: 730, size: 10, font: helv });
+    cover.drawText("Pitch decks are shared as individual links in the jury email.",
+      { x: 50, y: 712, size: 9, font: helv });
 
-    let y = 690;
+    let y = 680;
     for (let i = 0; i < ordered.length; i++) {
       const s = ordered[i];
       const execsArr = Array.isArray(s.executive_summary_files) ? (s.executive_summary_files as unknown[]) : [];
-      cover.drawText(`${i + 1}. ${s.startup_name} — deck + ${execsArr.length} pre-read`,
+      const n = execsArr.length;
+      cover.drawText(`${i + 1}. ${s.startup_name} — ${n} pre-read${n === 1 ? "" : "s"}`,
         { x: 60, y, size: 10, font: helv });
       y -= 16;
       if (y < 60) break;
@@ -122,19 +125,12 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // Pre-reads only. Decks are intentionally NOT merged here — they're sent
+    // as individual links in the jury email so the attachment stays small
+    // enough to email comfortably (email attachment limits, CEO inboxes…).
     for (const row of ordered) {
       const name = row.startup_name as string;
       const rec = { startup: name, deck: false, execs: 0 };
-      // Prefer final_deck if it's a PDF; otherwise fall back to application_deck.
-      // (Without this fallback, a .pptx "final" deck silently dropped the entire startup deck.)
-      const finalPath = (row.final_deck_path as string | null) || null;
-      const appPath = (row.application_deck_path as string | null) || null;
-      const finalIsPdf = !!finalPath && finalPath.toLowerCase().endsWith(".pdf");
-      const deckPath = finalIsPdf ? finalPath : appPath;
-      const deckSubtitle = !finalIsPdf && finalPath && appPath ? "Deck (application — final non-PDF)" : "Deck";
-      if (deckPath) {
-        rec.deck = await appendPdf(deckPath, name, deckSubtitle);
-      }
       const execs = Array.isArray(row.executive_summary_files) ? (row.executive_summary_files as Array<{ path: string; filename?: string }>) : [];
       for (let i = 0; i < execs.length; i++) {
         const ef = execs[i];
@@ -147,7 +143,10 @@ Deno.serve(async (req: Request) => {
     }
 
     const bytes = await out.save();
-    const storagePath = `jury_packs/${session_id}_jury_pack.pdf`;
+    // Filename intentionally renamed: the old name implied "everything bundled".
+    // Renaming makes it obvious to anyone clicking the link that this is the
+    // pre-read attachment, not the full deck collection.
+    const storagePath = `jury_packs/${session_id}_prereads.pdf`;
     const { error: upErr } = await admin.storage.from("uploads").upload(storagePath, bytes, {
       contentType: "application/pdf",
       upsert: true,
