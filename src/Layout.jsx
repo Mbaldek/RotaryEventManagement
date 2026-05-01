@@ -6,7 +6,7 @@ import NotificationProvider from "@/components/notifications/NotificationProvide
 
 // Pages rendered standalone (no Rotary lunch chrome, no lunch notifications).
 // These are the Rotary Startup Award sub-site — separate from the lunch app.
-const STANDALONE_PAGES = new Set(["RsaScore", "RsaDashboard", "RsaJuryForm", "RsaJuryView", "RsaAdmin", "RsaRecap", "RsaFinaleRsvp", "RsaPrintSheets", "StartupUpload"]);
+const STANDALONE_PAGES = new Set(["RsaScore", "RsaDashboard", "RsaJuryForm", "RsaJuryHub", "RsaJuryView", "RsaAdmin", "RsaRecap", "RsaFinaleRsvp", "RsaPrintSheets", "StartupUpload"]);
 
 export default function Layout({ children, currentPageName }) {
   if (STANDALONE_PAGES.has(currentPageName)) {
