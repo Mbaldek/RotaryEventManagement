@@ -427,7 +427,12 @@ export default function DecksTab({ sessionId }) {
         JuryProfile.filter({ validated: true }),
       ]);
       setSessionCfg(cfg?.[0] || null);
-      const savedOrder = Array.isArray(cfg[0]?.session_order) ? cfg[0].session_order : [];
+      // Fallback must match SetupTab/LiveTab (alphabetical) — Postgres return
+      // order is undefined and previously caused email RANK to diverge from
+      // the live presentation order when session_order was empty.
+      const savedOrder = Array.isArray(cfg[0]?.session_order) && cfg[0].session_order.length > 0
+        ? cfg[0].session_order
+        : confs.map((r) => r.startup_name).sort((a, b) => a.localeCompare(b));
       const byName = new Map(confs.map((r) => [r.startup_name, r]));
       const ordered = [];
       for (const n of savedOrder) if (byName.has(n)) ordered.push(n);
