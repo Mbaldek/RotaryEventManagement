@@ -391,6 +391,7 @@ export default function RsaDashboard() {
           <div className="nav-actions" style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
             {loading && <span style={{fontSize:11,color:"rgba(255,255,255,.4)",display:"flex",alignItems:"center",gap:6}}><span className="spinner"/>Chargement…</span>}
             {saving && <span style={{fontSize:11,color:GOLD}}>Sauvegarde…</span>}
+            <a href="/RsaJuryHub" target="_blank" rel="noopener noreferrer" className="btn" style={{fontSize:11,padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,.12)",color:"white",border:"1px solid rgba(255,255,255,.28)",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>◉ Hub jury</a>
             <a href="/RsaJuryForm" target="_blank" rel="noopener noreferrer" className="btn" style={{fontSize:11,padding:"5px 12px",borderRadius:8,background:"rgba(201,168,76,.15)",color:GOLD,border:"1px solid rgba(201,168,76,.35)",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>✎ Formulaire jury</a>
             <a href={`/RsaAdmin${import.meta.env.VITE_RSA_ADMIN_KEY ? `?k=${import.meta.env.VITE_RSA_ADMIN_KEY}` : ""}`} className="btn" style={{fontSize:11,padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,.12)",color:"white",border:"1px solid rgba(255,255,255,.28)",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>⚙ Admin live</a>
             <button className="btn" onClick={loadAll} style={{fontSize:11,padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,.08)",color:"rgba(255,255,255,.5)",border:"1px solid rgba(255,255,255,.1)"}}>↺</button>
@@ -678,6 +679,7 @@ export default function RsaDashboard() {
               })}
               <div style={{marginTop:14,paddingTop:12,borderTop:"1px dashed "+CREAM2,fontSize:10,color:"#9090a8",lineHeight:1.5}}>
                 <div style={{textTransform:"uppercase",letterSpacing:".1em",fontWeight:500,color:"#a0a0b8",marginBottom:4}}>Raccourcis</div>
+                <a href="/RsaJuryHub" target="_blank" rel="noreferrer" style={{display:"block",fontSize:11,color:GOLD,textDecoration:"none",padding:"2px 0"}}>↗ Hub jury (à diffuser — page agrégée)</a>
                 <a href="/RsaJuryForm" target="_blank" rel="noreferrer" style={{display:"block",fontSize:11,color:GOLD,textDecoration:"none",padding:"2px 0"}}>↗ Formulaire juré (à diffuser)</a>
               </div>
             </div>
