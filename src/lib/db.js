@@ -160,6 +160,9 @@ export const JuryScore = {
   },
 };
 
+// rsa_finale_rsvp: Grande Finale attendance confirmations (pitcher/visitor/jury).
+export const FinaleRsvp = createEntity('rsa_finale_rsvp');
+
 // jury_score_drafts: in-progress scores synced to server so jurors can resume on another device.
 // Composite PK (session_id, jury_name, startup_name) with permissive RLS for anon inserts.
 export const JuryScoreDraft = {

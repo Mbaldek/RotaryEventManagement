@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Download, Save, Rocket, AlertTriangle, Trophy, Sparkles } from "lucide-react";
+import { Loader2, Download, Save, Rocket, AlertTriangle, Trophy, Sparkles, FileCheck2, Users, ListOrdered, ExternalLink } from "lucide-react";
 import { SESSION_BY_ID, weightedScore, JURY_STATUS } from "@/lib/rsa/constants";
 import { buildRanking } from "@/lib/rsa/ranking";
 import { JuryScore, SessionConfig } from "@/lib/db";
 import StatusPill from "./StatusPill";
+import CommunicationsSection from "./CommunicationsSection";
 
 export default function ResultsTab({ sessionId }) {
   const session = SESSION_BY_ID[sessionId];
@@ -295,6 +296,49 @@ export default function ResultsTab({ sessionId }) {
         </div>
       ) : (
         <>
+          {/* TERMINER & récap — read-only printable recap pages, opened in a new tab */}
+          <div className="rounded-xl border border-stone-200 bg-white p-4">
+            <div className="flex items-start gap-3 flex-wrap">
+              <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0">
+                <FileCheck2 className="w-5 h-5 text-amber-700" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-stone-800">Terminer & récap</div>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Génère deux pages récap imprimables. Lecture seule — n'altère pas les données.
+                </p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <a
+                  href={`/RsaRecap?s=${sessionId}&view=startups`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-stone-300 bg-white hover:bg-amber-50 hover:border-amber-300 text-stone-700"
+                  title="Classement final pour les startups (sans détail jury)"
+                >
+                  <ListOrdered className="w-4 h-4" />
+                  Récap startups
+                  <ExternalLink className="w-3 h-3 opacity-50" />
+                </a>
+                <a
+                  href={`/RsaRecap?s=${sessionId}&view=jury`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-stone-300 bg-white hover:bg-amber-50 hover:border-amber-300 text-stone-700"
+                  title="Détail des votes par juré et par startup"
+                >
+                  <Users className="w-4 h-4" />
+                  Récap jury
+                  <ExternalLink className="w-3 h-3 opacity-50" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Email templates: jury / losing startups / winner */}
+          <CommunicationsSection sessionId={sessionId} ranking={rankedRows} />
+
+
           {/* Controls */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <p className="text-sm text-stone-600">

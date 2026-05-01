@@ -58,9 +58,11 @@ import ReservationRequest from './pages/ReservationRequest';
 import Reservations from './pages/Reservations';
 import RsaAdmin from './pages/RsaAdmin';
 import RsaDashboard from './pages/RsaDashboard';
+import RsaFinaleRsvp from './pages/RsaFinaleRsvp';
 import RsaJuryForm from './pages/RsaJuryForm';
 import RsaJuryView from './pages/RsaJuryView';
 import RsaPrintSheets from './pages/RsaPrintSheets';
+import RsaRecap from './pages/RsaRecap';
 import RsaScore from './pages/RsaScore';
 import StartupUpload from './pages/StartupUpload';
 import TableView from './pages/TableView';
@@ -81,9 +83,11 @@ export const PAGES = {
     "Reservations": Reservations,
     "RsaAdmin": RsaAdmin,
     "RsaDashboard": RsaDashboard,
+    "RsaFinaleRsvp": RsaFinaleRsvp,
     "RsaJuryForm": RsaJuryForm,
     "RsaJuryView": RsaJuryView,
     "RsaPrintSheets": RsaPrintSheets,
+    "RsaRecap": RsaRecap,
     "RsaScore": RsaScore,
     "StartupUpload": StartupUpload,
     "TableView": TableView,

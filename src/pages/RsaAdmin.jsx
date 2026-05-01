@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Shield, Users, Radio, Trophy, LogOut, FileText } from "lucide-react";
+import { Shield, Users, Radio, Trophy, LogOut, FileText, MailCheck } from "lucide-react";
 import { SESSIONS, SESSION_BY_ID, JURY_STATUS } from "@/lib/rsa/constants";
 import { SessionConfig } from "@/lib/db";
 import SetupTab from "@/components/rsa/admin/SetupTab";
 import LiveTab from "@/components/rsa/admin/LiveTab";
 import ResultsTab from "@/components/rsa/admin/ResultsTab";
 import DecksTab from "@/components/rsa/admin/DecksTab";
+import RsvpTab from "@/components/rsa/admin/RsvpTab";
 import StatusPill from "@/components/rsa/admin/StatusPill";
 
 const TABS = [
@@ -14,6 +15,7 @@ const TABS = [
   { id: "decks", label: "Decks", Icon: FileText },
   { id: "live", label: "Live", Icon: Radio },
   { id: "results", label: "Results", Icon: Trophy },
+  { id: "rsvp", label: "Finale RSVP", Icon: MailCheck, global: true },
 ];
 
 const GATE_KEY_LS = "rsa_admin_gate";
@@ -250,6 +252,7 @@ export default function RsaAdmin() {
         {tab === "decks" && <DecksTab sessionId={sessionId} />}
         {tab === "live" && <LiveTab sessionId={sessionId} onResultsReady={() => {}} />}
         {tab === "results" && <ResultsTab sessionId={sessionId} />}
+        {tab === "rsvp" && <RsvpTab />}
       </div>
     </div>
   );
