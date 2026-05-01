@@ -4,11 +4,12 @@ import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import {
   Loader2, Copy, Check, ExternalLink, Download, FileText,
-  Sparkles, X, Calendar, Lock,
+  Sparkles, X, Calendar,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   SESSIONS, SESSION_BY_ID, FINAL_SESSION_ID, QUALIFYING_SESSIONS, JURY_STATUS,
+  getSessionLabel, getSessionDate,
 } from "@/lib/rsa/constants";
 import { StartupConfirmation, SessionConfig, JuryProfile } from "@/lib/db";
 import { createPageUrl } from "@/utils";
@@ -21,7 +22,7 @@ const INK = "#3a3a52";
 const MUTED = "#9090a8";
 
 // Source of truth for session start times — mirrors RsaJuryForm so the
-// J-7 reveal window stays in sync with the registration lock window.
+// "live now" / "passed" flags stay in sync with the registration lock window.
 const SESSION_ISO = {
   s1_foodtech:  "2026-04-30T18:00:00+02:00",
   s2_social:    "2026-05-06T18:00:00+02:00",
@@ -30,8 +31,158 @@ const SESSION_ISO = {
   s5_greentech: "2026-05-21T18:00:00+02:00",
   final_grande: "2026-05-26T16:00:00+02:00",
 };
-const REVEAL_DAYS = 7;
 const LS_DISMISS_KEY = "rsa_jury_hub_register_dismissed";
+const LS_LANG = "rsa_jury_hub_lang";
+
+const T = {
+  fr: {
+    navTitle: "Rotary Startup Award 2026 — Hub jury",
+    navSub: "Decks · Scoring · Récap",
+    heroTag: "Rotary Startup Award 2026",
+    heroTitle: "Hub jury — toutes les sessions, en un seul lien",
+    statSessions: "Sessions terminées",
+    statFinalists: "Finalistes annoncés",
+    statNext: "Prochaine session",
+    today: "aujourd'hui",
+    tomorrow: "demain",
+    inDays: (n) => `J-${n}`,
+    inDaysLong: (n) => `Dans ${n} jours`,
+    todayCap: "Aujourd'hui",
+    tomorrowCap: "Demain",
+    registerStrong: "Pas encore juré ?",
+    registerBody: "Vous pouvez rejoindre le jury — l'inscription prend 2 minutes.",
+    registerCta: "S'inscrire au jury →",
+    dismiss: "Masquer",
+    statusLive: "Live",
+    statusDone: "Terminée",
+    scoringTag: "Lien scoring jury",
+    copy: "Copier",
+    openScoring: "Ouvrir le scoring",
+    scoringHelp: "Scannez le QR avec votre téléphone, ou ouvrez le lien sur n'importe quel appareil. À l'arrivée, sélectionnez votre nom dans la liste.",
+    juryPack: "Pack jury pre-read (PDF)",
+    juryPackPending: "Pack jury pre-read en préparation",
+    startupsCount: (n) => `Startups · ${n}`,
+    colN: "#",
+    colStartup: "Startup",
+    colDeck: "Deck",
+    colExec: "Executive summary",
+    deck: "Deck",
+    fileN: (n) => `Fichier ${n}`,
+    jurorsCount: (n) => `Jurés confirmés · ${n}`,
+    finalistTag: "Finaliste retenu",
+    finalistPending: "Finaliste pas encore désigné",
+    seeRecap: "Voir le récap →",
+    finaleTag: "Grande Finale",
+    finaleVenue: "Cyrus Conseil — 50 bd Haussmann, Paris 75009 · 16h–19h",
+    finaleDateSuffix: "26 mai",
+    finalistsAnnounced: (n) => `Finalistes annoncés · ${n} / 5`,
+    finalistsPendingFinale: "En cours de désignation au fil des sessions.",
+    finaleRsvpCta: "Confirmer ma présence à la finale →",
+    footerLine: "Hub jury — Rotary Startup Award 2026.",
+    footerContact: "Pour toute question :",
+    loading: "Chargement…",
+    toastCopied: "Lien scoring copié",
+    toastCopyFail: "Copie impossible",
+  },
+  en: {
+    navTitle: "Rotary Startup Award 2026 — Jury hub",
+    navSub: "Decks · Scoring · Recap",
+    heroTag: "Rotary Startup Award 2026",
+    heroTitle: "Jury hub — all sessions, in one link",
+    statSessions: "Sessions completed",
+    statFinalists: "Finalists announced",
+    statNext: "Next session",
+    today: "today",
+    tomorrow: "tomorrow",
+    inDays: (n) => `D-${n}`,
+    inDaysLong: (n) => `In ${n} days`,
+    todayCap: "Today",
+    tomorrowCap: "Tomorrow",
+    registerStrong: "Not yet a juror?",
+    registerBody: "You can join the jury — registration takes 2 minutes.",
+    registerCta: "Register as a juror →",
+    dismiss: "Dismiss",
+    statusLive: "Live",
+    statusDone: "Completed",
+    scoringTag: "Jury scoring link",
+    copy: "Copy",
+    openScoring: "Open scoring",
+    scoringHelp: "Scan the QR with your phone, or open the link on any device. On first load, pick your name from the list.",
+    juryPack: "Jury pre-read pack (PDF)",
+    juryPackPending: "Jury pre-read pack being prepared",
+    startupsCount: (n) => `Startups · ${n}`,
+    colN: "#",
+    colStartup: "Startup",
+    colDeck: "Deck",
+    colExec: "Executive summary",
+    deck: "Deck",
+    fileN: (n) => `File ${n}`,
+    jurorsCount: (n) => `Confirmed jurors · ${n}`,
+    finalistTag: "Selected finalist",
+    finalistPending: "Finalist not yet designated",
+    seeRecap: "See recap →",
+    finaleTag: "Grand Final",
+    finaleVenue: "Cyrus Conseil — 50 bd Haussmann, Paris 75009 · 4–7pm",
+    finaleDateSuffix: "May 26",
+    finalistsAnnounced: (n) => `Finalists announced · ${n} / 5`,
+    finalistsPendingFinale: "Being designated as sessions go.",
+    finaleRsvpCta: "Confirm my attendance at the final →",
+    footerLine: "Jury hub — Rotary Startup Award 2026.",
+    footerContact: "For any question:",
+    loading: "Loading…",
+    toastCopied: "Scoring link copied",
+    toastCopyFail: "Copy failed",
+  },
+  de: {
+    navTitle: "Rotary Startup Award 2026 — Jury-Hub",
+    navSub: "Decks · Scoring · Rückblick",
+    heroTag: "Rotary Startup Award 2026",
+    heroTitle: "Jury-Hub — alle Sessions in einem Link",
+    statSessions: "Abgeschlossene Sessions",
+    statFinalists: "Bekannte Finalisten",
+    statNext: "Nächste Session",
+    today: "heute",
+    tomorrow: "morgen",
+    inDays: (n) => `T-${n}`,
+    inDaysLong: (n) => `In ${n} Tagen`,
+    todayCap: "Heute",
+    tomorrowCap: "Morgen",
+    registerStrong: "Noch kein Jurymitglied?",
+    registerBody: "Sie können der Jury beitreten — die Anmeldung dauert 2 Minuten.",
+    registerCta: "Als Jurymitglied registrieren →",
+    dismiss: "Schließen",
+    statusLive: "Live",
+    statusDone: "Abgeschlossen",
+    scoringTag: "Jury-Scoring-Link",
+    copy: "Kopieren",
+    openScoring: "Scoring öffnen",
+    scoringHelp: "Scannen Sie den QR-Code mit Ihrem Telefon oder öffnen Sie den Link auf einem beliebigen Gerät. Beim ersten Aufruf wählen Sie Ihren Namen aus der Liste.",
+    juryPack: "Jury-Vorab-Lektüre-Paket (PDF)",
+    juryPackPending: "Jury-Vorab-Lektüre-Paket in Vorbereitung",
+    startupsCount: (n) => `Startups · ${n}`,
+    colN: "#",
+    colStartup: "Startup",
+    colDeck: "Deck",
+    colExec: "Executive Summary",
+    deck: "Deck",
+    fileN: (n) => `Datei ${n}`,
+    jurorsCount: (n) => `Bestätigte Jurymitglieder · ${n}`,
+    finalistTag: "Ausgewählter Finalist",
+    finalistPending: "Finalist noch nicht festgelegt",
+    seeRecap: "Rückblick ansehen →",
+    finaleTag: "Großes Finale",
+    finaleVenue: "Cyrus Conseil — 50 bd Haussmann, Paris 75009 · 16–19 Uhr",
+    finaleDateSuffix: "26. Mai",
+    finalistsAnnounced: (n) => `Bekannte Finalisten · ${n} / 5`,
+    finalistsPendingFinale: "Werden im Laufe der Sessions bestimmt.",
+    finaleRsvpCta: "Teilnahme am Finale bestätigen →",
+    footerLine: "Jury-Hub — Rotary Startup Award 2026.",
+    footerContact: "Bei Fragen:",
+    loading: "Laden…",
+    toastCopied: "Scoring-Link kopiert",
+    toastCopyFail: "Kopieren fehlgeschlagen",
+  },
+};
 
 function daysUntil(iso) {
   if (!iso) return null;
@@ -47,19 +198,30 @@ function deckUrlFor(row) {
   return publicUrl(row.final_deck_path || row.application_deck_path);
 }
 
-function copy(text, msg = "Copié") {
-  navigator.clipboard.writeText(text).then(
-    () => toast.success(msg),
-    () => toast.error("Copie impossible")
-  );
+function makeCopy(t) {
+  return function copy(text) {
+    navigator.clipboard.writeText(text).then(
+      () => toast.success(t.toastCopied),
+      () => toast.error(t.toastCopyFail)
+    );
+  };
 }
 
 export default function RsaJuryHub() {
+  const [lang, setLang] = useState(() => {
+    try { const saved = localStorage.getItem(LS_LANG); if (saved && T[saved]) return saved; } catch { /* ignore */ }
+    const nav = (typeof navigator !== "undefined" && navigator.language || "fr").slice(0, 2).toLowerCase();
+    return T[nav] ? nav : "fr";
+  });
+  useEffect(() => {
+    try { localStorage.setItem(LS_LANG, lang); } catch { /* ignore */ }
+  }, [lang]);
+  const t = T[lang];
+
   const [sessionConfigs, setSessionConfigs] = useState([]);
   const [startupsBySession, setStartupsBySession] = useState({});
   const [jurorsBySession, setJurorsBySession] = useState({});
   const [finalistsBySource, setFinalistsBySource] = useState({});
-  const [allValidatedJurors, setAllValidatedJurors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [registerDismissed, setRegisterDismissed] = useState(() => {
     try { return localStorage.getItem(LS_DISMISS_KEY) === "1"; } catch { return false; }
@@ -73,7 +235,6 @@ export default function RsaJuryHub() {
         JuryProfile.filter({ validated: true }),
       ]);
       setSessionConfigs(configs);
-      setAllValidatedJurors(jurors);
 
       const startupMap = {};
       const finalistMap = {};
@@ -107,7 +268,8 @@ export default function RsaJuryHub() {
       setStartupsBySession(startupMap);
       setFinalistsBySource(finalistMap);
 
-      // jury_profiles.assigned_sessions stores FR labels — match by session.label.
+      // jury_profiles.assigned_sessions stores FR labels — match by session.label
+      // (the canonical FR label) regardless of the active UI language.
       const jurorMap = {};
       for (const s of SESSIONS) {
         jurorMap[s.id] = jurors.filter((j) =>
@@ -160,9 +322,11 @@ export default function RsaJuryHub() {
   }, [finalistsBySource]);
 
   function dismissRegister() {
-    try { localStorage.setItem(LS_DISMISS_KEY, "1"); } catch { /* localStorage may be disabled */ }
+    try { localStorage.setItem(LS_DISMISS_KEY, "1"); } catch { /* ignore */ }
     setRegisterDismissed(true);
   }
+
+  const copy = makeCopy(t);
 
   return (
     <div style={{ background: CREAM, minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
@@ -179,7 +343,7 @@ export default function RsaJuryHub() {
       }}>
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 1.5rem", height: 58, maxWidth: 1100, margin: "0 auto",
+          padding: "0 1.5rem", height: 58, maxWidth: 1100, margin: "0 auto", gap: 12,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
             <div style={{
@@ -192,24 +356,25 @@ export default function RsaJuryHub() {
               <div style={{
                 fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 600,
                 color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              }}>Rotary Startup Award 2026 — Hub jury</div>
+              }}>{t.navTitle}</div>
               <div style={{
                 fontSize: 9, color: "rgba(255,255,255,.3)",
                 letterSpacing: ".1em", textTransform: "uppercase",
-              }}>Decks · Scoring · Récap</div>
+              }}>{t.navSub}</div>
             </div>
           </div>
+          <LangSwitcher lang={lang} onChange={setLang}/>
         </div>
       </div>
 
       <div style={{ padding: "22px 24px 80px", maxWidth: 1100, margin: "0 auto" }}>
-        <Hero overview={overview}/>
-        {!registerDismissed && <RegisterCta onDismiss={dismissRegister}/>}
+        <Hero overview={overview} t={t} lang={lang}/>
+        {!registerDismissed && <RegisterCta onDismiss={dismissRegister} t={t}/>}
 
         {loading ? (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 40, gap: 8, color: MUTED }}>
             <Loader2 className="animate-spin" style={{ width: 16, height: 16 }} />
-            Chargement…
+            {t.loading}
           </div>
         ) : (
           <>
@@ -222,21 +387,21 @@ export default function RsaJuryHub() {
               const days = daysUntil(SESSION_ISO[session.id]);
               const isLive = status === JURY_STATUS.LIVE;
               const isPast = days != null && days < 0;
-              const isFar = !isLive && !isPast && days != null && days > REVEAL_DAYS;
 
-              if (isFar) return <FarSessionCard key={session.id} session={session} days={days}/>;
               return (
                 <SessionCard
                   key={session.id}
                   session={session}
                   cfg={cfg}
-                  status={status}
                   startups={startups}
                   jurors={jurors}
                   finalist={finalist}
                   isLive={isLive}
                   isPast={isPast}
                   days={days}
+                  t={t}
+                  lang={lang}
+                  copy={copy}
                 />
               );
             })}
@@ -245,9 +410,11 @@ export default function RsaJuryHub() {
               days={daysUntil(SESSION_ISO[FINAL_SESSION_ID])}
               finalists={Object.values(finalistsBySource)}
               allFinaleStartups={startupsBySession[FINAL_SESSION_ID] || []}
+              t={t}
+              lang={lang}
             />
 
-            <Footer/>
+            <Footer t={t}/>
           </>
         )}
       </div>
@@ -255,7 +422,38 @@ export default function RsaJuryHub() {
   );
 }
 
-function Hero({ overview }) {
+function LangSwitcher({ lang, onChange }) {
+  return (
+    <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+      {["fr", "en", "de"].map((l) => {
+        const on = lang === l;
+        return (
+          <button
+            key={l}
+            onClick={() => onChange(l)}
+            style={{
+              fontSize: 10.5, padding: "4px 9px", borderRadius: 4, cursor: "pointer",
+              background: on ? GOLD : "transparent",
+              color: on ? NAVY : "rgba(255,255,255,.45)",
+              border: `1px solid ${on ? GOLD : "rgba(255,255,255,.2)"}`,
+              fontWeight: on ? 600 : 500, textTransform: "uppercase", letterSpacing: "0.08em",
+            }}
+          >
+            {l}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function formatDays(t, days) {
+  if (days === 0) return t.todayCap;
+  if (days === 1) return t.tomorrowCap;
+  return t.inDays(days);
+}
+
+function Hero({ overview, t, lang }) {
   return (
     <div style={{
       background: "white", border: `1px solid ${CREAM2}`, borderRadius: 12,
@@ -264,25 +462,26 @@ function Hero({ overview }) {
       <div style={{
         fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em",
         color: GOLD, fontWeight: 600, marginBottom: 6,
-      }}>Rotary Startup Award 2026</div>
+      }}>{t.heroTag}</div>
       <h1 style={{
         fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 600,
         color: NAVY, margin: 0, lineHeight: 1.15,
-      }}>Hub jury — toutes les sessions, en un seul lien</h1>
+      }}>{t.heroTitle}</h1>
       <div style={{
         display: "flex", gap: 24, marginTop: 14, flexWrap: "wrap",
         fontSize: 13, color: INK,
       }}>
-        <Stat label="Sessions terminées" value={`${overview.passedCount} / ${overview.total}`}/>
-        <Stat label="Finalistes annoncés" value={`${overview.finalistCount} / 5`}/>
+        <Stat label={t.statSessions} value={`${overview.passedCount} / ${overview.total}`}/>
+        <Stat label={t.statFinalists} value={`${overview.finalistCount} / 5`}/>
         {overview.next && (
           <Stat
-            label="Prochaine session"
-            value={overview.nextInDays === 0
-              ? `${overview.next.emoji} ${overview.next.label} · aujourd'hui`
-              : overview.nextInDays === 1
-                ? `${overview.next.emoji} ${overview.next.label} · demain`
-                : `${overview.next.emoji} ${overview.next.label} · J-${overview.nextInDays}`}
+            label={t.statNext}
+            value={(() => {
+              const lbl = `${overview.next.emoji} ${getSessionLabel(overview.next, lang)}`;
+              if (overview.nextInDays === 0) return `${lbl} · ${t.today}`;
+              if (overview.nextInDays === 1) return `${lbl} · ${t.tomorrow}`;
+              return `${lbl} · ${t.inDays(overview.nextInDays)}`;
+            })()}
           />
         )}
       </div>
@@ -299,7 +498,7 @@ function Stat({ label, value }) {
   );
 }
 
-function RegisterCta({ onDismiss }) {
+function RegisterCta({ onDismiss, t }) {
   return (
     <div style={{
       background: "rgba(201,168,76,0.08)", border: `1px solid ${GOLD}55`,
@@ -308,14 +507,14 @@ function RegisterCta({ onDismiss }) {
     }}>
       <Sparkles style={{ width: 18, height: 18, color: GOLD, flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 200, fontSize: 13, color: INK }}>
-        <strong style={{ color: NAVY }}>Pas encore juré ?</strong>{" "}
-        Vous pouvez rejoindre le jury — l'inscription prend 2 minutes.
+        <strong style={{ color: NAVY }}>{t.registerStrong}</strong>{" "}
+        {t.registerBody}
       </div>
       <Link to={createPageUrl("RsaJuryForm")} style={{
         background: NAVY, color: "white", padding: "8px 14px", borderRadius: 6,
         fontSize: 12, fontWeight: 500, textDecoration: "none", whiteSpace: "nowrap",
-      }}>S'inscrire au jury →</Link>
-      <button onClick={onDismiss} aria-label="Masquer"
+      }}>{t.registerCta}</Link>
+      <button onClick={onDismiss} aria-label={t.dismiss}
         style={{ background: "transparent", border: 0, cursor: "pointer", padding: 4, color: MUTED, display: "flex" }}>
         <X style={{ width: 14, height: 14 }} />
       </button>
@@ -323,32 +522,7 @@ function RegisterCta({ onDismiss }) {
   );
 }
 
-function FarSessionCard({ session, days }) {
-  return (
-    <div style={{
-      background: "white", border: `1px solid ${CREAM2}`, borderRadius: 12,
-      padding: "16px 20px", marginBottom: 14, opacity: 0.55,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <div style={{ fontSize: 22 }}>{session.emoji}</div>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{session.label}</div>
-          <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{session.date} · J-{days}</div>
-        </div>
-        <div style={{
-          display: "inline-flex", alignItems: "center", gap: 5,
-          fontSize: 10, color: MUTED, padding: "4px 8px",
-          background: CREAM2, borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.1em",
-        }}>
-          <Lock style={{ width: 11, height: 11 }} />
-          Disponible J-{REVEAL_DAYS}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SessionCard({ session, cfg, status, startups, jurors, finalist, isLive, isPast, days }) {
+function SessionCard({ session, cfg, startups, jurors, finalist, isLive, isPast, days, t, lang, copy }) {
   const scoringUrl = `${window.location.origin}/RsaScore?s=${session.id}`;
   const juryPackUrl = publicUrl(cfg?.jury_pack_path);
   const recapUrl = `/RsaRecap?s=${session.id}`;
@@ -369,24 +543,24 @@ function SessionCard({ session, cfg, status, startups, jurors, finalist, isLive,
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ fontSize: 24 }}>{session.emoji}</div>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: session.color }}>{session.label}</div>
-            <div style={{ fontSize: 11, color: INK, marginTop: 2 }}>{session.date}</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: session.color }}>{getSessionLabel(session, lang)}</div>
+            <div style={{ fontSize: 11, color: INK, marginTop: 2 }}>{getSessionDate(session, lang)}</div>
           </div>
         </div>
-        <SessionStatusBadge isLive={isLive} isPast={isPast} days={days}/>
+        <SessionStatusBadge isLive={isLive} isPast={isPast} days={days} t={t}/>
       </div>
 
       <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 18 }}>
-        <JuryAccessBlock scoringUrl={scoringUrl} juryPackUrl={juryPackUrl}/>
-        {startups.length > 0 && <StartupsTable startups={startups}/>}
-        {jurors.length > 0 && <JurorsList jurors={jurors}/>}
-        {isPast && <FinalistFooter finalist={finalist} recapUrl={recapUrl}/>}
+        <JuryAccessBlock scoringUrl={scoringUrl} juryPackUrl={juryPackUrl} t={t} copy={copy}/>
+        {startups.length > 0 && <StartupsTable startups={startups} t={t}/>}
+        {jurors.length > 0 && <JurorsList jurors={jurors} t={t}/>}
+        {isPast && <FinalistFooter finalist={finalist} recapUrl={recapUrl} t={t}/>}
       </div>
     </div>
   );
 }
 
-function SessionStatusBadge({ isLive, isPast, days }) {
+function SessionStatusBadge({ isLive, isPast, days, t }) {
   if (isLive) {
     return (
       <div style={{
@@ -399,7 +573,7 @@ function SessionStatusBadge({ isLive, isPast, days }) {
           width: 7, height: 7, background: "#dc2626", borderRadius: "50%",
           animation: "rsaJuryHubPulse 1.5s infinite",
         }}/>
-        Live
+        {t.statusLive}
       </div>
     );
   }
@@ -412,7 +586,7 @@ function SessionStatusBadge({ isLive, isPast, days }) {
         fontSize: 10.5, fontWeight: 500,
       }}>
         <Check style={{ width: 11, height: 11 }} />
-        Terminée
+        {t.statusDone}
       </div>
     );
   }
@@ -423,12 +597,12 @@ function SessionStatusBadge({ isLive, isPast, days }) {
       padding: "4px 10px", borderRadius: 4, fontSize: 10.5, fontWeight: 500,
     }}>
       <Calendar style={{ width: 11, height: 11 }} />
-      {days === 0 ? "Aujourd'hui" : `J-${days}`}
+      {formatDays(t, days)}
     </div>
   );
 }
 
-function JuryAccessBlock({ scoringUrl, juryPackUrl }) {
+function JuryAccessBlock({ scoringUrl, juryPackUrl, t, copy }) {
   return (
     <div style={{
       background: CREAM, border: `1px solid ${CREAM2}`, borderRadius: 8,
@@ -452,7 +626,7 @@ function JuryAccessBlock({ scoringUrl, juryPackUrl }) {
         <div style={{
           fontSize: 9, textTransform: "uppercase", letterSpacing: "0.15em",
           color: GOLD, fontWeight: 600, marginBottom: 4,
-        }}>Lien scoring jury</div>
+        }}>{t.scoringTag}</div>
         <div style={{
           display: "flex", gap: 6, alignItems: "center",
           background: "white", border: `1px solid ${CREAM2}`, borderRadius: 4,
@@ -462,8 +636,8 @@ function JuryAccessBlock({ scoringUrl, juryPackUrl }) {
           <code style={{
             flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}>{scoringUrl}</code>
-          <button onClick={() => copy(scoringUrl, "Lien scoring copié")}
-            title="Copier"
+          <button onClick={() => copy(scoringUrl)}
+            title={t.copy}
             style={{
               background: "transparent", border: 0, cursor: "pointer", padding: 2,
               color: GOLD, display: "flex", alignItems: "center",
@@ -471,15 +645,14 @@ function JuryAccessBlock({ scoringUrl, juryPackUrl }) {
             <Copy style={{ width: 13, height: 13 }} />
           </button>
           <a href={scoringUrl} target="_blank" rel="noopener noreferrer"
-            title="Ouvrir le scoring"
+            title={t.openScoring}
             style={{ color: GOLD, display: "flex", alignItems: "center" }}>
             <ExternalLink style={{ width: 13, height: 13 }} />
           </a>
         </div>
 
         <div style={{ fontSize: 11, color: INK, marginBottom: 10, lineHeight: 1.45 }}>
-          Scannez le QR avec votre téléphone, ou ouvrez le lien sur n'importe quel
-          appareil. À l'arrivée, sélectionnez votre nom dans la liste.
+          {t.scoringHelp}
         </div>
 
         {juryPackUrl ? (
@@ -490,7 +663,7 @@ function JuryAccessBlock({ scoringUrl, juryPackUrl }) {
               background: NAVY, color: "white", textDecoration: "none", fontWeight: 500,
             }}>
             <Download style={{ width: 13, height: 13 }} />
-            Pack jury pre-read (PDF)
+            {t.juryPack}
           </a>
         ) : (
           <div style={{
@@ -498,7 +671,7 @@ function JuryAccessBlock({ scoringUrl, juryPackUrl }) {
             color: MUTED, fontStyle: "italic",
           }}>
             <FileText style={{ width: 13, height: 13 }} />
-            Pack jury pre-read en préparation
+            {t.juryPackPending}
           </div>
         )}
       </div>
@@ -506,22 +679,22 @@ function JuryAccessBlock({ scoringUrl, juryPackUrl }) {
   );
 }
 
-function StartupsTable({ startups }) {
+function StartupsTable({ startups, t }) {
   return (
     <div>
       <div style={{
         fontSize: 11, fontWeight: 600, color: NAVY, marginBottom: 8,
         textTransform: "uppercase", letterSpacing: "0.1em",
-      }}>Startups · {startups.length}</div>
+      }}>{t.startupsCount(startups.length)}</div>
 
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: CREAM, borderBottom: `1px solid ${CREAM2}`, textAlign: "left" }}>
-              <th style={thStyle}>#</th>
-              <th style={thStyle}>Startup</th>
-              <th style={thStyle}>Deck</th>
-              <th style={thStyle}>Executive summary</th>
+              <th style={thStyle}>{t.colN}</th>
+              <th style={thStyle}>{t.colStartup}</th>
+              <th style={thStyle}>{t.colDeck}</th>
+              <th style={thStyle}>{t.colExec}</th>
             </tr>
           </thead>
           <tbody>
@@ -536,7 +709,7 @@ function StartupsTable({ startups }) {
                     {deckUrl ? (
                       <a href={deckUrl} target="_blank" rel="noreferrer" style={linkStyle}>
                         <Download style={{ width: 12, height: 12 }} />
-                        Deck
+                        {t.deck}
                       </a>
                     ) : <span style={mutedStyle}>—</span>}
                   </td>
@@ -550,7 +723,7 @@ function StartupsTable({ startups }) {
                           if (!url) return null;
                           const label = ef.filename
                             ? (ef.filename.length > 22 ? ef.filename.slice(0, 20) + "…" : ef.filename)
-                            : `Fichier ${i + 1}`;
+                            : t.fileN(i + 1);
                           return (
                             <a key={i} href={url} target="_blank" rel="noreferrer"
                               title={ef.filename || ef.path} style={linkStyle}>
@@ -572,13 +745,13 @@ function StartupsTable({ startups }) {
   );
 }
 
-function JurorsList({ jurors }) {
+function JurorsList({ jurors, t }) {
   return (
     <div>
       <div style={{
         fontSize: 11, fontWeight: 600, color: NAVY, marginBottom: 8,
         textTransform: "uppercase", letterSpacing: "0.1em",
-      }}>Jurés confirmés · {jurors.length}</div>
+      }}>{t.jurorsCount(jurors.length)}</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {jurors.map((j) => (
           <div key={j.id} style={{
@@ -602,7 +775,7 @@ function JurorsList({ jurors }) {
   );
 }
 
-function FinalistFooter({ finalist, recapUrl }) {
+function FinalistFooter({ finalist, recapUrl, t }) {
   return (
     <div style={{
       background: "linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04))",
@@ -614,7 +787,7 @@ function FinalistFooter({ finalist, recapUrl }) {
           <div style={{ fontSize: 22 }}>🏆</div>
           <div style={{ flex: 1, minWidth: 200 }}>
             <div style={{ fontSize: 10, color: "#9a6400", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em" }}>
-              Finaliste retenu
+              {t.finalistTag}
             </div>
             <div style={{ fontSize: 16, fontWeight: 600, color: NAVY, marginTop: 2 }}>
               {finalist.startup_name}
@@ -623,7 +796,7 @@ function FinalistFooter({ finalist, recapUrl }) {
         </>
       ) : (
         <div style={{ flex: 1, fontSize: 12, color: MUTED, fontStyle: "italic" }}>
-          Finaliste pas encore désigné
+          {t.finalistPending}
         </div>
       )}
       <a href={recapUrl} target="_blank" rel="noreferrer" style={{
@@ -631,13 +804,13 @@ function FinalistFooter({ finalist, recapUrl }) {
         padding: "7px 14px", borderRadius: 4, background: NAVY, color: "white",
         textDecoration: "none", fontWeight: 500,
       }}>
-        Voir le récap →
+        {t.seeRecap}
       </a>
     </div>
   );
 }
 
-function FinaleCard({ days, finalists, allFinaleStartups }) {
+function FinaleCard({ days, finalists, allFinaleStartups, t, lang }) {
   const finaleSession = SESSION_BY_ID[FINAL_SESSION_ID];
   const namesFromFinaleConfs = (allFinaleStartups || []).map((r) => r.startup_name);
   const finalistNames = finalists.map((f) => f.startup_name);
@@ -654,13 +827,13 @@ function FinaleCard({ days, finalists, allFinaleStartups }) {
         <div style={{ fontSize: 36 }}>🏆</div>
         <div style={{ flex: 1, minWidth: 200 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: "#9a6400", textTransform: "uppercase", letterSpacing: "0.16em" }}>
-            Grande Finale
+            {t.finaleTag}
           </div>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 600, color: NAVY, marginTop: 2 }}>
-            {finaleSession.label} · 26 mai
+            {getSessionLabel(finaleSession, lang)} · {t.finaleDateSuffix}
           </div>
           <div style={{ fontSize: 12, color: INK, marginTop: 4 }}>
-            Cyrus Conseil — 50 bd Haussmann, Paris 75009 · 16h–19h
+            {t.finaleVenue}
           </div>
         </div>
         {days != null && days >= 0 && (
@@ -668,14 +841,14 @@ function FinaleCard({ days, finalists, allFinaleStartups }) {
             background: "white", border: `1px solid ${GOLD}55`, padding: "6px 12px",
             borderRadius: 4, fontSize: 11, color: "#9a6400", fontWeight: 600,
           }}>
-            {days === 0 ? "Aujourd'hui" : days === 1 ? "Demain" : `Dans ${days} jours`}
+            {days === 0 ? t.todayCap : days === 1 ? t.tomorrowCap : t.inDaysLong(days)}
           </div>
         )}
       </div>
 
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: NAVY, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-          Finalistes annoncés · {finalists.length} / 5
+          {t.finalistsAnnounced(finalists.length)}
         </div>
         {visibleNames.length > 0 ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -689,7 +862,7 @@ function FinaleCard({ days, finalists, allFinaleStartups }) {
           </div>
         ) : (
           <div style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>
-            En cours de désignation au fil des sessions.
+            {t.finalistsPendingFinale}
           </div>
         )}
       </div>
@@ -699,21 +872,21 @@ function FinaleCard({ days, finalists, allFinaleStartups }) {
         padding: "10px 18px", borderRadius: 6, background: NAVY, color: "white",
         textDecoration: "none", fontWeight: 500,
       }}>
-        Confirmer ma présence à la finale →
+        {t.finaleRsvpCta}
       </Link>
     </div>
   );
 }
 
-function Footer() {
+function Footer({ t }) {
   return (
     <div style={{
       marginTop: 30, paddingTop: 20, borderTop: `1px solid ${CREAM2}`,
       fontSize: 11, color: MUTED, lineHeight: 1.6,
     }}>
       <div>
-        Hub jury — Rotary Startup Award 2026.{" "}
-        Pour toute question :{" "}
+        {t.footerLine}{" "}
+        {t.footerContact}{" "}
         <a href="mailto:mat.balleron@proton.me" style={{ color: NAVY, textDecoration: "underline" }}>
           mat.balleron@proton.me
         </a>
