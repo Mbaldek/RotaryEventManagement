@@ -19,7 +19,9 @@ const SESSION_DATES_LONG = {
   s3_tech:      {fr:"mercredi 13 mai 2026, 18h", en:"Wednesday 13 May 2026, 6pm",     de:"Mittwoch, 13. Mai 2026, 18 Uhr"},
   s4_health:    {fr:"mardi 19 mai 2026, 18h",    en:"Tuesday 19 May 2026, 6pm",       de:"Dienstag, 19. Mai 2026, 18 Uhr"},
   s5_greentech: {fr:"jeudi 21 mai 2026, 18h",    en:"Thursday 21 May 2026, 6pm",      de:"Donnerstag, 21. Mai 2026, 18 Uhr"},
+  final_grande: {fr:"mardi 26 mai 2026, 16h–19h", en:"Tuesday 26 May 2026, 4pm–7pm",  de:"Dienstag, 26. Mai 2026, 16:00–19:00 Uhr"},
 };
+const FINALE_VENUE = "Cyrus Conseil · 50 bd Haussmann · Paris 75009";
 const SESSION_LABELS_EN = {
   s1_foodtech: "FoodTech & Circular Economy",
   s2_social: "Social Impact & Edtech",
@@ -246,6 +248,167 @@ Bei Fragen (fehlender Teams-Link, Scoring-Zugang, unleserliches Deck…) genügt
 Mit freundlichen Grüßen,
 {ORGANISER_NAME}`;
 
+// --- Finale-specific jury pack templates ---
+// The Grande Finale runs in person at Cyrus Conseil (no Teams), in front of a
+// live audience (Rotary members, partners, investors, guests), and ends with
+// a cocktail reception. The format is also more demanding than the qualifiers
+// (10–12 min pitch + 8 min Q&A vs. 4 min in qualif). These templates are
+// surfaced when sessionId === "final_grande" via getJuryDefaultTemplate.
+
+const DEFAULT_JURY_TEMPLATE_FR_FINAL = `Sujet : Rotary Startup Award — Grande Finale {DATE_LONGUE} · pack jury
+
+Bonjour {JURY_PRENOM},
+
+Voici votre dossier de préparation pour la Grande Finale du Rotary Startup Award 2026, le {DATE_LONGUE}.
+
+📍 LIEU & FORMAT — IMPORTANT
+${FINALE_VENUE}
+Évènement intégralement en présentiel (pas de Teams).
+Public présent : membres du Rotary, partenaires, investisseurs et invités.
+Cocktail d'échange & networking en clôture (jury, startups, public).
+
+Déroulé de la finale :
+  • 16h00 — accueil café & briefing jury
+  • 16h30 — début des pitchs devant audience
+  • Chaque finaliste : 10 à 12 min de pitch + 8 min de Q&A
+  • ~18h00 — délibération du jury (à huis clos)
+  • ~18h30 — annonce du lauréat & remise du prix
+  • 19h00 — cocktail d'échange (~1h)
+
+Tenue : tenue habillée — vous serez exposé·e au public et aux photos officielles.
+
+Langue : pitchs et Q&A en anglais (jury international, public mixte). Les questions peuvent être posées dans la langue partagée avec la startup.
+
+Pre-read — à lire avant la finale :
+Le PDF joint à cet email rassemble les executive summaries des {N} finalistes. Sauvegardez-le pour le retrouver le jour J.
+(Lien direct si besoin : {JURY_PACK_URL})
+
+Pitch decks — liens individuels (volumineux, à ouvrir en ligne) :
+{STARTUPS_BLOCK}
+
+Scoring en direct — pas-à-pas :
+
+1. Le jour J, ouvrez ce lien sur smartphone, tablette ou laptop : {SCORING_URL}
+
+2. Choisir votre nom — à l'ouverture, une liste « Qui êtes-vous ? » s'affiche. Sélectionnez le vôtre (seuls les jurés finale validés y figurent). C'est cette identité qui enregistre TOUTES vos notes — choisissez bien du premier coup.
+
+3. Noter chaque finaliste — touchez la carte de la startup en cours pour la déplier. Notez les 6 critères de 0 à 5. Touchez « Envoyer » une fois les 6 notes posées — c'est ce bouton qui valide le finaliste.
+
+4. Reprendre / corriger — chaque clic est sauvegardé en continu. Vous pouvez revenir modifier vos envois jusqu'à ce que je verrouille la session après les pitchs (à partir de là, plus de modification possible).
+
+Grille d'évaluation (6 critères) :
+{CRITERIA_BLOCK}
+
+En cas de problème (accès scoring, deck illisible, retard…), un email, téléphone ou WhatsApp suffit — y compris le jour J.
+
+Bien cordialement,
+{ORGANISER_NAME}`;
+
+const DEFAULT_JURY_TEMPLATE_EN_FINAL = `Subject: Rotary Startup Award — Grand Finale {DATE_LONGUE} · jury pack
+
+Hello {JURY_PRENOM},
+
+Here is your preparation pack for the Rotary Startup Award 2026 Grand Finale on {DATE_LONGUE}.
+
+📍 VENUE & FORMAT — IMPORTANT
+${FINALE_VENUE}
+Fully in-person event (no Teams).
+Live audience: Rotary members, partners, investors and guests.
+Cocktail reception & networking at the end (jury, startups, public).
+
+Finale schedule:
+  • 4:00pm — welcome coffee & jury briefing
+  • 4:30pm — pitches start in front of the live audience
+  • Each finalist: 10 to 12 min pitch + 8 min Q&A
+  • ~6:00pm — jury deliberation (private)
+  • ~6:30pm — winner announcement & award ceremony
+  • 7:00pm — cocktail reception (~1h)
+
+Dress code: smart attire — you will be on stage in front of the audience and on official photographs.
+
+Language: pitches and Q&A in English (international jury, mixed audience). Questions may be asked in any language you share with the startup.
+
+Pre-read — to read before the finale:
+The PDF attached to this email bundles the executive summaries of the {N} finalists. Save it so you can refer back on the day.
+(Direct link if needed: {JURY_PACK_URL})
+
+Pitch decks — individual links (large, open online):
+{STARTUPS_BLOCK}
+
+Live scoring — step by step:
+
+1. On the day, open this link on phone, tablet or laptop: {SCORING_URL}
+
+2. Pick your name — a "Who are you?" list shows on first load. Select yours (only validated finale jurors appear). This identity records ALL your scores — choose carefully on the first try.
+
+3. Score each finalist — tap the startup card to expand it. Rate the 6 criteria from 0 to 5. Tap "Submit" once all 6 scores are in — that's the button that validates the finalist.
+
+4. Resume / edit — every click auto-saves. You can come back and edit until I lock the session after the pitches (after that, no more changes).
+
+Scoring grid (6 criteria):
+{CRITERIA_BLOCK}
+
+For anything (scoring access, unreadable deck, running late...), email, phone or WhatsApp works — including on the day.
+
+Best regards,
+{ORGANISER_NAME}`;
+
+const DEFAULT_JURY_TEMPLATE_DE_FINAL = `Betreff: Rotary Startup Award — Großes Finale {DATE_LONGUE} · Jury-Unterlagen
+
+Guten Tag {JURY_PRENOM},
+
+anbei Ihre Vorbereitungsunterlagen für das Große Finale des Rotary Startup Award 2026 am {DATE_LONGUE}.
+
+📍 ORT & FORMAT — WICHTIG
+${FINALE_VENUE}
+Vollständig vor Ort (kein Teams).
+Publikum: Rotary-Mitglieder, Partner, Investoren und Gäste.
+Cocktail-Empfang & Networking zum Abschluss (Jury, Startups, Publikum).
+
+Ablauf des Finales:
+  • 16:00 Uhr — Empfang & Jury-Briefing
+  • 16:30 Uhr — Beginn der Pitches vor Live-Publikum
+  • Pro Finalist: 10 bis 12 Min Pitch + 8 Min Q&A
+  • ~18:00 Uhr — Jury-Beratung (intern)
+  • ~18:30 Uhr — Bekanntgabe des Siegers & Preisverleihung
+  • 19:00 Uhr — Cocktail-Empfang (~1h)
+
+Dresscode: gepflegte Kleidung — Sie sind vor Publikum und auf offiziellen Fotos zu sehen.
+
+Sprache: Pitches und Q&A auf Englisch (internationale Jury, gemischtes Publikum). Fragen dürfen in jeder Sprache gestellt werden, die Sie mit dem Startup teilen.
+
+Vorab-Lektüre — vor dem Finale zu lesen:
+Das angehängte PDF bündelt die Executive Summaries der {N} Finalisten. Speichern Sie es für den Tag.
+(Direkter Link bei Bedarf: {JURY_PACK_URL})
+
+Pitch Decks — einzelne Links (groß, im Browser öffnen):
+{STARTUPS_BLOCK}
+
+Live-Scoring — Schritt für Schritt:
+
+1. Am Tag des Finales diesen Link auf Smartphone, Tablet oder Laptop öffnen: {SCORING_URL}
+
+2. Namen auswählen — beim Öffnen erscheint eine Liste „Wer sind Sie?". Wählen Sie Ihren Namen (nur validierte Finale-Jurymitglieder erscheinen). Diese Identität speichert ALLE Ihre Bewertungen — sorgfältig beim ersten Mal wählen.
+
+3. Pro Finalist bewerten — Startup-Karte antippen, um sie aufzuklappen. Die 6 Kriterien von 0 bis 5 bewerten. „Absenden" antippen, sobald alle 6 Bewertungen gesetzt sind — dieser Button bestätigt das Startup.
+
+4. Fortsetzen / korrigieren — jeder Klick wird automatisch gespeichert. Sie können nachträglich anpassen, bis ich die Session nach den Pitches sperre (danach keine Änderungen mehr möglich).
+
+Bewertungsraster (6 Kriterien):
+{CRITERIA_BLOCK}
+
+Bei Fragen (Scoring-Zugang, unleserliches Deck, Verspätung…) genügt eine E-Mail, ein Anruf oder WhatsApp — auch am Tag selbst.
+
+Mit freundlichen Grüßen,
+{ORGANISER_NAME}`;
+
+function getJuryDefaultTemplate(lang, sessionId) {
+  const isFinal = sessionId === "final_grande";
+  if (lang === "fr") return isFinal ? DEFAULT_JURY_TEMPLATE_FR_FINAL : DEFAULT_JURY_TEMPLATE_FR;
+  if (lang === "de") return isFinal ? DEFAULT_JURY_TEMPLATE_DE_FINAL : DEFAULT_JURY_TEMPLATE_DE;
+  return isFinal ? DEFAULT_JURY_TEMPLATE_EN_FINAL : DEFAULT_JURY_TEMPLATE_EN;
+}
+
 // --- Helpers for jury template rendering ---
 // Pre-reads now live in the attached jury_pack PDF, so the email body only
 // needs to surface deck URLs per startup. Earlier versions also rendered
@@ -401,16 +564,16 @@ export default function DecksTab({ sessionId }) {
   const [startupLangOverride, setStartupLangOverride] = useState({}); // { [rowId]: "fr"|"en" }
   const [templateFr, setTemplateFr] = useState(() => localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
   const [templateEn, setTemplateEn] = useState(() => localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
-  const [juryTemplateFr, setJuryTemplateFr] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
-  const [juryTemplateEn, setJuryTemplateEn] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_en_${sessionId}`) || DEFAULT_JURY_TEMPLATE_EN);
-  const [juryTemplateDe, setJuryTemplateDe] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_de_${sessionId}`) || DEFAULT_JURY_TEMPLATE_DE);
+  const [juryTemplateFr, setJuryTemplateFr] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_fr_${sessionId}`) || getJuryDefaultTemplate("fr", sessionId));
+  const [juryTemplateEn, setJuryTemplateEn] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_en_${sessionId}`) || getJuryDefaultTemplate("en", sessionId));
+  const [juryTemplateDe, setJuryTemplateDe] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_de_${sessionId}`) || getJuryDefaultTemplate("de", sessionId));
 
   useEffect(() => {
     setTemplateFr(localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
     setTemplateEn(localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
-    setJuryTemplateFr(localStorage.getItem(`rsa_jury_tpl_v2_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
-    setJuryTemplateEn(localStorage.getItem(`rsa_jury_tpl_v2_en_${sessionId}`) || DEFAULT_JURY_TEMPLATE_EN);
-    setJuryTemplateDe(localStorage.getItem(`rsa_jury_tpl_v2_de_${sessionId}`) || DEFAULT_JURY_TEMPLATE_DE);
+    setJuryTemplateFr(localStorage.getItem(`rsa_jury_tpl_v2_fr_${sessionId}`) || getJuryDefaultTemplate("fr", sessionId));
+    setJuryTemplateEn(localStorage.getItem(`rsa_jury_tpl_v2_en_${sessionId}`) || getJuryDefaultTemplate("en", sessionId));
+    setJuryTemplateDe(localStorage.getItem(`rsa_jury_tpl_v2_de_${sessionId}`) || getJuryDefaultTemplate("de", sessionId));
   }, [sessionId]);
   useEffect(() => { localStorage.setItem(`rsa_tpl_fr_${sessionId}`, templateFr); }, [sessionId, templateFr]);
   useEffect(() => { localStorage.setItem(`rsa_tpl_en_${sessionId}`, templateEn); }, [sessionId, templateEn]);
@@ -1213,9 +1376,9 @@ export default function DecksTab({ sessionId }) {
                 Copier tout (vrac)
               </button>
               <button onClick={() => {
-                setJuryTemplateFr(DEFAULT_JURY_TEMPLATE_FR);
-                setJuryTemplateEn(DEFAULT_JURY_TEMPLATE_EN);
-                setJuryTemplateDe(DEFAULT_JURY_TEMPLATE_DE);
+                setJuryTemplateFr(getJuryDefaultTemplate("fr", sessionId));
+                setJuryTemplateEn(getJuryDefaultTemplate("en", sessionId));
+                setJuryTemplateDe(getJuryDefaultTemplate("de", sessionId));
                 toast.success("Templates jury réinitialisés");
               }} className="text-xs text-stone-500 hover:text-stone-700">
                 Réinitialiser les templates
