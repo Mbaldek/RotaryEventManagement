@@ -36,10 +36,10 @@ const LS_LANG = "rsa_jury_hub_lang";
 
 const T = {
   fr: {
-    navTitle: "Rotary Startup Award 2026 — Hub jury",
-    navSub: "Decks · Scoring · Récap",
+    navTitle: "Rotary Startup Award 2026 — Espace concours",
+    navSub: "Toutes les sessions · Decks · Scoring · Récap",
     heroTag: "Rotary Startup Award 2026",
-    heroTitle: "Hub jury — toutes les sessions, en un seul lien",
+    heroTitle: "Le concours en un coup d'œil — toutes les sessions",
     statSessions: "Sessions terminées",
     statFinalists: "Finalistes annoncés",
     statNext: "Prochaine session",
@@ -86,10 +86,10 @@ const T = {
     toastCopyFail: "Copie impossible",
   },
   en: {
-    navTitle: "Rotary Startup Award 2026 — Jury hub",
-    navSub: "Decks · Scoring · Recap",
+    navTitle: "Rotary Startup Award 2026 — Awards dashboard",
+    navSub: "All sessions · Decks · Scoring · Recap",
     heroTag: "Rotary Startup Award 2026",
-    heroTitle: "Jury hub — all sessions, in one link",
+    heroTitle: "The awards at a glance — every session in one link",
     statSessions: "Sessions completed",
     statFinalists: "Finalists announced",
     statNext: "Next session",
@@ -136,10 +136,10 @@ const T = {
     toastCopyFail: "Copy failed",
   },
   de: {
-    navTitle: "Rotary Startup Award 2026 — Jury-Hub",
-    navSub: "Decks · Scoring · Rückblick",
+    navTitle: "Rotary Startup Award 2026 — Awards-Übersicht",
+    navSub: "Alle Sessions · Decks · Scoring · Rückblick",
     heroTag: "Rotary Startup Award 2026",
-    heroTitle: "Jury-Hub — alle Sessions in einem Link",
+    heroTitle: "Der Award auf einen Blick — alle Sessions in einem Link",
     statSessions: "Abgeschlossene Sessions",
     statFinalists: "Bekannte Finalisten",
     statNext: "Nächste Session",

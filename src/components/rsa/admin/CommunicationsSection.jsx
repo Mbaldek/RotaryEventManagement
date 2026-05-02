@@ -406,7 +406,15 @@ Hier das konsolidierte Endklassement:
 
 ${rankingLines(ranking)}
 
-${winner ? `${winner.startup} vertritt diese Session beim Großen Finale.\n\n` : ""}🏆 GROSSES FINALE
+${winner ? `${winner.startup} vertritt diese Session beim Großen Finale.\n\n` : ""}📋 DETAILLIERTER SESSION-RÜCKBLICK
+Vollständige Übersicht der Jury-Bewertungen, des Rankings und Kommentare:
+${baseUrl}/RsaRecap?s=${session.id}
+
+👁 AWARDS-ÜBERSICHT — alle Sessions auf einen Blick
+Vollständiges Programm, Startups, Decks, Jurys, Finalisten Session für Session:
+${baseUrl}/RsaJuryHub
+
+🏆 GROSSES FINALE
 ${finaleDate}
 ${FINALE_LOC}
 
@@ -431,7 +439,15 @@ Here is the consolidated final ranking:
 
 ${rankingLines(ranking)}
 
-${winner ? `${winner.startup} will represent this session at the Grand Finale.\n\n` : ""}🏆 GRAND FINALE
+${winner ? `${winner.startup} will represent this session at the Grand Finale.\n\n` : ""}📋 DETAILED SESSION RECAP
+Full view of jurors' scores, ranking and comments:
+${baseUrl}/RsaRecap?s=${session.id}
+
+👁 AWARDS DASHBOARD — all sessions at a glance
+Full programme, startups, decks, jurors, finalists announced session after session:
+${baseUrl}/RsaJuryHub
+
+🏆 GRAND FINALE
 ${finaleDate}
 ${FINALE_LOC}
 
@@ -456,7 +472,15 @@ Voici le classement final consolidé :
 
 ${rankingLines(ranking)}
 
-${winner ? `${winner.startup} représentera cette session lors de la Grande Finale.\n\n` : ""}🏆 GRANDE FINALE
+${winner ? `${winner.startup} représentera cette session lors de la Grande Finale.\n\n` : ""}📋 RÉCAP DÉTAILLÉ DE LA SESSION
+Vue complète des notes par juré, classement et commentaires :
+${baseUrl}/RsaRecap?s=${session.id}
+
+👁 ESPACE CONCOURS — toutes les sessions en un coup d'œil
+Programme complet, startups, decks, jurés, finalistes annoncés au fil des sessions :
+${baseUrl}/RsaJuryHub
+
+🏆 GRANDE FINALE
 ${finaleDate}
 ${FINALE_LOC}
 
