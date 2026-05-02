@@ -69,10 +69,30 @@ export default function RsaAdmin() {
 
   const [sessionRows, setSessionRows] = useState([]);
   const [sessionId, setSessionId] = useState(() => {
-    // Default to the first session with status=live, else first session
+    // Deep link from RsaDashboard PublishedSessionCard: ?session=<id> wins.
+    const qs = params.get("session");
+    if (qs && SESSIONS.some((s) => s.id === qs)) return qs;
     return localStorage.getItem("rsa_admin_session") || SESSIONS[0].id;
   });
-  const [tab, setTab] = useState(() => localStorage.getItem("rsa_admin_tab") || "live");
+  const [tab, setTab] = useState(() => {
+    // Deep link: ?tab=results, or #announce → results (the announce template
+    // lives inside ResultsTab > CommunicationsSection).
+    const qt = params.get("tab");
+    if (qt && ["setup","decks","live","results","rsvp"].includes(qt)) return qt;
+    if (typeof window !== "undefined" && window.location.hash === "#announce") return "results";
+    return localStorage.getItem("rsa_admin_tab") || "live";
+  });
+
+  // Strip session/tab query params once consumed (#announce hash kept so
+  // CommunicationsSection's scroll-into-view effect still fires).
+  useEffect(() => {
+    if (params.get("session") || params.get("tab")) {
+      const next = new URLSearchParams(params);
+      next.delete("session");
+      next.delete("tab");
+      setParams(next, { replace: true });
+    }
+  }, [params, setParams]);
 
   useEffect(() => {
     let cancelled = false;

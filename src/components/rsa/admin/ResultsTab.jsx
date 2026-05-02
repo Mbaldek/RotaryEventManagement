@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Download, Save, Rocket, AlertTriangle, Trophy, Sparkles, FileCheck2, Users, ListOrdered, ExternalLink } from "lucide-react";
-import { SESSION_BY_ID, weightedScore, JURY_STATUS } from "@/lib/rsa/constants";
+import { SESSION_BY_ID, FINAL_SESSION_ID, weightedScore, JURY_STATUS } from "@/lib/rsa/constants";
 import { buildRanking } from "@/lib/rsa/ranking";
-import { JuryScore, SessionConfig } from "@/lib/db";
+import { JuryScore, SessionConfig, StartupConfirmation } from "@/lib/db";
 import StatusPill from "./StatusPill";
 import CommunicationsSection from "./CommunicationsSection";
 
@@ -77,6 +77,23 @@ export default function ResultsTab({ sessionId }) {
   }
 
   async function publish() {
+    const winner = rankedRows.find((r) => r.final_rank === 1);
+    const winnerName = winner?.startup || "(aucun gagnant calculable)";
+    const isFinaleSession = sessionId === FINAL_SESSION_ID;
+
+    // Step 1 — strong warning + winner preview
+    const msg1 = isFinaleSession
+      ? `⚠️ PUBLIER LES RÉSULTATS DE LA GRANDE FINALE ?\n\n🏆 Lauréat : ${winnerName}\n\nCETTE ACTION EST DÉFINITIVE :\n• Les notes seront figées (plus de modification possible).\n• Le statut bascule en PUBLISHED dans toutes les vues.\n\nContinuer ?`
+      : `⚠️ PUBLIER LES RÉSULTATS DE "${session.label}" ?\n\n🏆 Vainqueur : ${winnerName}\n→ sera ajouté(e) à la Grande Finale automatiquement.\n\nCETTE ACTION EST DÉFINITIVE :\n• Les notes seront figées (plus de modification possible).\n• Le statut bascule en PUBLISHED — la session disparaît de l'opérationnel.\n\nContinuer ?`;
+    if (!window.confirm(msg1)) return;
+
+    // Step 2 — typed confirmation
+    const typed = window.prompt('CONFIRMATION FINALE\n\nTape exactement "PUBLIER" (en majuscules) pour valider :');
+    if (typed !== "PUBLIER") {
+      if (typed !== null) toast.error("Mot incorrect — publication annulée");
+      return;
+    }
+
     setPublishing(true);
     try {
       if (dirty) {
@@ -97,10 +114,29 @@ export default function ResultsTab({ sessionId }) {
         status: JURY_STATUS.PUBLISHED,
         published_at: new Date().toISOString(),
       });
-      toast.success("Results published");
+
+      // Auto-add winner to Grande Finale (idempotent — keep any prior manual swap).
+      if (winner && !isFinaleSession) {
+        const existing = await StartupConfirmation.filter({
+          session_id: FINAL_SESSION_ID,
+          source_session_id: sessionId,
+        });
+        if (existing.length === 0) {
+          await StartupConfirmation.create({
+            session_id: FINAL_SESSION_ID,
+            startup_name: winner.startup,
+            source_session_id: sessionId,
+          });
+          toast.success(`Résultats publiés · ${winner.startup} ajoutée à la Grande Finale`);
+        } else {
+          toast.success(`Résultats publiés (finaliste déjà présente : ${existing[0].startup_name})`);
+        }
+      } else {
+        toast.success("Résultats publiés");
+      }
     } catch (err) {
       console.error(err);
-      toast.error("Could not publish");
+      toast.error("Échec de publication");
     } finally {
       setPublishing(false);
     }

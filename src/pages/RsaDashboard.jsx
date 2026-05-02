@@ -157,6 +157,203 @@ body{font-family:'Inter',sans-serif;background:${CREAM};min-height:100vh}
 `;
 
 
+// Compact card shown in Tab "Organisation sessions" once a session is PUBLISHED.
+// Replaces the full operational card (Teams link / scoring URL / decks / checklist /
+// jurors avatars) with a 2-column results read: final ranking on the left,
+// jury × startup score matrix on the right. Snapshot lives on cfg.final_ranking
+// so no extra fetch is needed for the ranking itself; the matrix needs raw
+// jury_scores rows.
+const CRIT_KEYS_PUB = ["score_value_prop","score_market","score_business_model","score_team","score_pitch_quality","score_societal_impact"];
+const CRIT_WEIGHTS_PUB = { score_value_prop:0.2, score_market:0.2, score_business_model:0.2, score_team:0.2, score_pitch_quality:0.1, score_societal_impact:0.1 };
+function weightedScorePub(row) {
+  if (!row) return null;
+  for (const k of CRIT_KEYS_PUB) if (row[k] == null) return null;
+  let w = 0;
+  for (const k of CRIT_KEYS_PUB) w += row[k] * CRIT_WEIGHTS_PUB[k];
+  return w;
+}
+
+function PublishedSessionCard({ session, cfg, sessionLabel }) {
+  const ranking = Array.isArray(cfg.final_ranking) ? cfg.final_ranking : [];
+  const winner = ranking.find((r) => r.final_rank === 1);
+  const [scores, setScores] = useState([]);
+  const [loadingScores, setLoadingScores] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchScores() {
+      setLoadingScores(true);
+      try {
+        const r = await fetch(
+          `${SB_URL}/rest/v1/jury_scores?select=jury_name,startup_name,${CRIT_KEYS_PUB.join(",")}&session_id=eq.${session.id}`,
+          { headers: SB_HEADERS }
+        );
+        const data = await r.json();
+        if (!cancelled) setScores(data || []);
+      } catch (e) {
+        if (!cancelled) setScores([]);
+      } finally {
+        if (!cancelled) setLoadingScores(false);
+      }
+    }
+    fetchScores();
+    return () => { cancelled = true; };
+  }, [session.id]);
+
+  const cellMap = new Map();
+  for (const r of scores) cellMap.set(`${r.jury_name}::${r.startup_name}`, r);
+  const jurorNames = [...new Set(scores.map((s) => s.jury_name))].sort((a, b) => a.localeCompare(b));
+  const startupNames = ranking.map((r) => r.startup_name);
+  const adminQS = import.meta.env.VITE_RSA_ADMIN_KEY ? `?k=${import.meta.env.VITE_RSA_ADMIN_KEY}&` : "?";
+  const announceUrl = `/RsaAdmin${adminQS}session=${session.id}&tab=results#announce`;
+  const adminUrl = `/RsaAdmin${adminQS}session=${session.id}&tab=results`;
+  const recapUrl = `/RsaRecap?s=${session.id}`;
+
+  return (
+    <div className="card fade" style={{ marginBottom: 14, overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ background: NAVY, padding: "12px 18px", display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 4, height: 36, borderRadius: 2, background: session.color, flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 14, fontWeight: 600, color: "white" }}>
+            {session.emoji} {sessionLabel}
+          </div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,.4)", marginTop: 2 }}>
+            {session.dateL} · ✓ Publiée{cfg.published_at ? ` · ${new Date(cfg.published_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}` : ""}
+          </div>
+        </div>
+        <span style={{ fontSize: 9.5, padding: "3px 10px", borderRadius: 8, background: "#eef0fb", color: "#3d3a8a", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase" }}>
+          PUBLISHED
+        </span>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: "16px 18px" }}>
+        {/* Winner banner */}
+        {winner && (
+          <div style={{
+            background: "linear-gradient(135deg, #fdf6e8, #fbeec1)",
+            border: "1px solid #e8d090", borderRadius: 10, padding: "12px 16px",
+            marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+          }}>
+            <span style={{ fontSize: 26 }}>🏆</span>
+            <div style={{ flex: 1, minWidth: 180 }}>
+              <div style={{ fontSize: 9.5, color: "#9a6400", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".15em" }}>Lauréat</div>
+              <div style={{ fontSize: 18, fontWeight: 600, color: NAVY, fontFamily: "'Playfair Display', serif" }}>{winner.startup_name}</div>
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <div style={{ fontSize: 22, fontWeight: 600, color: GOLD, fontFamily: "'Playfair Display', serif" }}>
+                {typeof winner.final_score === "number" ? winner.final_score.toFixed(2) : "—"}
+                <span style={{ fontSize: 12, color: "#9090a8", fontWeight: 400 }}>/5</span>
+              </div>
+              <div style={{ fontSize: 10, color: "#9090a8" }}>{winner.juror_count || 0} juré{(winner.juror_count || 0) > 1 ? "s" : ""}</div>
+            </div>
+            <a href={announceUrl} title="Composer l'email d'annonce publique"
+              style={{ fontSize: 11, padding: "7px 14px", borderRadius: 8, background: GOLD, color: NAVY, textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+              📣 Annonce publique
+            </a>
+          </div>
+        )}
+
+        {/* Two-column grid */}
+        <div className="pub-grid" style={{ display: "grid", gridTemplateColumns: "minmax(260px, 1fr) minmax(320px, 1.3fr)", gap: 16 }}>
+          {/* LEFT — final ranking */}
+          <div>
+            <div style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".1em", color: "#a0a0b8", fontWeight: 500, marginBottom: 7 }}>
+              Classement final
+            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: CREAM, borderBottom: "1px solid " + CREAM2 }}>
+                  <th style={{ padding: "6px 8px", textAlign: "left", fontWeight: 500, color: "#9090a8", fontSize: 10, width: 28 }}>#</th>
+                  <th style={{ padding: "6px 8px", textAlign: "left", fontWeight: 500, color: "#9090a8", fontSize: 10 }}>Startup</th>
+                  <th style={{ padding: "6px 8px", textAlign: "right", fontWeight: 500, color: "#9090a8", fontSize: 10 }}>Score</th>
+                  <th style={{ padding: "6px 8px", textAlign: "right", fontWeight: 500, color: "#9090a8", fontSize: 10, width: 50 }}>Jurés</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ranking.length === 0 ? (
+                  <tr><td colSpan={4} style={{ padding: 20, textAlign: "center", color: "#9090a8", fontStyle: "italic", fontSize: 11 }}>Aucun classement enregistré</td></tr>
+                ) : ranking.map((r) => (
+                  <tr key={r.startup_name} style={{ borderBottom: "1px solid " + CREAM2, background: r.final_rank === 1 ? "#fdf6e8" : "white" }}>
+                    <td style={{ padding: "6px 8px", color: r.final_rank === 1 ? "#9a6400" : "#9090a8", fontWeight: r.final_rank === 1 ? 600 : 500 }}>
+                      {r.final_rank === 1 ? "🏆" : r.final_rank}
+                    </td>
+                    <td style={{ padding: "6px 8px", color: NAVY, fontWeight: r.final_rank === 1 ? 600 : 400 }}>{r.startup_name}</td>
+                    <td style={{ padding: "6px 8px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: NAVY, fontWeight: 600 }}>
+                      {typeof r.final_score === "number" ? r.final_score.toFixed(2) : "—"}
+                    </td>
+                    <td style={{ padding: "6px 8px", textAlign: "right", color: "#9090a8", fontSize: 11 }}>{r.juror_count ?? 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* RIGHT — jury × startup matrix */}
+          <div>
+            <div style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".1em", color: "#a0a0b8", fontWeight: 500, marginBottom: 7 }}>
+              Notes par juré (pondérées /5)
+            </div>
+            {loadingScores ? (
+              <div style={{ padding: 20, textAlign: "center", color: "#9090a8", fontSize: 11 }}>Chargement…</div>
+            ) : jurorNames.length === 0 ? (
+              <div style={{ padding: 20, textAlign: "center", color: "#9090a8", fontSize: 11, fontStyle: "italic" }}>Aucun score enregistré</div>
+            ) : (
+              <div style={{ overflowX: "auto", border: "1px solid " + CREAM2, borderRadius: 8 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                  <thead>
+                    <tr style={{ background: CREAM, borderBottom: "1px solid " + CREAM2 }}>
+                      <th style={{ padding: "6px 8px", textAlign: "left", fontWeight: 500, color: "#9090a8", fontSize: 10, position: "sticky", left: 0, background: CREAM, minWidth: 110 }}>Startup</th>
+                      {jurorNames.map((jn) => (
+                        <th key={jn} style={{ padding: "6px 4px", textAlign: "center", fontWeight: 500, color: "#9090a8", fontSize: 9.5, minWidth: 50, fontFamily: "'Playfair Display',serif" }} title={jn}>
+                          {jn.length > 10 ? jn.slice(0, 8) + "…" : jn}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {startupNames.map((sname, i) => {
+                      const isWinner = winner && sname === winner.startup_name;
+                      return (
+                        <tr key={sname} style={{ borderBottom: "1px solid " + CREAM2, background: isWinner ? "#fdf6e8" : (i % 2 ? CREAM : "white") }}>
+                          <td style={{ padding: "6px 8px", fontWeight: isWinner ? 600 : 500, color: NAVY, position: "sticky", left: 0, background: isWinner ? "#fdf6e8" : (i % 2 ? CREAM : "white") }}>
+                            {sname}
+                          </td>
+                          {jurorNames.map((jn) => {
+                            const w = weightedScorePub(cellMap.get(jn + "::" + sname));
+                            return (
+                              <td key={jn} style={{ padding: "6px 4px", textAlign: "center", fontVariantNumeric: "tabular-nums", color: w == null ? "#c8c8d4" : NAVY, fontWeight: w != null ? 500 : 400 }}>
+                                {w != null ? w.toFixed(2) : "—"}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer actions */}
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed " + CREAM2, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <a href={recapUrl} target="_blank" rel="noreferrer"
+            style={{ fontSize: 11, padding: "6px 12px", borderRadius: 8, background: "white", color: NAVY, border: "1px solid " + CREAM2, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
+            ↗ Récap public
+          </a>
+          <a href={adminUrl}
+            style={{ fontSize: 11, padding: "6px 12px", borderRadius: 8, background: NAVY, color: "white", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
+            ⚙ Admin (modifier si besoin)
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LiveScoresHub({sessionId, sessionLabel, color, light, border, startups}) {
   const [scores, setScores] = useState([]);
   const [lastRefresh, setLastRefresh] = useState(null);
@@ -716,6 +913,13 @@ export default function RsaDashboard() {
               const isCheckDone = (cid) => autoCheck(cid) || !!cl[cid];
               const clDone = SESSION_CHECKS.filter(c=>isCheckDone(c.id)).length;
               const phases = ["J-5","J-2","J-1","J+0"];
+
+              // Once results are published, the operational view (Teams / scoring URL /
+              // decks / checklist / juror avatars) is no longer relevant — swap to the
+              // compact PublishedSessionCard (ranking + jury matrix + announce shortcut).
+              if ((cfg.status||"").toLowerCase() === "published") {
+                return <PublishedSessionCard key={sk} session={s} cfg={cfg} sessionLabel={sk} />;
+              }
 
               return (
                 <div key={sk} className="card fade" style={{marginBottom:14,overflow:"hidden",animationDelay:si*.05+"s"}}>

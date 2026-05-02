@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Copy, Mail, Send, Mic2, Users as UsersIcon, Trophy, ExternalLink } from "lucide-react";
+import { Loader2, Copy, Mail, Send, Mic2, Users as UsersIcon, Trophy, ExternalLink, Megaphone } from "lucide-react";
 import { JuryProfile, StartupConfirmation } from "@/lib/db";
-import { SESSION_BY_ID } from "@/lib/rsa/constants";
+import { SESSION_BY_ID, FINAL_SESSION_ID } from "@/lib/rsa/constants";
 
 const FINALE_DATE = "Mardi 26 mai 2026 · 16h–19h";
 const FINALE_LOC = "Cyrus Conseil · 50 bd Haussmann · Paris 75009";
@@ -11,17 +11,20 @@ export default function CommunicationsSection({ sessionId, ranking }) {
   const session = SESSION_BY_ID[sessionId];
   const [jurors, setJurors] = useState([]);
   const [startups, setStartups] = useState([]);
+  const [finalistRowsCount, setFinalistRowsCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(null); // null | 'jury' | 'losers' | 'winner'
+  const [open, setOpen] = useState(null); // null | 'jury' | 'losers' | 'winner' | 'announce'
+  const announceRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
       try {
-        const [allJury, startupRows] = await Promise.all([
+        const [allJury, startupRows, finaleRows] = await Promise.all([
           JuryProfile.list("nom"),
           StartupConfirmation.filter({ session_id: sessionId }),
+          StartupConfirmation.filter({ session_id: FINAL_SESSION_ID }),
         ]);
         if (cancelled) return;
         const validated = (allJury || []).filter((j) => {
@@ -32,6 +35,7 @@ export default function CommunicationsSection({ sessionId, ranking }) {
         });
         setJurors(validated);
         setStartups(startupRows || []);
+        setFinalistRowsCount((finaleRows || []).length);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -41,6 +45,18 @@ export default function CommunicationsSection({ sessionId, ranking }) {
       cancelled = true;
     };
   }, [sessionId, session.label, session.id, session.isFinal]);
+
+  // Open + scroll the announce card if the URL hash points to it (deep link
+  // from RsaDashboard's PublishedSessionCard "📣 Annonce publique" button).
+  useEffect(() => {
+    if (loading) return;
+    if (typeof window === "undefined") return;
+    if (window.location.hash !== "#announce") return;
+    setOpen("announce");
+    requestAnimationFrame(() => {
+      announceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [loading]);
 
   const winner = useMemo(() => ranking.find((r) => r.final_rank === 1), [ranking]);
   const losers = useMemo(() => ranking.filter((r) => r.final_rank > 1), [ranking]);
@@ -83,6 +99,14 @@ export default function CommunicationsSection({ sessionId, ranking }) {
         baseUrl,
       })
     : null;
+  const announceTemplate = winner && !session.isFinal
+    ? buildAnnounceTemplate({
+        session,
+        winner,
+        baseUrl,
+        finalistsSoFar: finalistRowsCount,
+      })
+    : null;
 
   if (loading) {
     return (
@@ -107,7 +131,7 @@ export default function CommunicationsSection({ sessionId, ranking }) {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-3">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
         <TemplateCard
           color="blue"
           Icon={Trophy}
@@ -143,6 +167,26 @@ export default function CommunicationsSection({ sessionId, ranking }) {
           onToggle={() => setOpen(open === "winner" ? null : "winner")}
           disabled={!winner}
         />
+        <div ref={announceRef} id="announce" style={{ scrollMarginTop: 16 }}>
+          <TemplateCard
+            color="rose"
+            Icon={Megaphone}
+            title="📣 Annonce publique"
+            subtitle={
+              winner
+                ? session.isFinal
+                  ? "Réservé aux sessions qualificatives"
+                  : `Annoncer ${winner.startup} comme finaliste`
+                : "Pas encore de gagnant"
+            }
+            recipients={[]}
+            template={announceTemplate}
+            isOpen={open === "announce"}
+            onToggle={() => setOpen(open === "announce" ? null : "announce")}
+            disabled={!winner || session.isFinal}
+            recipientsHint="Pas de destinataires pré-remplis — colle où tu veux : email club, partenaires, réseau"
+          />
+        </div>
       </div>
     </div>
   );
@@ -158,11 +202,13 @@ function TemplateCard({
   isOpen,
   onToggle,
   disabled,
+  recipientsHint,
 }) {
   const tones = {
     blue: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", btn: "bg-blue-600 hover:bg-blue-700" },
     violet: { bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-700", btn: "bg-violet-600 hover:bg-violet-700" },
     amber: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", btn: "bg-amber-600 hover:bg-amber-700" },
+    rose: { bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", btn: "bg-rose-600 hover:bg-rose-700" },
   };
   const tone = tones[color] || tones.blue;
 
@@ -184,16 +230,17 @@ function TemplateCard({
   }
 
   function openMailto() {
-    if (!template || recipients.length === 0) return;
+    if (!template) return;
     const dedup = [...new Set(recipients)];
-    // Use BCC to keep recipients private when there are several
+    // Use BCC to keep recipients private when there are several. With zero
+    // recipients (e.g. public announce template) we still open the compose
+    // window so the user can paste their audience manually.
     const useBcc = dedup.length > 1;
     const params = new URLSearchParams();
     params.set("subject", template.subject);
     params.set("body", template.body);
     if (useBcc) params.set("bcc", dedup.join(","));
     const to = useBcc ? "" : dedup[0] || "";
-    // mailto encodes spaces as %20 — most clients handle that fine
     const url = `mailto:${encodeURIComponent(to)}?${params.toString()}`;
     window.location.href = url;
   }
@@ -229,22 +276,29 @@ function TemplateCard({
             >
               <Copy className="w-3 h-3 inline mr-1" /> Corps
             </button>
-            <button
-              onClick={copyEmails}
-              disabled={recipients.length === 0}
-              className="text-[11px] px-2 py-1 rounded bg-white hover:bg-stone-50 text-stone-700 disabled:opacity-50"
-              title="Copier les emails destinataires"
-            >
-              <Copy className="w-3 h-3 inline mr-1" /> Emails ({recipients.length})
-            </button>
+            {recipientsHint ? null : (
+              <button
+                onClick={copyEmails}
+                disabled={recipients.length === 0}
+                className="text-[11px] px-2 py-1 rounded bg-white hover:bg-stone-50 text-stone-700 disabled:opacity-50"
+                title="Copier les emails destinataires"
+              >
+                <Copy className="w-3 h-3 inline mr-1" /> Emails ({recipients.length})
+              </button>
+            )}
           </div>
+          {recipientsHint && (
+            <div className="text-[11px] text-stone-500 italic">
+              {recipientsHint}
+            </div>
+          )}
 
           <div className="flex gap-1.5">
             <button
               onClick={openMailto}
-              disabled={recipients.length === 0}
+              disabled={recipients.length === 0 && !recipientsHint}
               className={`flex-1 text-[12px] px-2 py-1.5 rounded text-white font-medium inline-flex items-center justify-center gap-1.5 ${tone.btn} disabled:opacity-50`}
-              title="Ouvre ton client mail avec sujet, corps et destinataires en BCC"
+              title={recipientsHint ? "Ouvre ton client mail avec sujet et corps pré-remplis (à toi de mettre les destinataires)" : "Ouvre ton client mail avec sujet, corps et destinataires en BCC"}
             >
               <Send className="w-3 h-3" /> Ouvrir dans le mail
               <ExternalLink className="w-3 h-3 opacity-70" />
@@ -394,6 +448,57 @@ Encore bravo, et à très vite.
 
 Bien cordialement,
 La Commission Rotary Startup Award 2026
+Rotary Club de Paris`;
+  return { subject, body };
+}
+
+// Public-facing announce (signed by the orga team) — the "faire monter la
+// sauce" moment after each session publish. Marketing tone, ready to forward
+// to the club mailing list, partners, or paste into a LinkedIn post.
+function buildAnnounceTemplate({ session, winner, baseUrl, finalistsSoFar }) {
+  const TOTAL = 5;
+  const ordinal = (n) => (n === 1 ? "1er" : `${n}e`);
+  const counterLine =
+    finalistsSoFar > 0
+      ? finalistsSoFar === 1
+        ? "🏁 Premier finaliste désigné !"
+        : finalistsSoFar >= TOTAL
+        ? "🎯 Plateau finaliste au complet !"
+        : `🏁 ${ordinal(finalistsSoFar)} finaliste désigné — ${finalistsSoFar}/${TOTAL} ! Plus que ${TOTAL - finalistsSoFar} à venir.`
+      : "";
+
+  const subject = `📣 ${winner.startup} en Grande Finale du Rotary Startup Award 2026 !`;
+  const finaleHubLink = `${baseUrl}/RsaJuryHub`;
+  const recapLink = `${baseUrl}/RsaRecap?s=${session.id}`;
+
+  const body = `Bonjour à toutes et tous,
+
+${counterLine}
+
+À l'issue de la session "${session.label}" du ${session.date}, le jury international du Rotary Startup Award 2026 a désigné son lauréat :
+
+🏆 ${winner.startup}
+
+Score final : ${winner.final_score.toFixed(2)}/5 sur ${winner.n} évaluations indépendantes — un résultat serré qui témoigne de la densité du plateau cette année.
+
+${winner.startup} rejoint donc le plateau de la Grande Finale, où elle pitchera face aux gagnants des autres sessions devant un jury élargi et l'ensemble de la communauté Rotary Paris.
+
+🏆 GRANDE FINALE
+${FINALE_DATE}
+${FINALE_LOC}
+
+Toutes les startups, jurys et le programme complet sont consultables ici :
+${finaleHubLink}
+
+Et le récap détaillé de cette session (notes, classement, jurys) :
+${recapLink}
+
+Un grand merci à tous les jurés qui ont accepté de donner de leur temps et de leur expertise pour évaluer ces projets. Nous avons hâte de vivre la suite avec vous — la prochaine session arrive vite, restez à l'affût !
+
+À très bientôt,
+
+L'équipe organisation
+Rotary Startup Award 2026
 Rotary Club de Paris`;
   return { subject, body };
 }

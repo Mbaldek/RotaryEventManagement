@@ -22,8 +22,39 @@ export default function FinalistsPicker({ onChanged }) {
         StartupConfirmation.filter({ session_id: FINAL_SESSION_ID }),
       ]);
       const qualIds = QUALIFYING_SESSIONS.map((s) => s.id);
-      setQualifierRows(allCfg.filter((c) => qualIds.includes(c.session_id)));
+      const qrs = allCfg.filter((c) => qualIds.includes(c.session_id));
+      setQualifierRows(qrs);
       setFinalists(fc);
+
+      // Auto-sync: any PUBLISHED qualifier without a finalist row gets one
+      // (idempotent — never replaces a manual swap, only fills holes).
+      // Catches sessions published before this code shipped (FoodTech) and
+      // covers the edge case where ResultsTab.publish() failed midway.
+      const presentSources = new Set(fc.map((f) => f.source_session_id).filter(Boolean));
+      const toAdd = [];
+      for (const cfgRow of qrs) {
+        if (cfgRow.status !== JURY_STATUS.PUBLISHED) continue;
+        if (presentSources.has(cfgRow.session_id)) continue;
+        const winner = getPublishedWinner(cfgRow);
+        if (!winner) continue;
+        toAdd.push({
+          session_id: FINAL_SESSION_ID,
+          startup_name: winner.startup_name,
+          source_session_id: cfgRow.session_id,
+        });
+      }
+      if (toAdd.length > 0) {
+        for (const row of toAdd) {
+          await StartupConfirmation.create(row);
+        }
+        await refreshOrder();
+        const fresh = await StartupConfirmation.filter({ session_id: FINAL_SESSION_ID });
+        setFinalists(fresh);
+        toast.success(
+          `✓ ${toAdd.length} vainqueur${toAdd.length > 1 ? "s" : ""} synchronisé${toAdd.length > 1 ? "s" : ""} en finale (${toAdd.map(t => t.startup_name).join(", ")})`
+        );
+        onChanged?.();
+      }
     } finally {
       setLoading(false);
     }
@@ -31,6 +62,12 @@ export default function FinalistsPicker({ onChanged }) {
 
   useEffect(() => {
     load();
+    // Realtime: any session_config flip (publish elsewhere) or finalist
+    // mutation triggers a re-load → auto-sync re-runs.
+    const offCfg = SessionConfig.subscribe(() => load());
+    const offFin = StartupConfirmation.subscribe(() => load());
+    return () => { offCfg?.(); offFin?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const finalistBySource = useMemo(() => {

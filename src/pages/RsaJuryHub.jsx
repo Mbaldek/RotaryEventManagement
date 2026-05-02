@@ -55,6 +55,7 @@ const T = {
     dismiss: "Masquer",
     statusLive: "Live",
     statusDone: "Terminée",
+    statusPublished: "Résultats publiés",
     scoringTag: "Lien scoring jury",
     copy: "Copier",
     openScoring: "Ouvrir le scoring",
@@ -104,6 +105,7 @@ const T = {
     dismiss: "Dismiss",
     statusLive: "Live",
     statusDone: "Completed",
+    statusPublished: "Results published",
     scoringTag: "Jury scoring link",
     copy: "Copy",
     openScoring: "Open scoring",
@@ -153,6 +155,7 @@ const T = {
     dismiss: "Schließen",
     statusLive: "Live",
     statusDone: "Abgeschlossen",
+    statusPublished: "Ergebnisse veröffentlicht",
     scoringTag: "Jury-Scoring-Link",
     copy: "Kopieren",
     openScoring: "Scoring öffnen",
@@ -387,6 +390,23 @@ export default function RsaJuryHub() {
               const days = daysUntil(SESSION_ISO[session.id]);
               const isLive = status === JURY_STATUS.LIVE;
               const isPast = days != null && days < 0;
+              const isPublished = status === JURY_STATUS.PUBLISHED;
+
+              // Once published, kill all the operational widgets (QR, scoring URL,
+              // jury pack, deck/exec table, jurors list) — only show the closed-card
+              // with finalist name + recap link. Everything else is in the recap.
+              if (isPublished) {
+                return (
+                  <PublishedSessionCardJH
+                    key={session.id}
+                    session={session}
+                    finalist={finalist}
+                    cfg={cfg}
+                    t={t}
+                    lang={lang}
+                  />
+                );
+              }
 
               return (
                 <SessionCard
@@ -518,6 +538,78 @@ function RegisterCta({ onDismiss, t }) {
         style={{ background: "transparent", border: 0, cursor: "pointer", padding: 4, color: MUTED, display: "flex" }}>
         <X style={{ width: 14, height: 14 }} />
       </button>
+    </div>
+  );
+}
+
+// Minimal card shown when status === PUBLISHED. Drops every operational widget
+// (QR, scoring URL, jury pack, deck table, jurors list) — the action that
+// remains for a juror is to read the recap, period.
+function PublishedSessionCardJH({ session, finalist, t, lang }) {
+  const recapUrl = `/RsaRecap?s=${session.id}`;
+  return (
+    <div style={{
+      background: "white",
+      border: `1px solid ${session.border}`,
+      borderRadius: 12,
+      marginBottom: 18,
+      overflow: "hidden",
+    }}>
+      <div style={{
+        background: session.light, padding: "14px 20px",
+        borderBottom: `1px solid ${session.border}`,
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ fontSize: 24 }}>{session.emoji}</div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: session.color }}>{getSessionLabel(session, lang)}</div>
+            <div style={{ fontSize: 11, color: INK, marginTop: 2 }}>{getSessionDate(session, lang)}</div>
+          </div>
+        </div>
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.3)",
+          color: "#059669", padding: "4px 10px", borderRadius: 4,
+          fontSize: 10.5, fontWeight: 500,
+        }}>
+          <Check style={{ width: 11, height: 11 }} />
+          {t.statusPublished}
+        </div>
+      </div>
+
+      <div style={{ padding: "18px 20px" }}>
+        <div style={{
+          background: "linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04))",
+          border: `1px solid ${GOLD}55`, borderRadius: 8,
+          padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
+        }}>
+          <div style={{ fontSize: 28 }}>🏆</div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            {finalist ? (
+              <>
+                <div style={{ fontSize: 10, color: "#9a6400", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em" }}>
+                  {t.finalistTag}
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 600, color: NAVY, marginTop: 2, fontFamily: "'Playfair Display', serif" }}>
+                  {finalist.startup_name}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>
+                {t.finalistPending}
+              </div>
+            )}
+          </div>
+          <a href={recapUrl} target="_blank" rel="noreferrer" style={{
+            display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13,
+            padding: "9px 16px", borderRadius: 6, background: NAVY, color: "white",
+            textDecoration: "none", fontWeight: 500, flexShrink: 0,
+          }}>
+            {t.seeRecap}
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
