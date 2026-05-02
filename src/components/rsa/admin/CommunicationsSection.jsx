@@ -2,9 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Copy, Mail, Send, Mic2, Users as UsersIcon, Trophy, ExternalLink, Megaphone } from "lucide-react";
 import { JuryProfile, StartupConfirmation } from "@/lib/db";
-import { SESSION_BY_ID, FINAL_SESSION_ID } from "@/lib/rsa/constants";
+import { SESSION_BY_ID, FINAL_SESSION_ID, getSessionLabel, getSessionDate } from "@/lib/rsa/constants";
 
-const FINALE_DATE = "Mardi 26 mai 2026 · 16h–19h";
+const FINALE_DATES = {
+  fr: "Mardi 26 mai 2026 · 16h–19h",
+  en: "Tuesday 26 May 2026 · 4pm–7pm",
+  de: "Dienstag, 26. Mai 2026 · 16:00–19:00 Uhr",
+};
 const FINALE_LOC = "Cyrus Conseil · 50 bd Haussmann · Paris 75009";
 
 export default function CommunicationsSection({ sessionId, ranking }) {
@@ -68,7 +72,15 @@ export default function CommunicationsSection({ sessionId, ranking }) {
   }, [startups]);
 
   // Recipient lists
-  const juryEmails = jurors.filter((j) => j.email).map((j) => j.email);
+  const juryByLang = useMemo(() => {
+    const groups = { fr: [], en: [], de: [] };
+    for (const j of jurors) {
+      if (!j.email) continue;
+      const lang = (j.lang === "en" || j.lang === "de") ? j.lang : "fr";
+      groups[lang].push(j.email);
+    }
+    return groups;
+  }, [jurors]);
   const winnerStartup = winner ? startupByName.get(winner.startup) : null;
   const winnerEmail = winnerStartup?.startup_contact_email || "";
   const winnerFirstName = winnerStartup?.startup_contact_prenom || "";
@@ -79,12 +91,9 @@ export default function CommunicationsSection({ sessionId, ranking }) {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
   // -------- Templates --------
-  const juryTemplate = buildJuryTemplate({
-    session,
-    ranking,
-    winner,
-    baseUrl,
-  });
+  const juryTemplateFr = buildJuryTemplate({ session, ranking, winner, baseUrl, lang: "fr" });
+  const juryTemplateEn = buildJuryTemplate({ session, ranking, winner, baseUrl, lang: "en" });
+  const juryTemplateDe = buildJuryTemplate({ session, ranking, winner, baseUrl, lang: "de" });
   const losersTemplate = buildLosersTemplate({
     session,
     winner,
@@ -125,22 +134,43 @@ export default function CommunicationsSection({ sessionId, ranking }) {
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold text-stone-800">Communications post-session</div>
           <p className="text-xs text-stone-500 mt-0.5">
-            Templates FR pré-remplis avec les données réelles. Copier le sujet/corps et la liste de
-            destinataires, puis envoyer depuis ton client mail.
+            Templates pré-remplis avec les données réelles. Le bloc Jury est dupliqué FR / EN / DE
+            (groupé par langue préférée du juré). Clique « Ouvrir dans le mail » sur chaque carte
+            pour adresser chacun dans sa langue.
           </p>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
         <TemplateCard
           color="blue"
           Icon={Trophy}
-          title="Jury"
-          subtitle={`${juryEmails.length} juré${juryEmails.length > 1 ? "s" : ""} · classement final`}
-          recipients={juryEmails}
-          template={juryTemplate}
-          isOpen={open === "jury"}
-          onToggle={() => setOpen(open === "jury" ? null : "jury")}
+          title="Jury 🇫🇷 FR"
+          subtitle={`${juryByLang.fr.length} juré${juryByLang.fr.length > 1 ? "s" : ""} francophone${juryByLang.fr.length > 1 ? "s" : ""} · classement final`}
+          recipients={juryByLang.fr}
+          template={juryTemplateFr}
+          isOpen={open === "juryFr"}
+          onToggle={() => setOpen(open === "juryFr" ? null : "juryFr")}
+        />
+        <TemplateCard
+          color="blue"
+          Icon={Trophy}
+          title="Jury 🇬🇧 EN"
+          subtitle={`${juryByLang.en.length} English-speaking juror${juryByLang.en.length > 1 ? "s" : ""} · final ranking`}
+          recipients={juryByLang.en}
+          template={juryTemplateEn}
+          isOpen={open === "juryEn"}
+          onToggle={() => setOpen(open === "juryEn" ? null : "juryEn")}
+        />
+        <TemplateCard
+          color="blue"
+          Icon={Trophy}
+          title="Jury 🇩🇪 DE"
+          subtitle={`${juryByLang.de.length} deutschsprachige${juryByLang.de.length > 1 ? "s" : "r"} Jurymitglied${juryByLang.de.length > 1 ? "er" : ""} · Endklassement`}
+          recipients={juryByLang.de}
+          template={juryTemplateDe}
+          isOpen={open === "juryDe"}
+          onToggle={() => setOpen(open === "juryDe" ? null : "juryDe")}
         />
         <TemplateCard
           color="violet"
@@ -236,12 +266,17 @@ function TemplateCard({
     // recipients (e.g. public announce template) we still open the compose
     // window so the user can paste their audience manually.
     const useBcc = dedup.length > 1;
-    const params = new URLSearchParams();
-    params.set("subject", template.subject);
-    params.set("body", template.body);
-    if (useBcc) params.set("bcc", dedup.join(","));
+    // Build the query manually with encodeURIComponent so spaces become %20.
+    // URLSearchParams.toString() encodes spaces as "+" (form-urlencoded), which
+    // some mail clients (Proton) do not decode in mailto links — body arrives
+    // peppered with "+" characters.
+    const parts = [
+      `subject=${encodeURIComponent(template.subject)}`,
+      `body=${encodeURIComponent(template.body)}`,
+    ];
+    if (useBcc) parts.push(`bcc=${encodeURIComponent(dedup.join(","))}`);
     const to = useBcc ? "" : dedup[0] || "";
-    const url = `mailto:${encodeURIComponent(to)}?${params.toString()}`;
+    const url = `mailto:${encodeURIComponent(to)}?${parts.join("&")}`;
     window.location.href = url;
   }
 
@@ -355,19 +390,74 @@ function rankingLines(ranking) {
     .join("\n");
 }
 
-function buildJuryTemplate({ session, ranking, winner, baseUrl }) {
+function buildJuryTemplate({ session, ranking, winner, baseUrl, lang = "fr" }) {
   const finaleLink = `${baseUrl}/RsaFinaleRsvp?role=jury`;
-  const subject = `Rotary Startup Award — Merci pour votre évaluation · ${session.label}`;
+  const sessionLabel = getSessionLabel(session, lang);
+  const sessionDate = getSessionDate(session, lang);
+  const finaleDate = FINALE_DATES[lang] || FINALE_DATES.fr;
+
+  if (lang === "de") {
+    const subject = `Rotary Startup Award — Vielen Dank für Ihre Bewertung · ${sessionLabel}`;
+    const body = `Guten Tag,
+
+vielen Dank für Ihre Zeit und Ihre Expertise bei der Session „${sessionLabel}" des Rotary Startup Award 2026 am ${sessionDate}.
+
+Hier das konsolidierte Endklassement:
+
+${rankingLines(ranking)}
+
+${winner ? `${winner.startup} vertritt diese Session beim Großen Finale.\n\n` : ""}🏆 GROSSES FINALE
+${finaleDate}
+${FINALE_LOC}
+
+Wir würden uns sehr freuen, Sie bei dieser Veranstaltung begrüßen zu dürfen. Bitte bestätigen Sie Ihre Teilnahme mit wenigen Klicks:
+${finaleLink}
+
+Nochmals herzlichen Dank für Ihr Engagement und Ihren Expertenblick auf diese Projekte.
+
+Mit freundlichen Grüßen,
+Die Kommission Rotary Startup Award 2026
+Rotary Club de Paris`;
+    return { subject, body };
+  }
+
+  if (lang === "en") {
+    const subject = `Rotary Startup Award — Thank you for your evaluation · ${sessionLabel}`;
+    const body = `Hello,
+
+Many thanks for your time and your expertise during the "${sessionLabel}" session of the Rotary Startup Award 2026, held on ${sessionDate}.
+
+Here is the consolidated final ranking:
+
+${rankingLines(ranking)}
+
+${winner ? `${winner.startup} will represent this session at the Grand Finale.\n\n` : ""}🏆 GRAND FINALE
+${finaleDate}
+${FINALE_LOC}
+
+We would be delighted to have you with us at this event. Please confirm your attendance in a few clicks:
+${finaleLink}
+
+Once again, thank you for your commitment and your expert eye on these projects.
+
+Best regards,
+The Rotary Startup Award 2026 Committee
+Rotary Club de Paris`;
+    return { subject, body };
+  }
+
+  // fr (default)
+  const subject = `Rotary Startup Award — Merci pour votre évaluation · ${sessionLabel}`;
   const body = `Bonjour,
 
-Merci infiniment pour votre temps et votre expertise lors de la session "${session.label}" du Rotary Startup Award 2026, qui s'est tenue le ${session.date}.
+Merci infiniment pour votre temps et votre expertise lors de la session "${sessionLabel}" du Rotary Startup Award 2026, qui s'est tenue le ${sessionDate}.
 
 Voici le classement final consolidé :
 
 ${rankingLines(ranking)}
 
 ${winner ? `${winner.startup} représentera cette session lors de la Grande Finale.\n\n` : ""}🏆 GRANDE FINALE
-${FINALE_DATE}
+${finaleDate}
 ${FINALE_LOC}
 
 Nous serions ravis de vous compter parmi nous lors de cet évènement. Merci de confirmer votre présence en quelques clics :
@@ -398,7 +488,7 @@ Nous tenions à vous remercier directement, parce que la qualité globale de la 
 
 Nous serions ravis de vous compter parmi nous lors de la Grande Finale, comme invité·e :
 
-${FINALE_DATE}
+${FINALE_DATES.fr}
 ${FINALE_LOC}
 
 Vous y croiserez investisseurs, jurés, entrepreneurs et la communauté Rotary. C'est une vraie occasion de prolonger les échanges, faire de nouvelles rencontres, et voir le format finale en conditions réelles — utile si vous représentez à nouveau votre projet plus tard.
@@ -425,7 +515,7 @@ Toutes nos félicitations ! ${winner.startup} a remporté la session "${session.
 Vous représenterez cette session lors de la Grande Finale, face aux gagnants des autres sessions.
 
 🏆 GRANDE FINALE
-${FINALE_DATE}
+${FINALE_DATES.fr}
 ${FINALE_LOC}
 
 📌 Format pitch ajusté pour la finale
@@ -484,7 +574,7 @@ Score final : ${winner.final_score.toFixed(2)}/5 sur ${winner.n} évaluations in
 ${winner.startup} rejoint donc le plateau de la Grande Finale, où elle pitchera face aux gagnants des autres sessions devant un jury élargi et l'ensemble de la communauté Rotary Paris.
 
 🏆 GRANDE FINALE
-${FINALE_DATE}
+${FINALE_DATES.fr}
 ${FINALE_LOC}
 
 Toutes les startups, jurys et le programme complet sont consultables ici :
