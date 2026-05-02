@@ -242,6 +242,18 @@ export default function RsaFinaleRsvp() {
     return ROLES.some((x) => x.id === r) ? r : null;
   }, [params]);
 
+  // The "jury" role isn't a self-service path: real jurors are vetted and
+  // entered in jury_profiles by the admin, then receive a tokenized email
+  // (?role=jury) to confirm presence at the Grande Finale. Hiding the jury
+  // tile from the public picker prevents random visitors from thinking they
+  // can sign up as juror just by clicking. We still honour an incoming
+  // ?role=jury query param (deep link from the admin's email) so that
+  // legitimate jurors land on the form pre-filled.
+  const visibleRoles = useMemo(() => {
+    if (initialRole === "jury") return ROLES;
+    return ROLES.filter((r) => r.id !== "jury");
+  }, [initialRole]);
+
   const [role, setRole] = useState(initialRole);
   const [attending, setAttending] = useState(null); // null | true | false
 
@@ -461,11 +473,11 @@ export default function RsaFinaleRsvp() {
               className="role-grid"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3,1fr)",
+                gridTemplateColumns: `repeat(${visibleRoles.length},1fr)`,
                 gap: 10,
               }}
             >
-              {ROLES.map((r) => {
+              {visibleRoles.map((r) => {
                 const on = role === r.id;
                 const Icon = r.Icon;
                 return (
