@@ -237,19 +237,21 @@ export default function RsaFinaleRsvp() {
     } catch {}
   }, [lang]);
 
-  // "jury" is NOT a public role on this form. Being a juror for a session
-  // doesn't mean someone is also a juror for the Grande Finale (that's a
-  // separate vetted list, jury_profiles.grande_finale === true), so even a
-  // ?role=jury deep-link must not pre-select. Keep "jury" in the data model
-  // (the FinaleRsvp table tolerates it) but hide it from the picker entirely
-  // and ignore the URL param.
+  // "jury" is invitation-only. The picker shows Pitcher + Visitor for any
+  // public visitor; the Jury tile only appears when the URL carries
+  // ?role=jury, which is the deep-link from the dedicated finale-jury
+  // invitation email (CommunicationsSection > "Jury Finale FR/EN/DE" cards).
+  // Real finale jurors are vetted upstream — flagged jury_profiles.grande_finale
+  // === true — and are the only ones who ever receive that link.
   const initialRole = useMemo(() => {
     const r = params.get("role");
-    if (r === "jury") return null;
     return ROLES.some((x) => x.id === r) ? r : null;
   }, [params]);
 
-  const visibleRoles = useMemo(() => ROLES.filter((r) => r.id !== "jury"), []);
+  const visibleRoles = useMemo(() => {
+    if (initialRole === "jury") return ROLES;
+    return ROLES.filter((r) => r.id !== "jury");
+  }, [initialRole]);
 
   const [role, setRole] = useState(initialRole);
   const [attending, setAttending] = useState(null); // null | true | false

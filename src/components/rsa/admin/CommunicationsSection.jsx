@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Copy, Mail, Send, Mic2, Users as UsersIcon, Trophy, ExternalLink, Megaphone } from "lucide-react";
+import { Loader2, Copy, Mail, Send, Mic2, Users as UsersIcon, Trophy, ExternalLink, Megaphone, Crown } from "lucide-react";
 import { JuryProfile, StartupConfirmation } from "@/lib/db";
 import { SESSION_BY_ID, FINAL_SESSION_ID, getSessionLabel, getSessionDate } from "@/lib/rsa/constants";
 
@@ -14,10 +14,11 @@ const FINALE_LOC = "Cyrus Conseil · 50 bd Haussmann · Paris 75009";
 export default function CommunicationsSection({ sessionId, ranking }) {
   const session = SESSION_BY_ID[sessionId];
   const [jurors, setJurors] = useState([]);
+  const [finaleJurors, setFinaleJurors] = useState([]);
   const [startups, setStartups] = useState([]);
   const [finalistRowsCount, setFinalistRowsCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(null); // null | 'jury' | 'losers' | 'winner' | 'announce'
+  const [open, setOpen] = useState(null); // open card key
   const announceRef = useRef(null);
 
   useEffect(() => {
@@ -37,7 +38,14 @@ export default function CommunicationsSection({ sessionId, ranking }) {
           const a = j.assigned_sessions || [];
           return a.includes(session.label) || a.includes(session.id);
         });
+        // Independent of which session is being viewed: always know the full
+        // list of finale jurors so we can offer the "invite finale jury" cards
+        // from any session's Communications panel.
+        const allFinaleJurors = (allJury || []).filter(
+          (j) => j.validated && j.grande_finale === true
+        );
         setJurors(validated);
+        setFinaleJurors(allFinaleJurors);
         setStartups(startupRows || []);
         setFinalistRowsCount((finaleRows || []).length);
       } finally {
@@ -81,6 +89,15 @@ export default function CommunicationsSection({ sessionId, ranking }) {
     }
     return groups;
   }, [jurors]);
+  const finaleJuryByLang = useMemo(() => {
+    const groups = { fr: [], en: [], de: [] };
+    for (const j of finaleJurors) {
+      if (!j.email) continue;
+      const lang = (j.lang === "en" || j.lang === "de") ? j.lang : "fr";
+      groups[lang].push(j.email);
+    }
+    return groups;
+  }, [finaleJurors]);
   const winnerStartup = winner ? startupByName.get(winner.startup) : null;
   const winnerEmail = winnerStartup?.startup_contact_email || "";
   const winnerFirstName = winnerStartup?.startup_contact_prenom || "";
@@ -94,6 +111,9 @@ export default function CommunicationsSection({ sessionId, ranking }) {
   const juryTemplateFr = buildJuryTemplate({ session, ranking, winner, baseUrl, lang: "fr" });
   const juryTemplateEn = buildJuryTemplate({ session, ranking, winner, baseUrl, lang: "en" });
   const juryTemplateDe = buildJuryTemplate({ session, ranking, winner, baseUrl, lang: "de" });
+  const finaleInviteTemplateFr = buildFinaleJuryInvitationTemplate({ baseUrl, lang: "fr" });
+  const finaleInviteTemplateEn = buildFinaleJuryInvitationTemplate({ baseUrl, lang: "en" });
+  const finaleInviteTemplateDe = buildFinaleJuryInvitationTemplate({ baseUrl, lang: "de" });
   const losersTemplate = buildLosersTemplate({
     session,
     winner,
@@ -134,9 +154,9 @@ export default function CommunicationsSection({ sessionId, ranking }) {
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold text-stone-800">Communications post-session</div>
           <p className="text-xs text-stone-500 mt-0.5">
-            Templates pré-remplis avec les données réelles. Le bloc Jury est dupliqué FR / EN / DE
-            (groupé par langue préférée du juré). Clique « Ouvrir dans le mail » sur chaque carte
-            pour adresser chacun dans sa langue.
+            Templates pré-remplis avec les données réelles. Jury session (bleu) = thank-you après
+            chaque session qualificative. Jury finale (vert) = invitation présence des jurés
+            sélectionnés pour la Grande Finale (flag <code className="text-[10px] bg-stone-100 px-1 rounded">grande_finale</code>). Tout est groupé par langue (FR/EN/DE).
           </p>
         </div>
       </div>
@@ -171,6 +191,36 @@ export default function CommunicationsSection({ sessionId, ranking }) {
           template={juryTemplateDe}
           isOpen={open === "juryDe"}
           onToggle={() => setOpen(open === "juryDe" ? null : "juryDe")}
+        />
+        <TemplateCard
+          color="emerald"
+          Icon={Crown}
+          title="🏆 Jury Finale 🇫🇷 FR"
+          subtitle={`${finaleJuryByLang.fr.length} juré${finaleJuryByLang.fr.length > 1 ? "s" : ""} finale FR · invitation présence`}
+          recipients={finaleJuryByLang.fr}
+          template={finaleInviteTemplateFr}
+          isOpen={open === "finaleFr"}
+          onToggle={() => setOpen(open === "finaleFr" ? null : "finaleFr")}
+        />
+        <TemplateCard
+          color="emerald"
+          Icon={Crown}
+          title="🏆 Jury Finale 🇬🇧 EN"
+          subtitle={`${finaleJuryByLang.en.length} finale juror${finaleJuryByLang.en.length > 1 ? "s" : ""} EN · attendance invitation`}
+          recipients={finaleJuryByLang.en}
+          template={finaleInviteTemplateEn}
+          isOpen={open === "finaleEn"}
+          onToggle={() => setOpen(open === "finaleEn" ? null : "finaleEn")}
+        />
+        <TemplateCard
+          color="emerald"
+          Icon={Crown}
+          title="🏆 Jury Finale 🇩🇪 DE"
+          subtitle={`${finaleJuryByLang.de.length} Finale-Jurymitglied${finaleJuryByLang.de.length > 1 ? "er" : ""} DE · Teilnahme-Einladung`}
+          recipients={finaleJuryByLang.de}
+          template={finaleInviteTemplateDe}
+          isOpen={open === "finaleDe"}
+          onToggle={() => setOpen(open === "finaleDe" ? null : "finaleDe")}
         />
         <TemplateCard
           color="violet"
@@ -239,6 +289,7 @@ function TemplateCard({
     violet: { bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-700", btn: "bg-violet-600 hover:bg-violet-700" },
     amber: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", btn: "bg-amber-600 hover:bg-amber-700" },
     rose: { bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", btn: "bg-rose-600 hover:bg-rose-700" },
+    emerald: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", btn: "bg-emerald-600 hover:bg-emerald-700" },
   };
   const tone = tones[color] || tones.blue;
 
@@ -388,6 +439,82 @@ function rankingLines(ranking) {
       return `${m} #${r.final_rank} — ${r.startup} · ${r.final_score.toFixed(2)}/5`;
     })
     .join("\n");
+}
+
+// Invitation to confirm presence as a finale juror — sent to validated jurors
+// flagged grande_finale=true. Distinct from the post-session thank-you email
+// (buildJuryTemplate) which thanks every juror after their qualifying session.
+function buildFinaleJuryInvitationTemplate({ baseUrl, lang = "fr" }) {
+  const finaleLink = `${baseUrl}/RsaFinaleRsvp?role=jury`;
+  const finaleDate = FINALE_DATES[lang] || FINALE_DATES.fr;
+
+  if (lang === "de") {
+    const subject = "Rotary Startup Award — Einladung Jury Großes Finale";
+    const body = `Guten Tag,
+
+es wäre uns eine große Ehre, Sie als Jurymitglied beim Großen Finale des Rotary Startup Award 2026 begrüßen zu dürfen.
+
+🏆 GROSSES FINALE
+${finaleDate}
+${FINALE_LOC}
+
+Sie wurden ausgewählt, um die finalistischen Startups zu bewerten — die Gewinner der jeweiligen Qualifikationssessions. Das Format ist anspruchsvoller als in den Qualifikationen: 10–12 Min Pitch, 8 Min Q&A pro Startup.
+
+📅 Bitte bestätigen Sie Ihre Teilnahme mit wenigen Klicks:
+${finaleLink}
+
+Das Jury-Paket (Pre-Read-Deck, Teams-Link, Scoring-Link, Bewertungsraster) wird Ihnen in den Tagen vor dem Finale zugesandt.
+
+Mit freundlichen Grüßen,
+Die Kommission Rotary Startup Award 2026
+Rotary Club de Paris`;
+    return { subject, body };
+  }
+
+  if (lang === "en") {
+    const subject = "Rotary Startup Award — Grand Finale jury invitation";
+    const body = `Hello,
+
+We would be honoured to have you on the jury panel for the Rotary Startup Award 2026 Grand Finale.
+
+🏆 GRAND FINALE
+${finaleDate}
+${FINALE_LOC}
+
+You have been selected to evaluate the finalist startups — the winners of each qualifying session. The format is more demanding than the qualifiers: 10–12 min pitch + 8 min Q&A per startup.
+
+📅 Please confirm your attendance in a few clicks:
+${finaleLink}
+
+The jury pack (pre-read deck, Teams link, scoring link, rating grid) will be sent to you in the days leading up to the finale.
+
+Best regards,
+The Rotary Startup Award 2026 Committee
+Rotary Club de Paris`;
+    return { subject, body };
+  }
+
+  // fr (default)
+  const subject = "Rotary Startup Award — Invitation jury Grande Finale";
+  const body = `Bonjour,
+
+Nous serions très honorés de vous compter parmi les jurés de la Grande Finale du Rotary Startup Award 2026.
+
+🏆 GRANDE FINALE
+${finaleDate}
+${FINALE_LOC}
+
+Vous avez été retenu·e pour évaluer les startups finalistes — les gagnants de chacune des sessions qualificatives. Le format est plus exigeant qu'en qualif : pitch 10–12 min + Q&A 8 min par startup.
+
+📅 Merci de confirmer votre présence en quelques clics :
+${finaleLink}
+
+Le pack jury (deck pré-read, lien Teams, lien scoring, grille de notation) vous parviendra dans les jours précédant la finale.
+
+Bien cordialement,
+La Commission Rotary Startup Award 2026
+Rotary Club de Paris`;
+  return { subject, body };
 }
 
 function buildJuryTemplate({ session, ranking, winner, baseUrl, lang = "fr" }) {
