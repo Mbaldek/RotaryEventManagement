@@ -396,9 +396,9 @@ export default function DecksTab({ sessionId }) {
   const [showEmails, setShowEmails] = useState(false);
   const [showJuryEmails, setShowJuryEmails] = useState(false);
   const [generatingPack, setGeneratingPack] = useState(false);
-  // Per-card language overrides (not persisted — transient admin choice)
+  // Per-card language overrides (not persisted — transient admin choice).
+  // Note: jury language is persisted to jury_profiles.lang directly (see setJuryLang).
   const [startupLangOverride, setStartupLangOverride] = useState({}); // { [rowId]: "fr"|"en" }
-  const [juryLangOverride, setJuryLangOverride] = useState({}); // { [juryId]: "fr"|"en"|"de" }
   const [templateFr, setTemplateFr] = useState(() => localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
   const [templateEn, setTemplateEn] = useState(() => localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
   const [juryTemplateFr, setJuryTemplateFr] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_fr_${sessionId}`) || DEFAULT_JURY_TEMPLATE_FR);
@@ -496,6 +496,22 @@ export default function DecksTab({ sessionId }) {
       await load();
     } catch (e) {}
     setWorking(null);
+  }
+
+  // Persist a juror's preferred language to jury_profiles.lang.
+  // Optimistic update + rollback on failure. The CommunicationsSection (and any
+  // other consumer) reads j.lang directly from the DB, so this makes the
+  // dropdown a single source of truth instead of a transient per-mount toggle.
+  async function setJuryLang(j, newLang) {
+    if (!j?.id || newLang === j.lang) return;
+    const prev = j.lang ?? null;
+    setJurors((curr) => curr.map((x) => (x.id === j.id ? { ...x, lang: newLang } : x)));
+    try {
+      await JuryProfile.update(j.id, { lang: newLang });
+    } catch (e) {
+      setJurors((curr) => curr.map((x) => (x.id === j.id ? { ...x, lang: prev } : x)));
+      toast.error("Mise à jour de la langue échouée");
+    }
   }
 
   function jurySentAt(j) {
@@ -696,8 +712,7 @@ export default function DecksTab({ sessionId }) {
     if (!jurors.length) return [];
     const scoringUrl = `${window.location.origin}/RsaScore?s=${sessionId}`;
     return jurors.map((j) => {
-      const detected = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
-      const lang = juryLangOverride[j.id] || detected;
+      const lang = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
       const tpl = lang === "fr" ? juryTemplateFr : lang === "de" ? juryTemplateDe : juryTemplateEn;
       const label = session ? getSessionLabel(session, lang) : "";
       const dateLong = (SESSION_DATES_LONG[sessionId] || {})[lang] || "";
@@ -744,7 +759,7 @@ export default function DecksTab({ sessionId }) {
 
       return { jury: j, lang, subject, body, bodyHtml, to: j.email || "" };
     });
-  }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session, juryLangOverride, juryPackUrl, sessionCfg?.teams_link]);
+  }, [jurors, rows, juryTemplateFr, juryTemplateEn, juryTemplateDe, sessionId, session, juryPackUrl, sessionCfg?.teams_link]);
 
   function gmailLink(e) {
     const u = new URL("https://mail.google.com/mail/");
@@ -1094,8 +1109,7 @@ export default function DecksTab({ sessionId }) {
               {jurors.map((j, idx) => {
                 const busy = working === j.id;
                 const sentAt = jurySentAt(j);
-                const detected = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
-                const lang = juryLangOverride[j.id] || detected;
+                const lang = (j.lang === "fr" || j.lang === "en" || j.lang === "de") ? j.lang : "en";
                 const langClass = lang === "fr"
                   ? "bg-blue-50 text-blue-700 border-blue-200"
                   : lang === "de"
@@ -1114,8 +1128,8 @@ export default function DecksTab({ sessionId }) {
                     <td className="px-3 py-2">
                       <select
                         value={lang}
-                        onChange={(ev) => setJuryLangOverride((o) => ({ ...o, [j.id]: ev.target.value }))}
-                        title="Langue du template email pour ce juré"
+                        onChange={(ev) => setJuryLang(j, ev.target.value)}
+                        title="Langue préférée du juré (sauvegardé en base — réutilisé pour les emails post-session)"
                         className={`text-[10px] px-1.5 py-0.5 rounded border cursor-pointer focus:outline-none ${langClass}`}>
                         <option value="fr">FR</option>
                         <option value="en">EN</option>
