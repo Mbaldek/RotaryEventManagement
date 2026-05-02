@@ -2,8 +2,37 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Trophy, Loader2, Check, AlertCircle, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { QUALIFYING_SESSIONS, FINAL_SESSION_ID, JURY_STATUS } from "@/lib/rsa/constants";
-import { SessionConfig, StartupConfirmation } from "@/lib/db";
-import { getPublishedWinner, getPublishedRunnerUp } from "@/lib/rsa/ranking";
+import { SessionConfig, StartupConfirmation, JuryScore } from "@/lib/db";
+import { buildRanking, getPublishedWinner, getPublishedRunnerUp } from "@/lib/rsa/ranking";
+
+// When a session is PUBLISHED but its final_ranking snapshot is empty (e.g.
+// FoodTech, published before snapshot logic shipped), recompute it from raw
+// jury_scores + admin_overrides and persist back. Returns the rebuilt snapshot
+// or null if there are simply no scores yet.
+async function healSnapshotIfMissing(cfgRow) {
+  if (Array.isArray(cfgRow.final_ranking) && cfgRow.final_ranking.length > 0) {
+    return cfgRow.final_ranking;
+  }
+  const scores = await JuryScore.filter({ session_id: cfgRow.session_id });
+  if (!Array.isArray(scores) || scores.length === 0) return null;
+  const ranked = buildRanking(scores, cfgRow.admin_overrides || {});
+  if (ranked.length === 0) return null;
+  const snapshot = ranked.map((r) => ({
+    startup_name: r.startup,
+    avg: r.avg,
+    bonus: r.bonus,
+    final_score: r.final_score,
+    final_rank: r.final_rank,
+    note: r.note || "",
+    juror_count: r.n,
+  }));
+  try {
+    await SessionConfig.updateBySessionId(cfgRow.session_id, { final_ranking: snapshot });
+  } catch (e) {
+    console.warn("[FinalistsPicker] heal snapshot failed for", cfgRow.session_id, e);
+  }
+  return snapshot;
+}
 
 // One row per qualifying session — shows the published winner (or "scoring in
 // progress") and lets the admin add it to the finale, swap to runner-up, or
@@ -30,12 +59,18 @@ export default function FinalistsPicker({ onChanged }) {
       // (idempotent — never replaces a manual swap, only fills holes).
       // Catches sessions published before this code shipped (FoodTech) and
       // covers the edge case where ResultsTab.publish() failed midway.
+      // If the snapshot itself is missing, heal it first by recomputing from
+      // raw scores so getPublishedWinner has something to read.
       const presentSources = new Set(fc.map((f) => f.source_session_id).filter(Boolean));
       const toAdd = [];
       for (const cfgRow of qrs) {
         if (cfgRow.status !== JURY_STATUS.PUBLISHED) continue;
         if (presentSources.has(cfgRow.session_id)) continue;
-        const winner = getPublishedWinner(cfgRow);
+        let winner = getPublishedWinner(cfgRow);
+        if (!winner) {
+          const healed = await healSnapshotIfMissing(cfgRow);
+          if (healed) winner = healed.find((r) => r.final_rank === 1) || null;
+        }
         if (!winner) continue;
         toAdd.push({
           session_id: FINAL_SESSION_ID,

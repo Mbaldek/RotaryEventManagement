@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { buildRanking } from "@/lib/rsa/ranking";
 
 const SB_URL = "https://uaoucznptxmvhhytapso.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhb3Vjem5wdHhtdmhoeXRhcHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTU5NzAsImV4cCI6MjA4OTQ5MTk3MH0.evOgZctRuIxGSnZLocea5cAKqKR5nc-5x32QDqBUt0U";
@@ -174,32 +175,75 @@ function weightedScorePub(row) {
 }
 
 function PublishedSessionCard({ session, cfg, sessionLabel }) {
-  const ranking = Array.isArray(cfg.final_ranking) ? cfg.final_ranking : [];
-  const winner = ranking.find((r) => r.final_rank === 1);
+  const savedSnapshot = Array.isArray(cfg.final_ranking) ? cfg.final_ranking : [];
   const [scores, setScores] = useState([]);
   const [loadingScores, setLoadingScores] = useState(true);
+  const [computedSnapshot, setComputedSnapshot] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    async function fetchScores() {
+    async function fetchAll() {
       setLoadingScores(true);
       try {
-        const r = await fetch(
-          `${SB_URL}/rest/v1/jury_scores?select=jury_name,startup_name,${CRIT_KEYS_PUB.join(",")}&session_id=eq.${session.id}`,
-          { headers: SB_HEADERS }
-        );
-        const data = await r.json();
-        if (!cancelled) setScores(data || []);
+        const [scoresRes, cfgRes] = await Promise.all([
+          fetch(
+            `${SB_URL}/rest/v1/jury_scores?select=jury_name,startup_name,${CRIT_KEYS_PUB.join(",")}&session_id=eq.${session.id}`,
+            { headers: SB_HEADERS }
+          ),
+          fetch(
+            `${SB_URL}/rest/v1/session_config?select=admin_overrides,final_ranking&session_id=eq.${session.id}`,
+            { headers: SB_HEADERS }
+          ),
+        ]);
+        const scoresData = await scoresRes.json();
+        const cfgData = await cfgRes.json();
+        if (cancelled) return;
+        setScores(scoresData || []);
+
+        // Always recompute the ranking from raw scores + admin overrides — the
+        // saved snapshot may be missing (sessions published before snapshot
+        // logic shipped, e.g. FoodTech). Once computed, heal-save it back to
+        // the DB so downstream consumers (FinalistsPicker auto-sync, RsaJuryHub,
+        // RsaRecap) pick it up.
+        const overrides = cfgData[0]?.admin_overrides || {};
+        const dbSnapshot = Array.isArray(cfgData[0]?.final_ranking) ? cfgData[0].final_ranking : [];
+        const ranked = buildRanking(scoresData || [], overrides);
+        const computed = ranked.map((r) => ({
+          startup_name: r.startup,
+          avg: r.avg,
+          bonus: r.bonus,
+          final_score: r.final_score,
+          final_rank: r.final_rank,
+          note: r.note || "",
+          juror_count: r.n,
+        }));
+        setComputedSnapshot(computed);
+
+        if (dbSnapshot.length === 0 && computed.length > 0) {
+          // Fire-and-forget heal — no toast (silent), it's a recovery path.
+          fetch(
+            `${SB_URL}/rest/v1/session_config?session_id=eq.${session.id}`,
+            {
+              method: "PATCH",
+              headers: { ...SB_HEADERS, "Prefer": "return=minimal" },
+              body: JSON.stringify({ final_ranking: computed }),
+            }
+          ).catch((e) => console.warn("[PublishedSessionCard] heal snapshot failed:", e));
+        }
       } catch (e) {
         if (!cancelled) setScores([]);
       } finally {
         if (!cancelled) setLoadingScores(false);
       }
     }
-    fetchScores();
+    fetchAll();
     return () => { cancelled = true; };
   }, [session.id]);
 
+  // Prefer the live-computed snapshot once available; fall back to whatever
+  // the parent loadAll fetched (cfg.final_ranking) for the first paint.
+  const ranking = computedSnapshot ?? savedSnapshot;
+  const winner = ranking.find((r) => r.final_rank === 1);
   const cellMap = new Map();
   for (const r of scores) cellMap.set(`${r.jury_name}::${r.startup_name}`, r);
   const jurorNames = [...new Set(scores.map((s) => s.jury_name))].sort((a, b) => a.localeCompare(b));
