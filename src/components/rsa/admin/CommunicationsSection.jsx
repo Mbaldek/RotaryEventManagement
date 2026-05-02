@@ -391,10 +391,13 @@ function rankingLines(ranking) {
 }
 
 function buildJuryTemplate({ session, ranking, winner, baseUrl, lang = "fr" }) {
-  const finaleLink = `${baseUrl}/RsaFinaleRsvp?role=jury`;
+  // Note: this email no longer asks session jurors to RSVP for the Grande
+  // Finale — being on a session jury does NOT make you a finale juror, so
+  // the previous "?role=jury" RSVP link was misleading. Finale jury is a
+  // separate vetted list (jury_profiles.grande_finale === true) and they
+  // receive their own dedicated invitation flow.
   const sessionLabel = getSessionLabel(session, lang);
   const sessionDate = getSessionDate(session, lang);
-  const finaleDate = FINALE_DATES[lang] || FINALE_DATES.fr;
 
   if (lang === "de") {
     const subject = `Rotary Startup Award — Vielen Dank für Ihre Bewertung · ${sessionLabel}`;
@@ -413,13 +416,6 @@ ${baseUrl}/RsaRecap?s=${session.id}
 👁 AWARDS-ÜBERSICHT — alle Sessions auf einen Blick
 Vollständiges Programm, Startups, Decks, Jurys, Finalisten Session für Session:
 ${baseUrl}/RsaJuryHub
-
-🏆 GROSSES FINALE
-${finaleDate}
-${FINALE_LOC}
-
-Wir würden uns sehr freuen, Sie bei dieser Veranstaltung begrüßen zu dürfen. Bitte bestätigen Sie Ihre Teilnahme mit wenigen Klicks:
-${finaleLink}
 
 Nochmals herzlichen Dank für Ihr Engagement und Ihren Expertenblick auf diese Projekte.
 
@@ -447,13 +443,6 @@ ${baseUrl}/RsaRecap?s=${session.id}
 Full programme, startups, decks, jurors, finalists announced session after session:
 ${baseUrl}/RsaJuryHub
 
-🏆 GRAND FINALE
-${finaleDate}
-${FINALE_LOC}
-
-We would be delighted to have you with us at this event. Please confirm your attendance in a few clicks:
-${finaleLink}
-
 Once again, thank you for your commitment and your expert eye on these projects.
 
 Best regards,
@@ -479,13 +468,6 @@ ${baseUrl}/RsaRecap?s=${session.id}
 👁 ESPACE CONCOURS — toutes les sessions en un coup d'œil
 Programme complet, startups, decks, jurés, finalistes annoncés au fil des sessions :
 ${baseUrl}/RsaJuryHub
-
-🏆 GRANDE FINALE
-${finaleDate}
-${FINALE_LOC}
-
-Nous serions ravis de vous compter parmi nous lors de cet évènement. Merci de confirmer votre présence en quelques clics :
-${finaleLink}
 
 Encore merci pour votre engagement et votre regard d'expert sur ces projets.
 

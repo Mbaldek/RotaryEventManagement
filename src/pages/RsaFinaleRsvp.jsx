@@ -237,22 +237,19 @@ export default function RsaFinaleRsvp() {
     } catch {}
   }, [lang]);
 
+  // "jury" is NOT a public role on this form. Being a juror for a session
+  // doesn't mean someone is also a juror for the Grande Finale (that's a
+  // separate vetted list, jury_profiles.grande_finale === true), so even a
+  // ?role=jury deep-link must not pre-select. Keep "jury" in the data model
+  // (the FinaleRsvp table tolerates it) but hide it from the picker entirely
+  // and ignore the URL param.
   const initialRole = useMemo(() => {
     const r = params.get("role");
+    if (r === "jury") return null;
     return ROLES.some((x) => x.id === r) ? r : null;
   }, [params]);
 
-  // The "jury" role isn't a self-service path: real jurors are vetted and
-  // entered in jury_profiles by the admin, then receive a tokenized email
-  // (?role=jury) to confirm presence at the Grande Finale. Hiding the jury
-  // tile from the public picker prevents random visitors from thinking they
-  // can sign up as juror just by clicking. We still honour an incoming
-  // ?role=jury query param (deep link from the admin's email) so that
-  // legitimate jurors land on the form pre-filled.
-  const visibleRoles = useMemo(() => {
-    if (initialRole === "jury") return ROLES;
-    return ROLES.filter((r) => r.id !== "jury");
-  }, [initialRole]);
+  const visibleRoles = useMemo(() => ROLES.filter((r) => r.id !== "jury"), []);
 
   const [role, setRole] = useState(initialRole);
   const [attending, setAttending] = useState(null); // null | true | false
