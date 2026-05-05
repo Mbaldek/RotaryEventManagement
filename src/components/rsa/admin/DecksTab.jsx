@@ -12,6 +12,7 @@ const SESSION_DEADLINES = {
   s3_tech:      {iso:"2026-05-10", label:"10 mai",    labelEn:"10 May"},
   s4_health:    {iso:"2026-05-16", label:"16 mai",    labelEn:"16 May"},
   s5_greentech: {iso:"2026-05-18", label:"18 mai",    labelEn:"18 May"},
+  final_grande: {iso:"2026-05-23", label:"23 mai",    labelEn:"23 May"},
 };
 const SESSION_DATES_LONG = {
   s1_foodtech:  {fr:"jeudi 30 avril 2026, 18h",  en:"Thursday 30 April 2026, 6pm",    de:"Donnerstag, 30. April 2026, 18 Uhr"},
@@ -28,6 +29,7 @@ const SESSION_LABELS_EN = {
   s3_tech: "Tech, AI, Fintech & Mobility",
   s4_health: "Healthtech & Biotech",
   s5_greentech: "Greentech & Environment",
+  final_grande: "Grand Final",
 };
 
 const FR_COUNTRIES = new Set([
@@ -602,10 +604,15 @@ export default function DecksTab({ sessionId }) {
       for (const r of confs) if (!ordered.includes(r.startup_name)) ordered.push(r.startup_name);
       setRows(ordered.map((n) => byName.get(n)).filter(Boolean));
 
-      // Jurés : assigned_sessions stocke le label FR de la session (voir SetupTab)
+      // Jurés : pour la grande finale l'assignation est portée par le booléen
+      // grande_finale (cf. SetupTab.toggleAssignment, branche isFinal). Pour les
+      // sessions qualificatives, assigned_sessions stocke le label FR.
       const sessionLabelFr = session?.label;
-      const sessionJurors = (Array.isArray(juryAll) ? juryAll : []).filter(
-        (j) => Array.isArray(j.assigned_sessions) && j.assigned_sessions.includes(sessionLabelFr)
+      const isFinal = !!session?.isFinal;
+      const sessionJurors = (Array.isArray(juryAll) ? juryAll : []).filter((j) =>
+        isFinal
+          ? j.grande_finale === true
+          : Array.isArray(j.assigned_sessions) && j.assigned_sessions.includes(sessionLabelFr)
       );
       setJurors(sessionJurors);
     } catch (e) {

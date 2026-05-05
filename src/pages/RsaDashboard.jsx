@@ -480,6 +480,234 @@ function LiveScoresHub({sessionId, sessionLabel, color, light, border, startups}
   );
 }
 
+// Grande Finale — structurellement différente d'une qualif :
+// startups = 5 finalistes (auto-pick depuis FinalistsPicker dans /RsaAdmin),
+// jurés = jury_profiles.grande_finale=true, lieu présentiel.
+const FINALE_DEADLINE = {iso:"2026-05-23", label:"23 mai"};
+function FinaleCard({sid, cfg, finalists, jurors, onTeamsLink, onToggleCheck}) {
+  const status = (cfg.status||"draft").toLowerCase();
+  const STATUS_MAP = {
+    draft:    {label:"DRAFT — scoring fermé",        bg:"#f0eef0", fg:"#64536a", bd:"#d9d0dc"},
+    live:     {label:"● LIVE — jurés peuvent scorer", bg:"#e8f5ee", fg:"#1d6b4f", bd:"#b0d8c4"},
+    locked:   {label:"LOCKED — scoring fermé",       bg:"#fff4e0", fg:"#8a5a10", bd:"#f0d890"},
+    published:{label:"PUBLISHED — résultats publiés", bg:"#eef0fb", fg:"#3d3a8a", bd:"#c0c4e8"},
+  };
+  const sm = STATUS_MAP[status]||STATUS_MAP.draft;
+  const dl = FINALE_DEADLINE;
+  const daysLeft = daysUntil(dl.iso);
+  const overdue = daysLeft < 0;
+  const nDeckDone = finalists.filter(f=>!!f.deck_confirmed_at || !!f.final_deck_path).length;
+  const FINALE_CHECKS = [
+    {id:"finale_venue_ok",      label:"Salle Cyrus Conseil confirmée",                phase:"J-7"},
+    {id:"finale_jurys_ok",      label:"Min. 5 jurés finale confirmés",                phase:"J-7"},
+    {id:"finale_finalists_ok",  label:"5 finalistes verrouillés (1 par session)",     phase:"J-7"},
+    {id:"finale_invitations",   label:"Invitations finalistes + jury envoyées",       phase:"J-5"},
+    {id:"finale_decks",         label:"Decks finaux reçus (deadline J-3 = 23 mai)",   phase:"J-3"},
+    {id:"finale_brief_jury",    label:"Brief jury envoyé (lieu, scoring, planning)",  phase:"J-3"},
+    {id:"finale_cocktail",      label:"Cocktail dînatoire confirmé (RSVP, traiteur)", phase:"J-2"},
+    {id:"finale_run_through",   label:"Run-through technique sur place",              phase:"J-1"},
+    {id:"finale_session_go",    label:"Session lancée à 16h00",                       phase:"J+0"},
+    {id:"finale_winner_notif",  label:"Lauréat annoncé + comm. presse 3 juin prête",  phase:"J+0"},
+  ];
+  const cl = cfg.checklist||{};
+  const autoCheck = (cid) => (
+    (cid==="finale_jurys_ok"     && jurors.length>=5) ||
+    (cid==="finale_finalists_ok" && finalists.length===5) ||
+    (cid==="finale_decks"        && nDeckDone===5 && finalists.length===5)
+  );
+  const isCheckDone = (cid) => autoCheck(cid) || !!cl[cid];
+  const phases = ["J-7","J-5","J-3","J-2","J-1","J+0"];
+  const phaseBgs = {"J-7":"#fdf6e8","J-5":"#fdf6e8","J-3":"#fff4e0","J-2":"#fff4e0","J-1":"#fbe8ee","J+0":"#e8f5ee"};
+  const phaseColors = {"J-7":"#9a6400","J-5":"#9a6400","J-3":"#8a5a10","J-2":"#8a5a10","J-1":"#8a2040","J+0":"#1d6b4f"};
+  const clDone = FINALE_CHECKS.filter(c=>isCheckDone(c.id)).length;
+
+  return (
+    <div className="card fade" style={{marginBottom:14,overflow:"hidden",border:"2px solid "+GOLD}}>
+      <div style={{background:"linear-gradient(135deg,"+NAVY+" 0%,#1a2f5a 100%)",padding:"14px 18px",display:"flex",alignItems:"center",gap:12,borderBottom:"3px solid "+GOLD}}>
+        <div style={{width:4,height:42,borderRadius:2,background:GOLD,flexShrink:0}}/>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,fontWeight:600,color:"white"}}>🏆 Grande Finale</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.55)",marginTop:3}}>
+            Mardi 26 mai 2026 · 16h–19h · <strong style={{color:GOLD}}>Cyrus Conseil</strong>, 50 bd Haussmann, Paris 75009
+          </div>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.4)",marginTop:2,fontStyle:"italic"}}>
+            Cocktail dînatoire à l'issue, ouvert à tous · présentiel
+          </div>
+        </div>
+        <div style={{display:"flex",gap:14,alignItems:"center"}}>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:18,fontWeight:600,color:finalists.length===5?GOLD:"rgba(255,255,255,.3)",fontFamily:"'Playfair Display',serif"}}>{finalists.length}/5</div>
+            <div style={{fontSize:9,color:"rgba(255,255,255,.3)"}}>finalistes</div>
+          </div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:18,fontWeight:600,color:jurors.length>=5?GOLD:"rgba(255,255,255,.3)",fontFamily:"'Playfair Display',serif"}}>{jurors.length}</div>
+            <div style={{fontSize:9,color:"rgba(255,255,255,.3)"}}>jurés</div>
+          </div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:18,fontWeight:600,color:"rgba(255,255,255,.4)",fontFamily:"'Playfair Display',serif"}}>{clDone}/{FINALE_CHECKS.length}</div>
+            <div style={{fontSize:9,color:"rgba(255,255,255,.3)"}}>actions</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="sess-split" style={{padding:"14px 18px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+        {/* Left */}
+        <div>
+          {/* Links */}
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:7}}>Liens</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+              <span style={{fontSize:10,color:"#6a6a8a",width:60,flexShrink:0}}>🎥 Teams</span>
+              <input className="inp" defaultValue={cfg.teams_link||""} onBlur={e=>onTeamsLink(e.target.value)} placeholder="Backup distanciel (jurés à distance)…" style={{flex:1,fontSize:11}}/>
+              {cfg.teams_link&&<a href={cfg.teams_link} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>}
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+              <span style={{fontSize:10,color:"#6a6a8a",width:60,flexShrink:0}}>📊 Scoring</span>
+              <div style={{flex:1,fontSize:11,padding:"7px 10px",background:"#fdf6e8",borderRadius:8,border:"1px solid #e8d090",color:"#9a6400",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                {window.location.origin}/RsaScore?s={sid}
+              </div>
+              <button className="btn" onClick={()=>{navigator.clipboard.writeText(window.location.origin+"/RsaScore?s="+sid).catch(()=>{});}} style={{fontSize:10,padding:"5px 10px",borderRadius:8,background:GOLD,color:NAVY,border:"none",flexShrink:0,fontWeight:600}}>📋</button>
+              <a href={"/RsaScore?s="+sid} target="_blank" rel="noreferrer" style={{fontSize:11,color:GOLD,textDecoration:"none",flexShrink:0}}>↗</a>
+            </div>
+          </div>
+
+          {/* Statut scoring */}
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:7}}>Statut scoring</div>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              <div style={{flex:"1 1 180px",padding:"8px 12px",borderRadius:9,background:sm.bg,border:"1px solid "+sm.bd}}>
+                <div style={{fontSize:12,fontWeight:500,color:sm.fg}}>{sm.label}</div>
+              </div>
+              <a href={`/RsaAdmin${import.meta.env.VITE_RSA_ADMIN_KEY?`?k=${import.meta.env.VITE_RSA_ADMIN_KEY}`:""}`}
+                style={{fontSize:11,padding:"8px 14px",borderRadius:9,background:NAVY,color:GOLD,textDecoration:"none",fontFamily:"Inter,sans-serif",fontWeight:500,flexShrink:0,display:"inline-flex",alignItems:"center",gap:5}}>
+                ⚙ Gérer dans l'Admin →
+              </a>
+            </div>
+            <div style={{fontSize:10,color:"#a0a0b8",marginTop:5}}>
+              Sélection des finalistes + Open / Lock / Publish dans l'onglet Setup/Live de la session « Grande Finale ».
+            </div>
+          </div>
+
+          {/* Finalistes + decks */}
+          <div style={{marginBottom:12}}>
+            <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:7,gap:8}}>
+              <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500}}>Finalistes & decks finaux</div>
+              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                <span style={{fontSize:10,color:nDeckDone===finalists.length&&finalists.length>0?"#1d6b4f":"#9090a8"}}>{nDeckDone}/{finalists.length||5}</span>
+                <span style={{fontSize:10,padding:"1px 7px",borderRadius:6,background:overdue?"#fbe8ee":daysLeft<=3?"#fdf6e8":CREAM,color:overdue?"#8a2040":daysLeft<=3?"#9a6400":"#6a6a8a",border:"1px solid "+(overdue?"#e8a8bc":daysLeft<=3?"#e8d090":CREAM2),whiteSpace:"nowrap"}}>
+                  {overdue ? `deadline dépassée (${dl.label})` : daysLeft === 0 ? `deadline aujourd'hui (${dl.label})` : `${dl.label} · J-${daysLeft}`}
+                </span>
+              </div>
+            </div>
+            {finalists.length===0 && (
+              <div style={{padding:"12px",background:"#fdf6e8",border:"1px dashed #e8d090",borderRadius:8,fontSize:11,color:"#9a6400",fontStyle:"italic",textAlign:"center"}}>
+                Aucun finaliste sélectionné — utiliser le sélecteur de finalistes dans /RsaAdmin (session Grande Finale)
+              </div>
+            )}
+            {finalists.map(st=>{
+              const uploaded = !!st.final_deck_path;
+              const kept = !!st.deck_confirmed_at && !uploaded;
+              const color = uploaded?"#1d6b4f":kept?"#6a6a8a":"#9a6400";
+              const bg = uploaded?"#e8f5ee":kept?"white":"#fdf6e8";
+              const border = uploaded?"#b0d8c4":kept?CREAM2:"#e8d090";
+              const lbl = uploaded?"✓ uploadé":kept?"✓ garde cand.":"⏳ attente";
+              const ext = uploaded && st.final_deck_original_filename ? (st.final_deck_original_filename.split(".").pop()||"").toUpperCase() : "";
+              const fileLabel = uploaded
+                ? (st.final_deck_original_filename || "deck")
+                : kept ? (st.application_deck_filename || "deck candidature")
+                : "";
+              const downloadPath = uploaded ? st.final_deck_path : kept ? st.application_deck_path : null;
+              const downloadUrl = downloadPath ? `${SB_URL}/storage/v1/object/public/uploads/${downloadPath}` : null;
+              const uploadLink = st.deck_upload_token ? `${window.location.origin}/StartupUpload?t=${st.deck_upload_token}` : "";
+              const sourceTag = st.source_session_id && SC[Object.keys(SC).find(k=>SC[k].id===st.source_session_id)];
+              return (
+                <div key={st.name} style={{display:"flex",alignItems:"center",gap:7,padding:"5px 8px",borderRadius:8,background:bg,border:"1px solid "+border,marginBottom:3}}>
+                  <span style={{fontSize:9.5,padding:"2px 8px",borderRadius:8,background:color,color:"white",fontWeight:500,flexShrink:0,minWidth:86,textAlign:"center"}}>{lbl}</span>
+                  <div style={{flex:1,minWidth:0,fontSize:11.5,color:NAVY}}>
+                    <div style={{fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:6}}>
+                      {st.name}
+                      {sourceTag && <span style={{fontSize:9,padding:"1px 6px",borderRadius:6,background:sourceTag.light,color:sourceTag.color,border:"1px solid "+sourceTag.border,flexShrink:0}}>{sourceTag.emoji} {sourceTag.short}</span>}
+                    </div>
+                    {fileLabel && (
+                      <div style={{fontSize:10,color:"#8a8aaa",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                        {ext && <span style={{display:"inline-block",fontSize:8.5,padding:"0 4px",borderRadius:3,background:uploaded?"#b0d8c4":CREAM2,color:uploaded?"#1d6b4f":"#6a6a8a",marginRight:5,fontWeight:600}}>{ext}</span>}
+                        {fileLabel}{st.final_deck_uploaded_at ? ` · ${shortDate(st.final_deck_uploaded_at)}` : st.deck_confirmed_at && kept ? ` · confirmé ${shortDate(st.deck_confirmed_at)}` : ""}
+                      </div>
+                    )}
+                  </div>
+                  {downloadUrl && (
+                    <a href={downloadUrl} target="_blank" rel="noreferrer" title="Télécharger le deck"
+                      style={{fontSize:10,padding:"3px 8px",borderRadius:6,background:"white",color:NAVY,border:"1px solid "+CREAM2,textDecoration:"none",flexShrink:0}}>↓</a>
+                  )}
+                  {!st.deck_confirmed_at && uploadLink && (
+                    <button className="btn" title="Copier le lien d'upload pour cette finaliste"
+                      onClick={()=>{navigator.clipboard.writeText(uploadLink).catch(()=>{});}}
+                      style={{fontSize:10,padding:"3px 8px",borderRadius:6,background:"white",color:NAVY,border:"1px solid "+CREAM2,flexShrink:0}}>📋 lien</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right: Checklist */}
+        <div>
+          <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:8}}>Checklist opérationnelle finale</div>
+          {phases.map(phase=>{
+            const phChecks = FINALE_CHECKS.filter(c=>c.phase===phase);
+            if (phChecks.length===0) return null;
+            const phDone = phChecks.filter(c=>isCheckDone(c.id)).length;
+            return (
+              <div key={phase} style={{marginBottom:10}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                  <span style={{fontSize:9.5,padding:"1px 8px",borderRadius:8,background:phaseBgs[phase],color:phaseColors[phase],fontWeight:600}}>{phase}</span>
+                  <span style={{fontSize:10,color:phDone===phChecks.length?"#1d6b4f":"#9090a8"}}>{phDone}/{phChecks.length}</span>
+                </div>
+                {phChecks.map(c=>{
+                  const auto = autoCheck(c.id);
+                  const done = isCheckDone(c.id);
+                  return (
+                    <div key={c.id} className="btn" onClick={()=>{ if(!auto) onToggleCheck(c.id); }}
+                      title={auto?"Auto-validé":undefined}
+                      style={{display:"flex",alignItems:"center",gap:8,padding:"5px 6px",borderRadius:7,marginBottom:2,opacity:done?.5:1,background:done?"#f8f8f5":"transparent",cursor:auto?"default":"pointer"}}>
+                      <div style={{width:13,height:13,borderRadius:3,flexShrink:0,border:done?"none":"1.5px solid #d0d0e0",background:done?(auto?GOLD:"#1d6b4f"):"white",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        {done&&<svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M1 2.5L2.5 4L6 1" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                      <span style={{fontSize:11,color:done?"#9090a8":NAVY,textDecoration:done?"line-through":"none"}}>{c.label}{auto&&<span style={{marginLeft:5,fontSize:9,color:"#9a6400"}}>auto</span>}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+
+          {/* Live Scores Hub */}
+          <LiveScoresHub sessionId={sid} sessionLabel="Grande Finale" color={GOLD} light="#fdf6e8" border="#e8d090" startups={finalists.map(f=>f.name)} />
+
+          {/* Jurés finale */}
+          <div style={{marginTop:14}}>
+            <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".1em",color:"#a0a0b8",fontWeight:500,marginBottom:8}}>Jurés finale <span style={{color:jurors.length>=5?"#1d6b4f":"#c03010",marginLeft:4}}>({jurors.length})</span></div>
+            {jurors.length===0&&<div style={{fontSize:11,color:"#c0c0d0",fontStyle:"italic",padding:"10px 0"}}>Aucun juré finale assigné — cocher 🏆 dans l'onglet Jury</div>}
+            {jurors.map(j=>(
+              <div key={j.id} style={{display:"flex",alignItems:"center",gap:9,padding:"6px 9px",background:"white",border:"1px solid "+CREAM2,borderRadius:8,marginBottom:3}}>
+                {j.photo_base64
+                  ?<img src={j.photo_base64} alt="" style={{width:26,height:26,borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
+                  :<div style={{width:26,height:26,borderRadius:"50%",background:NAVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:600,color:GOLD,flexShrink:0}}>{(j.prenom||"?")[0]}{(j.nom||"?")[0]}</div>
+                }
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:11.5,fontWeight:500,color:NAVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{j.prenom} {j.nom}</div>
+                  <div style={{fontSize:10,color:"#9090a8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{j.qualite}{j.organisation?" · "+j.organisation:""}</div>
+                </div>
+                <span title="Grande Finale" style={{fontSize:11,flexShrink:0}}>🏆</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RsaDashboard() {
   const [tab, setTab] = useState("calendar");
   const [sessConf, setSessConf] = useState({});
@@ -1201,6 +1429,27 @@ export default function RsaDashboard() {
                 </div>
               );
             })}
+
+            {/* GRANDE FINALE — carte dédiée (structure différente : finalistes auto, jurés via grande_finale) */}
+            {(()=>{
+              const sid = "final_grande";
+              const cfg = sessConf[sid] || {};
+              const fs = finalists.map(f => {
+                const c = confs[f.startup_name+"__"+sid] || {};
+                return { name: f.startup_name, source_session_id: f.source_session_id, ...c };
+              });
+              const finalJurors = profiles.filter(p => p.validated && p.grande_finale);
+              return (
+                <FinaleCard
+                  sid={sid}
+                  cfg={cfg}
+                  finalists={fs}
+                  jurors={finalJurors}
+                  onTeamsLink={(v)=>saveConf(sid,"teams_link",v)}
+                  onToggleCheck={(cid)=>toggleSessCheck(sid,cid)}
+                />
+              );
+            })()}
           </div>
         )}
 

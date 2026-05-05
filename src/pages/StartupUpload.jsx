@@ -30,6 +30,14 @@ const SESSIONS = {
     label:{fr:"Greentech & Environnement", en:"Greentech & Environment"},
     date: {fr:"jeudi 21 mai 2026, 18h", en:"Thursday 21 May 2026, 6pm"},
     deadline:{fr:"lundi 18 mai 2026", en:"Monday 18 May 2026"}},
+  final_grande:  {emoji:"🏆", color:"#c9a84c", light:"#fdf6e8", border:"#e8d090",
+    label:{fr:"Grande Finale", en:"Grand Final"},
+    date: {fr:"mardi 26 mai 2026, 16h–19h", en:"Tuesday 26 May 2026, 4–7pm"},
+    deadline:{fr:"samedi 23 mai 2026", en:"Saturday 23 May 2026"},
+    formatOverride: {
+      fr:"Format : présentiel chez Cyrus Conseil (50 bd Haussmann, Paris 75009), 16h–19h. 5 finalistes · 10 à 12 min de pitch + 8 à 10 min de Q&A avec le jury (en anglais). Cocktail dînatoire à l'issue, ouvert à tous.",
+      en:"Format: in person at Cyrus Conseil (50 bd Haussmann, Paris 75009), 4–7pm. 5 finalists · 10 to 12 min pitch + 8 to 10 min Q&A with the jury (in English). Cocktail reception afterwards, open to all.",
+    }},
 };
 
 const T = {
@@ -376,7 +384,7 @@ export default function StartupUpload() {
         {/* Session brief */}
         <div className="fade" style={{background:"white",borderRadius:12,padding:"16px 18px",marginBottom:14,border:"1px solid "+CREAM2,animationDelay:".04s"}}>
           <div style={{fontSize:11,color:"#8a8aaa",letterSpacing:".05em",textTransform:"uppercase",fontWeight:500,marginBottom:8}}>{t.ownPres}</div>
-          <div style={{fontSize:13,color:"#4a4a68",lineHeight:1.7,marginBottom:10}}>{t.formatInfo}</div>
+          <div style={{fontSize:13,color:"#4a4a68",lineHeight:1.7,marginBottom:10}}>{(sess.formatOverride && sess.formatOverride[lang]) || t.formatInfo}</div>
           <div style={{fontSize:13,color:"#4a4a68",lineHeight:1.7}}>{t.ownPresDesc}</div>
         </div>
 
