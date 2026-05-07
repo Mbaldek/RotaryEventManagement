@@ -78,6 +78,10 @@ const T = {
     finaleDateSuffix: "26 mai",
     finalistsAnnounced: (n) => `Finalistes annoncés · ${n} / 5`,
     finalistsPendingFinale: "En cours de désignation au fil des sessions.",
+    finalistDocsTitle: "Documents des finalistes",
+    finalistDocsEmpty: "Documents en cours de réception — les decks finaux et executive summaries arriveront avant la finale.",
+    deckPending: "Deck à venir",
+    execPending: "Executive summary à venir",
     finaleRsvpCta: "Confirmer ma présence à la finale →",
     footerLine: "Hub jury — Rotary Startup Award 2026.",
     footerContact: "Pour toute question :",
@@ -128,6 +132,10 @@ const T = {
     finaleDateSuffix: "May 26",
     finalistsAnnounced: (n) => `Finalists announced · ${n} / 5`,
     finalistsPendingFinale: "Being designated as sessions go.",
+    finalistDocsTitle: "Finalist documents",
+    finalistDocsEmpty: "Documents being collected — final decks and executive summaries will land before the grand final.",
+    deckPending: "Deck coming",
+    execPending: "Executive summary coming",
     finaleRsvpCta: "Confirm my attendance at the final →",
     footerLine: "Jury hub — Rotary Startup Award 2026.",
     footerContact: "For any question:",
@@ -178,6 +186,10 @@ const T = {
     finaleDateSuffix: "26. Mai",
     finalistsAnnounced: (n) => `Bekannte Finalisten · ${n} / 5`,
     finalistsPendingFinale: "Werden im Laufe der Sessions bestimmt.",
+    finalistDocsTitle: "Dokumente der Finalisten",
+    finalistDocsEmpty: "Dokumente werden noch erfasst — finale Decks und Executive Summaries treffen vor dem Finale ein.",
+    deckPending: "Deck folgt",
+    execPending: "Executive Summary folgt",
     finaleRsvpCta: "Teilnahme am Finale bestätigen →",
     footerLine: "Jury-Hub — Rotary Startup Award 2026.",
     footerContact: "Bei Fragen:",
@@ -904,9 +916,13 @@ function FinalistFooter({ finalist, recapUrl, t }) {
 
 function FinaleCard({ days, finalists, allFinaleStartups, t, lang }) {
   const finaleSession = SESSION_BY_ID[FINAL_SESSION_ID];
-  const namesFromFinaleConfs = (allFinaleStartups || []).map((r) => r.startup_name);
-  const finalistNames = finalists.map((f) => f.startup_name);
-  const visibleNames = namesFromFinaleConfs.length > 0 ? namesFromFinaleConfs : finalistNames;
+  // `allFinaleStartups` are the startup_confirmations rows tied to the finale
+  // session itself (source of truth for decks/exec summaries). `finalists` are
+  // the same rows indexed by source_session_id, used as a fallback.
+  const visibleStartups = (allFinaleStartups && allFinaleStartups.length > 0)
+    ? allFinaleStartups
+    : finalists;
+  const visibleNames = visibleStartups.map((r) => r.startup_name);
   const rsvpUrl = createPageUrl("RsaFinaleRsvp");
 
   return (
@@ -959,6 +975,10 @@ function FinaleCard({ days, finalists, allFinaleStartups, t, lang }) {
         )}
       </div>
 
+      {visibleStartups.length > 0 && (
+        <FinalistDocs startups={visibleStartups} t={t}/>
+      )}
+
       <Link to={rsvpUrl} style={{
         display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13,
         padding: "10px 18px", borderRadius: 6, background: NAVY, color: "white",
@@ -966,6 +986,63 @@ function FinaleCard({ days, finalists, allFinaleStartups, t, lang }) {
       }}>
         {t.finaleRsvpCta}
       </Link>
+    </div>
+  );
+}
+
+function FinalistDocs({ startups, t }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{
+        fontSize: 11, fontWeight: 600, color: NAVY, marginBottom: 8,
+        textTransform: "uppercase", letterSpacing: "0.1em",
+      }}>{t.finalistDocsTitle}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {startups.map((s) => {
+          const deckUrl = deckUrlFor(s);
+          const execs = Array.isArray(s.executive_summary_files) ? s.executive_summary_files : [];
+          return (
+            <div key={s.id} style={{
+              background: "white", border: `1px solid ${GOLD}33`, borderRadius: 8,
+              padding: "10px 14px", display: "flex", alignItems: "center",
+              gap: 12, flexWrap: "wrap",
+            }}>
+              <div style={{
+                fontSize: 13, fontWeight: 600, color: NAVY,
+                minWidth: 140, flex: "0 0 auto",
+              }}>{s.startup_name}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, flex: 1 }}>
+                {deckUrl ? (
+                  <a href={deckUrl} target="_blank" rel="noreferrer" style={linkStyle}>
+                    <Download style={{ width: 12, height: 12 }} />
+                    {t.deck}
+                  </a>
+                ) : (
+                  <span style={mutedStyle}>{t.deckPending}</span>
+                )}
+                {execs.length > 0 ? (
+                  execs.map((ef, i) => {
+                    const url = publicUrl(ef.path);
+                    if (!url) return null;
+                    const label = ef.filename
+                      ? (ef.filename.length > 28 ? ef.filename.slice(0, 26) + "…" : ef.filename)
+                      : t.fileN(i + 1);
+                    return (
+                      <a key={i} href={url} target="_blank" rel="noreferrer"
+                        title={ef.filename || ef.path} style={linkStyle}>
+                        <FileText style={{ width: 11, height: 11 }} />
+                        {label}
+                      </a>
+                    );
+                  })
+                ) : (
+                  <span style={mutedStyle}>{t.execPending}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
