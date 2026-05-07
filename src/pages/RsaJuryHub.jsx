@@ -442,6 +442,7 @@ export default function RsaJuryHub() {
               days={daysUntil(SESSION_ISO[FINAL_SESSION_ID])}
               finalists={Object.values(finalistsBySource)}
               allFinaleStartups={startupsBySession[FINAL_SESSION_ID] || []}
+              startupsBySession={startupsBySession}
               t={t}
               lang={lang}
             />
@@ -914,15 +915,29 @@ function FinalistFooter({ finalist, recapUrl, t }) {
   );
 }
 
-function FinaleCard({ days, finalists, allFinaleStartups, t, lang }) {
+function FinaleCard({ days, finalists, allFinaleStartups, startupsBySession, t, lang }) {
   const finaleSession = SESSION_BY_ID[FINAL_SESSION_ID];
-  // `allFinaleStartups` are the startup_confirmations rows tied to the finale
-  // session itself (source of truth for decks/exec summaries). `finalists` are
-  // the same rows indexed by source_session_id, used as a fallback.
+  // The finale rows in `allFinaleStartups` are placeholders created on result
+  // publication — they only carry startup_name + source_session_id, not the
+  // deck/exec summary. The actual documents live on the original qualifying
+  // session row, so for each finale row we resolve the source row by matching
+  // (source_session_id, startup_name) inside `startupsBySession`.
   const visibleStartups = (allFinaleStartups && allFinaleStartups.length > 0)
     ? allFinaleStartups
     : finalists;
   const visibleNames = visibleStartups.map((r) => r.startup_name);
+  const docRows = visibleStartups.map((r) => {
+    const srcId = r.source_session_id;
+    const sourceRow = srcId
+      ? (startupsBySession[srcId] || []).find((x) => x.startup_name === r.startup_name)
+      : null;
+    return {
+      id: r.id,
+      startup_name: r.startup_name,
+      sourceRow,
+      sourceSession: srcId ? SESSION_BY_ID[srcId] : null,
+    };
+  });
   const rsvpUrl = createPageUrl("RsaFinaleRsvp");
 
   return (
@@ -975,8 +990,8 @@ function FinaleCard({ days, finalists, allFinaleStartups, t, lang }) {
         )}
       </div>
 
-      {visibleStartups.length > 0 && (
-        <FinalistDocs startups={visibleStartups} t={t}/>
+      {docRows.length > 0 && (
+        <FinalistDocs rows={docRows} t={t} lang={lang}/>
       )}
 
       <Link to={rsvpUrl} style={{
@@ -990,7 +1005,7 @@ function FinaleCard({ days, finalists, allFinaleStartups, t, lang }) {
   );
 }
 
-function FinalistDocs({ startups, t }) {
+function FinalistDocs({ rows, t, lang }) {
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{
@@ -998,19 +1013,31 @@ function FinalistDocs({ startups, t }) {
         textTransform: "uppercase", letterSpacing: "0.1em",
       }}>{t.finalistDocsTitle}</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {startups.map((s) => {
-          const deckUrl = deckUrlFor(s);
-          const execs = Array.isArray(s.executive_summary_files) ? s.executive_summary_files : [];
+        {rows.map((r) => {
+          const src = r.sourceRow;
+          const deckUrl = src ? deckUrlFor(src) : null;
+          const execs = src && Array.isArray(src.executive_summary_files)
+            ? src.executive_summary_files : [];
           return (
-            <div key={s.id} style={{
+            <div key={r.id} style={{
               background: "white", border: `1px solid ${GOLD}33`, borderRadius: 8,
               padding: "10px 14px", display: "flex", alignItems: "center",
               gap: 12, flexWrap: "wrap",
             }}>
-              <div style={{
-                fontSize: 13, fontWeight: 600, color: NAVY,
-                minWidth: 140, flex: "0 0 auto",
-              }}>{s.startup_name}</div>
+              <div style={{ minWidth: 140, flex: "0 0 auto" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: NAVY }}>
+                  {r.startup_name}
+                </div>
+                {r.sourceSession && (
+                  <div style={{
+                    fontSize: 10, color: MUTED, marginTop: 2,
+                    display: "flex", alignItems: "center", gap: 4,
+                  }}>
+                    <span>{r.sourceSession.emoji}</span>
+                    <span>{getSessionLabel(r.sourceSession, lang)}</span>
+                  </div>
+                )}
+              </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, flex: 1 }}>
                 {deckUrl ? (
                   <a href={deckUrl} target="_blank" rel="noreferrer" style={linkStyle}>
