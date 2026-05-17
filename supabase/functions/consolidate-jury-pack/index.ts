@@ -17,6 +17,27 @@ const A4: [number, number] = [595.28, 841.89];
 // placeholder page with a direct download link.
 const MAX_INPUT_BYTES = 15 * 1024 * 1024;
 
+function safe(s: unknown): string {
+  // pdf-lib standard fonts use WinAnsi encoding, which crashes on combining
+  // diacritical marks (e.g. macOS filenames stored as NFD instead of NFC).
+  // Normalize to NFC, drop any leftover combining marks, then replace anything
+  // outside the WinAnsi-encodable set with "?" so drawText never throws.
+  const COMBINING = new RegExp("[\u0300-\u036F]", "g");
+  // ASCII + Latin-1 + the WinAnsi extras mapped in 0x80-0x9F
+  // (Euro, OE/oe, S/s/Y/Z/z carons, curly quotes, dashes, bullets, daggers, etc.)
+  const ALLOWED = new RegExp(
+    "[^\u0009\u000A\u000D\u0020-\u00FF" +
+    "\u20AC\u0152\u0153\u0160\u0161\u0178\u017D\u017E" +
+    "\u2018\u2019\u201C\u201D\u2013\u2014\u2022\u2026" +
+    "\u2030\u2039\u203A\u02C6\u02DC\u0192\u2020\u2021]",
+    "g",
+  );
+  return String(s == null ? "" : s)
+    .normalize("NFC")
+    .replace(COMBINING, "")
+    .replace(ALLOWED, "?");
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
@@ -50,11 +71,11 @@ Deno.serve(async (req: Request) => {
     const helv = await out.embedFont(StandardFonts.Helvetica);
 
     const cover = out.addPage(A4);
-    cover.drawText("Rotary Startup Award 2026", { x: 50, y: 780, size: 22, font: helvBold });
-    cover.drawText(`Pre-read pack — ${session_id}`, { x: 50, y: 750, size: 14, font: helv });
-    cover.drawText(`${ordered.length} startups · pre-reads only · generated ${new Date().toISOString().slice(0, 10)}`,
+    cover.drawText(safe("Rotary Startup Award 2026"), { x: 50, y: 780, size: 22, font: helvBold });
+    cover.drawText(safe(`Pre-read pack — ${session_id}`), { x: 50, y: 750, size: 14, font: helv });
+    cover.drawText(safe(`${ordered.length} startups · pre-reads only · generated ${new Date().toISOString().slice(0, 10)}`),
       { x: 50, y: 730, size: 10, font: helv });
-    cover.drawText("Pitch decks are shared as individual links in the jury email.",
+    cover.drawText(safe("Pitch decks are shared as individual links in the jury email."),
       { x: 50, y: 712, size: 9, font: helv });
 
     let y = 680;
@@ -62,7 +83,7 @@ Deno.serve(async (req: Request) => {
       const s = ordered[i];
       const execsArr = Array.isArray(s.executive_summary_files) ? (s.executive_summary_files as unknown[]) : [];
       const n = execsArr.length;
-      cover.drawText(`${i + 1}. ${s.startup_name} — ${n} pre-read${n === 1 ? "" : "s"}`,
+      cover.drawText(safe(`${i + 1}. ${s.startup_name} — ${n} pre-read${n === 1 ? "" : "s"}`),
         { x: 60, y, size: 10, font: helv });
       y -= 16;
       if (y < 60) break;
@@ -78,14 +99,14 @@ Deno.serve(async (req: Request) => {
 
     function drawPlaceholder(title: string, subtitle: string, reason: string, link: string) {
       const page = out.addPage(A4);
-      page.drawText(title, { x: 50, y: 600, size: 24, font: helvBold });
-      page.drawText(subtitle, { x: 50, y: 570, size: 13, font: helv });
-      page.drawText("Document non fusionné dans ce pack:", { x: 50, y: 510, size: 11, font: helvBold });
-      page.drawText(reason, { x: 50, y: 490, size: 10, font: helv });
+      page.drawText(safe(title), { x: 50, y: 600, size: 24, font: helvBold });
+      page.drawText(safe(subtitle), { x: 50, y: 570, size: 13, font: helv });
+      page.drawText(safe("Document non fusionné dans ce pack:"), { x: 50, y: 510, size: 11, font: helvBold });
+      page.drawText(safe(reason), { x: 50, y: 490, size: 10, font: helv });
       if (link) {
-        page.drawText("Lien direct:", { x: 50, y: 460, size: 10, font: helvBold });
+        page.drawText(safe("Lien direct:"), { x: 50, y: 460, size: 10, font: helvBold });
         // pdf-lib has no auto-wrap; the URL is long but a single line is fine for jury reading.
-        page.drawText(link, { x: 50, y: 442, size: 8, font: helv });
+        page.drawText(safe(link), { x: 50, y: 442, size: 8, font: helv });
       }
     }
 
@@ -112,8 +133,8 @@ Deno.serve(async (req: Request) => {
       try {
         const src = await PDFDocument.load(await blob.arrayBuffer(), { ignoreEncryption: true });
         const sep = out.addPage(A4);
-        sep.drawText(title, { x: 50, y: 420, size: 26, font: helvBold });
-        sep.drawText(subtitle, { x: 50, y: 385, size: 13, font: helv });
+        sep.drawText(safe(title), { x: 50, y: 420, size: 26, font: helvBold });
+        sep.drawText(safe(subtitle), { x: 50, y: 385, size: 13, font: helv });
         const pages = await out.copyPages(src, src.getPageIndices());
         pages.forEach((p) => out.addPage(p));
         return true;
