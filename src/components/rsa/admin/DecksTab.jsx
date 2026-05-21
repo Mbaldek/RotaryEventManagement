@@ -118,6 +118,114 @@ For this session, I am your direct point of contact. Feel free to reach me by em
 Best regards,
 Mathieu`;
 
+// --- Finale-specific finalist (startup) brief ---
+// The qualifying-session template above is Teams/online-flavored (18h05 start,
+// per-slot timing, "lien Teams"). The Grande Finale is in person at Cyrus
+// Conseil, public, with a tougher format (10–12 min pitch + 8 min Q&A) and a
+// closing cocktail. Surfaced when sessionId === "final_grande" via
+// getStartupDefaultTemplate. Named jury roles are editable placeholders.
+const DEFAULT_TEMPLATE_FR_FINAL = `Sujet : Rotary Startup Award — Grande Finale {DATE_LONGUE} · brief finaliste · {STARTUP}
+
+Bonjour {CONTACT_PRENOM},
+
+{STARTUP} représente sa session en Grande Finale du Rotary Startup Award 2026 — bravo ! Voici tout ce qu'il vous faut pour le jour J.
+
+📍 LIEU & FORMAT — IMPORTANT (différent des qualifs)
+${FINALE_VENUE}
+Évènement intégralement en présentiel (pas de Teams).
+Public présent : membres du Rotary, partenaires, investisseurs et invités.
+Cocktail dînatoire en clôture, ouvert à tous.
+
+Déroulé de la finale :
+  • 16h00 — accueil café
+  • 16h30 — début des pitchs devant audience
+  • Chaque finaliste : 10 à 12 min de pitch + 8 min de Q&A
+  • ~18h00 — délibération du jury (à huis clos)
+  • ~18h30 — annonce du lauréat & remise du prix
+  • 19h00 — cocktail dînatoire (~1h)
+
+🎤 RÈGLES DU JEU
+  • Pitch : 10 à 12 minutes (vs 4 min en qualif) — vous partagez votre écran vous-même.
+  • Q&A jury : 8 minutes.
+  • Total max : 20 min — un dépassement coupe court à la Q&A.
+  • Langue : pitch et Q&A en anglais (jury international).
+  • Tenue : tenue habillée — public et photos officielles.
+  • Évaluation : 6 critères notés de 0 à 5 (proposition de valeur, marché & scalabilité, business model, équipe, qualité du pitch, impact sociétal & environnemental).
+
+👥 LE JURY DE LA FINALE
+Un jury international, emmené par :
+  • Lead Jury : [Lead Jury 1] · [Lead Jury 2]
+  • Co-présidents Rotary : [Co-président Paris] · [Co-président Berlin]
+Le panel réunit les jurés des sessions qualificatives.
+
+📎 DECK FINAL — deadline {DEADLINE}
+Votre format passe à 10–12 min : pensez à étoffer et mettre à jour votre deck en conséquence.
+Déposez la version finale (PowerPoint recommandé ou PDF, max 50 Mo) ici avant le {DEADLINE} :
+{UPLOAD_URL}
+
+🍸 COCKTAIL & ACCOMPAGNANTS
+La finale se clôt par un cocktail dînatoire ouvert à tous. Vous pouvez venir accompagné·e (cofondateur·rice, proches) — pensez à confirmer les présences via le formulaire RSVP qui vous a été envoyé.
+
+Contact :
+Je reste votre point de contact direct — email, téléphone ou WhatsApp, même en dernière minute.
+
+Bien cordialement,
+Mathieu`;
+
+const DEFAULT_TEMPLATE_EN_FINAL = `Subject: Rotary Startup Award — Grand Finale {DATE_LONGUE} · finalist brief · {STARTUP}
+
+Hello {CONTACT_PRENOM},
+
+{STARTUP} represents its session at the Rotary Startup Award 2026 Grand Finale — congratulations! Here is everything you need for the day.
+
+📍 VENUE & FORMAT — IMPORTANT (different from the qualifiers)
+${FINALE_VENUE}
+Fully in-person event (no Teams).
+Live audience: Rotary members, partners, investors and guests.
+Cocktail reception at the end, open to all.
+
+Finale schedule:
+  • 4:00pm — welcome coffee
+  • 4:30pm — pitches start in front of the live audience
+  • Each finalist: 10 to 12 min pitch + 8 min Q&A
+  • ~6:00pm — jury deliberation (private)
+  • ~6:30pm — winner announcement & award ceremony
+  • 7:00pm — cocktail reception (~1h)
+
+🎤 RULES OF THE GAME
+  • Pitch: 10 to 12 minutes (vs 4 min in the qualifiers) — you share your own screen.
+  • Jury Q&A: 8 minutes.
+  • Hard cap: 20 min — overrunning eats into your Q&A.
+  • Language: pitch and Q&A in English (international jury).
+  • Dress code: smart attire — live audience and official photographs.
+  • Scoring: 6 criteria rated 0 to 5 (value proposition, market & scalability, business model, team, pitch quality, societal & environmental impact).
+
+👥 THE FINALE JURY
+An international jury, led by:
+  • Lead Jury: [Lead Jury 1] · [Lead Jury 2]
+  • Rotary co-presidents: [Co-president Paris] · [Co-president Berlin]
+The panel brings together the jurors from the qualifying sessions.
+
+📎 FINAL DECK — deadline {DEADLINE}
+Your format moves to 10–12 min: expand and update your deck accordingly.
+Upload the final version (PowerPoint recommended, or PDF, max 50 MB) here before {DEADLINE}:
+{UPLOAD_URL}
+
+🍸 COCKTAIL & GUESTS
+The finale closes with a cocktail reception open to all. You may bring guests (co-founder, close ones) — please confirm attendance via the RSVP form you received.
+
+Contact:
+I remain your direct point of contact — email, phone or WhatsApp, even last-minute.
+
+Best regards,
+Mathieu`;
+
+function getStartupDefaultTemplate(lang, sessionId) {
+  const isFinal = sessionId === "final_grande";
+  if (lang === "fr") return isFinal ? DEFAULT_TEMPLATE_FR_FINAL : DEFAULT_TEMPLATE_FR;
+  return isFinal ? DEFAULT_TEMPLATE_EN_FINAL : DEFAULT_TEMPLATE_EN;
+}
+
 const DEFAULT_JURY_TEMPLATE_FR = `Sujet : Rotary Startup Award — session {DATE_LONGUE} · dossier jury
 
 Bonjour {JURY_PRENOM},
@@ -281,6 +389,17 @@ Tenue : tenue habillée — vous serez exposé·e au public et aux photos offici
 
 Langue : pitchs et Q&A en anglais (jury international, public mixte). Les questions peuvent être posées dans la langue partagée avec la startup.
 
+👥 JURY DE LA FINALE
+Vous siégez dans un jury international, emmené par :
+  • Lead Jury : [Lead Jury 1] · [Lead Jury 2]
+  • Co-présidents Rotary : [Co-président Paris] · [Co-président Berlin]
+Le panel réunit les jurés des sessions qualificatives.
+
+🎤 RÈGLES DU JEU (format finaliste)
+  • Pitch : 10 à 12 min + Q&A : 8 min par finaliste (total max 20 min).
+  • Pitch et Q&A en anglais ; questions possibles dans la langue partagée avec la startup.
+  • Évaluation : 6 critères notés de 0 à 5 (grille rappelée plus bas).
+
 Pre-read — à lire avant la finale :
 Le PDF joint à cet email rassemble les executive summaries des {N} finalistes. Sauvegardez-le pour le retrouver le jour J.
 (Lien direct si besoin : {JURY_PACK_URL})
@@ -330,6 +449,17 @@ Dress code: smart attire — you will be on stage in front of the audience and o
 
 Language: pitches and Q&A in English (international jury, mixed audience). Questions may be asked in any language you share with the startup.
 
+👥 THE FINALE JURY
+You sit on an international jury, led by:
+  • Lead Jury: [Lead Jury 1] · [Lead Jury 2]
+  • Rotary co-presidents: [Co-president Paris] · [Co-president Berlin]
+The panel brings together the jurors from the qualifying sessions.
+
+🎤 RULES OF THE GAME (finalist format)
+  • Pitch: 10–12 min + Q&A: 8 min per finalist (hard cap 20 min).
+  • Pitch and Q&A in English; questions in any language you share with the startup.
+  • Scoring: 6 criteria rated 0 to 5 (grid recalled below).
+
 Pre-read — to read before the finale:
 The PDF attached to this email bundles the executive summaries of the {N} finalists. Save it so you can refer back on the day.
 (Direct link if needed: {JURY_PACK_URL})
@@ -378,6 +508,17 @@ Ablauf des Finales:
 Dresscode: gepflegte Kleidung — Sie sind vor Publikum und auf offiziellen Fotos zu sehen.
 
 Sprache: Pitches und Q&A auf Englisch (internationale Jury, gemischtes Publikum). Fragen dürfen in jeder Sprache gestellt werden, die Sie mit dem Startup teilen.
+
+👥 JURY DES FINALES
+Sie sitzen in einer internationalen Jury, geleitet von:
+  • Lead Jury: [Lead Jury 1] · [Lead Jury 2]
+  • Rotary-Co-Präsidenten: [Co-Präsident Paris] · [Co-Präsident Berlin]
+Das Panel vereint die Jurymitglieder der Qualifikationssessions.
+
+🎤 SPIELREGELN (Finalisten-Format)
+  • Pitch: 10–12 Min + Q&A: 8 Min pro Finalist (maximal 20 Min).
+  • Pitch und Q&A auf Englisch; Fragen in jeder mit dem Startup geteilten Sprache.
+  • Bewertung: 6 Kriterien von 0 bis 5 (Raster unten wiederholt).
 
 Vorab-Lektüre — vor dem Finale zu lesen:
 Das angehängte PDF bündelt die Executive Summaries der {N} Finalisten. Speichern Sie es für den Tag.
@@ -564,15 +705,15 @@ export default function DecksTab({ sessionId }) {
   // Per-card language overrides (not persisted — transient admin choice).
   // Note: jury language is persisted to jury_profiles.lang directly (see setJuryLang).
   const [startupLangOverride, setStartupLangOverride] = useState({}); // { [rowId]: "fr"|"en" }
-  const [templateFr, setTemplateFr] = useState(() => localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
-  const [templateEn, setTemplateEn] = useState(() => localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
+  const [templateFr, setTemplateFr] = useState(() => localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || getStartupDefaultTemplate("fr", sessionId));
+  const [templateEn, setTemplateEn] = useState(() => localStorage.getItem(`rsa_tpl_en_${sessionId}`) || getStartupDefaultTemplate("en", sessionId));
   const [juryTemplateFr, setJuryTemplateFr] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_fr_${sessionId}`) || getJuryDefaultTemplate("fr", sessionId));
   const [juryTemplateEn, setJuryTemplateEn] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_en_${sessionId}`) || getJuryDefaultTemplate("en", sessionId));
   const [juryTemplateDe, setJuryTemplateDe] = useState(() => localStorage.getItem(`rsa_jury_tpl_v2_de_${sessionId}`) || getJuryDefaultTemplate("de", sessionId));
 
   useEffect(() => {
-    setTemplateFr(localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || DEFAULT_TEMPLATE_FR);
-    setTemplateEn(localStorage.getItem(`rsa_tpl_en_${sessionId}`) || DEFAULT_TEMPLATE_EN);
+    setTemplateFr(localStorage.getItem(`rsa_tpl_fr_${sessionId}`) || getStartupDefaultTemplate("fr", sessionId));
+    setTemplateEn(localStorage.getItem(`rsa_tpl_en_${sessionId}`) || getStartupDefaultTemplate("en", sessionId));
     setJuryTemplateFr(localStorage.getItem(`rsa_jury_tpl_v2_fr_${sessionId}`) || getJuryDefaultTemplate("fr", sessionId));
     setJuryTemplateEn(localStorage.getItem(`rsa_jury_tpl_v2_en_${sessionId}`) || getJuryDefaultTemplate("en", sessionId));
     setJuryTemplateDe(localStorage.getItem(`rsa_jury_tpl_v2_de_${sessionId}`) || getJuryDefaultTemplate("de", sessionId));
@@ -1113,7 +1254,7 @@ export default function DecksTab({ sessionId }) {
                 Copier tout (vrac)
               </button>
               <button onClick={() => {
-                setTemplateFr(DEFAULT_TEMPLATE_FR); setTemplateEn(DEFAULT_TEMPLATE_EN);
+                setTemplateFr(getStartupDefaultTemplate("fr", sessionId)); setTemplateEn(getStartupDefaultTemplate("en", sessionId));
                 toast.success("Templates réinitialisés");
               }} className="text-xs text-stone-500 hover:text-stone-700">
                 Réinitialiser les templates
