@@ -760,16 +760,42 @@ export default function DecksTab({ sessionId }) {
         JuryProfile.filter({ validated: true }),
       ]);
       setSessionCfg(cfg?.[0] || null);
+
+      // Finale finalist rows are lean pointers created by FinalistsPicker
+      // (session_id, startup_name, source_session_id only) — no contact info.
+      // Enrich them with contact + country from the source qualifying-session
+      // row so the finalist emails aren't blank and language detection works.
+      // We deliberately do NOT pull decks: the "⏳ en attente" upload status must
+      // stay accurate until the finalist uploads their new finale (10–12 min) deck.
+      let resolved = confs;
+      if (session?.isFinal) {
+        const srcIds = [...new Set(confs.map((r) => r.source_session_id).filter(Boolean))];
+        const srcRows = (
+          await Promise.all(srcIds.map((sid) => StartupConfirmation.filter({ session_id: sid })))
+        ).flat();
+        const srcByKey = new Map(srcRows.map((r) => [`${r.session_id}::${r.startup_name}`, r]));
+        resolved = confs.map((r) => {
+          const src = r.source_session_id ? srcByKey.get(`${r.source_session_id}::${r.startup_name}`) : null;
+          if (!src) return r;
+          return {
+            ...r,
+            startup_contact_prenom: r.startup_contact_prenom || src.startup_contact_prenom,
+            startup_contact_email: r.startup_contact_email || src.startup_contact_email,
+            startup_country: r.startup_country || src.startup_country,
+          };
+        });
+      }
+
       // Fallback must match SetupTab/LiveTab (alphabetical) — Postgres return
       // order is undefined and previously caused email RANK to diverge from
       // the live presentation order when session_order was empty.
       const savedOrder = Array.isArray(cfg[0]?.session_order) && cfg[0].session_order.length > 0
         ? cfg[0].session_order
-        : confs.map((r) => r.startup_name).sort((a, b) => a.localeCompare(b));
-      const byName = new Map(confs.map((r) => [r.startup_name, r]));
+        : resolved.map((r) => r.startup_name).sort((a, b) => a.localeCompare(b));
+      const byName = new Map(resolved.map((r) => [r.startup_name, r]));
       const ordered = [];
       for (const n of savedOrder) if (byName.has(n)) ordered.push(n);
-      for (const r of confs) if (!ordered.includes(r.startup_name)) ordered.push(r.startup_name);
+      for (const r of resolved) if (!ordered.includes(r.startup_name)) ordered.push(r.startup_name);
       setRows(ordered.map((n) => byName.get(n)).filter(Boolean));
 
       // Jurés : pour la grande finale l'assignation est portée par le booléen
