@@ -11,6 +11,22 @@ const FINALE_DATES = {
 };
 const FINALE_LOC = "Cyrus Conseil · 50 bd Haussmann · Paris 75009";
 
+// Losing startups carry no explicit lang field, so we derive the visitor-email
+// language from their country (DACH → de, francophone → fr, else en).
+const DE_COUNTRIES = new Set([
+  "Allemagne", "Germany", "Deutschland", "Autriche", "Austria", "Österreich",
+]);
+const FR_COUNTRIES = new Set([
+  "France", "Belgique", "Belgium", "Suisse", "Switzerland", "Luxembourg",
+  "Québec", "Quebec", "Canada", "Monaco",
+]);
+function startupLang(country) {
+  const c = (country || "").trim();
+  if (DE_COUNTRIES.has(c)) return "de";
+  if (FR_COUNTRIES.has(c)) return "fr";
+  return "en";
+}
+
 export default function CommunicationsSection({ sessionId, ranking }) {
   const session = SESSION_BY_ID[sessionId];
   const [jurors, setJurors] = useState([]);
@@ -101,9 +117,16 @@ export default function CommunicationsSection({ sessionId, ranking }) {
   const winnerStartup = winner ? startupByName.get(winner.startup) : null;
   const winnerEmail = winnerStartup?.startup_contact_email || "";
   const winnerFirstName = winnerStartup?.startup_contact_prenom || "";
-  const loserEmails = losers
-    .map((r) => startupByName.get(r.startup)?.startup_contact_email)
-    .filter(Boolean);
+  const losersByLang = useMemo(() => {
+    const groups = { fr: [], en: [], de: [] };
+    for (const r of losers) {
+      const row = startupByName.get(r.startup);
+      const email = row?.startup_contact_email;
+      if (!email) continue;
+      groups[startupLang(row?.startup_country)].push(email);
+    }
+    return groups;
+  }, [losers, startupByName]);
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -117,11 +140,9 @@ export default function CommunicationsSection({ sessionId, ranking }) {
   const saveDateTemplateFr = buildFinaleSaveTheDateTemplate({ lang: "fr" });
   const saveDateTemplateEn = buildFinaleSaveTheDateTemplate({ lang: "en" });
   const saveDateTemplateDe = buildFinaleSaveTheDateTemplate({ lang: "de" });
-  const losersTemplate = buildLosersTemplate({
-    session,
-    winner,
-    baseUrl,
-  });
+  const losersTemplateFr = buildLosersTemplate({ session, winner, baseUrl, lang: "fr" });
+  const losersTemplateEn = buildLosersTemplate({ session, winner, baseUrl, lang: "en" });
+  const losersTemplateDe = buildLosersTemplate({ session, winner, baseUrl, lang: "de" });
   const winnerTemplate = winner
     ? buildWinnerTemplate({
         session,
@@ -258,12 +279,32 @@ export default function CommunicationsSection({ sessionId, ranking }) {
         <TemplateCard
           color="violet"
           Icon={UsersIcon}
-          title="Startups perdantes"
-          subtitle={`${loserEmails.length} contact${loserEmails.length > 1 ? "s" : ""} · invitation visiteur`}
-          recipients={loserEmails}
-          template={losersTemplate}
-          isOpen={open === "losers"}
-          onToggle={() => setOpen(open === "losers" ? null : "losers")}
+          title="Perdantes 🇫🇷 FR"
+          subtitle={`${losersByLang.fr.length} contact${losersByLang.fr.length > 1 ? "s" : ""} FR · invitation visiteur`}
+          recipients={losersByLang.fr}
+          template={losersTemplateFr}
+          isOpen={open === "losersFr"}
+          onToggle={() => setOpen(open === "losersFr" ? null : "losersFr")}
+        />
+        <TemplateCard
+          color="violet"
+          Icon={UsersIcon}
+          title="Perdantes 🇬🇧 EN"
+          subtitle={`${losersByLang.en.length} contact${losersByLang.en.length > 1 ? "s" : ""} EN · visitor invitation`}
+          recipients={losersByLang.en}
+          template={losersTemplateEn}
+          isOpen={open === "losersEn"}
+          onToggle={() => setOpen(open === "losersEn" ? null : "losersEn")}
+        />
+        <TemplateCard
+          color="violet"
+          Icon={UsersIcon}
+          title="Perdantes 🇩🇪 DE"
+          subtitle={`${losersByLang.de.length} Kontakt${losersByLang.de.length > 1 ? "e" : ""} DE · Gast-Einladung`}
+          recipients={losersByLang.de}
+          template={losersTemplateDe}
+          isOpen={open === "losersDe"}
+          onToggle={() => setOpen(open === "losersDe" ? null : "losersDe")}
         />
         <TemplateCard
           color="amber"
@@ -730,14 +771,86 @@ Rotary Club de Paris`;
   return { subject, body };
 }
 
-function buildLosersTemplate({ session, winner, baseUrl }) {
-  const subject = `Rotary Startup Award — Merci pour votre pitch · ${session.label}`;
+function buildLosersTemplate({ session, winner, baseUrl, lang = "fr" }) {
+  const label = getSessionLabel(session, lang);
+  const date = getSessionDate(session, lang);
+  const finaleDate = FINALE_DATES[lang] || FINALE_DATES.fr;
+  const rsvpLink = `${baseUrl}/RsaFinaleRsvp?role=visitor&from=${encodeURIComponent(session.id)}`;
+
+  if (lang === "de") {
+    const subject = `Rotary Startup Award — Vielen Dank für Ihren Pitch · ${label}`;
+    const winnerLine = winner
+      ? `Nach den Bewertungen wurde ${winner.startup} ausgewählt, um „${label}" beim Großen Finale zu vertreten. Die Entscheidung war knapp: über alle Bewerbungen hinweg blieben die Abstände gering, und mehrere Projekte hätten diesen Platz verdient. Die Jury entschied anhand eines Bündels von Kriterien — das schmälert die Qualität Ihres Pitches in keiner Weise.`
+      : `Die Jury hat beraten und das Startup bestimmt, das die Session beim Großen Finale vertreten wird.`;
+    const body = `Guten Tag,
+
+vielen Dank, dass Sie sich die Zeit genommen haben, bei der Session „${label}" des Rotary Startup Award 2026 am ${date} zu pitchen. Sein Projekt vor einer anspruchsvollen Jury zu präsentieren, erfordert Vorbereitung und Mut — das ist an sich schon eine Leistung.
+
+${winnerLine}
+
+Wir wollten Ihnen direkt danken, denn die Gesamtqualität der Session verdankt sich auch Ihnen.
+
+🏆 EINLADUNG ZUM GROSSEN FINALE — als Gast
+
+Wir würden uns sehr freuen, Sie als Gast beim Großen Finale begrüßen zu dürfen:
+
+${finaleDate}
+${FINALE_LOC}
+
+Sie treffen dort Investoren, Jurymitglieder, Gründer und die Rotary-Gemeinschaft. Eine echte Gelegenheit, den Austausch fortzusetzen, neue Kontakte zu knüpfen und das Finale-Format unter realen Bedingungen zu erleben — nützlich, falls Sie Ihr Projekt später erneut präsentieren.
+
+Um Ihre Teilnahme zu bestätigen (oder unverbindlich abzusagen), füllen Sie bitte dieses kurze Formular aus:
+${rsvpLink}
+
+Alles Gute für Ihren weiteren Weg — halten Sie uns gerne über Ihre Fortschritte auf dem Laufenden.
+
+Mit freundlichen Grüßen,
+Die Kommission Rotary Startup Award 2026
+Rotary Club de Paris`;
+    return { subject, body };
+  }
+
+  if (lang === "en") {
+    const subject = `Rotary Startup Award — Thank you for your pitch · ${label}`;
+    const winnerLine = winner
+      ? `Following the evaluations, ${winner.startup} was selected to represent "${label}" at the Grand Finale. It was a close call: across all the entries the gaps stayed narrow and several projects could have claimed that spot. The jury decided on a combination of criteria, which takes nothing away from the quality of your pitch.`
+      : `The jury deliberated and chose the startup that will represent the session at the Grand Finale.`;
+    const body = `Hello,
+
+Thank you for taking the time to pitch during the "${label}" session of the Rotary Startup Award 2026, on ${date}. Presenting your project to a demanding jury takes preparation and nerve — that's an achievement in itself.
+
+${winnerLine}
+
+We wanted to thank you directly, because the overall quality of the session owes a lot to yours too.
+
+🏆 GRAND FINALE INVITATION — as a guest
+
+We would be delighted to have you with us at the Grand Finale, as a guest:
+
+${finaleDate}
+${FINALE_LOC}
+
+You will meet investors, jurors, entrepreneurs and the Rotary community. It's a real chance to keep the conversations going, make new connections, and see the finale format in real conditions — useful if you pitch your project again later.
+
+To confirm your attendance (or decline, no obligation), please fill in this short form:
+${rsvpLink}
+
+All the best for what's next — feel free to keep us posted on your progress.
+
+Best regards,
+The Rotary Startup Award 2026 Committee
+Rotary Club de Paris`;
+    return { subject, body };
+  }
+
+  // fr (default)
+  const subject = `Rotary Startup Award — Merci pour votre pitch · ${label}`;
   const winnerLine = winner
-    ? `À l'issue des évaluations, ${winner.startup} a été retenu·e pour représenter "${session.label}" en Grande Finale. Le choix a été serré : sur l'ensemble des dossiers, les écarts sont restés faibles et plusieurs projets auraient pu défendre cette place. Le jury a tranché sur un faisceau de critères, sans que cela retire quoi que ce soit à la qualité de votre pitch.`
+    ? `À l'issue des évaluations, ${winner.startup} a été retenu·e pour représenter "${label}" en Grande Finale. Le choix a été serré : sur l'ensemble des dossiers, les écarts sont restés faibles et plusieurs projets auraient pu défendre cette place. Le jury a tranché sur un faisceau de critères, sans que cela retire quoi que ce soit à la qualité de votre pitch.`
     : `Le jury a délibéré et désigné la startup qui représentera la session en Grande Finale.`;
   const body = `Bonjour,
 
-Merci d'avoir pris le temps de pitcher lors de la session "${session.label}" du Rotary Startup Award 2026, le ${session.date}. Présenter son projet devant un jury exigeant demande de la préparation et du cran — c'est déjà un accomplissement en soi.
+Merci d'avoir pris le temps de pitcher lors de la session "${label}" du Rotary Startup Award 2026, le ${date}. Présenter son projet devant un jury exigeant demande de la préparation et du cran — c'est déjà un accomplissement en soi.
 
 ${winnerLine}
 
@@ -747,13 +860,13 @@ Nous tenions à vous remercier directement, parce que la qualité globale de la 
 
 Nous serions ravis de vous compter parmi nous lors de la Grande Finale, comme invité·e :
 
-${FINALE_DATES.fr}
+${finaleDate}
 ${FINALE_LOC}
 
 Vous y croiserez investisseurs, jurés, entrepreneurs et la communauté Rotary. C'est une vraie occasion de prolonger les échanges, faire de nouvelles rencontres, et voir le format finale en conditions réelles — utile si vous représentez à nouveau votre projet plus tard.
 
 Pour confirmer votre présence (ou décliner sans obligation), merci de remplir ce court formulaire :
-${baseUrl}/RsaFinaleRsvp?role=visitor&from=${encodeURIComponent(session.id)}
+${rsvpLink}
 
 Bonne continuation pour la suite — n'hésitez pas à nous tenir au courant de vos avancées.
 
