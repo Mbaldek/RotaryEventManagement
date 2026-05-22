@@ -5,6 +5,29 @@ const SB_URL = "https://uaoucznptxmvhhytapso.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhb3Vjem5wdHhtdmhoeXRhcHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTU5NzAsImV4cCI6MjA4OTQ5MTk3MH0.evOgZctRuIxGSnZLocea5cAKqKR5nc-5x32QDqBUt0U";
 const SB_HEADERS = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json", "Prefer": "return=representation" };
 
+// Resize an image file to a max 400px JPEG data URL — mirrors the jury form's
+// compressor so admin-uploaded photos match the self-service ones in storage
+// footprint and shape (jury_profiles.photo_base64).
+function compressImage(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      let w = img.width, h = img.height;
+      const max = 400;
+      if (w > h && w > max) { h = Math.round(h * max / w); w = max; }
+      else if (h > max) { w = Math.round(w * max / h); h = max; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.75));
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
 const NAVY = "#0f1f3d";
 const GOLD = "#c9a84c";
 const CREAM = "#f7f4ef";
@@ -714,6 +737,7 @@ export default function RsaDashboard() {
   const [jurys, setJurys] = useState([]);
   const [addJuror, setAddJuror] = useState(null);
   const [detailJuror, setDetailJuror] = useState(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nj, setNj] = useState({name:"",type:"Rotary",role:"",email:"",sessions:[]});
@@ -1875,6 +1899,53 @@ export default function RsaDashboard() {
               <button onClick={()=>setDetailJuror(null)} className="btn" style={{width:30,height:30,borderRadius:8,background:CREAM,color:"#9090a8",border:"1px solid "+CREAM2,fontSize:14,padding:0,flexShrink:0}}>✕</button>
             </div>
             <div style={{padding:"16px 22px"}}>
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:6}}>Photo</div>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  {detailJuror.photo_base64
+                    ?<img src={detailJuror.photo_base64} alt="" style={{width:64,height:64,borderRadius:"50%",objectFit:"cover",flexShrink:0,border:"1px solid "+CREAM2}}/>
+                    :<div style={{width:64,height:64,borderRadius:"50%",background:CREAM,border:"1px dashed "+CREAM2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>📷</div>
+                  }
+                  <div style={{display:"flex",flexDirection:"column",gap:6,minWidth:0}}>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      <label className="btn" style={{fontSize:11.5,padding:"7px 14px",borderRadius:8,background:NAVY,color:GOLD,fontFamily:"Inter,sans-serif",fontWeight:500,cursor:photoBusy?"wait":"pointer",opacity:photoBusy?0.6:1,display:"inline-flex",alignItems:"center",gap:6}}>
+                        {photoBusy?"⏳ Envoi…":(detailJuror.photo_base64?"Changer la photo":"Ajouter une photo")}
+                        <input type="file" accept="image/*" style={{display:"none"}} disabled={photoBusy}
+                          onChange={async e=>{
+                            const file=e.target.files&&e.target.files[0]; e.target.value="";
+                            if(!file||!file.type.startsWith("image/"))return;
+                            setPhotoBusy(true);
+                            try{
+                              const b64=await compressImage(file);
+                              if(!b64)throw new Error("compression impossible");
+                              const res=await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${detailJuror.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({photo_base64:b64})});
+                              if(!res.ok)throw new Error("HTTP "+res.status);
+                              setDetailJuror(d=>d?{...d,photo_base64:b64}:d);
+                              await loadAll();
+                            }catch(err){alert("Échec de l'upload : "+(err.message||err));}
+                            setPhotoBusy(false);
+                          }}/>
+                      </label>
+                      {detailJuror.photo_base64&&(
+                        <button className="btn" disabled={photoBusy}
+                          onClick={async()=>{
+                            if(!confirm("Retirer la photo de ce juré ?"))return;
+                            setPhotoBusy(true);
+                            try{
+                              const res=await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${detailJuror.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify({photo_base64:null})});
+                              if(!res.ok)throw new Error("HTTP "+res.status);
+                              setDetailJuror(d=>d?{...d,photo_base64:null}:d);
+                              await loadAll();
+                            }catch(err){alert("Échec : "+(err.message||err));}
+                            setPhotoBusy(false);
+                          }}
+                          style={{fontSize:10.5,padding:"5px 11px",borderRadius:7,background:CREAM,color:"#9a3a3a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}>Retirer</button>
+                      )}
+                    </div>
+                    <div style={{fontSize:10.5,color:"#a8a8c0"}}>JPG/PNG · redimensionnée à 400px · utilisée dans les slides & supports</div>
+                  </div>
+                </div>
+              </div>
               {detailJuror.email&&(
                 <div style={{marginBottom:12}}>
                   <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>Email</div>
