@@ -13,7 +13,7 @@ import {
   X,
   Search,
 } from "lucide-react";
-import { FinaleRsvp } from "@/lib/db";
+import { FinaleRsvp, JuryProfile } from "@/lib/db";
 import { SESSION_BY_ID } from "@/lib/rsa/constants";
 
 const ROLE_META = {
@@ -50,8 +50,40 @@ export default function RsvpTab() {
   async function load() {
     setLoading(true);
     try {
-      const data = await FinaleRsvp.list("-created_at");
-      setRows(data);
+      const [rsvps, jurors] = await Promise.all([
+        FinaleRsvp.list("-created_at"),
+        JuryProfile.filter({ validated: true }),
+      ]);
+      // Finale jurors aren't RSVP rows — fold them in as "jury" entries so the
+      // admin sees everyone (jury + pitchers + visitors), not only form
+      // respondents. A juror who DID submit the RSVP form keeps their real row
+      // (matched by email); the rest get a synthetic "attendu" entry.
+      const rsvpEmails = new Set(
+        (rsvps || []).map((r) => (r.email || "").trim().toLowerCase()).filter(Boolean)
+      );
+      const synthetic = (jurors || [])
+        .filter((j) => j.grande_finale === true)
+        .filter((j) => {
+          const e = (j.email || "").trim().toLowerCase();
+          return !e || !rsvpEmails.has(e);
+        })
+        .map((j) => ({
+          id: `jury:${j.id}`,
+          _fromJury: true,
+          role: "jury",
+          attending: null, // not yet RSVP'd — shown as "attendu"
+          party_size: 1,
+          prenom: j.prenom || "",
+          nom: j.nom || "",
+          organisation: j.organisation || j.qualite || "",
+          email: j.email || "",
+          telephone: "",
+          startup_name: "",
+          source_session_id: null,
+          message: "",
+          created_at: j.created_at || null,
+        }));
+      setRows([...(rsvps || []), ...synthetic]);
     } catch (err) {
       console.error(err);
       toast.error("Could not load RSVPs");
@@ -63,14 +95,15 @@ export default function RsvpTab() {
   useEffect(() => {
     load();
     const unsub = FinaleRsvp.subscribe(() => load());
-    return () => unsub?.();
+    const unsubJ = JuryProfile.subscribe?.(() => load());
+    return () => { unsub?.(); unsubJ?.(); };
   }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((r) => {
-      if (filter === "yes" && !r.attending) return false;
-      if (filter === "no" && r.attending) return false;
+      if (filter === "yes" && r.attending !== true) return false;
+      if (filter === "no" && r.attending !== false) return false;
       if (["pitcher", "visitor", "jury"].includes(filter) && r.role !== filter) return false;
       if (!q) return true;
       const hay = [r.prenom, r.nom, r.email, r.organisation, r.startup_name, r.message]
@@ -86,16 +119,21 @@ export default function RsvpTab() {
       total: rows.length,
       yes: 0,
       no: 0,
+      pending: 0,
       pitcher: 0,
       visitor: 0,
       jury: 0,
       headcount: 0,
     };
     for (const r of rows) {
-      if (r.attending) {
+      if (r.attending === true) {
         out.yes++;
         out.headcount += r.party_size || 1;
-      } else out.no++;
+      } else if (r.attending === false) {
+        out.no++;
+      } else {
+        out.pending++;
+      }
       if (r.role in out) out[r.role]++;
     }
     return out;
@@ -135,8 +173,8 @@ export default function RsvpTab() {
         headers
           .map((h) => {
             let v = r[h];
+            if (h === "attending") return v === true ? "yes" : v === false ? "no" : "pending";
             if (v == null) return "";
-            if (h === "attending") v = v ? "yes" : "no";
             if (h === "created_at") v = new Date(v).toISOString();
             return csvField(v);
           })
@@ -186,7 +224,8 @@ export default function RsvpTab() {
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-stone-800">Grande Finale — RSVP</h2>
             <p className="text-xs text-stone-600 mt-0.5">
-              Confirmations de présence (pitchers, visiteurs, jury). Mise à jour temps réel.
+              Pitchers, visiteurs et jury finale. Le jury est inclus automatiquement
+              (statut « attendu » tant qu'il n'a pas répondu au formulaire).
             </p>
           </div>
           <button
@@ -201,9 +240,9 @@ export default function RsvpTab() {
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Stat
-          label="Total réponses"
+          label="Total liste"
           value={stats.total}
-          sub={`${stats.yes} oui · ${stats.no} non`}
+          sub={`${stats.yes} oui · ${stats.no} non${stats.pending ? ` · ${stats.pending} attendus` : ""}`}
         />
         <Stat
           label="Présents (têtes)"
@@ -342,10 +381,12 @@ export default function RsvpTab() {
                       </span>
                     </td>
                     <td className="p-3 text-center">
-                      {r.attending ? (
+                      {r.attending === true ? (
                         <Check className="w-4 h-4 text-emerald-600 mx-auto" />
-                      ) : (
+                      ) : r.attending === false ? (
                         <X className="w-4 h-4 text-rose-500 mx-auto" />
+                      ) : (
+                        <span className="text-[10px] text-stone-400 italic">attendu</span>
                       )}
                     </td>
                     <td className="p-3 text-center text-sm font-semibold text-stone-700 tabular-nums">
@@ -401,34 +442,38 @@ export default function RsvpTab() {
                       )}
                     </td>
                     <td className="p-3 text-right text-xs text-stone-500 whitespace-nowrap">
-                      {new Date(r.created_at).toLocaleString("fr-FR", {
+                      {r.created_at ? new Date(r.created_at).toLocaleString("fr-FR", {
                         day: "2-digit",
                         month: "short",
                         hour: "2-digit",
                         minute: "2-digit",
-                      })}
+                      }) : "—"}
                     </td>
                     <td className="p-3 text-center">
-                      <button
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              `Supprimer la réponse de ${r.prenom} ${r.nom} ?`
-                            )
-                          ) {
-                            deleteRow(r.id);
-                          }
-                        }}
-                        disabled={deleting === r.id}
-                        className="text-stone-300 hover:text-rose-600 transition-colors"
-                        title="Supprimer"
-                      >
-                        {deleting === r.id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-3.5 h-3.5" />
-                        )}
-                      </button>
+                      {r._fromJury ? (
+                        <span className="text-stone-300" title="Issu du panel jury — gérer dans l'onglet Jury">🏆</span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Supprimer la réponse de ${r.prenom} ${r.nom} ?`
+                              )
+                            ) {
+                              deleteRow(r.id);
+                            }
+                          }}
+                          disabled={deleting === r.id}
+                          className="text-stone-300 hover:text-rose-600 transition-colors"
+                          title="Supprimer"
+                        >
+                          {deleting === r.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
