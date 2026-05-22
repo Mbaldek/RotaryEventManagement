@@ -359,11 +359,14 @@ Mit freundlichen Grüßen,
 {ORGANISER_NAME}`;
 
 // --- Finale-specific jury pack templates ---
-// The Grande Finale runs in person at Cyrus Conseil (no Teams), in front of a
-// live audience (Rotary members, partners, investors, guests), and ends with
-// a cocktail reception. The format is also more demanding than the qualifiers
-// (10–12 min pitch + 8 min Q&A vs. 4 min in qualif). These templates are
-// surfaced when sessionId === "final_grande" via getJuryDefaultTemplate.
+// The Grande Finale runs in person at Cyrus Conseil in front of a live audience
+// (Rotary members, partners, investors, guests), is ALSO broadcast on Teams
+// Live, and ends with a cocktail reception. Format is tougher than the
+// qualifiers (10–12 min pitch + 8 min Q&A vs. 4 min). These templates cover
+// on-site logistics (early arrival, sign-in, Rotary welcome, cocktail), the
+// Teams Live link ({TEAMS_URL}), jury composition (2 external jurors guiding the
+// Rotary jury + co-presidents), scoring guidelines and Q&A conduct. Surfaced
+// when sessionId === "final_grande" via getJuryDefaultTemplate.
 
 const DEFAULT_JURY_TEMPLATE_FR_FINAL = `Sujet : Rotary Startup Award — Grande Finale {DATE_LONGUE} · pack jury
 
@@ -371,11 +374,12 @@ Bonjour {JURY_PRENOM},
 
 Voici votre dossier de préparation pour la Grande Finale du Rotary Startup Award 2026, le {DATE_LONGUE}.
 
-📍 LIEU & FORMAT — IMPORTANT
+📍 LIEU & LOGISTIQUE — SESSION EN PRÉSENTIEL
 ${FINALE_VENUE}
-Évènement intégralement en présentiel (pas de Teams).
-Public présent : membres du Rotary, partenaires, investisseurs et invités.
-Cocktail d'échange & networking en clôture (jury, startups, public).
+  • Merci d'arriver pour 16h00 (30 min avant les pitchs) — accueil café & briefing jury.
+  • Émargement à l'entrée : l'accueil Rotary vous présentera une feuille de présence.
+  • Tenue habillée — vous serez exposé·e au public et aux photos officielles.
+  • Cocktail dînatoire en clôture (19h00, ~1h) : échange avec startups, investisseurs et communauté Rotary.
 
 Déroulé de la finale :
   • 16h00 — accueil café & briefing jury
@@ -383,22 +387,29 @@ Déroulé de la finale :
   • Chaque finaliste : 10 à 12 min de pitch + 8 min de Q&A
   • ~18h00 — délibération du jury (à huis clos)
   • ~18h30 — annonce du lauréat & remise du prix
-  • 19h00 — cocktail d'échange (~1h)
+  • 19h00 — cocktail dînatoire (~1h)
 
-Tenue : tenue habillée — vous serez exposé·e au public et aux photos officielles.
+📺 DIFFUSION TEAMS LIVE
+La finale est aussi diffusée en direct sur Teams Live (audience à distance, membres empêchés) :
+{TEAMS_URL}
+Que vous soyez sur place ou à distance, votre évaluation se saisit sur la page de scoring (lien plus bas).
 
-Langue : pitchs et Q&A en anglais (jury international, public mixte). Les questions peuvent être posées dans la langue partagée avec la startup.
-
-👥 JURY DE LA FINALE
-Vous siégez dans un jury international, emmené par :
-  • Lead Jury : [Lead Jury 1] · [Lead Jury 2]
-  • Co-présidents Rotary : [Co-président Paris] · [Co-président Berlin]
-Le panel réunit les jurés des sessions qualificatives.
+👥 COMPOSITION DU JURY
+Notre jury Rotary est guidé par 2 jurés externes qui nous font l'honneur d'être présents :
+  • [Juré externe 1] · [Juré externe 2]
+Sous la co-présidence de :
+  • [Co-président Paris] · [Co-président Berlin]
+Le panel réunit également les jurés des sessions qualificatives.
 
 🎤 RÈGLES DU JEU (format finaliste)
   • Pitch : 10 à 12 min + Q&A : 8 min par finaliste (total max 20 min).
   • Pitch et Q&A en anglais ; questions possibles dans la langue partagée avec la startup.
   • Évaluation : 6 critères notés de 0 à 5 (grille rappelée plus bas).
+
+💬 CONDUITE DES Q&A — recommandations
+  • Questions courtes et ciblées : pas de dialogue de 5 minutes, on laisse de l'air aux autres jurés.
+  • Visez les angles clés qui éclairent le projet pour tout le monde (marché, modèle, équipe, traction).
+  • N'hésitez pas à challenger un message du pitch — c'est utile, tant que ça reste courtois et constructif.
 
 Pre-read — à lire avant la finale :
 Le PDF joint à cet email rassemble les executive summaries des {N} finalistes. Sauvegardez-le pour le retrouver le jour J.
@@ -407,7 +418,7 @@ Le PDF joint à cet email rassemble les executive summaries des {N} finalistes. 
 Pitch decks — liens individuels (volumineux, à ouvrir en ligne) :
 {STARTUPS_BLOCK}
 
-Scoring en direct — pas-à-pas :
+Scoring en direct — guidelines & pas-à-pas :
 
 1. Le jour J, ouvrez ce lien sur smartphone, tablette ou laptop : {SCORING_URL}
 
@@ -431,11 +442,12 @@ Hello {JURY_PRENOM},
 
 Here is your preparation pack for the Rotary Startup Award 2026 Grand Finale on {DATE_LONGUE}.
 
-📍 VENUE & FORMAT — IMPORTANT
+📍 VENUE & LOGISTICS — IN-PERSON SESSION
 ${FINALE_VENUE}
-Fully in-person event (no Teams).
-Live audience: Rotary members, partners, investors and guests.
-Cocktail reception & networking at the end (jury, startups, public).
+  • Please arrive by 4:00pm (30 min before pitches) — welcome coffee & jury briefing.
+  • Sign-in at the door: the Rotary welcome desk will have an attendance sheet.
+  • Smart attire — you will be in front of the audience and on official photographs.
+  • Cocktail reception at the end (7:00pm, ~1h): mingle with startups, investors and the Rotary community.
 
 Finale schedule:
   • 4:00pm — welcome coffee & jury briefing
@@ -445,20 +457,27 @@ Finale schedule:
   • ~6:30pm — winner announcement & award ceremony
   • 7:00pm — cocktail reception (~1h)
 
-Dress code: smart attire — you will be on stage in front of the audience and on official photographs.
+📺 TEAMS LIVE BROADCAST
+The finale is also streamed live on Teams Live (remote audience, members who can't attend):
+{TEAMS_URL}
+Whether you're on-site or remote, your scoring is entered on the scoring page (link below).
 
-Language: pitches and Q&A in English (international jury, mixed audience). Questions may be asked in any language you share with the startup.
-
-👥 THE FINALE JURY
-You sit on an international jury, led by:
-  • Lead Jury: [Lead Jury 1] · [Lead Jury 2]
-  • Rotary co-presidents: [Co-president Paris] · [Co-president Berlin]
-The panel brings together the jurors from the qualifying sessions.
+👥 JURY COMPOSITION
+Our Rotary jury is guided by 2 external jurors who honour us with their presence:
+  • [External juror 1] · [External juror 2]
+Under the co-presidency of:
+  • [Co-president Paris] · [Co-president Berlin]
+The panel also brings together the jurors from the qualifying sessions.
 
 🎤 RULES OF THE GAME (finalist format)
   • Pitch: 10–12 min + Q&A: 8 min per finalist (hard cap 20 min).
   • Pitch and Q&A in English; questions in any language you share with the startup.
   • Scoring: 6 criteria rated 0 to 5 (grid recalled below).
+
+💬 Q&A CONDUCT — recommendations
+  • Keep questions short and targeted: no 5-minute dialogue, leave room for the other jurors.
+  • Aim at the key angles that shed light on the project for everyone (market, model, team, traction).
+  • Don't hesitate to challenge a claim from the pitch — that's valuable, as long as it stays courteous and constructive.
 
 Pre-read — to read before the finale:
 The PDF attached to this email bundles the executive summaries of the {N} finalists. Save it so you can refer back on the day.
@@ -467,7 +486,7 @@ The PDF attached to this email bundles the executive summaries of the {N} finali
 Pitch decks — individual links (large, open online):
 {STARTUPS_BLOCK}
 
-Live scoring — step by step:
+Live scoring — guidelines & step by step:
 
 1. On the day, open this link on phone, tablet or laptop: {SCORING_URL}
 
@@ -491,11 +510,12 @@ Guten Tag {JURY_PRENOM},
 
 anbei Ihre Vorbereitungsunterlagen für das Große Finale des Rotary Startup Award 2026 am {DATE_LONGUE}.
 
-📍 ORT & FORMAT — WICHTIG
+📍 ORT & LOGISTIK — PRÄSENZ-SESSION
 ${FINALE_VENUE}
-Vollständig vor Ort (kein Teams).
-Publikum: Rotary-Mitglieder, Partner, Investoren und Gäste.
-Cocktail-Empfang & Networking zum Abschluss (Jury, Startups, Publikum).
+  • Bitte seien Sie um 16:00 Uhr da (30 Min vor den Pitches) — Empfang mit Kaffee & Jury-Briefing.
+  • Anmeldung am Eingang: Der Rotary-Empfang legt Ihnen eine Anwesenheitsliste vor.
+  • Gepflegte Kleidung — Sie sind vor Publikum und auf offiziellen Fotos zu sehen.
+  • Cocktail-Empfang zum Abschluss (19:00 Uhr, ~1h): Austausch mit Startups, Investoren und der Rotary-Gemeinschaft.
 
 Ablauf des Finales:
   • 16:00 Uhr — Empfang & Jury-Briefing
@@ -505,20 +525,27 @@ Ablauf des Finales:
   • ~18:30 Uhr — Bekanntgabe des Siegers & Preisverleihung
   • 19:00 Uhr — Cocktail-Empfang (~1h)
 
-Dresscode: gepflegte Kleidung — Sie sind vor Publikum und auf offiziellen Fotos zu sehen.
+📺 TEAMS-LIVE-ÜBERTRAGUNG
+Das Finale wird zusätzlich live auf Teams Live übertragen (Publikum aus der Ferne, verhinderte Mitglieder):
+{TEAMS_URL}
+Ob vor Ort oder aus der Ferne — Ihre Bewertung geben Sie auf der Scoring-Seite ein (Link unten).
 
-Sprache: Pitches und Q&A auf Englisch (internationale Jury, gemischtes Publikum). Fragen dürfen in jeder Sprache gestellt werden, die Sie mit dem Startup teilen.
-
-👥 JURY DES FINALES
-Sie sitzen in einer internationalen Jury, geleitet von:
-  • Lead Jury: [Lead Jury 1] · [Lead Jury 2]
-  • Rotary-Co-Präsidenten: [Co-Präsident Paris] · [Co-Präsident Berlin]
-Das Panel vereint die Jurymitglieder der Qualifikationssessions.
+👥 ZUSAMMENSETZUNG DER JURY
+Unsere Rotary-Jury wird von 2 externen Jurymitgliedern geleitet, die uns mit ihrer Anwesenheit die Ehre erweisen:
+  • [Externes Jurymitglied 1] · [Externes Jurymitglied 2]
+Unter dem Co-Vorsitz von:
+  • [Co-Präsident Paris] · [Co-Präsident Berlin]
+Das Panel vereint außerdem die Jurymitglieder der Qualifikationssessions.
 
 🎤 SPIELREGELN (Finalisten-Format)
   • Pitch: 10–12 Min + Q&A: 8 Min pro Finalist (maximal 20 Min).
   • Pitch und Q&A auf Englisch; Fragen in jeder mit dem Startup geteilten Sprache.
   • Bewertung: 6 Kriterien von 0 bis 5 (Raster unten wiederholt).
+
+💬 Q&A-FÜHRUNG — Empfehlungen
+  • Kurze, gezielte Fragen: kein 5-Minuten-Dialog, lassen Sie den anderen Jurymitgliedern Raum.
+  • Zielen Sie auf die Schlüsselaspekte, die das Projekt für alle erhellen (Markt, Modell, Team, Traktion).
+  • Hinterfragen Sie ruhig eine Aussage aus dem Pitch — das ist wertvoll, solange es höflich und konstruktiv bleibt.
 
 Vorab-Lektüre — vor dem Finale zu lesen:
 Das angehängte PDF bündelt die Executive Summaries der {N} Finalisten. Speichern Sie es für den Tag.
@@ -527,7 +554,7 @@ Das angehängte PDF bündelt die Executive Summaries der {N} Finalisten. Speiche
 Pitch Decks — einzelne Links (groß, im Browser öffnen):
 {STARTUPS_BLOCK}
 
-Live-Scoring — Schritt für Schritt:
+Live-Scoring — Leitfaden & Schritt für Schritt:
 
 1. Am Tag des Finales diesen Link auf Smartphone, Tablet oder Laptop öffnen: {SCORING_URL}
 

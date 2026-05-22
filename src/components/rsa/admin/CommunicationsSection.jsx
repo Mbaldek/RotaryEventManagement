@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Copy, Mail, Send, Mic2, Users as UsersIcon, Trophy, ExternalLink, Megaphone, Crown, CalendarClock } from "lucide-react";
+import { Loader2, Copy, Mail, Send, Mic2, Users as UsersIcon, Trophy, ExternalLink, Crown } from "lucide-react";
 import { JuryProfile, StartupConfirmation } from "@/lib/db";
-import { SESSION_BY_ID, FINAL_SESSION_ID, getSessionLabel, getSessionDate } from "@/lib/rsa/constants";
+import { SESSION_BY_ID, getSessionLabel, getSessionDate } from "@/lib/rsa/constants";
 
 const FINALE_DATES = {
   fr: "Mardi 26 mai 2026 · 16h–19h",
@@ -32,20 +32,17 @@ export default function CommunicationsSection({ sessionId, ranking }) {
   const [jurors, setJurors] = useState([]);
   const [finaleJurors, setFinaleJurors] = useState([]);
   const [startups, setStartups] = useState([]);
-  const [finalistRowsCount, setFinalistRowsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(null); // open card key
-  const announceRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
       try {
-        const [allJury, startupRows, finaleRows] = await Promise.all([
+        const [allJury, startupRows] = await Promise.all([
           JuryProfile.list("nom"),
           StartupConfirmation.filter({ session_id: sessionId }),
-          StartupConfirmation.filter({ session_id: FINAL_SESSION_ID }),
         ]);
         if (cancelled) return;
         const validated = (allJury || []).filter((j) => {
@@ -63,7 +60,6 @@ export default function CommunicationsSection({ sessionId, ranking }) {
         setJurors(validated);
         setFinaleJurors(allFinaleJurors);
         setStartups(startupRows || []);
-        setFinalistRowsCount((finaleRows || []).length);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -73,18 +69,6 @@ export default function CommunicationsSection({ sessionId, ranking }) {
       cancelled = true;
     };
   }, [sessionId, session.label, session.id, session.isFinal]);
-
-  // Open + scroll the announce card if the URL hash points to it (deep link
-  // from RsaDashboard's PublishedSessionCard "📣 Annonce publique" button).
-  useEffect(() => {
-    if (loading) return;
-    if (typeof window === "undefined") return;
-    if (window.location.hash !== "#announce") return;
-    setOpen("announce");
-    requestAnimationFrame(() => {
-      announceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }, [loading]);
 
   const winner = useMemo(() => ranking.find((r) => r.final_rank === 1), [ranking]);
   const losers = useMemo(() => ranking.filter((r) => r.final_rank > 1), [ranking]);
@@ -137,9 +121,6 @@ export default function CommunicationsSection({ sessionId, ranking }) {
   const finaleInviteTemplateFr = buildFinaleJuryInvitationTemplate({ baseUrl, lang: "fr" });
   const finaleInviteTemplateEn = buildFinaleJuryInvitationTemplate({ baseUrl, lang: "en" });
   const finaleInviteTemplateDe = buildFinaleJuryInvitationTemplate({ baseUrl, lang: "de" });
-  const saveDateTemplateFr = buildFinaleSaveTheDateTemplate({ lang: "fr" });
-  const saveDateTemplateEn = buildFinaleSaveTheDateTemplate({ lang: "en" });
-  const saveDateTemplateDe = buildFinaleSaveTheDateTemplate({ lang: "de" });
   const losersTemplateFr = buildLosersTemplate({ session, winner, baseUrl, lang: "fr" });
   const losersTemplateEn = buildLosersTemplate({ session, winner, baseUrl, lang: "en" });
   const losersTemplateDe = buildLosersTemplate({ session, winner, baseUrl, lang: "de" });
@@ -150,14 +131,6 @@ export default function CommunicationsSection({ sessionId, ranking }) {
         ranking,
         firstName: winnerFirstName,
         baseUrl,
-      })
-    : null;
-  const announceTemplate = winner && !session.isFinal
-    ? buildAnnounceTemplate({
-        session,
-        winner,
-        baseUrl,
-        finalistsSoFar: finalistRowsCount,
       })
     : null;
 
@@ -215,36 +188,6 @@ export default function CommunicationsSection({ sessionId, ranking }) {
           template={juryTemplateDe}
           isOpen={open === "juryDe"}
           onToggle={() => setOpen(open === "juryDe" ? null : "juryDe")}
-        />
-        <TemplateCard
-          color="indigo"
-          Icon={CalendarClock}
-          title="📅 Save the date 🇫🇷 FR"
-          subtitle={`${finaleJuryByLang.fr.length} juré${finaleJuryByLang.fr.length > 1 ? "s" : ""} finale FR · bloquer le créneau`}
-          recipients={finaleJuryByLang.fr}
-          template={saveDateTemplateFr}
-          isOpen={open === "saveDateFr"}
-          onToggle={() => setOpen(open === "saveDateFr" ? null : "saveDateFr")}
-        />
-        <TemplateCard
-          color="indigo"
-          Icon={CalendarClock}
-          title="📅 Save the date 🇬🇧 EN"
-          subtitle={`${finaleJuryByLang.en.length} finale juror${finaleJuryByLang.en.length > 1 ? "s" : ""} EN · block the date`}
-          recipients={finaleJuryByLang.en}
-          template={saveDateTemplateEn}
-          isOpen={open === "saveDateEn"}
-          onToggle={() => setOpen(open === "saveDateEn" ? null : "saveDateEn")}
-        />
-        <TemplateCard
-          color="indigo"
-          Icon={CalendarClock}
-          title="📅 Save the date 🇩🇪 DE"
-          subtitle={`${finaleJuryByLang.de.length} Finale-Jurymitglied${finaleJuryByLang.de.length > 1 ? "er" : ""} DE · Termin blockieren`}
-          recipients={finaleJuryByLang.de}
-          template={saveDateTemplateDe}
-          isOpen={open === "saveDateDe"}
-          onToggle={() => setOpen(open === "saveDateDe" ? null : "saveDateDe")}
         />
         <TemplateCard
           color="emerald"
@@ -321,26 +264,6 @@ export default function CommunicationsSection({ sessionId, ranking }) {
           onToggle={() => setOpen(open === "winner" ? null : "winner")}
           disabled={!winner}
         />
-        <div ref={announceRef} id="announce" style={{ scrollMarginTop: 16 }}>
-          <TemplateCard
-            color="rose"
-            Icon={Megaphone}
-            title="📣 Annonce publique"
-            subtitle={
-              winner
-                ? session.isFinal
-                  ? "Réservé aux sessions qualificatives"
-                  : `Annoncer ${winner.startup} comme finaliste`
-                : "Pas encore de gagnant"
-            }
-            recipients={[]}
-            template={announceTemplate}
-            isOpen={open === "announce"}
-            onToggle={() => setOpen(open === "announce" ? null : "announce")}
-            disabled={!winner || session.isFinal}
-            recipientsHint="Pas de destinataires pré-remplis — colle où tu veux : email club, partenaires, réseau"
-          />
-        </div>
       </div>
     </div>
   );
@@ -514,98 +437,6 @@ function rankingLines(ranking) {
       return `${m} #${r.final_rank} — ${r.startup} · ${r.final_score.toFixed(2)}/5`;
     })
     .join("\n");
-}
-
-// Save-the-date — earliest finale-jury comm. Light, no RSVP, no jury pack.
-// Goal: get the 11 finale jurors to block the slot in their calendar before
-// anything else. Sent weeks ahead. Insists on the physical / in-person nature
-// (vs the qualifying sessions which run on Teams) and the public format with
-// cocktail at the end so they understand it's a different beast.
-function buildFinaleSaveTheDateTemplate({ lang = "fr" }) {
-  const finaleDate = FINALE_DATES[lang] || FINALE_DATES.fr;
-
-  if (lang === "de") {
-    const subject = "Save the date — Rotary Startup Award Großes Finale 2026";
-    const body = `Guten Tag,
-
-bitte blockieren Sie sich folgenden Termin im Kalender:
-
-🏆 GROSSES FINALE — Rotary Startup Award 2026
-${finaleDate}
-${FINALE_LOC}
-
-Sie wurden als Mitglied der Finale-Jury ausgewählt — herzlichen Glückwunsch und vielen Dank für Ihr Engagement!
-
-Im Unterschied zu den Qualifikationssessions (auf Teams) findet das Finale ausschließlich vor Ort statt:
-  • Präsenz vor Ort, kein Teams.
-  • Publikum: Rotary-Mitglieder, Partner, Investoren und Gäste.
-  • Pitches und Q&A vor Live-Publikum.
-  • Im Anschluss Cocktail-Empfang & Networking mit Jury, Startups und Gästen.
-
-Eine offizielle Einladung mit RSVP-Link folgt in den kommenden Tagen, gefolgt vom Jury-Paket (Decks, Bewertungsraster, Ablauf) in den Wochen vor dem Termin.
-
-Bei Fragen oder Terminkonflikten gerne kurz Bescheid geben.
-
-Mit freundlichen Grüßen,
-Die Kommission Rotary Startup Award 2026
-Rotary Club de Paris`;
-    return { subject, body };
-  }
-
-  if (lang === "en") {
-    const subject = "Save the date — Rotary Startup Award Grand Finale 2026";
-    const body = `Hello,
-
-Please block the following slot in your calendar:
-
-🏆 GRAND FINALE — Rotary Startup Award 2026
-${finaleDate}
-${FINALE_LOC}
-
-You have been selected as a member of the finale jury panel — congratulations and thank you for your commitment!
-
-Unlike the qualifying sessions (held on Teams), the Grand Finale is fully in person:
-  • In-person attendance only, no Teams.
-  • Live audience: Rotary members, partners, investors and guests.
-  • Pitches and Q&A in front of a live crowd.
-  • Followed by a cocktail reception & networking with jury, startups and guests.
-
-A formal invitation with the RSVP link will follow in the coming days, then the jury pack (decks, rating grid, schedule) in the weeks before the event.
-
-If you spot a conflict or have any question, just drop us a line.
-
-Best regards,
-The Rotary Startup Award 2026 Committee
-Rotary Club de Paris`;
-    return { subject, body };
-  }
-
-  // fr (default)
-  const subject = "Save the date — Grande Finale Rotary Startup Award 2026";
-  const body = `Bonjour,
-
-Merci de bloquer dès maintenant ce créneau dans votre agenda :
-
-🏆 GRANDE FINALE — Rotary Startup Award 2026
-${finaleDate}
-${FINALE_LOC}
-
-Vous avez été retenu·e comme juré·e de la finale — bravo et merci pour votre engagement !
-
-Contrairement aux sessions qualificatives (qui se tenaient sur Teams), la Grande Finale est intégralement en présentiel :
-  • Présentiel exclusif, pas de Teams.
-  • Public présent : membres du Rotary, partenaires, investisseurs et invités.
-  • Pitchs et Q&A devant audience.
-  • Cocktail d'échange & networking en clôture, avec jury, startups et public.
-
-Une invitation formelle avec lien RSVP suivra dans les prochains jours, puis le pack jury (decks, grille, déroulé) dans les semaines précédant l'évènement.
-
-Si vous repérez un conflit d'agenda ou avez la moindre question, un mot suffit.
-
-Bien cordialement,
-La Commission Rotary Startup Award 2026
-Rotary Club de Paris`;
-  return { subject, body };
 }
 
 // Invitation to confirm presence as a finale juror — sent to validated jurors
@@ -910,57 +741,6 @@ Encore bravo, et à très vite.
 
 Bien cordialement,
 La Commission Rotary Startup Award 2026
-Rotary Club de Paris`;
-  return { subject, body };
-}
-
-// Public-facing announce (signed by the orga team) — the "faire monter la
-// sauce" moment after each session publish. Marketing tone, ready to forward
-// to the club mailing list, partners, or paste into a LinkedIn post.
-function buildAnnounceTemplate({ session, winner, baseUrl, finalistsSoFar }) {
-  const TOTAL = 5;
-  const ordinal = (n) => (n === 1 ? "1er" : `${n}e`);
-  const counterLine =
-    finalistsSoFar > 0
-      ? finalistsSoFar === 1
-        ? "🏁 Premier finaliste désigné !"
-        : finalistsSoFar >= TOTAL
-        ? "🎯 Plateau finaliste au complet !"
-        : `🏁 ${ordinal(finalistsSoFar)} finaliste désigné — ${finalistsSoFar}/${TOTAL} ! Plus que ${TOTAL - finalistsSoFar} à venir.`
-      : "";
-
-  const subject = `📣 ${winner.startup} en Grande Finale du Rotary Startup Award 2026 !`;
-  const finaleHubLink = `${baseUrl}/RsaJuryHub`;
-  const recapLink = `${baseUrl}/RsaRecap?s=${session.id}`;
-
-  const body = `Bonjour à toutes et tous,
-
-${counterLine}
-
-À l'issue de la session "${session.label}" du ${session.date}, le jury international du Rotary Startup Award 2026 a désigné son lauréat :
-
-🏆 ${winner.startup}
-
-Score final : ${winner.final_score.toFixed(2)}/5 sur ${winner.n} évaluations indépendantes — un résultat serré qui témoigne de la densité du plateau cette année.
-
-${winner.startup} rejoint donc le plateau de la Grande Finale, où elle pitchera face aux gagnants des autres sessions devant un jury élargi et l'ensemble de la communauté Rotary Paris.
-
-🏆 GRANDE FINALE
-${FINALE_DATES.fr}
-${FINALE_LOC}
-
-Toutes les startups, jurys et le programme complet sont consultables ici :
-${finaleHubLink}
-
-Et le récap détaillé de cette session (notes, classement, jurys) :
-${recapLink}
-
-Un grand merci à tous les jurés qui ont accepté de donner de leur temps et de leur expertise pour évaluer ces projets. Nous avons hâte de vivre la suite avec vous — la prochaine session arrive vite, restez à l'affût !
-
-À très bientôt,
-
-L'équipe organisation
-Rotary Startup Award 2026
 Rotary Club de Paris`;
   return { subject, body };
 }

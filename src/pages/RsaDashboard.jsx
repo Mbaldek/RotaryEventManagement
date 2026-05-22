@@ -249,7 +249,6 @@ function PublishedSessionCard({ session, cfg, sessionLabel }) {
   const jurorNames = [...new Set(scores.map((s) => s.jury_name))].sort((a, b) => a.localeCompare(b));
   const startupNames = ranking.map((r) => r.startup_name);
   const adminQS = import.meta.env.VITE_RSA_ADMIN_KEY ? `?k=${import.meta.env.VITE_RSA_ADMIN_KEY}&` : "?";
-  const announceUrl = `/RsaAdmin${adminQS}session=${session.id}&tab=results#announce`;
   const adminUrl = `/RsaAdmin${adminQS}session=${session.id}&tab=results`;
   const recapUrl = `/RsaRecap?s=${session.id}`;
 
@@ -292,10 +291,6 @@ function PublishedSessionCard({ session, cfg, sessionLabel }) {
               </div>
               <div style={{ fontSize: 10, color: "#9090a8" }}>{winner.juror_count || 0} juré{(winner.juror_count || 0) > 1 ? "s" : ""}</div>
             </div>
-            <a href={announceUrl} title="Composer l'email d'annonce publique"
-              style={{ fontSize: 11, padding: "7px 14px", borderRadius: 8, background: GOLD, color: NAVY, textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
-              📣 Annonce publique
-            </a>
           </div>
         )}
 
