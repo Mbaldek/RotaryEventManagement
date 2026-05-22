@@ -762,11 +762,15 @@ export default function DecksTab({ sessionId }) {
       setSessionCfg(cfg?.[0] || null);
 
       // Finale finalist rows are lean pointers created by FinalistsPicker
-      // (session_id, startup_name, source_session_id only) — no contact info.
-      // Enrich them with contact + country from the source qualifying-session
-      // row so the finalist emails aren't blank and language detection works.
-      // We deliberately do NOT pull decks: the "⏳ en attente" upload status must
-      // stay accurate until the finalist uploads their new finale (10–12 min) deck.
+      // (session_id, startup_name, source_session_id) — no contact, deck or
+      // pre-reads. Backfill them from the source qualifying-session row so the
+      // finalist emails, the jury deck links AND the server-generated pre-read
+      // pack aren't empty. We PERSIST the backfill (idempotent) because the
+      // consolidate-jury-pack edge function reads executive_summary_files
+      // straight off these rows — read-time merge wouldn't reach it. final_deck_path
+      // is left untouched so the "⏳ en attente" upload status stays accurate until
+      // the finalist sends their new finale deck; the source deck lands in
+      // application_deck_path as the baseline.
       let resolved = confs;
       if (session?.isFinal) {
         const srcIds = [...new Set(confs.map((r) => r.source_session_id).filter(Boolean))];
@@ -774,16 +778,30 @@ export default function DecksTab({ sessionId }) {
           await Promise.all(srcIds.map((sid) => StartupConfirmation.filter({ session_id: sid })))
         ).flat();
         const srcByKey = new Map(srcRows.map((r) => [`${r.session_id}::${r.startup_name}`, r]));
+        const patches = [];
         resolved = confs.map((r) => {
           const src = r.source_session_id ? srcByKey.get(`${r.source_session_id}::${r.startup_name}`) : null;
           if (!src) return r;
-          return {
-            ...r,
-            startup_contact_prenom: r.startup_contact_prenom || src.startup_contact_prenom,
-            startup_contact_email: r.startup_contact_email || src.startup_contact_email,
-            startup_country: r.startup_country || src.startup_country,
-          };
+          const patch = {};
+          if (!r.startup_contact_prenom && src.startup_contact_prenom) patch.startup_contact_prenom = src.startup_contact_prenom;
+          if (!r.startup_contact_email && src.startup_contact_email) patch.startup_contact_email = src.startup_contact_email;
+          if (!r.startup_country && src.startup_country) patch.startup_country = src.startup_country;
+          const srcDeck = src.final_deck_path || src.application_deck_path;
+          const srcDeckName = src.final_deck_path ? src.final_deck_original_filename : src.application_deck_filename;
+          if (!r.application_deck_path && !r.final_deck_path && srcDeck) {
+            patch.application_deck_path = srcDeck;
+            if (srcDeckName) patch.application_deck_filename = srcDeckName;
+          }
+          const hasExec = Array.isArray(r.executive_summary_files) && r.executive_summary_files.length > 0;
+          const srcExec = Array.isArray(src.executive_summary_files) ? src.executive_summary_files : [];
+          if (!hasExec && srcExec.length > 0) patch.executive_summary_files = srcExec;
+          if (Object.keys(patch).length === 0) return r;
+          patches.push({ id: r.id, patch });
+          return { ...r, ...patch };
         });
+        if (patches.length > 0) {
+          await Promise.all(patches.map((p) => StartupConfirmation.update(p.id, p.patch)));
+        }
       }
 
       // Fallback must match SetupTab/LiveTab (alphabetical) — Postgres return
