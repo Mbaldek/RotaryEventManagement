@@ -738,6 +738,7 @@ export default function RsaDashboard() {
   const [addJuror, setAddJuror] = useState(null);
   const [detailJuror, setDetailJuror] = useState(null);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [savingJuror, setSavingJuror] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nj, setNj] = useState({name:"",type:"Rotary",role:"",email:"",sessions:[]});
@@ -1946,15 +1947,36 @@ export default function RsaDashboard() {
                   </div>
                 </div>
               </div>
-              {detailJuror.email&&(
-                <div style={{marginBottom:12}}>
-                  <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>Email</div>
-                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                    <a href={"mailto:"+detailJuror.email} style={{fontSize:12.5,color:NAVY,textDecoration:"none",flex:1,wordBreak:"break-all"}}>{detailJuror.email}</a>
-                    <button onClick={()=>{navigator.clipboard.writeText(detailJuror.email);}} className="btn" style={{fontSize:10,padding:"4px 9px",borderRadius:7,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif",flexShrink:0}}>📋 Copier</button>
-                  </div>
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:6}}>Infos juré</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <input value={detailJuror.prenom||""} onChange={e=>setDetailJuror(d=>({...d,prenom:e.target.value}))} placeholder="Prénom"
+                    style={{padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
+                  <input value={detailJuror.nom||""} onChange={e=>setDetailJuror(d=>({...d,nom:e.target.value}))} placeholder="Nom"
+                    style={{padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
+                  <input value={detailJuror.qualite||""} onChange={e=>setDetailJuror(d=>({...d,qualite:e.target.value}))} placeholder="Titre / Qualité (ex. Directeur Innovation)"
+                    style={{gridColumn:"1/3",padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
+                  <input value={detailJuror.organisation||""} onChange={e=>setDetailJuror(d=>({...d,organisation:e.target.value}))} placeholder="Organisation"
+                    style={{gridColumn:"1/3",padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
+                  <input value={detailJuror.email||""} type="email" onChange={e=>setDetailJuror(d=>({...d,email:e.target.value}))} placeholder="Email"
+                    style={{gridColumn:"1/3",padding:"7px 10px",fontSize:12,borderRadius:7,border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}/>
                 </div>
-              )}
+                <div style={{display:"flex",gap:6,marginTop:8,alignItems:"center",flexWrap:"wrap"}}>
+                  <button className="btn" disabled={savingJuror||!(detailJuror.prenom||"").trim()||!(detailJuror.nom||"").trim()}
+                    onClick={async()=>{
+                      setSavingJuror(true);
+                      try{
+                        const patch={prenom:(detailJuror.prenom||"").trim(),nom:(detailJuror.nom||"").trim(),qualite:(detailJuror.qualite||"").trim(),organisation:(detailJuror.organisation||"").trim()||null,email:(detailJuror.email||"").trim()||null};
+                        const res=await fetch(`${SB_URL}/rest/v1/jury_profiles?id=eq.${detailJuror.id}`,{method:"PATCH",headers:{...SB_HEADERS,"Prefer":"return=minimal"},body:JSON.stringify(patch)});
+                        if(!res.ok)throw new Error("HTTP "+res.status);
+                        await loadAll();
+                      }catch(err){alert("Échec de l'enregistrement : "+(err.message||err));}
+                      setSavingJuror(false);
+                    }}
+                    style={{fontSize:11.5,padding:"7px 14px",borderRadius:8,background:"#1d6b4f",color:"white",border:"none",fontFamily:"Inter,sans-serif",fontWeight:500,cursor:savingJuror?"wait":"pointer",opacity:(savingJuror||!(detailJuror.prenom||"").trim()||!(detailJuror.nom||"").trim())?0.5:1}}>{savingJuror?"⏳ Enregistrement…":"💾 Enregistrer"}</button>
+                  {detailJuror.email&&<button onClick={()=>{navigator.clipboard.writeText(detailJuror.email);}} className="btn" style={{fontSize:10.5,padding:"6px 11px",borderRadius:7,background:CREAM,color:"#6a6a8a",border:"1px solid "+CREAM2,fontFamily:"Inter,sans-serif"}}>📋 Copier email</button>}
+                </div>
+              </div>
               <div style={{marginBottom:12}}>
                 <div style={{fontSize:9.5,textTransform:"uppercase",letterSpacing:".08em",color:"#a0a0b8",fontWeight:500,marginBottom:4}}>Sessions assignées</div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
