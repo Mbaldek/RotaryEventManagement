@@ -4,6 +4,7 @@ import { Loader2, Copy, RotateCcw, ExternalLink, Check, Mail, Download, Users, F
 import { SESSION_BY_ID, CRITERIA, getCriterion, getSessionLabel } from "@/lib/rsa/constants";
 import { StartupConfirmation, SessionConfig, JuryProfile } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
+import FinaleEmailsSection from "./FinaleEmailsSection";
 
 // J-3 deadlines (matches RsaDashboard.SESSION_DEADLINES)
 const SESSION_DEADLINES = {
@@ -1293,7 +1294,8 @@ export default function DecksTab({ sessionId }) {
         </div>
       </section>
 
-      {/* Section B: emails J-7 */}
+      {/* Section B: emails J-7 (sessions qualificatives — la finale a son propre bloc plus bas) */}
+      {!session?.isFinal && (
       <section>
         <div className="flex items-baseline justify-between mb-2 flex-wrap gap-2">
           <h2 className="text-sm font-semibold text-stone-800">Brouillons d'emails J-7</h2>
@@ -1381,6 +1383,7 @@ export default function DecksTab({ sessionId }) {
           </div>
         )}
       </section>
+      )}
 
       {/* Section C: jury outreach tracking */}
       <section>
@@ -1554,7 +1557,8 @@ export default function DecksTab({ sessionId }) {
         </div>
       </section>
 
-      {/* Section D: emails jury (tri-lingue FR/EN/DE) */}
+      {/* Section D: emails jury (sessions qualificatives — la finale a son propre bloc plus bas) */}
+      {!session?.isFinal && (
       <section>
         <div className="flex items-baseline justify-between mb-2 flex-wrap gap-2">
           <h2 className="text-sm font-semibold text-stone-800 inline-flex items-center gap-2">
@@ -1661,6 +1665,11 @@ export default function DecksTab({ sessionId }) {
           </div>
         )}
       </section>
+      )}
+
+      {session?.isFinal && (
+        <FinaleEmailsSection rows={rows} jurors={jurors} juryPackUrl={juryPackUrl} />
+      )}
     </div>
   );
 }
