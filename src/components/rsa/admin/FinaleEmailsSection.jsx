@@ -1,10 +1,32 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Copy, Send, ExternalLink, Mic2, Users as UsersIcon, Crown, RotateCcw } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 // Concrete finale logistics, baked into the editable defaults. The Teams join
 // link was cleaned from the malformed launcher URL the organiser pasted.
 const FINALE_TEAMS_URL = "https://teams.live.com/meet/93234415719609?p=7BjmHidIF7xzrs0rt0";
+
+// Per-finalist list with individual pitch-deck links — same approach as the
+// jury pack email. Finale rows carry a deck (final_deck_path = their new finale
+// deck, else application_deck_path = the baseline backfilled from the source
+// qualifying session). Rendered into {STARTUPS_BLOCK} per card language.
+const BLOCK_LABELS = {
+  fr: { deck: "Deck", none: "non fourni" },
+  de: { deck: "Deck", none: "nicht bereitgestellt" },
+};
+function buildStartupsBlock(rows, lang) {
+  const L = BLOCK_LABELS[lang] || BLOCK_LABELS.fr;
+  const list = (rows || []).filter((r) => r && r.startup_name);
+  if (!list.length) return "—";
+  return list
+    .map((r, i) => {
+      const path = r.final_deck_path || r.application_deck_path;
+      const url = path ? supabase.storage.from("uploads").getPublicUrl(path).data.publicUrl : null;
+      return `${i + 1}. ${r.startup_name}\n   ${L.deck} : ${url || L.none}`;
+    })
+    .join("\n\n");
+}
 
 // ---- Default templates (FR / DE) for the three finale audiences ----
 // {SCORING_URL} {JURYHUB_URL} {PACK_URL} {TEAMS_URL} are substituted at render.
@@ -100,6 +122,13 @@ Accueil au rez-de-chaussée dès 15h30, émargement + pièce d'identité.
   • 18h15 — fin des pitchs
   • puis cocktail — annonce du lauréat
 
+📚 LES FINALISTES & LEURS DOCUMENTS
+  • Pre-read (executive summaries des finalistes) : {PACK_URL}
+  • Espace concours — l'historique complet du concours (toutes les sessions, startups, decks, jurys, classements) : {JURYHUB_URL}
+
+Pitch decks des finalistes :
+{STARTUPS_BLOCK}
+
 📊 SCORING — même format que les sessions qualificatives
   • Page de scoring : {SCORING_URL}
   • Un QR code sera aussi affiché sur place.
@@ -145,6 +174,13 @@ Empfang im Erdgeschoss ab 15:30 Uhr, Anmeldung + Ausweis.
   • 18:15 — Ende der Pitches
   • anschließend Cocktail — Bekanntgabe des Siegers
 
+📚 DIE FINALISTEN & IHRE UNTERLAGEN
+  • Pre-Read (Executive Summaries der Finalisten): {PACK_URL}
+  • Wettbewerbsbereich — die vollständige Historie des Wettbewerbs (alle Sessions, Startups, Decks, Jurys, Rankings): {JURYHUB_URL}
+
+Pitch Decks der Finalisten:
+{STARTUPS_BLOCK}
+
 📊 SCORING — gleiches Format wie die Qualifikationssessions
   • Scoring-Seite: {SCORING_URL}
   • Ein QR-Code wird auch vor Ort angezeigt.
@@ -188,9 +224,11 @@ Accueil au rez-de-chaussée dès 15h30 ; émargement + pièce d'identité.
   • Questions concises et précises, pour laisser ensuite la place aux jurés Rotary.
 
 📚 VOS DOCUMENTS
-  • Pack pre-read (executive summaries des finalistes) : {PACK_URL}
-  • Espace concours — toutes les startups, decks, jurys et le programme : {JURYHUB_URL}
-  • Les decks des finalistes sont accessibles depuis l'Espace concours ci-dessus.
+  • Pre-read (executive summaries des finalistes) : {PACK_URL}
+  • Espace concours — l'historique complet du concours (toutes les sessions, startups, decks, jurys, classements) : {JURYHUB_URL}
+
+Pitch decks des finalistes :
+{STARTUPS_BLOCK}
 
 📊 SCORING — comment ça marche
   • Page de scoring : {SCORING_URL} (un QR code sera aussi affiché sur place)
@@ -224,9 +262,11 @@ Empfang im Erdgeschoss ab 15:30 Uhr; Anmeldung + Ausweis.
   • Kurze, präzise Fragen, um anschließend der Rotary-Jury Raum zu lassen.
 
 📚 IHRE UNTERLAGEN
-  • Pre-Read-Paket (Executive Summaries der Finalisten): {PACK_URL}
-  • Wettbewerbsbereich — alle Startups, Decks, Jurys und das Programm: {JURYHUB_URL}
-  • Die Decks der Finalisten sind über den Wettbewerbsbereich oben zugänglich.
+  • Pre-Read (Executive Summaries der Finalisten): {PACK_URL}
+  • Wettbewerbsbereich — die vollständige Historie des Wettbewerbs (alle Sessions, Startups, Decks, Jurys, Rankings): {JURYHUB_URL}
+
+Pitch Decks der Finalisten:
+{STARTUPS_BLOCK}
 
 📊 SCORING — so funktioniert es
   • Scoring-Seite: {SCORING_URL} (ein QR-Code wird auch vor Ort angezeigt)
@@ -287,20 +327,20 @@ export default function FinaleEmailsSection({ rows, jurors, juryPackUrl }) {
           id="finalist" color="amber" Icon={Mic2}
           title="Finalistes"
           subtitle={`${finalistEmails.length} contact${finalistEmails.length > 1 ? "s" : ""} · pitch 15 min / 25 min total`}
-          defaults={DEFAULTS.finalist} vars={vars} recipients={finalistEmails}
+          defaults={DEFAULTS.finalist} vars={vars} rows={rows} recipients={finalistEmails}
         />
         <FinaleEmailCard
           id="jury" color="blue" Icon={UsersIcon}
           title="Jury Rotary"
           subtitle={`${juryEmails.length} juré${juryEmails.length > 1 ? "s" : ""} finale · scoring en direct`}
-          defaults={DEFAULTS.jury} vars={vars} recipients={juryEmails}
+          defaults={DEFAULTS.jury} vars={vars} rows={rows} recipients={juryEmails}
           note="Retire les 2 jurées externes du BCC — elles ont leur email dédié ci-contre."
         />
         <FinaleEmailCard
           id="ext" color="emerald" Icon={Crown}
           title="Jurés externes (Lead Jury)"
           subtitle="à envoyer aux 2 jurées externes"
-          defaults={DEFAULTS.ext} vars={vars} recipients={[]}
+          defaults={DEFAULTS.ext} vars={vars} rows={rows} recipients={[]}
           recipientsHint="Saisis toi-même les destinataires (les 2 jurées externes)."
         />
       </div>
@@ -314,7 +354,7 @@ const TONES = {
   emerald: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", btn: "bg-emerald-600 hover:bg-emerald-700" },
 };
 
-function FinaleEmailCard({ id, color, Icon, title, subtitle, defaults, vars, recipients, note, recipientsHint }) {
+function FinaleEmailCard({ id, color, Icon, title, subtitle, defaults, vars, rows, recipients, note, recipientsHint }) {
   const tone = TONES[color] || TONES.blue;
   const [lang, setLang] = useState("fr");
   const [tplFr, setTplFr] = useState(() => localStorage.getItem(`rsa_fin_email_${id}_fr`) || defaults.fr);
@@ -325,7 +365,8 @@ function FinaleEmailCard({ id, color, Icon, title, subtitle, defaults, vars, rec
 
   const tpl = lang === "fr" ? tplFr : tplDe;
   const setTpl = lang === "fr" ? setTplFr : setTplDe;
-  const { subject, body } = splitSubjectBody(renderTemplate(tpl, vars));
+  const fullVars = { ...vars, STARTUPS_BLOCK: buildStartupsBlock(rows, lang) };
+  const { subject, body } = splitSubjectBody(renderTemplate(tpl, fullVars));
 
   function copy(text, label) {
     if (!text) return;
