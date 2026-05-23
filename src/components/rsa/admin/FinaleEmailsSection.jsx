@@ -296,6 +296,65 @@ function splitSubjectBody(text) {
   return { subject: "", body: text };
 }
 
+// --- Short clickable links (HTML clipboard) ---
+// Raw Supabase storage / Teams URLs are 100-200 chars and ugly in an email.
+// When copied as text/html the placeholders become short anchors; pasting into
+// a Gmail/Proton compose window keeps them clickable. text/plain stays as a
+// fallback for plain editors.
+const HTML_LINK_LABELS = {
+  fr: { deck: "Voir le deck", teams: "Rejoindre la réunion Teams", pack: "Télécharger le pre-read (PDF)", scoring: "Ouvrir la page de scoring", juryhub: "Espace concours" },
+  de: { deck: "Deck öffnen", teams: "Teams-Meeting beitreten", pack: "Pre-Read (PDF) öffnen", scoring: "Scoring-Seite öffnen", juryhub: "Wettbewerbsbereich" },
+};
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function buildStartupsBlockHtml(rows, lang) {
+  const L = BLOCK_LABELS[lang] || BLOCK_LABELS.fr;
+  const HL = HTML_LINK_LABELS[lang] || HTML_LINK_LABELS.fr;
+  const list = (rows || []).filter((r) => r && r.startup_name);
+  if (!list.length) return "—";
+  return list
+    .map((r, i) => {
+      const path = r.final_deck_path || r.application_deck_path;
+      const url = path ? supabase.storage.from("uploads").getPublicUrl(path).data.publicUrl : null;
+      const link = url ? `<a href="${escapeHtml(url)}">${escapeHtml(HL.deck)}</a>` : `<em>${escapeHtml(L.none)}</em>`;
+      return `${i + 1}. <strong>${escapeHtml(r.startup_name)}</strong> — ${link}`;
+    })
+    .join("<br>");
+}
+// Render the body to HTML: strip the subject line, escape the static text, then
+// splice in already-HTML-safe values (anchor tags / escaped strings), newlines → <br>.
+function renderTemplateHtml(tpl, varsHtml) {
+  const lines = tpl.split("\n");
+  const first = (lines[0] || "").trim();
+  const bodyTpl = /^(?:sujet|betreff)\s*:\s*/i.test(first)
+    ? lines.slice(1).join("\n").replace(/^\n+/, "")
+    : tpl;
+  let out = escapeHtml(bodyTpl);
+  for (const [k, v] of Object.entries(varsHtml)) out = out.split(`{${k}}`).join(v ?? "");
+  return out.replace(/\n/g, "<br>");
+}
+async function copyRich(html, plain, okMsg) {
+  try {
+    if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([plain], { type: "text/plain" }),
+        }),
+      ]);
+      toast.success(okMsg);
+    } else {
+      await navigator.clipboard.writeText(plain);
+      toast.success("Copié (texte simple — HTML non supporté)");
+    }
+  } catch {
+    toast.error("Copie impossible");
+  }
+}
+
 export default function FinaleEmailsSection({ rows, jurors, juryPackUrl }) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const vars = useMemo(() => ({
@@ -368,6 +427,18 @@ function FinaleEmailCard({ id, color, Icon, title, subtitle, defaults, vars, row
   const fullVars = { ...vars, STARTUPS_BLOCK: buildStartupsBlock(rows, lang) };
   const { subject, body } = splitSubjectBody(renderTemplate(tpl, fullVars));
 
+  // HTML version with short clickable anchors instead of raw long URLs.
+  const HL = HTML_LINK_LABELS[lang] || HTML_LINK_LABELS.fr;
+  const linkHtml = (url, label) =>
+    /^https?:\/\//i.test(url || "") ? `<a href="${escapeHtml(url)}">${escapeHtml(label)}</a>` : escapeHtml(url || "");
+  const bodyHtml = renderTemplateHtml(tpl, {
+    SCORING_URL: linkHtml(fullVars.SCORING_URL, HL.scoring),
+    JURYHUB_URL: linkHtml(fullVars.JURYHUB_URL, HL.juryhub),
+    PACK_URL: linkHtml(fullVars.PACK_URL, HL.pack),
+    TEAMS_URL: linkHtml(fullVars.TEAMS_URL, HL.teams),
+    STARTUPS_BLOCK: buildStartupsBlockHtml(rows, lang),
+  });
+
   function copy(text, label) {
     if (!text) return;
     navigator.clipboard.writeText(text).then(
@@ -414,8 +485,10 @@ function FinaleEmailCard({ id, color, Icon, title, subtitle, defaults, vars, row
         <button onClick={() => copy(subject, "Sujet")} className="text-[11px] px-2 py-1 rounded bg-white hover:bg-stone-50 text-stone-700">
           <Copy className="w-3 h-3 inline mr-1" /> Sujet
         </button>
-        <button onClick={() => copy(body, "Corps")} className="text-[11px] px-2 py-1 rounded bg-white hover:bg-stone-50 text-stone-700">
-          <Copy className="w-3 h-3 inline mr-1" /> Corps
+        <button onClick={() => copyRich(bodyHtml, body, "Email copié — liens courts cliquables (colle dans Gmail/Proton)")}
+          title="Liens raccourcis cliquables. Colle dans un brouillon Gmail/Proton pour les conserver."
+          className="text-[11px] px-2 py-1 rounded bg-white hover:bg-stone-50 text-stone-700">
+          <Copy className="w-3 h-3 inline mr-1" /> Copier (HTML)
         </button>
         {!recipientsHint && (
           <button onClick={copyEmails} disabled={recipients.length === 0}
@@ -443,7 +516,9 @@ function FinaleEmailCard({ id, color, Icon, title, subtitle, defaults, vars, row
       ) : (
         <div className="bg-white border border-stone-200 rounded p-2 space-y-1.5">
           <div className="text-xs text-stone-800 font-medium">{subject}</div>
-          <pre className="text-[11px] text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-64 overflow-y-auto">{body}</pre>
+          <div className="text-[11px] text-stone-700 leading-relaxed max-h-64 overflow-y-auto [&_a]:text-indigo-600 [&_a]:underline"
+            style={{ whiteSpace: "pre-wrap" }}
+            dangerouslySetInnerHTML={{ __html: bodyHtml }} />
         </div>
       )}
     </div>
