@@ -345,6 +345,20 @@ export default function ResultsTab({ sessionId }) {
                 </p>
               </div>
               <div className="flex gap-2 flex-wrap">
+                {session.isFinal && (
+                  <a
+                    href="/RsaFinaleResults"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold border-2 text-amber-800"
+                    style={{ background: "#fdf6e8", borderColor: "#c9a84c" }}
+                    title="Palmarès public de la Grande Finale — à partager avec tous (lecture seule, live)"
+                  >
+                    <Trophy className="w-4 h-4" />
+                    Palmarès public
+                    <ExternalLink className="w-3 h-3 opacity-50" />
+                  </a>
+                )}
                 <a
                   href={`/RsaRecap?s=${sessionId}&view=startups`}
                   target="_blank"

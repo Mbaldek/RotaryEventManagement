@@ -58,6 +58,7 @@ import ReservationRequest from './pages/ReservationRequest';
 import Reservations from './pages/Reservations';
 import RsaAdmin from './pages/RsaAdmin';
 import RsaDashboard from './pages/RsaDashboard';
+import RsaFinaleResults from './pages/RsaFinaleResults';
 import RsaFinaleRsvp from './pages/RsaFinaleRsvp';
 import RsaJuryForm from './pages/RsaJuryForm';
 import RsaJuryHub from './pages/RsaJuryHub';
@@ -84,6 +85,7 @@ export const PAGES = {
     "Reservations": Reservations,
     "RsaAdmin": RsaAdmin,
     "RsaDashboard": RsaDashboard,
+    "RsaFinaleResults": RsaFinaleResults,
     "RsaFinaleRsvp": RsaFinaleRsvp,
     "RsaJuryForm": RsaJuryForm,
     "RsaJuryHub": RsaJuryHub,
