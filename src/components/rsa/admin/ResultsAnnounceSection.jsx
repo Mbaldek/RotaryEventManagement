@@ -44,16 +44,14 @@ const PALMARES_LABEL = {
   en: "🏆 Full results and the finale page:",
   de: "🏆 Das vollständige Ergebnis und die Finale-Seite:",
 };
-const HUB_LABEL = {
-  fr: "👁 L'historique complet du concours (toutes les sessions, startups, jurys) :",
-  en: "👁 The full competition archive (all sessions, startups, jurors):",
-  de: "👁 Das vollständige Wettbewerbsarchiv (alle Sessions, Startups, Jurys):",
-};
+// Public results page on the rotary-startup.org domain (Vercel custom domain).
+// This is the ONLY external link allowed in the announcement emails — no vercel.app,
+// no JuryHub, nothing else.
+const PUBLIC_RESULTS_URL = "https://palmares.rotary-startup.org/RsaFinaleResults";
 
 export default function ResultsAnnounceSection() {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const RESULTS_URL = `${origin}/RsaFinaleResults`;
-  const JURYHUB_URL = `${origin}/RsaJuryHub`;
+  const RESULTS_URL = PUBLIC_RESULTS_URL;
+  const JURYHUB_URL = ""; // deprecated — emails carry only the results-page link
 
   const [loading, setLoading] = useState(true);
   const [ranked, setRanked] = useState([]);
@@ -187,7 +185,7 @@ export default function ResultsAnnounceSection() {
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold text-stone-800">Annonce des résultats — post-finale</div>
           <p className="text-xs text-stone-500 mt-0.5">
-            Lauréat <strong>{winner.startup}</strong> · messages de félicitations + remerciements, <strong>sans les scores</strong> (vainqueur + classement uniquement). Trilingue FR/EN/DE, destinataires pré-remplis. Le classement et la page palmarès renvoient vers <code className="text-[10px] bg-stone-100 px-1 rounded">/RsaFinaleResults</code>.
+            Lauréat <strong>{winner.startup}</strong> · messages de félicitations + remerciements, <strong>sans les scores</strong> (vainqueur + classement uniquement). Trilingue FR/EN/DE, destinataires pré-remplis. Seul lien dans les emails : la page palmarès sur <code className="text-[10px] bg-stone-100 px-1 rounded">rotary-startup.org</code>.
           </p>
         </div>
       </div>
@@ -238,9 +236,9 @@ async function copyRich(html, plain) {
 }
 
 const LINK_LABELS = {
-  fr: { results: "Voir le palmarès", hub: "Espace concours" },
-  en: { results: "View the results", hub: "Competition archive" },
-  de: { results: "Ergebnis ansehen", hub: "Wettbewerbsbereich" },
+  fr: { results: "Voir le palmarès" },
+  en: { results: "View the results" },
+  de: { results: "Ergebnis ansehen" },
 };
 
 function AudienceCard({ audience, ctx }) {
@@ -297,7 +295,6 @@ function AudienceCard({ audience, ctx }) {
   const recips = manual ? [...new Set(parsedManual)] : [...new Set(group[lang] || [])];
   const links = [
     { url: ctx.RESULTS_URL, label: LINK_LABELS[lang].results },
-    { url: ctx.JURYHUB_URL, label: LINK_LABELS[lang].hub },
   ];
   const bodyHtml = bodyToHtml(body, links);
 
@@ -400,12 +397,9 @@ function AudienceCard({ audience, ctx }) {
 // ============================ TEMPLATE BUILDERS ============================
 // Each returns { subject, body }. No scores anywhere — winner + ranking only.
 
-function footer(lang, RESULTS_URL, JURYHUB_URL) {
+function footer(lang, RESULTS_URL) {
   return `${PALMARES_LABEL[lang]}
 ${RESULTS_URL}
-
-${HUB_LABEL[lang]}
-${JURYHUB_URL}
 
 ${SEE_YOU[lang]}
 
