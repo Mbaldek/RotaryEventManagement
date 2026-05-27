@@ -40,14 +40,13 @@ const SEE_YOU = {
   de: "Wir sehen uns 2027 zu einer neuen Ausgabe. Bis dahin: passen Sie gut auf Ihre Projekte auf — und bleiben Sie in Kontakt.",
 };
 const PALMARES_LABEL = {
-  fr: "🏆 Le palmarès complet et la page de la finale :",
-  en: "🏆 Full results and the finale page:",
-  de: "🏆 Das vollständige Ergebnis und die Finale-Seite:",
+  fr: "🏆 Le palmarès complet et tous les résultats sur notre site :",
+  en: "🏆 The full results are on our website:",
+  de: "🏆 Alle Ergebnisse finden Sie auf unserer Website:",
 };
-// Public results page on the rotary-startup.org domain (Vercel custom domain).
-// This is the ONLY external link allowed in the announcement emails — no vercel.app,
-// no JuryHub, nothing else.
-const PUBLIC_RESULTS_URL = "https://palmares.rotary-startup.org/RsaFinaleResults";
+// Public results live on the rotary-startup.org landing page (finale results table,
+// built on WordPress). This is the ONLY link in the announcement emails.
+const PUBLIC_RESULTS_URL = "https://rotary-startup.org";
 
 export default function ResultsAnnounceSection() {
   const RESULTS_URL = PUBLIC_RESULTS_URL;
