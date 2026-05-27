@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Download, Save, Rocket, AlertTriangle, Trophy, Sparkles, FileCheck2, Users, ListOrdered, ExternalLink } from "lucide-react";
-import { SESSION_BY_ID, FINAL_SESSION_ID, weightedScore, JURY_STATUS } from "@/lib/rsa/constants";
+import { SESSION_BY_ID, FINAL_SESSION_ID, JURY_STATUS } from "@/lib/rsa/constants";
 import { buildRanking } from "@/lib/rsa/ranking";
 import { JuryScore, SessionConfig, StartupConfirmation } from "@/lib/db";
 import StatusPill from "./StatusPill";
 import CommunicationsSection from "./CommunicationsSection";
+import ResultsAnnounceSection from "./ResultsAnnounceSection";
 
 export default function ResultsTab({ sessionId }) {
   const session = SESSION_BY_ID[sessionId];
@@ -321,6 +322,9 @@ export default function ResultsTab({ sessionId }) {
           </div>
         </div>
       )}
+
+      {/* Post-finale results announcement — score-free, all audiences, FR/EN/DE */}
+      {session.isFinal && published && <ResultsAnnounceSection />}
 
       {status === JURY_STATUS.DRAFT || status === JURY_STATUS.LIVE ? (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3">
