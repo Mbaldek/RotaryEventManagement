@@ -249,6 +249,15 @@ function AudienceCard({ audience, ctx }) {
   const [lang, setLang] = useState("fr");
   const [editing, setEditing] = useState(false);
 
+  // Manual audiences (clubs, incubators, all applicants) have no DB source — the
+  // organiser pastes recipients here. Kept out of the repo (personal data) and
+  // persisted only in the browser.
+  const manualKey = `rsa_results_recips_${id}`;
+  const [manualRecips, setManualRecips] = useState(() => {
+    try { return localStorage.getItem(manualKey) || ""; } catch { return ""; }
+  });
+  useEffect(() => { try { localStorage.setItem(manualKey, manualRecips); } catch {} }, [manualKey, manualRecips]);
+
   const generated = useMemo(() => ({
     fr: build({ ...ctx, lang: "fr" }),
     en: build({ ...ctx, lang: "en" }),
@@ -279,7 +288,11 @@ function AudienceCard({ audience, ctx }) {
   const subject = tpl.subject;
   const body = customBody || tpl.body;
 
-  const recips = [...new Set(group[lang] || [])];
+  const parsedManual = manualRecips
+    .split(/[\s,;]+/)
+    .map((s) => s.trim())
+    .filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
+  const recips = manual ? [...new Set(parsedManual)] : [...new Set(group[lang] || [])];
   const links = [
     { url: ctx.RESULTS_URL, label: LINK_LABELS[lang].results },
     { url: ctx.JURYHUB_URL, label: LINK_LABELS[lang].hub },
@@ -322,7 +335,19 @@ function AudienceCard({ audience, ctx }) {
         </div>
       </div>
 
-      {manual && <div className="text-[11px] text-stone-500 italic">{manual}</div>}
+      {manual && (
+        <div className="flex flex-col gap-1">
+          <div className="text-[11px] text-stone-500 italic">{manual}</div>
+          <textarea
+            value={manualRecips}
+            onChange={(e) => setManualRecips(e.target.value)}
+            rows={2}
+            placeholder="Colle ici les emails (séparés par virgule, espace ou retour à la ligne)…"
+            className="w-full text-[11px] p-1.5 rounded border border-stone-200 focus:border-stone-400 focus:outline-none"
+          />
+          <div className="text-[10px] text-stone-400">{recips.length} destinataire{recips.length > 1 ? "s" : ""} valide{recips.length > 1 ? "s" : ""}</div>
+        </div>
+      )}
 
       <div className="flex gap-1.5 flex-wrap">
         <button onClick={() => copyText(subject, "Sujet")} className="text-[11px] px-2 py-1 rounded bg-white hover:bg-stone-50 text-stone-700">
