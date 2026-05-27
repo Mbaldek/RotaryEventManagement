@@ -154,10 +154,11 @@ export default function ResultsAnnounceSection() {
       { id: "finalists", Icon: Mic2, color: "amber", title: "Finalistes", group: recipients.finalists, build: buildFinalists },
       { id: "visitors", Icon: UsersIcon, color: "violet", title: "Visiteurs de la finale", group: recipients.visitors, build: buildVisitors },
       { id: "finaleJury", Icon: Trophy, color: "emerald", title: "Jury de la finale", group: recipients.finaleJury, build: buildFinaleJury },
-      { id: "allStartups", Icon: UserCheck, color: "blue", title: "Toutes les startups participantes", group: recipients.allStartups, build: buildAllStartups },
+      { id: "allStartups", Icon: UserCheck, color: "blue", title: "Startups ayant pitché", group: recipients.allStartups, build: buildAllStartups },
+      { id: "allApplicants", Icon: UserCheck, color: "blue", title: "Tous les candidats (65+ dossiers)", group: emptyGroups(), build: buildAllApplicants, manual: "Destinataires à importer — TOUS les dossiers Airtable, candidats non retenus inclus (CSV ou AIRTABLE_PAT)." },
       { id: "allJury", Icon: UsersIcon, color: "blue", title: "Tous les jurés participants", group: recipients.allJury, build: buildAllJury },
       { id: "clubs", Icon: Building2, color: "rose", title: "Clubs Rotary", group: emptyGroups(), build: buildClubs, manual: "Destinataires à saisir (contacts clubs)." },
-      { id: "incubators", Icon: Sprout, color: "rose", title: "Incubateurs relais", group: emptyGroups(), build: buildIncubators, manual: "Destinataires à saisir (incubateurs ayant relayé l'appel)." },
+      { id: "incubators", Icon: Sprout, color: "rose", title: "Incubateurs / partenaires — compte rendu", group: emptyGroups(), build: buildIncubators, manual: "Destinataires à saisir à la main (incubateurs / partenaires)." },
     ];
   }, [winner, recipients]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -658,6 +659,64 @@ ${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
   };
 }
 
+// Sent to EVERY applicant of the season — including the ~40 startups that applied
+// but were not selected to pitch. Inclusive, warm, no judgement on non-selection.
+function buildAllApplicants({ lang, rankingBlock, winner, RESULTS_URL, JURYHUB_URL }) {
+  const block = rankingBlock(lang);
+  if (lang === "de") {
+    return {
+      subject: `🏆 Rotary Startup Award 2026 — Ergebnis & Dank für Ihre Bewerbung`,
+      body: `Guten Tag,
+
+vielen Dank, dass Sie sich für den Rotary Startup Award 2026 beworben haben. Diese erste Ausgabe hat über 65 Bewerbungen zusammengebracht — ein starkes Zeichen für die Dynamik des Ökosystems. Nicht alle konnten zum Pitchen ausgewählt werden, doch jede Bewerbung hat zum Reichtum dieser Saison beigetragen.
+
+Falls Ihr Projekt diesmal nicht ausgewählt wurde: Das ist kein Urteil über seinen Wert. Die Auswahl war hart, und viele hervorragende Bewerbungen konnten nicht ins Programm aufgenommen werden.
+
+Beim Großen Finale am 26. Mai bei Cyrus Conseil traten die fünf Sessionsieger vor einer internationalen Jury an. Herzlichen Glückwunsch an ${winner.startup}, Preisträger 2026.
+
+Das Endklassement:
+
+${block}
+
+${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
+    };
+  }
+  if (lang === "en") {
+    return {
+      subject: `🏆 Rotary Startup Award 2026 — results & thank you for applying`,
+      body: `Hello,
+
+Thank you for applying to the Rotary Startup Award 2026. This first edition brought together more than 65 applications — a strong signal of how vibrant the ecosystem is. Not all could be selected to pitch, but every application added to the richness of this season.
+
+If your project wasn't selected this time, please don't take it as a verdict on its value. The selection was tough, and many excellent applications could not be scheduled.
+
+At the Grand Finale on 26 May at Cyrus Conseil, the five session winners competed before an international jury. Congratulations to ${winner.startup}, the 2026 laureate.
+
+The final ranking:
+
+${block}
+
+${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
+    };
+  }
+  return {
+    subject: `🏆 Rotary Startup Award 2026 — résultats & merci pour votre candidature`,
+    body: `Bonjour,
+
+Merci d'avoir candidaté au Rotary Startup Award 2026. Cette première édition a réuni plus de 65 candidatures — un signal fort de la vitalité de l'écosystème. Toutes n'ont pas pu être retenues pour pitcher, mais chaque dossier a compté dans la richesse de cette saison.
+
+Si votre projet n'a pas été retenu cette fois, ne le prenez pas comme un verdict sur sa valeur : la sélection a été difficile, et beaucoup d'excellents dossiers n'ont pas pu être programmés.
+
+Lors de la Grande Finale, le 26 mai chez Cyrus Conseil, les cinq vainqueurs de session se sont affrontés devant un jury international. Toutes nos félicitations à ${winner.startup}, lauréat 2026.
+
+Le classement final :
+
+${block}
+
+${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
+  };
+}
+
 function buildClubs({ lang, rankingBlock, winner, RESULTS_URL, JURYHUB_URL }) {
   const block = rankingBlock(lang);
   if (lang === "de") {
@@ -714,57 +773,81 @@ ${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
   };
 }
 
+// Generic competition recap ("compte rendu") — for incubators & partners who
+// relayed the call. Manual recipients (no base available). Richer than the others:
+// season figures + result. Reusable as a stand-alone debrief.
 function buildIncubators({ lang, rankingBlock, winner, RESULTS_URL, JURYHUB_URL }) {
   const block = rankingBlock(lang);
   if (lang === "de") {
     return {
-      subject: `🏆 Rotary Startup Award 2026 — Ergebnis & Dank für Ihre Unterstützung`,
+      subject: `🏆 Rotary Startup Award 2026 — Bericht zur Ausgabe`,
       body: `Guten Tag,
 
-vielen Dank, dass Sie den Aufruf zum Rotary Startup Award 2026 in Ihrem Netzwerk verbreitet haben. Mehrere Startups Ihres Ökosystems haben teilgenommen — und das hat den Wettbewerb reicher gemacht.
+hier ein kurzer Bericht zur ersten Ausgabe des Rotary Startup Award 2026, den Sie mit bekannt gemacht haben.
 
-Beim Großen Finale wurde ${winner.startup} zum Preisträger 2026 gekürt.
+In Zahlen:
+• über 65 eingegangene Bewerbungen
+• 28 zum Pitchen ausgewählte Startups
+• 5 thematische Sessions (FoodTech, Soziale Wirkung, Tech/KI/Fintech, Healthtech, Greentech)
+• 34 mobilisierte Jurymitglieder
+• ein Großes Finale am 26. Mai bei Cyrus Conseil, vor einer zwölfköpfigen internationalen Jury
 
-Das Endklassement:
+Preisträger 2026: ${winner.startup}.
+
+Das Endklassement des Finales:
 
 ${block}
 
-Wir würden uns freuen, die Zusammenarbeit für die Ausgabe 2027 fortzusetzen — die von Ihnen begleiteten Projekte haben hier ihren Platz.
+Vielen Dank, dass Sie den Aufruf in Ihrem Netzwerk verbreitet haben — mehrere von Ihnen begleitete Projekte haben teilgenommen. Wir würden uns freuen, 2027 gemeinsam weiterzumachen.
 
 ${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
     };
   }
   if (lang === "en") {
     return {
-      subject: `🏆 Rotary Startup Award 2026 — results & thanks for relaying`,
+      subject: `🏆 Rotary Startup Award 2026 — edition report`,
       body: `Hello,
 
-Thank you for relaying the Rotary Startup Award 2026 call across your network. Several startups from your ecosystem took part — and that made the competition richer.
+Here is a short report on the first edition of the Rotary Startup Award 2026, which you helped spread the word about.
 
-At the Grand Finale, ${winner.startup} was named the 2026 laureate.
+In figures:
+• more than 65 applications received
+• 28 startups selected to pitch
+• 5 themed sessions (FoodTech, Social Impact, Tech/AI/Fintech, Healthtech, Greentech)
+• 34 jurors mobilised
+• a Grand Finale on 26 May at Cyrus Conseil, before an international jury of twelve
 
-The final ranking:
+2026 laureate: ${winner.startup}.
+
+The finale's final ranking:
 
 ${block}
 
-We would be delighted to continue working together for the 2027 edition — the projects you support have their place here.
+Thank you for relaying the call across your network — several projects you support took part. We would be delighted to continue together in 2027.
 
 ${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
     };
   }
   return {
-    subject: `🏆 Rotary Startup Award 2026 — résultats & merci pour votre relais`,
+    subject: `🏆 Rotary Startup Award 2026 — compte rendu de l'édition`,
     body: `Bonjour,
 
-Merci d'avoir relayé l'appel du Rotary Startup Award 2026 dans votre réseau. Plusieurs startups de votre écosystème ont participé — et cela a rendu le concours plus riche.
+Voici un bref compte rendu de la première édition du Rotary Startup Award 2026, que vous avez contribué à faire connaître.
 
-Lors de la Grande Finale, ${winner.startup} a été désigné lauréat 2026.
+En quelques chiffres :
+• plus de 65 candidatures reçues
+• 28 startups sélectionnées pour pitcher
+• 5 sessions thématiques (FoodTech, Impact social, Tech/AI/Fintech, Healthtech, Greentech)
+• 34 jurés mobilisés
+• une Grande Finale le 26 mai chez Cyrus Conseil, devant un jury international de douze membres
 
-Le classement final :
+Lauréat 2026 : ${winner.startup}.
+
+Le classement final de la finale :
 
 ${block}
 
-Nous serions ravis de poursuivre la collaboration pour l'édition 2027 — les projets que vous accompagnez ont toute leur place ici.
+Merci d'avoir relayé l'appel à candidatures auprès de votre réseau — plusieurs projets que vous accompagnez ont pris part au concours. Nous serions ravis de poursuivre ensemble en 2027.
 
 ${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
   };
