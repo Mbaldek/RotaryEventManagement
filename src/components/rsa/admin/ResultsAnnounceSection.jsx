@@ -253,10 +253,12 @@ function AudienceCard({ audience, ctx }) {
   // organiser pastes recipients here. Kept out of the repo (personal data) and
   // persisted only in the browser.
   const manualKey = `rsa_results_recips_${id}`;
-  const [manualRecips, setManualRecips] = useState(() => {
-    try { return localStorage.getItem(manualKey) || ""; } catch { return ""; }
+  const [manualMap, setManualMap] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(manualKey) || "{}") || {}; } catch { return {}; }
   });
-  useEffect(() => { try { localStorage.setItem(manualKey, manualRecips); } catch {} }, [manualKey, manualRecips]);
+  useEffect(() => { try { localStorage.setItem(manualKey, JSON.stringify(manualMap)); } catch {} }, [manualKey, manualMap]);
+  const manualRecips = manualMap[lang] || "";
+  const setManualRecips = (val) => setManualMap((m) => ({ ...m, [lang]: val }));
 
   const generated = useMemo(() => ({
     fr: build({ ...ctx, lang: "fr" }),
