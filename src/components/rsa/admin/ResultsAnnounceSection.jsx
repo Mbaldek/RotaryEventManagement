@@ -737,59 +737,101 @@ ${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
   };
 }
 
-function buildClubs({ lang, rankingBlock, winner, RESULTS_URL, JURYHUB_URL }) {
+// Clubs Rotary — formal, institutional register (matches the launch communication:
+// rotarian salutation, Rotary values, both Clubs named, committee signature,
+// "amitié rotarienne"). No generic footer — its own formal closing.
+function buildClubs({ lang, rankingBlock, winner, RESULTS_URL }) {
   const block = rankingBlock(lang);
   if (lang === "de") {
     return {
-      subject: `🏆 Rotary Startup Award 2026 — Ergebnis & Dank an die Clubs`,
-      body: `Liebe Rotary-Freundinnen und -Freunde,
+      subject: `Rotary Startup Award 2026 — Ergebnisse des Großen Finales`,
+      body: `Liebe Rotarierinnen und Rotarier,
 
-der Rotary Startup Award 2026 ist zu Ende — und Ihr Club hat dazu beigetragen, sei es durch die Verbreitung des Aufrufs, durch Jurymitglieder oder durch Ihre Präsenz. Vielen Dank.
+der Rotary Club Paris freut sich, Ihnen in Zusammenarbeit mit dem Rotary Club Berlin Brandenburg Tor die Ergebnisse des Großen Finales des Rotary Startup Award 2026 mitzuteilen, das am 26. Mai 2026 stattfand.
 
-Beim Großen Finale wurde ${winner.startup} zum Preisträger 2026 gekürt.
+Getreu den Werten von Rotary — Dienst, Engagement, Anspruch und positive gesellschaftliche Wirkung — versammelte diese Ausgabe Startups mit hohem wirtschaftlichem und gesellschaftlichem Potenzial, in einem strukturierten, transparenten und nicht-kommerziellen Rahmen. Nach fünf thematischen Sessions und einem Großen Finale vor einer internationalen Jury wurde ${winner.startup} zur Preisträgerin der Ausgabe 2026 gekürt.
 
-Das Endklassement:
+Endklassement des Großen Finales:
 
 ${block}
 
-Diese Ausgabe hat gezeigt, was Rotary im Dienst des Unternehmertums und des gesellschaftlichen Engagements bewirken kann.
+Dieses Ergebnis ist das Werk eines gemeinsamen Engagements: Wir danken den Mitgliedern unserer Clubs herzlich, die als Jurymitglieder mitgewirkt, den Aufruf verbreitet oder das Finale mit ihrer Anwesenheit geehrt haben.
 
-${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
+Alle Ergebnisse finden Sie auf der offiziellen Website:
+${RESULTS_URL}
+
+Der Rotary Startup Award kehrt 2027 mit einer neuen Ausgabe zurück, die wir gerne gemeinsam mit Ihnen vorbereiten.
+
+Für Fragen erreichen Sie das Organisationskomitee unter: prixstartuprotary@proton.me
+
+Wir danken Ihnen für Ihr Engagement und Ihre Unterstützung dieser gemeinschaftlichen Initiative, die zum Ansehen unseres Clubs und zum Wirken von Rotary für verantwortungsvolle Innovation beiträgt.
+
+Mit herzlicher rotarischer Freundschaft,
+
+Das Organisationskomitee
+Rotary Startup Award 2026 — Rotary Club Paris
+Mathieu Balleron – Sophie Parize – Etienne Denarié – Jihad El Khoury`,
     };
   }
   if (lang === "en") {
     return {
-      subject: `🏆 Rotary Startup Award 2026 — results & thanks to the clubs`,
-      body: `Dear Rotary friends,
+      subject: `Rotary Startup Award 2026 — Grand Finale results`,
+      body: `Dear fellow Rotarians,
 
-The Rotary Startup Award 2026 has come to a close — and your club helped make it happen, whether by relaying the call, providing jurors, or simply being there. Thank you.
+The Rotary Club of Paris, in collaboration with the Rotary Club of Berlin Brandenburg Tor, is pleased to share with you the results of the Grand Finale of the 2026 Rotary Startup Award, held on 26 May 2026.
 
-At the Grand Finale, ${winner.startup} was named the 2026 laureate.
+True to the values of Rotary — service, commitment, excellence and positive impact on society — this edition brought together startups with strong economic and societal potential, within a structured, transparent and non-commercial framework. Following five themed sessions and a Grand Finale before an international jury, ${winner.startup} was named laureate of the 2026 edition.
 
-The final ranking:
+Grand Finale final ranking:
 
 ${block}
 
-This edition showed what Rotary can achieve in the service of entrepreneurship and community impact.
+This outcome is the fruit of a collective effort: we warmly thank the members of our Clubs who served as jurors, relayed the call for applications, or honoured the finale with their presence.
 
-${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
+The full results are available on the official website:
+${RESULTS_URL}
+
+The Rotary Startup Award will return in 2027 for a new edition, which we look forward to preparing together with you.
+
+For any question, you may contact the Organising Committee at: prixstartuprotary@proton.me
+
+We thank you for your engagement and your support for this collective initiative, which contributes to the influence of our Club and to Rotary's action in favour of responsible innovation.
+
+With warm Rotarian friendship,
+
+The Organising Committee
+Rotary Startup Award 2026 — Rotary Club of Paris
+Mathieu Balleron – Sophie Parize – Etienne Denarié – Jihad El Khoury`,
     };
   }
   return {
-    subject: `🏆 Rotary Startup Award 2026 — résultats & merci aux clubs`,
-    body: `Chers amis rotariens,
+    subject: `Rotary Startup Award 2026 — Résultats de la Grande Finale`,
+    body: `Chères amies rotariennes, chers amis rotariens,
 
-Le Rotary Startup Award 2026 s'achève — et votre club y a contribué, que ce soit en relayant l'appel, en fournissant des jurés ou simplement par votre présence. Merci.
+Le Rotary Club de Paris, en collaboration avec le Rotary Club de Berlin Brandenburg Tor, a le plaisir de vous communiquer les résultats de la Grande Finale de l'édition 2026 du Rotary Startup Award, qui s'est tenue le 26 mai 2026.
 
-Lors de la Grande Finale, ${winner.startup} a été désigné lauréat 2026.
+Fidèle aux valeurs du Rotary — service, engagement, exigence et impact positif sur la société — cette édition a réuni des startups à fort potentiel économique et sociétal, dans un cadre structuré, transparent et non commercial. À l'issue de cinq sessions thématiques, puis d'une Grande Finale devant un jury international, la startup ${winner.startup} a été désignée lauréate de l'édition 2026.
 
-Le classement final :
+Classement final de la Grande Finale :
 
 ${block}
 
-Cette édition a montré ce que le Rotary peut accomplir au service de l'entrepreneuriat et de l'engagement sociétal.
+Ce résultat est l'aboutissement d'une mobilisation collective : nous remercions chaleureusement les membres de nos Clubs qui se sont engagés comme jurés, ont relayé l'appel à candidatures ou honoré la finale de leur présence.
 
-${footer(lang, RESULTS_URL, JURYHUB_URL)}`,
+L'ensemble des résultats est consultable sur le site officiel :
+${RESULTS_URL}
+
+Le Rotary Startup Award reviendra en 2027 pour une nouvelle édition, que nous aurons le plaisir de préparer avec vous.
+
+Pour toute question, vous pouvez contacter le Comité d'organisation à l'adresse suivante : prixstartuprotary@proton.me
+
+Nous vous remercions de votre mobilisation et de votre soutien à cette initiative collective, qui contribue au rayonnement de notre Club et à l'action du Rotary en faveur de l'innovation responsable.
+
+Avec toute notre amitié rotarienne,
+
+Le Comité d'organisation
+Rotary Startup Award 2026 du Rotary Club de Paris
+Mathieu Balleron – Sophie Parize – Etienne Denarié – Jihad El Khoury`,
   };
 }
 
