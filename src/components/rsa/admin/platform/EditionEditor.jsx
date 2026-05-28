@@ -185,8 +185,13 @@ export default function EditionEditor({ edition }) {
         <TextRow id="ed-sel-date"   label={t(SETUP.selectionDate)}  type="date" value={form.selection_date}    onChange={(v) => patch({ selection_date: v })} />
         <TextRow id="ed-fin-date"   label={t(SETUP.finaleDate)}     type="date" value={form.finale_date}       onChange={(v) => patch({ finale_date: v })} />
         <TextRow id="ed-awd-date"   label={t(SETUP.awardsDate)}     type="date" value={form.awards_date}       onChange={(v) => patch({ awards_date: v })} />
-        <TextRow id="ed-prize-main" label={t(SETUP.prizeMain)}      type="number" step="0.01" value={form.prize_main}    onChange={(v) => patch({ prize_main: v })} />
-        <TextRow id="ed-prize-spec" label={t(SETUP.prizeSpecial)}   type="number" step="0.01" value={form.prize_special} onChange={(v) => patch({ prize_special: v })} />
+        {/* V2.5 — Les inputs prize_main / prize_special legacy sont retirés
+            du form : ils sont devenus redondants avec le module Prix (table
+            prizes + section "Prix de la compétition" plus bas dans
+            CompetitionEditor). Les colonnes editions.prize_main/special
+            restent en base (deprecated read-only) pour backward-compat.
+            Le state interne du form continue de les porter pour ne pas
+            les écraser en cas de update. */}
       </div>
 
       <div className="mt-3 flex items-center gap-2">
