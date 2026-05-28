@@ -30,6 +30,8 @@ import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { UI, COMP } from './i18n';
 import EditionEditor from '../EditionEditor';
+// V2.5 — Module Prix
+import PrizesList from '@/components/rsa/prizes/PrizesList';
 import {
   useAllClubs,
   useClubsForEdition,
@@ -542,6 +544,11 @@ export default function CompetitionEditor({ competition, onClose }) {
 
       <EditionEditor edition={competition} />
       <AttachedClubsPanel competition={competition} />
+
+      {/* V2.5 — Prix de la compétition (master_admin only via RLS).
+          Affiche le Grand Prix + Prix Spécial backfillés + permet d'en créer
+          d'autres au niveau compétition (club_id IS NULL). */}
+      <PrizesList editionId={competition.id} scope="competition" />
 
       {/* V2.5 — Zone destructive : lien rouge subtil pour ouvrir la modale 3-step. */}
       <div

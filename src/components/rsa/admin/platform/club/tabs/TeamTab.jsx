@@ -14,6 +14,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import { CREAM2, NAVY, MUTED, GOLD, INK, SERIF } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -24,6 +25,8 @@ import {
   useAssignClubMember,
   useRevokeClubMember,
 } from '../useClub';
+// V2.5 — Invite users (modale onboarding magic-link)
+import { InviteUserModal } from '@/components/rsa/invite';
 
 function FieldLabel({ children, htmlFor }) {
   return (
@@ -140,6 +143,7 @@ export default function TeamTab({ clubId }) {
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState('comite');
   const [createError, setCreateError] = useState(null);
+  const [inviteOpen, setInviteOpen] = useState(false); // V2.5
 
   // Group rows par email pour affichage condensé : un membre cumule potentielle-
   // ment club_admin + comite + jury sur un même club (par ex. un président qui
@@ -183,7 +187,38 @@ export default function TeamTab({ clubId }) {
           {t(CLUB_TEAM.sectionTitle)}
         </h3>
         <span className="text-[12px]" style={{ color: MUTED }}>· {rowsByEmail.length}</span>
+        {/* V2.5 — Bouton Inviter (envoie magic-link Élysée à un nouveau membre) */}
+        <button
+          type="button"
+          onClick={() => setInviteOpen(true)}
+          className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-[12.5px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+          style={{ background: NAVY, color: 'white' }}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          {t({ fr: 'Inviter un membre', en: 'Invite a member', de: 'Mitglied einladen' })}
+        </button>
       </header>
+
+      {inviteOpen && (
+        <InviteUserModal
+          scope="club"
+          clubId={clubId}
+          onClose={() => setInviteOpen(false)}
+          onSuccess={(res) => {
+            toast.success(t({
+              fr: res?.was_already_existing
+                ? 'Rôle mis à jour, email envoyé.'
+                : 'Invitation envoyée.',
+              en: res?.was_already_existing
+                ? 'Role updated, email sent.'
+                : 'Invitation sent.',
+              de: res?.was_already_existing
+                ? 'Rolle aktualisiert, E-Mail versendet.'
+                : 'Einladung versendet.',
+            }));
+          }}
+        />
+      )}
 
       {/* Provisionnement */}
       <div

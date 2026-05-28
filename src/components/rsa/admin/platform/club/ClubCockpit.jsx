@@ -32,6 +32,8 @@ import JuryApplicationsTab from './tabs/JuryApplicationsTab';
 // CommsTab : monté seulement si l'EmailStudio M9 a livré son shell (lazy import pour
 // rester tolérant pendant la mise en place — fallback minimal sinon).
 import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
+// V2.5 — Module Prix
+import PrizesList from '@/components/rsa/prizes/PrizesList';
 import { useClub, useClubEditions, useClubSessions } from './useClub';
 
 function Spinner() {
@@ -280,6 +282,9 @@ export default function ClubCockpit({ clubId }) {
         )}
         {!editionsQ.isLoading && tab === 'rules' && (
           <ClubRulesTab edition={edition} clubId={clubId} />
+        )}
+        {!editionsQ.isLoading && tab === 'prizes' && (
+          <PrizesList editionId={editionId} clubId={clubId} scope="club" />
         )}
         {!editionsQ.isLoading && tab === 'comms' && (
           <EmailStudio clubId={clubId} edition={edition} />

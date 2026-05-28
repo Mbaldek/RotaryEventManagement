@@ -34,6 +34,7 @@ const NAV_T = {
   admin: { fr: "Admin", en: "Admin", de: "Admin" },
   signOut: { fr: "Se déconnecter", en: "Sign out", de: "Abmelden" },
   menu: { fr: "Menu", en: "Menu", de: "Menü" },
+  concours: { fr: "Concours", en: "Awards", de: "Wettbewerb" }, // V2.5
 };
 
 export default function TopNav({
@@ -51,6 +52,7 @@ export default function TopNav({
   // "Mon dossier"; jury/comité/admin see their hubs.
   const defaultItems = [
     { to: "/MonDossier", label: t(NAV_T.myDossier) },
+    { to: "/Concours", label: t(NAV_T.concours) }, // V2.5 — accessible à tous les authentifiés
     { to: "/Jury", label: t(NAV_T.jury), roles: ["jury"] },
     { to: "/Selection", label: t(NAV_T.selection), roles: ["comite"] },
     { to: "/Admin", label: t(NAV_T.admin), roles: ["admin"] },

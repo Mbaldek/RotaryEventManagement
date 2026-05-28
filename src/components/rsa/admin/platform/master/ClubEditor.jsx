@@ -12,6 +12,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, X, Trash2, AlertTriangle, Pencil } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   CREAM2, NAVY, MUTED, INK, GOLD, SERIF,
 } from '@/components/design';
@@ -25,6 +26,8 @@ import {
   useUpdateClub,
 } from './useMaster';
 import ClubForm, { clubRowToForm } from './ClubForm';
+// V2.5 — Invite users
+import { InviteUserModal } from '@/components/rsa/invite';
 
 function FieldLabel({ children, htmlFor }) {
   return (
@@ -305,6 +308,7 @@ function MembersSection({ club }) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('club_admin');
   const [error, setError] = useState(null);
+  const [inviteOpen, setInviteOpen] = useState(false); // V2.5
 
   const rows = useMemo(() => members.data || [], [members.data]);
 
@@ -340,8 +344,39 @@ function MembersSection({ club }) {
           {t(CLUBS.membersSection)}
         </h3>
         <span className="text-[12px]" style={{ color: MUTED }}>· {rows.length}</span>
+        {/* V2.5 — bouton Inviter (ouvre InviteUserModal scope=club) */}
+        <button
+          type="button"
+          onClick={() => setInviteOpen(true)}
+          className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-[12.5px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+          style={{ background: NAVY, color: 'white' }}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          {t({ fr: 'Inviter', en: 'Invite', de: 'Einladen' })}
+        </button>
       </header>
       <p className="text-[12px] mb-3" style={{ color: MUTED }}>{t(CLUBS.membersHint)}</p>
+
+      {inviteOpen && (
+        <InviteUserModal
+          scope="club"
+          clubId={club.id}
+          onClose={() => setInviteOpen(false)}
+          onSuccess={(res) => {
+            toast.success(t({
+              fr: res?.was_already_existing
+                ? 'Rôle mis à jour, email envoyé.'
+                : 'Invitation envoyée.',
+              en: res?.was_already_existing
+                ? 'Role updated, email sent.'
+                : 'Invitation sent.',
+              de: res?.was_already_existing
+                ? 'Rolle aktualisiert, E-Mail versendet.'
+                : 'Einladung versendet.',
+            }));
+          }}
+        />
+      )}
 
       <div
         className="rounded-[4px] p-3 mb-4"
