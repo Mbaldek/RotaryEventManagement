@@ -53,12 +53,34 @@ export function PlatformAuthProvider({ children }) {
 
   useEffect(() => {
     let active = true;
+
+    // Garde-fou ABSOLU : si pour une raison quelconque la chaîne init ne fire pas son
+    // `finally` (ex. supabase.auth.getSession() ne résout JAMAIS — observé 2026-05-28
+    // sur app.rotary-startup.org où le `loading` restait true → MagicLinkLogin jamais
+    // monté, donc utilisateur bloqué sur PageShell vide), on force loading=false après
+    // 4s. Pire cas : on rend l'UI "non auth" avec le formulaire dispo, plutôt qu'un
+    // écran figé. Le diagnostic reste visible en console (cf. logs ci-dessous).
+    const initWatchdog = setTimeout(() => {
+      if (active) {
+        // eslint-disable-next-line no-console
+        console.warn('[PlatformAuth] init watchdog fired (4s) — forcing loading=false. ' +
+          'Probable cause: supabase.auth.getSession() did not resolve.');
+        setLoading(false);
+      }
+    }, 4000);
+
     (async () => {
+      // eslint-disable-next-line no-console
+      console.debug('[PlatformAuth] init start');
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        // eslint-disable-next-line no-console
+        console.debug('[PlatformAuth] getSession resolved, session?', !!session);
         if (!active) return;
         setAuthUser(session?.user ?? null);
         await loadIdentity(session?.user?.email);
+        // eslint-disable-next-line no-console
+        console.debug('[PlatformAuth] loadIdentity done');
       } catch (err) {
         // Fix défensif : si getSession ou loadIdentity throw, on libère quand même
         // le verrou de loading (sinon le spinner reste à l'infini sans message d'erreur).
@@ -67,7 +89,10 @@ export function PlatformAuthProvider({ children }) {
         // eslint-disable-next-line no-console
         console.error('[PlatformAuth] init failed:', err);
       } finally {
-        if (active) setLoading(false);
+        if (active) {
+          clearTimeout(initWatchdog);
+          setLoading(false);
+        }
       }
     })();
 
@@ -88,6 +113,7 @@ export function PlatformAuthProvider({ children }) {
 
     return () => {
       active = false;
+      clearTimeout(initWatchdog);
       subscription.unsubscribe();
     };
   }, [loadIdentity]);
