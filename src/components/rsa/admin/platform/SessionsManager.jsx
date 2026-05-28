@@ -1,0 +1,362 @@
+// SessionsManager — gestion des sessions d'une édition (Module 4a, SETUP).
+//
+// * Liste des sessions ordonnées par position + StatusPill (kind=jury) sur le lifecycle.
+// * Bouton « Créer une session » : ouvre un mini-form inline (id, name, theme, kind,
+//   session_date, position, notes) qui appelle rsa_create_session (RPC SECURITY DEFINER).
+// * Bouton « Réinitialiser » par session : confirm typé "RESET" + appel
+//   rsa_reset_session_template (refuse si la session est sortie de 'draft' ou si jurés
+//   assignés ou startups affectées).
+//
+// Pas d'édition des champs de session ici (le SQL n'expose pas encore d'RPC d'update
+// — sortie de scope M4a, l'admin réinit + recrée si besoin pendant qu'une session est
+// encore 'draft').
+
+import React, { useState } from 'react';
+import { Loader2, Plus, RotateCcw, AlertTriangle } from 'lucide-react';
+import { CREAM2, NAVY, MUTED, INK, SERIF } from '@/components/design/tokens';
+import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
+import { StatusPill } from '@/components/design';
+import { useLang } from '@/lib/platform/i18n';
+import { UI, SETUP, SESSION_KINDS } from './i18n';
+import { useCreateSession, useResetSessionTemplate } from './useAdmin';
+
+const EMPTY_PAYLOAD = {
+  id: '',
+  name: '',
+  theme: '',
+  kind: 'qualifying',
+  session_date: '',
+  position: 0,
+  notes: '',
+};
+
+function FieldLabel({ children, htmlFor }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="block uppercase tracking-[0.14em] text-[10.5px] mb-1.5"
+      style={{ color: MUTED }}
+    >
+      {children}
+    </label>
+  );
+}
+
+function ResetButton({ sessionId, sessionName, onReset }) {
+  const { t } = useLang();
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState('');
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onConfirm() {
+    if (typed !== 'RESET') {
+      setError(t(SETUP.resetTypePrompt));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await onReset(sessionId);
+      setOpen(false);
+      setTyped('');
+    } catch (err) {
+      setError(err?.message || 'Error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 text-[11.5px] px-2 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+        style={{ color: DANGER, border: `1px solid ${CREAM2}` }}
+        title={t(SETUP.resetSessionTitle)}
+      >
+        <RotateCcw className="w-3 h-3" /> {t(SETUP.resetSession)}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-[4px] p-3 mt-2"
+      style={{ background: TINT_DANGER, border: `1px solid ${CREAM2}` }}
+    >
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: DANGER }} />
+        <div className="flex-1 min-w-0">
+          <p className="text-[12.5px]" style={{ color: NAVY }}>
+            <strong>{t(SETUP.resetSessionTitle)} — {sessionName}.</strong>
+          </p>
+          <p className="text-[12px] mt-1" style={{ color: INK }}>{t(SETUP.resetSessionBody)}</p>
+          <div className="mt-2 flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              placeholder={t(SETUP.resetTypePrompt)}
+              className="flex-1 text-[12.5px] rounded-[4px] px-2 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+            />
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={typed !== 'RESET' || busy}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-[4px] text-[12.5px] font-medium disabled:opacity-50"
+              style={{ background: DANGER, color: 'white' }}
+            >
+              {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {t(SETUP.resetSession)}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); setTyped(''); setError(null); }}
+              disabled={busy}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-[4px] text-[12.5px]"
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+            >
+              {t(UI.cancel)}
+            </button>
+          </div>
+          {error && (
+            <p className="text-[12px] mt-2" style={{ color: DANGER }}>{error}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function SessionsManager({ editionId, sessions, isLoading, onSelectSession }) {
+  const { t } = useLang();
+  const createSession = useCreateSession();
+  const resetSession  = useResetSessionTemplate();
+
+  const [showForm, setShowForm] = useState(false);
+  const [payload, setPayload] = useState(EMPTY_PAYLOAD);
+  const [createError, setCreateError] = useState(null);
+
+  async function onCreate() {
+    setCreateError(null);
+    if (!editionId) return;
+    const id = payload.id?.trim();
+    const name = payload.name?.trim();
+    if (!id || !name) {
+      setCreateError('id + name requis');
+      return;
+    }
+    try {
+      await createSession.mutateAsync({
+        editionId,
+        payload: {
+          id,
+          name,
+          theme: payload.theme?.trim() || null,
+          kind: payload.kind,
+          session_date: payload.session_date || null,
+          position: Number(payload.position) || 0,
+          notes: payload.notes?.trim() || null,
+        },
+      });
+      setShowForm(false);
+      setPayload(EMPTY_PAYLOAD);
+    } catch (err) {
+      setCreateError(err?.message || 'Error');
+    }
+  }
+
+  return (
+    <section
+      className="rounded-[4px] p-5 mb-6"
+      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+    >
+      <header className="mb-4 flex items-center gap-3 flex-wrap">
+        <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+          {t(SETUP.sectionSessions)}
+        </h3>
+        <span className="text-[12px]" style={{ color: MUTED }}>·</span>
+        <span className="text-[12px]" style={{ color: INK }}>
+          {sessions.length} session(s)
+        </span>
+        <button
+          type="button"
+          onClick={() => setShowForm((v) => !v)}
+          className="ml-auto inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+          style={{ background: NAVY, color: 'white' }}
+        >
+          <Plus className="w-4 h-4" /> {t(SETUP.createSession)}
+        </button>
+      </header>
+
+      {showForm && (
+        <div
+          className="rounded-[4px] p-4 mb-4"
+          style={{ background: '#fdf6e8', border: `1px solid ${CREAM2}` }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <FieldLabel htmlFor="new-id">{t(SETUP.newSessionId)}</FieldLabel>
+              <input
+                id="new-id"
+                type="text"
+                value={payload.id}
+                onChange={(e) => setPayload((p) => ({ ...p, id: e.target.value }))}
+                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              />
+            </div>
+            <div>
+              <FieldLabel htmlFor="new-name">{t(SETUP.newSessionName)}</FieldLabel>
+              <input
+                id="new-name"
+                type="text"
+                value={payload.name}
+                onChange={(e) => setPayload((p) => ({ ...p, name: e.target.value }))}
+                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              />
+            </div>
+            <div>
+              <FieldLabel htmlFor="new-theme">{t(SETUP.newSessionTheme)}</FieldLabel>
+              <input
+                id="new-theme"
+                type="text"
+                value={payload.theme}
+                onChange={(e) => setPayload((p) => ({ ...p, theme: e.target.value }))}
+                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              />
+            </div>
+            <div>
+              <FieldLabel htmlFor="new-kind">{t(SETUP.newSessionKind)}</FieldLabel>
+              <select
+                id="new-kind"
+                value={payload.kind}
+                onChange={(e) => setPayload((p) => ({ ...p, kind: e.target.value }))}
+                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              >
+                {SESSION_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {k === 'qualifying' ? t(SETUP.kindQualifying) : t(SETUP.kindFinale)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <FieldLabel htmlFor="new-date">{t(SETUP.newSessionDate)}</FieldLabel>
+              <input
+                id="new-date"
+                type="date"
+                value={payload.session_date}
+                onChange={(e) => setPayload((p) => ({ ...p, session_date: e.target.value }))}
+                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              />
+            </div>
+            <div>
+              <FieldLabel htmlFor="new-pos">{t(SETUP.newSessionPos)}</FieldLabel>
+              <input
+                id="new-pos"
+                type="number"
+                value={payload.position}
+                onChange={(e) => setPayload((p) => ({ ...p, position: e.target.value }))}
+                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              />
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onCreate}
+              disabled={createSession.isPending}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px] font-medium disabled:opacity-50"
+              style={{ background: NAVY, color: 'white' }}
+            >
+              {createSession.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {t(UI.create)}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowForm(false); setPayload(EMPTY_PAYLOAD); setCreateError(null); }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px]"
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+            >
+              {t(UI.cancel)}
+            </button>
+            {createError && (
+              <span className="text-[12px]" style={{ color: DANGER }}>{createError}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="py-6 flex justify-center">
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: MUTED }} />
+        </div>
+      )}
+
+      {!isLoading && sessions.length === 0 && (
+        <p className="text-[13px] py-3" style={{ color: MUTED }}>{t(SETUP.noSessions)}</p>
+      )}
+
+      {!isLoading && sessions.length > 0 && (
+        <ul className="divide-y" style={{ borderColor: CREAM2 }}>
+          {sessions.map((s) => {
+            const status = s.config?.status || 'draft';
+            return (
+              <li key={s.id} className="py-3">
+                <div className="flex items-start gap-3 flex-wrap">
+                  <span
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-full text-[11px] tabular-nums"
+                    style={{ background: '#fdf6e8', color: NAVY, border: `1px solid ${CREAM2}` }}
+                  >
+                    {s.position ?? 0}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[14px] font-medium" style={{ color: NAVY }}>{s.name}</span>
+                      <StatusPill status={status} kind="jury" />
+                      <span className="text-[11.5px]" style={{ color: MUTED }}>· {s.kind}</span>
+                      {s.session_date && (
+                        <span className="text-[11.5px]" style={{ color: MUTED }}>· {s.session_date}</span>
+                      )}
+                    </div>
+                    {s.theme && (
+                      <p className="text-[12px] mt-0.5" style={{ color: INK }}>{s.theme}</p>
+                    )}
+                    <p className="text-[11px] mt-0.5 font-mono" style={{ color: MUTED }}>{s.id}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onSelectSession?.(s.id)}
+                      className="text-[11.5px] underline decoration-1 underline-offset-2"
+                      style={{ color: NAVY }}
+                    >
+                      LIVE →
+                    </button>
+                    {status === 'draft' && (
+                      <ResetButton
+                        sessionId={s.id}
+                        sessionName={s.name}
+                        onReset={(sid) => resetSession.mutateAsync(sid)}
+                      />
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}

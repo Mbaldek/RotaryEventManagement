@@ -103,10 +103,126 @@ export const Edition = {
     if (error) throw error;
     return data?.[0] ?? null;
   },
+
+  // Module 4a — Toutes les éditions (admin). RLS editions_admin couvre déjà l'écriture
+  // mais la lecture est publique (status<>'draft' OR is_staff). On lit tout pour l'admin.
+  async listAllForAdmin() {
+    const { data, error } = await supabase
+      .from('editions')
+      .select('*')
+      .order('year', { ascending: false })
+      .order('application_open', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Module 4a — patch admin direct (la policy editions_admin couvre).
+  async patch(id, patch) {
+    return this.update(id, { ...patch });
+  },
 };
 
 // sessions : clusters thématiques + finale. PK text. Nom 'RsaSession' (cf. en-tête).
-export const RsaSession = createEntity('sessions');
+export const RsaSession = {
+  ...createEntity('sessions'),
+
+  // Module 4a — Lecture des sessions d'une édition (ordonnées par position).
+  async forEdition(editionId) {
+    if (!editionId) return [];
+    const { data, error } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('edition_id', editionId)
+      .order('position', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Module 4a — Jointure sessions + session_config (admin SETUP/LIVE/RESULTS lit en une seule
+  // requête car session_config est legacy mais sa policy session_config_read couvre).
+  async withConfigForEdition(editionId) {
+    if (!editionId) return [];
+    const sessions = await this.forEdition(editionId);
+    if (!sessions.length) return [];
+    const ids = sessions.map((s) => s.id);
+    const { data: cfg, error } = await supabase
+      .from('session_config')
+      .select('*')
+      .in('session_id', ids);
+    if (error) throw error;
+    const byId = new Map((cfg || []).map((c) => [c.session_id, c]));
+    return sessions.map((s) => ({ ...s, config: byId.get(s.id) || null }));
+  },
+
+  // Module 4a — Create (RPC SECURITY DEFINER) : insère sessions + seed session_config
+  // dans la même transaction (résout le blocker §2.1.B du blueprint).
+  // payload : { id, name, theme, kind, session_date, position, notes? }
+  async createWithConfig({ editionId, payload }) {
+    const { data, error } = await supabase.rpc('rsa_create_session', {
+      p_edition_id: editionId,
+      p_session: payload,
+    });
+    if (error) throw error;
+    return Array.isArray(data) ? data[0] : data;
+  },
+
+  // Module 4a — Lifecycle wrappers (RPC SECURITY DEFINER admin only).
+  async setLive(sessionId) {
+    const { error } = await supabase.rpc('rsa_set_session_live', { p_session_id: sessionId });
+    if (error) throw error;
+  },
+  async setDraft(sessionId) {
+    const { error } = await supabase.rpc('rsa_set_session_draft', { p_session_id: sessionId });
+    if (error) throw error;
+  },
+  async resetTemplate(sessionId) {
+    const { error } = await supabase.rpc('rsa_reset_session_template', { p_session_id: sessionId });
+    if (error) throw error;
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Module 4a — AppUserRole (provisionning rôles plateforme, admin only)
+// ─────────────────────────────────────────────────────────────────────────────
+// La table app_user_roles est verrouillée côté écriture (service_role only) ; en
+// lecture elle n'expose que la ligne du caller. M4a passe par deux RPC SECURITY DEFINER :
+//   - rsa_list_app_user_roles() : lecture admin de TOUTE la table.
+//   - rsa_assign_role(email, roles[]) : UPSERT avec last-admin protection.
+
+export const AppUserRole = {
+  // Liste admin de toutes les lignes app_user_roles (RPC SECURITY DEFINER admin-only).
+  async list() {
+    const { data, error } = await supabase.rpc('rsa_list_app_user_roles');
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Lecture d'une ligne pour un email donné (utilise la même RPC + filtre client).
+  // Plus simple et plus sûr que d'ouvrir un second endpoint.
+  async forEmail(email) {
+    if (!email) return null;
+    const norm = String(email).trim().toLowerCase();
+    const all = await this.list();
+    return all.find((r) => String(r.email).toLowerCase() === norm) || null;
+  },
+
+  // Assignation/révocation : roles = liste finale (vide = révocation totale).
+  // RPC valide les rôles ⊆ ('startup','jury','comite','admin') et applique la
+  // last-admin protection. Renvoie la ligne mise à jour.
+  async assign({ email, roles }) {
+    const { data, error } = await supabase.rpc('rsa_assign_role', {
+      p_email: email,
+      p_roles: roles,
+    });
+    if (error) throw error;
+    return Array.isArray(data) ? data[0] : data;
+  },
+
+  // Révocation totale (sucre — délègue à assign avec roles=[]).
+  async revoke(email) {
+    return this.assign({ email, roles: [] });
+  },
+};
 
 // Colonnes éditables par le candidat depuis le tunnel. Toute autre colonne
 // (status, submitted_at, eligibility, session_id, owner_id, edition_id, id,
@@ -249,6 +365,36 @@ export const Startup = {
     const { data, error } = await q;
     if (error) throw error;
     return data || [];
+  },
+
+  // Module 4a — Listing admin transverse (toute édition + tout statut). Pas de paginé
+  // dédié : l'admin coque opérationnelle reste petite (1 édition active * ~60 dossiers).
+  // filters : { editionId?, statusIn?: string[], sessionId? }
+  async pageForAdmin({ editionId, statusIn, sessionId } = {}) {
+    let q = supabase.from('startups').select('*');
+    if (editionId) q = q.eq('edition_id', editionId);
+    if (Array.isArray(statusIn) && statusIn.length) q = q.in('status', statusIn);
+    if (sessionId) q = q.eq('session_id', sessionId);
+    q = q.order('updated_at', { ascending: false }).limit(500);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Module 4a — Synthèse {status: count} pour la ModuleStatusStrip.
+  // Une seule requête : on lit (id, status) puis on agrège côté client.
+  async summaryByStatus(editionId) {
+    if (!editionId) return {};
+    const { data, error } = await supabase
+      .from('startups')
+      .select('id, status')
+      .eq('edition_id', editionId);
+    if (error) throw error;
+    const out = {};
+    for (const r of data || []) {
+      out[r.status] = (out[r.status] || 0) + 1;
+    }
+    return out;
   },
 };
 
