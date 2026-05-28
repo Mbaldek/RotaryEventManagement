@@ -50,6 +50,7 @@
 import Admin from './pages/Admin';
 import AdminControl from './pages/AdminControl';
 import Archives from './pages/Archives';
+import Concours from './pages/Concours';
 import Dashboard from './pages/Dashboard';
 import EventPlanning from './pages/EventPlanning';
 import Features from './pages/Features';
@@ -83,6 +84,7 @@ export const PAGES = {
     "Admin": Admin,
     "AdminControl": AdminControl,
     "Archives": Archives,
+    "Concours": Concours,
     "Dashboard": Dashboard,
     "EventPlanning": EventPlanning,
     "Features": Features,
