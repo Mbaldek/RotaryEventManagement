@@ -761,23 +761,45 @@ export const Club = {
     return data || [];
   },
 
-  // Création — réservée master_admin (vérifié côté serveur).
+  // Création V2.5 — réservée master_admin (vérifié côté serveur).
   //
-  // V2 hotfix 2026-05-28 : un bug remonté par le user reportait un spinner
-  // perpétuel sur le bouton « Créer ». Pour faciliter le diagnostic, on log
-  // chaque étape en console.debug et on ajoute un watchdog 12s qui REJETTE la
-  // promise si le RPC ne répond pas — sinon TanStack Query reste en isPending
-  // indéfiniment et l'UI semble figée. L'erreur reste visible côté caller via
-  // setFormError.
-  async createClub({ id, name, region, contactEmail, contactName }) {
+  // V2.5 refonte 2026-05-31 : l'ID n'est plus fourni par le caller (généré
+  // côté serveur depuis le nom). Signature étendue avec country/language +
+  // représentant (first/last/email/phone) + président + coordonnées clubs.
+  //
+  // V2 hotfix conservé : watchdog 12s pour éviter le spinner perpétuel si le
+  // RPC ne répond pas. Logs console.debug pour le diagnostic.
+  async createClub({
+    name,
+    country,
+    language = 'fr',
+    contactFirstName,
+    contactLastName,
+    contactEmail,
+    contactPhone,
+    presidentFirstName,
+    presidentLastName,
+    presidentEmail,
+    clubEmail,
+    clubPhone,
+    clubAddress,
+  }) {
     // eslint-disable-next-line no-console
-    console.debug('[Club.createClub] start', { id, name, region, contactEmail, contactName });
+    console.debug('[Club.createClub] start', { name, country, language });
     const rpcPromise = supabase.rpc('rsa_create_club', {
-      p_id: id,
       p_name: name,
-      p_region: region ?? null,
+      p_country: country,
+      p_language: language ?? 'fr',
+      p_contact_first_name: contactFirstName ?? null,
+      p_contact_last_name: contactLastName ?? null,
       p_contact_email: contactEmail ?? null,
-      p_contact_name: contactName ?? null,
+      p_contact_phone: contactPhone ?? null,
+      p_president_first_name: presidentFirstName ?? null,
+      p_president_last_name: presidentLastName ?? null,
+      p_president_email: presidentEmail ?? null,
+      p_club_email: clubEmail ?? null,
+      p_club_phone: clubPhone ?? null,
+      p_club_address: clubAddress ?? null,
     });
     const watchdog = new Promise((_resolve, reject) =>
       setTimeout(() => reject(new Error('createClub_timeout: pas de réponse après 12s — vérifier réseau, JWT ou Supabase status')), 12000),
@@ -789,6 +811,48 @@ export const Club = {
     });
     // eslint-disable-next-line no-console
     console.debug('[Club.createClub] response', { data, error });
+    if (error) throw error;
+    return data;
+  },
+
+  // Édition V2.5 — master_admin OR club_admin du club (vérifié côté serveur).
+  //
+  // Convention : un champ omis (undefined) OU passé à null = ne pas toucher.
+  // Pour vider un champ, passer la chaîne vide '' (normalisée côté SQL).
+  // L'id n'est jamais modifiable.
+  async updateClub({
+    id,
+    name,
+    country,
+    language,
+    contactFirstName,
+    contactLastName,
+    contactEmail,
+    contactPhone,
+    presidentFirstName,
+    presidentLastName,
+    presidentEmail,
+    clubEmail,
+    clubPhone,
+    clubAddress,
+  }) {
+    if (!id) throw new Error('updateClub: id requis');
+    const { data, error } = await supabase.rpc('rsa_update_club', {
+      p_id: id,
+      p_name: name ?? null,
+      p_country: country ?? null,
+      p_language: language ?? null,
+      p_contact_first_name: contactFirstName ?? null,
+      p_contact_last_name: contactLastName ?? null,
+      p_contact_email: contactEmail ?? null,
+      p_contact_phone: contactPhone ?? null,
+      p_president_first_name: presidentFirstName ?? null,
+      p_president_last_name: presidentLastName ?? null,
+      p_president_email: presidentEmail ?? null,
+      p_club_email: clubEmail ?? null,
+      p_club_phone: clubPhone ?? null,
+      p_club_address: clubAddress ?? null,
+    });
     if (error) throw error;
     return data;
   },

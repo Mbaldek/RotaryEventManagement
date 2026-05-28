@@ -1,7 +1,11 @@
 // ClubsTab — Master Cockpit, onglet « Clubs ».
 //
-// Liste tous les clubs, form de création (id, name, region, contact_email, contact_name).
-// Le clic sur un club ouvre le ClubEditor en panneau inline (membres, assign/revoke).
+// V2.5 refonte 2026-05-31 :
+//   - Form de création utilise <ClubForm> partagé (4 sections empilées hairline gold)
+//   - ID auto-généré côté serveur depuis le nom — plus de champ "Identifiant" exposé
+//   - Le clic sur un club ouvre le ClubEditor enrichi (lecture seule + bouton Éditer)
+//
+// La gestion des membres reste portée par ClubEditor (inchangée).
 
 import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, ChevronRight, X } from 'lucide-react';
@@ -10,21 +14,10 @@ import {
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
-import { UI, CLUBS, KEBAB_REGEX } from '../i18n';
+import { UI, CLUBS } from '../i18n';
 import { useAllClubs, useCreateClub, useClubMembers } from '../useMaster';
 import ClubEditor from '../ClubEditor';
-
-function FieldLabel({ children, htmlFor }) {
-  return (
-    <label
-      htmlFor={htmlFor}
-      className="block uppercase tracking-[0.14em] text-[10.5px] mb-1.5"
-      style={{ color: MUTED }}
-    >
-      {children}
-    </label>
-  );
-}
+import ClubForm from '../ClubForm';
 
 function ClubCard({ club, isOpen, onOpen }) {
   const { t } = useLang();
@@ -37,6 +30,13 @@ function ClubCard({ club, isOpen, onOpen }) {
     }
     return out;
   }, [members.data]);
+
+  // V2.5 : on affiche country (nouveau) ; fallback region pour clubs legacy non backfillés.
+  const locTag = club.country || club.region || null;
+  // Représentant : nouveau format (first/last) ; fallback contact_name.
+  const repName = (club.contact_first_name || club.contact_last_name)
+    ? `${club.contact_first_name || ''} ${club.contact_last_name || ''}`.trim()
+    : club.contact_name || null;
 
   return (
     <li
@@ -55,15 +55,15 @@ function ClubCard({ club, isOpen, onOpen }) {
             >
               {club.name}
             </h4>
-            {club.region && (
-              <span className="text-[11.5px]" style={{ color: GOLD }}>· {club.region}</span>
+            {locTag && (
+              <span className="text-[11.5px]" style={{ color: GOLD }}>· {locTag}</span>
             )}
           </div>
           <p className="text-[11px] mt-0.5 font-mono" style={{ color: MUTED }}>{club.id}</p>
-          {(club.contact_name || club.contact_email) && (
+          {(repName || club.contact_email) && (
             <p className="text-[12px] mt-1" style={{ color: INK }}>
-              {club.contact_name}
-              {club.contact_name && club.contact_email && <span style={{ color: MUTED }}> · </span>}
+              {repName}
+              {repName && club.contact_email && <span style={{ color: MUTED }}> · </span>}
               {club.contact_email && (
                 <span style={{ color: MUTED }}>{club.contact_email}</span>
               )}
@@ -120,40 +120,22 @@ export default function ClubsTab() {
 
   const [openId, setOpenId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ id: '', name: '', region: '', contactEmail: '', contactName: '' });
   const [formError, setFormError] = useState(null);
+  // Petite clé qui force le remount de ClubForm pour reset les champs après création.
+  const [formKey, setFormKey] = useState(0);
 
   const clubs = useMemo(() => list.data || [], [list.data]);
   const openClub = useMemo(() => clubs.find((c) => c.id === openId) || null, [clubs, openId]);
 
-  function resetForm() {
-    setForm({ id: '', name: '', region: '', contactEmail: '', contactName: '' });
+  async function onCreate(payload) {
     setFormError(null);
-  }
-
-  async function onCreate() {
-    setFormError(null);
-    const id = String(form.id || '').trim().toLowerCase();
-    const name = String(form.name || '').trim();
-    if (!id || !KEBAB_REGEX.test(id)) {
-      setFormError(t(CLUBS.invalidId));
-      return;
-    }
-    if (!name) {
-      setFormError(t(CLUBS.nameLabel));
-      return;
-    }
     try {
-      await create.mutateAsync({
-        id,
-        name,
-        region: form.region?.trim() || null,
-        contactEmail: form.contactEmail?.trim() || null,
-        contactName: form.contactName?.trim() || null,
-      });
+      const created = await create.mutateAsync(payload);
       setShowForm(false);
-      resetForm();
-      setOpenId(id);
+      setFormKey((k) => k + 1);
+      if (created?.id) {
+        setOpenId(created.id);
+      }
     } catch (err) {
       setFormError(err?.message || 'Error');
     }
@@ -168,7 +150,11 @@ export default function ClubsTab() {
         <span className="text-[12px]" style={{ color: MUTED }}>· {clubs.length}</span>
         <button
           type="button"
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => {
+            setShowForm((v) => !v);
+            setFormError(null);
+            setFormKey((k) => k + 1);
+          }}
           className="ml-auto inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
           style={{ background: NAVY, color: 'white' }}
         >
@@ -178,95 +164,27 @@ export default function ClubsTab() {
 
       {showForm && (
         <div
-          className="rounded-[4px] p-4 mb-4"
+          className="rounded-[4px] p-5 mb-4"
           style={{ background: '#fdf6e8', border: `1px solid ${CREAM2}` }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <FieldLabel htmlFor="new-club-id">{t(CLUBS.idLabel)}</FieldLabel>
-              <input
-                id="new-club-id"
-                type="text"
-                value={form.id}
-                onChange={(e) => setForm((p) => ({ ...p, id: e.target.value }))}
-                placeholder="berlin"
-                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-              />
-              <p className="mt-1 text-[11px]" style={{ color: MUTED }}>{t(CLUBS.idHint)}</p>
-            </div>
-            <div>
-              <FieldLabel htmlFor="new-club-name">{t(CLUBS.nameLabel)}</FieldLabel>
-              <input
-                id="new-club-name"
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="Rotary Club Berlin"
-                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-              />
-            </div>
-            <div>
-              <FieldLabel htmlFor="new-club-region">{t(CLUBS.regionLabel)}</FieldLabel>
-              <input
-                id="new-club-region"
-                type="text"
-                value={form.region}
-                onChange={(e) => setForm((p) => ({ ...p, region: e.target.value }))}
-                placeholder="Berlin"
-                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-              />
-            </div>
-            <div>
-              <FieldLabel htmlFor="new-club-contact-name">{t(CLUBS.contactNameLabel)}</FieldLabel>
-              <input
-                id="new-club-contact-name"
-                type="text"
-                value={form.contactName}
-                onChange={(e) => setForm((p) => ({ ...p, contactName: e.target.value }))}
-                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <FieldLabel htmlFor="new-club-contact-email">{t(CLUBS.contactEmailLabel)}</FieldLabel>
-              <input
-                id="new-club-contact-email"
-                type="email"
-                value={form.contactEmail}
-                onChange={(e) => setForm((p) => ({ ...p, contactEmail: e.target.value }))}
-                placeholder={t(CLUBS.emailPlaceholder)}
-                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-              />
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onCreate}
-              disabled={create.isPending}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px] font-medium disabled:opacity-50"
-              style={{ background: NAVY, color: 'white' }}
-            >
-              {create.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              {t(UI.create)}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowForm(false); resetForm(); }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
-            >
-              {t(UI.cancel)}
-            </button>
-            {formError && (
-              <span className="text-[12px]" style={{ color: DANGER }}>{formError}</span>
-            )}
-          </div>
+          <h4
+            className="text-[16px] mb-4"
+            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+          >
+            {t(CLUBS.newClub)}
+          </h4>
+          <ClubForm
+            key={formKey}
+            mode="create"
+            submitting={create.isPending}
+            onSubmit={onCreate}
+            onCancel={() => {
+              setShowForm(false);
+              setFormError(null);
+              setFormKey((k) => k + 1);
+            }}
+            submitError={formError}
+          />
         </div>
       )}
 

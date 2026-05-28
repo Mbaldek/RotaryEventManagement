@@ -1,25 +1,30 @@
-// ClubEditor — édition d'un club (Master Cockpit V2).
+// ClubEditor — édition d'un club (Master Cockpit V2.5).
 //
 // Sections :
-//   * En-tête : meta du club (lecture seule pour l'instant — l'édition des
-//     champs nom/region/contact viendra avec un RPC `rsa_update_club` futur).
-//   * Membres : liste via rsa_list_club_members + form assign + bouton retirer
-//     (avec confirm typé). Le RPC bloque la suppression du dernier club_admin
-//     sauf si master_admin (le serveur émet l'erreur, on la capte et affiche).
+//   * En-tête           : id (eyebrow gold), name, bouton Fermer + bouton Éditer
+//   * Informations du club (4 sections empilées, hairline gold)
+//       - Mode lecture : tous les nouveaux champs V2.5 affichés en read-only
+//       - Mode édition : <ClubForm mode="edit"> avec save/cancel
+//     L'ID reste TOUJOURS read-only (jamais modifiable après création).
+//   * Membres : assign/revoke (inchangé V2)
+//
+// V2.5 refonte 2026-05-31 — bascule entre lecture et édition via useUpdateClub.
 
 import React, { useMemo, useState } from 'react';
-import { Loader2, Plus, X, Trash2, AlertTriangle } from 'lucide-react';
+import { Loader2, Plus, X, Trash2, AlertTriangle, Pencil } from 'lucide-react';
 import {
   CREAM2, NAVY, MUTED, INK, GOLD, SERIF,
 } from '@/components/design';
 import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
-import { UI, CLUBS, CLUB_ROLES } from './i18n';
+import { UI, CLUBS, CLUB_ROLES, COUNTRY_OPTIONS, LANGUAGE_OPTIONS } from './i18n';
 import {
   useClubMembers,
   useAssignClubRole,
   useRevokeClubRole,
+  useUpdateClub,
 } from './useMaster';
+import ClubForm, { clubRowToForm } from './ClubForm';
 
 function FieldLabel({ children, htmlFor }) {
   return (
@@ -33,11 +38,182 @@ function FieldLabel({ children, htmlFor }) {
   );
 }
 
+// ── Hairline gold + uppercase eyebrow (pattern Élysée — mirror ClubForm). ──
+function SectionHeader({ children }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-3 mt-1">
+      <span
+        className="h-[1.5px] w-7"
+        style={{ background: GOLD }}
+        aria-hidden
+      />
+      <span
+        className="uppercase text-[10px] tracking-[0.18em] font-medium"
+        style={{ color: GOLD }}
+      >
+        {children}
+      </span>
+    </div>
+  );
+}
+
+// ── Read-only row : libellé + valeur (ou « Non renseigné »). ───────────────
+function ReadRow({ label, value, className = '' }) {
+  const { t } = useLang();
+  const isEmpty = value == null || value === '';
+  return (
+    <div className={`flex flex-col gap-1 ${className}`}>
+      <span
+        className="text-[11px] uppercase tracking-[0.12em] font-medium"
+        style={{ color: INK }}
+      >
+        {label}
+      </span>
+      <span
+        className="text-[13.5px] whitespace-pre-line"
+        style={{ color: isEmpty ? MUTED : NAVY }}
+      >
+        {isEmpty ? t(CLUBS.notProvided) : value}
+      </span>
+    </div>
+  );
+}
+
 function roleLabelFor(t, role) {
   if (role === 'club_admin') return t(CLUBS.roleClubAdmin);
   if (role === 'comite') return t(CLUBS.roleComite);
   if (role === 'jury') return t(CLUBS.roleJury);
   return role;
+}
+
+// ── ClubInfoSection : 4 sections en read-only OU le ClubForm en mode edit ──
+function ClubInfoSection({ club }) {
+  const { t, lang } = useLang();
+  const update = useUpdateClub();
+  const [editing, setEditing] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
+  // Look-up labels FR/EN/DE depuis les catalogs (pour affichage read-only).
+  const countryLabel = useMemo(() => {
+    if (!club.country) return null;
+    const opt = COUNTRY_OPTIONS.find((c) => c.code === club.country);
+    return opt ? `${opt[lang] || opt.fr} (${opt.code})` : club.country;
+  }, [club.country, lang]);
+  const languageLabel = useMemo(() => {
+    if (!club.language) return null;
+    const opt = LANGUAGE_OPTIONS.find((l) => l.code === club.language);
+    return opt ? (opt[lang] || opt.fr) : club.language;
+  }, [club.language, lang]);
+
+  // Fallback : si V2.5 vide ET legacy V2 rempli, on affiche le legacy.
+  const repName = (club.contact_first_name || club.contact_last_name)
+    ? `${club.contact_first_name || ''} ${club.contact_last_name || ''}`.trim()
+    : (club.contact_name || null);
+
+  async function onSave(payload) {
+    setSubmitError(null);
+    try {
+      await update.mutateAsync(payload);
+      setEditing(false);
+    } catch (err) {
+      setSubmitError(err?.message || 'Error');
+    }
+  }
+
+  return (
+    <section
+      className="rounded-[4px] p-5 mb-2"
+      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+    >
+      <header className="mb-4 flex items-center gap-3 flex-wrap">
+        <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+          {t(CLUBS.clubInfoSectionTitle)}
+        </h3>
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => { setEditing(true); setSubmitError(null); }}
+            className="ml-auto inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+            style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: 'white' }}
+          >
+            <Pencil className="w-3.5 h-3.5" /> {t(CLUBS.editClubAction)}
+          </button>
+        )}
+      </header>
+
+      {editing ? (
+        <ClubForm
+          mode="edit"
+          clubId={club.id}
+          initial={clubRowToForm(club)}
+          submitting={update.isPending}
+          onSubmit={onSave}
+          onCancel={() => { setEditing(false); setSubmitError(null); }}
+          submitError={submitError}
+        />
+      ) : (
+        <div className="space-y-5">
+          {/* 1. Informations du club */}
+          <div>
+            <SectionHeader>{t(CLUBS.sectionClubInfo)}</SectionHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ReadRow
+                label={t(CLUBS.nameLabel)}
+                value={club.name}
+                className="md:col-span-2"
+              />
+              <ReadRow
+                label={t(CLUBS.generatedIdLabel)}
+                value={<span className="font-mono">{club.id}</span>}
+                className="md:col-span-2"
+              />
+              <ReadRow label={t(CLUBS.countryLabel)}    value={countryLabel} />
+              <ReadRow label={t(CLUBS.languageLabel)}   value={languageLabel} />
+            </div>
+          </div>
+
+          {/* 2. Représentant */}
+          <div>
+            <SectionHeader>{t(CLUBS.sectionContact)}</SectionHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ReadRow label={t(CLUBS.firstNameLabel)} value={club.contact_first_name || (repName ? repName.split(' ')[0] : null)} />
+              <ReadRow label={t(CLUBS.lastNameLabel)}  value={club.contact_last_name  || (repName ? repName.split(' ').slice(1).join(' ') || null : null)} />
+              <ReadRow label={t(CLUBS.emailLabel)}     value={club.contact_email} />
+              <ReadRow label={t(CLUBS.phoneLabel)}     value={club.contact_phone} />
+            </div>
+          </div>
+
+          {/* 3. Président */}
+          <div>
+            <SectionHeader>{t(CLUBS.sectionPresident)}</SectionHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ReadRow label={t(CLUBS.firstNameLabel)} value={club.president_first_name} />
+              <ReadRow label={t(CLUBS.lastNameLabel)}  value={club.president_last_name} />
+              <ReadRow
+                label={t(CLUBS.emailLabel)}
+                value={club.president_email}
+                className="md:col-span-2"
+              />
+            </div>
+          </div>
+
+          {/* 4. Coordonnées institutionnelles */}
+          <div>
+            <SectionHeader>{t(CLUBS.sectionAddress)}</SectionHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ReadRow label={t(CLUBS.clubEmailLabel)}   value={club.club_email} />
+              <ReadRow label={t(CLUBS.clubPhoneLabel)}   value={club.club_phone} />
+              <ReadRow
+                label={t(CLUBS.clubAddressLabel)}
+                value={club.club_address}
+                className="md:col-span-2"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
 
 function RevokeButton({ club, member, onRevoke }) {
@@ -306,8 +482,8 @@ export default function ClubEditor({ club, onClose }) {
         <span className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: GOLD }}>
           {club.id}
         </span>
-        {club.region && (
-          <span className="text-[11.5px]" style={{ color: MUTED }}>· {club.region}</span>
+        {club.country && (
+          <span className="text-[11.5px]" style={{ color: MUTED }}>· {club.country}</span>
         )}
         <button
           type="button"
@@ -318,6 +494,9 @@ export default function ClubEditor({ club, onClose }) {
           <X className="w-3.5 h-3.5" /> {t(UI.close)}
         </button>
       </header>
+
+      {/* V2.5 — Section "Informations du club" enrichie (read-only + edit mode) */}
+      <ClubInfoSection club={club} />
 
       <MembersSection club={club} />
     </div>

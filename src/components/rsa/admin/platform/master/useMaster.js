@@ -59,6 +59,47 @@ export function useCreateCompetition() {
   });
 }
 
+// V2.5 — Pré-comptage des dépendances pour la modale de suppression de compétition.
+// Retourne un jsonb { name, year, model, clubs_count, sessions_total, sessions_draft,
+// sessions_live, sessions_published, startups_count, reviews_count, scores_count }.
+export function useCountCompetitionDependencies(editionId) {
+  return useQuery({
+    queryKey: ['rsa', 'master', 'competition-dependencies', editionId],
+    enabled: !!editionId,
+    staleTime: 10 * 1000,
+    queryFn: async () => {
+      if (!editionId) return null;
+      const { data, error } = await supabase.rpc(
+        'rsa_count_competition_dependencies',
+        { p_id: editionId },
+      );
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// V2.5 — Suppression typée d'une compétition. Le typed_confirm doit être exactement
+// "SUPPRIMER {edition.name}", validé côté RPC (RAISE 'typed_confirm_mismatch' sinon).
+// Retourne le snapshot jsonb des compteurs supprimés (pour toast détaillé).
+export function useDeleteCompetition() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ editionId, typedConfirm }) => {
+      const { data, error } = await supabase.rpc('rsa_delete_competition', {
+        p_id:            editionId,
+        p_typed_confirm: typedConfirm,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.competitions });
+      invalidateMaster(qc);
+    },
+  });
+}
+
 // ── Clubs ───────────────────────────────────────────────────────────────────
 export function useAllClubs() {
   return useQuery({
@@ -71,10 +112,24 @@ export function useAllClubs() {
 export function useCreateClub() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, name, region, contactEmail, contactName }) =>
-      Club.createClub({ id, name, region, contactEmail, contactName }),
+    mutationFn: (payload) => Club.createClub(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.clubs });
+    },
+  });
+}
+
+// V2.5 — édition d'un club existant (master_admin OR club_admin du club).
+// payload : { id, name?, country?, language?, contactFirstName?, ... }
+export function useUpdateClub() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => Club.updateClub(payload),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: KEYS.clubs });
+      if (vars?.id) {
+        qc.invalidateQueries({ queryKey: KEYS.clubMembers(vars.id) });
+      }
     },
   });
 }

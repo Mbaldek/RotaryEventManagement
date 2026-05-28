@@ -154,6 +154,114 @@ export const COMP = {
     en: 'All existing clubs are already attached.',
     de: 'Alle vorhandenen Clubs sind bereits angehängt.', // TODO refine DE copy
   },
+
+  // ── V2.5 — Save sticky footer + 3-step delete ─────────────────────────────
+  unsavedChanges: {
+    fr: 'Modifications non enregistrées',
+    en: 'Unsaved changes',
+    de: 'Nicht gespeicherte Änderungen',
+  },
+  beforeUnloadWarning: {
+    fr: 'Modifications non enregistrées. Quitter quand même ?',
+    en: 'You have unsaved changes. Leave anyway?',
+    de: 'Nicht gespeicherte Änderungen. Trotzdem verlassen?', // TODO refine DE copy
+  },
+  competitionSaved: {
+    fr: 'Compétition enregistrée',
+    en: 'Competition saved',
+    de: 'Wettbewerb gespeichert',
+  },
+  deleteCompetitionLink: {
+    fr: 'Supprimer cette compétition',
+    en: 'Delete this competition',
+    de: 'Diesen Wettbewerb löschen',
+  },
+  deleteStep1Title: {
+    fr: 'Supprimer définitivement cette compétition ?',
+    en: 'Permanently delete this competition?',
+    de: 'Diesen Wettbewerb endgültig löschen?',
+  },
+  deleteStep1Lede: {
+    fr: 'Cette action supprimera définitivement les éléments suivants. L’historique sera perdu, aucune sauvegarde.',
+    en: 'This action will permanently delete the items below. History will be lost, no backup.',
+    de: 'Diese Aktion löscht endgültig die folgenden Elemente. Der Verlauf geht verloren, keine Sicherung.', // TODO refine DE copy
+  },
+  countClubsAttached: {
+    fr: 'club(s) attaché(s) — les clubs eux-mêmes restent, seule l’association est supprimée',
+    en: 'attached club(s) — the clubs themselves remain, only the link is removed',
+    de: 'angehängte Club(s) — die Clubs selbst bleiben, nur die Verbindung wird entfernt', // TODO refine DE copy
+  },
+  countSessions: {
+    fr: 'session(s)',
+    en: 'session(s)',
+    de: 'Session(s)',
+  },
+  countSessionsBreakdownDraft: {
+    fr: 'en draft',
+    en: 'in draft',
+    de: 'als Entwurf',
+  },
+  countSessionsBreakdownLive: {
+    fr: 'en direct',
+    en: 'live',
+    de: 'live',
+  },
+  countSessionsBreakdownPublished: {
+    fr: 'publiée(s)',
+    en: 'published',
+    de: 'veröffentlicht',
+  },
+  countStartups: {
+    fr: 'candidature(s) startups',
+    en: 'startup application(s)',
+    de: 'Startup-Bewerbung(en)',
+  },
+  countReviews: {
+    fr: 'évaluation(s) comité',
+    en: 'committee review(s)',
+    de: 'Komitee-Bewertung(en)',
+  },
+  countScores: {
+    fr: 'note(s) jury',
+    en: 'jury score(s)',
+    de: 'Jury-Bewertung(en)',
+  },
+  deleteNext: {
+    fr: 'Suivant',
+    en: 'Next',
+    de: 'Weiter',
+  },
+  deleteStep2Title: {
+    fr: 'Confirmation finale',
+    en: 'Final confirmation',
+    de: 'Endgültige Bestätigung',
+  },
+  // {phrase} sera remplacé par "SUPPRIMER {name}" dans le composant
+  deleteStep2Prompt: {
+    fr: 'Tapez exactement {phrase} pour confirmer.',
+    en: 'Type exactly {phrase} to confirm.',
+    de: 'Geben Sie genau {phrase} ein, um zu bestätigen.',
+  },
+  deleteFinalAction: {
+    fr: 'Supprimer définitivement',
+    en: 'Delete permanently',
+    de: 'Endgültig löschen',
+  },
+  deleteTypedMismatch: {
+    fr: 'La saisie ne correspond pas. Recopiez exactement la phrase ci-dessus.',
+    en: 'The text does not match. Copy the exact phrase above.',
+    de: 'Die Eingabe stimmt nicht überein. Kopieren Sie genau den Satz oben.', // TODO refine DE copy
+  },
+  competitionDeleted: {
+    fr: 'Compétition supprimée',
+    en: 'Competition deleted',
+    de: 'Wettbewerb gelöscht',
+  },
+  deleteForbidden: {
+    fr: 'Seul un master_admin peut supprimer une compétition.',
+    en: 'Only a master_admin can delete a competition.',
+    de: 'Nur ein master_admin kann einen Wettbewerb löschen.',
+  },
 };
 
 // ── Clubs tab ───────────────────────────────────────────────────────────────
@@ -165,7 +273,7 @@ export const CLUBS = {
     en: 'No clubs yet. Create the first participating Rotary club.',
     de: 'Noch keine Clubs. Erstellen Sie den ersten teilnehmenden Rotary-Club.', // TODO refine DE copy
   },
-  // Fields
+  // ── Fields V2 (legacy, gardés pour backward-compat / affichage liste) ────
   idLabel:       { fr: 'Identifiant',      en: 'Identifier',    de: 'Kennung' },
   idHint:        {
     fr: 'Kebab-case, ex. « paris », « berlin », « lyon-1 ». Immuable.',
@@ -177,6 +285,127 @@ export const CLUBS = {
   contactNameLabel: { fr: 'Contact (nom)', en: 'Contact (name)', de: 'Kontakt (Name)' },
   contactEmailLabel:{ fr: 'Contact (email)', en: 'Contact (email)', de: 'Kontakt (E-Mail)' },
   invalidId:     COMP.invalidId,
+
+  // ── V2.5 — Form refonte (sections, labels, placeholders, errors) ────────
+  // Sections du form (hairline gold + uppercase tracking-wide)
+  sectionClubInfo: {
+    fr: 'Informations du club',
+    en: 'Club information',
+    de: 'Club-Informationen',
+  },
+  sectionContact: {
+    fr: 'Représentant (contact opérationnel)',
+    en: 'Representative (operational contact)',
+    de: 'Vertreter (operativer Kontakt)', // TODO refine DE copy
+  },
+  sectionPresident: {
+    fr: 'Président du club',
+    en: 'Club president',
+    de: 'Clubpräsident',
+  },
+  sectionAddress: {
+    fr: 'Coordonnées institutionnelles',
+    en: 'Institutional contact details',
+    de: 'Institutionelle Kontaktdaten', // TODO refine DE copy
+  },
+  // Champs (labels + placeholders + helpers)
+  countryLabel:    { fr: 'Pays',           en: 'Country',       de: 'Land' },
+  languageLabel:   {
+    fr: 'Langue principale',
+    en: 'Primary language',
+    de: 'Hauptsprache', // TODO refine DE copy
+  },
+  pickCountry:     { fr: 'Sélectionnez un pays', en: 'Pick a country', de: 'Land auswählen' },
+  pickLanguage:    { fr: 'Sélectionnez une langue', en: 'Pick a language', de: 'Sprache auswählen' },
+  firstNameLabel:  { fr: 'Prénom',         en: 'First name',    de: 'Vorname' },
+  lastNameLabel:   { fr: 'Nom',            en: 'Last name',     de: 'Nachname' },
+  emailLabel:      { fr: 'Email',          en: 'Email',         de: 'E-Mail' },
+  phoneLabel:      { fr: 'Téléphone',      en: 'Phone',         de: 'Telefon' },
+  clubEmailLabel:  { fr: 'Email du club',  en: 'Club email',    de: 'Club-E-Mail' },
+  clubPhoneLabel:  { fr: 'Téléphone du club', en: 'Club phone', de: 'Club-Telefon' },
+  clubAddressLabel:{ fr: 'Adresse postale', en: 'Postal address', de: 'Postanschrift' },
+  clubNamePlaceholder: {
+    fr: 'Rotary Club de Berlin',
+    en: 'Rotary Club of Berlin',
+    de: 'Rotary Club Berlin',
+  },
+  clubAddressPlaceholder: {
+    fr: '12 rue de l’exemple\n75009 Paris\nFrance',
+    en: '12 Example Street\n10115 Berlin\nGermany',
+    de: 'Beispielstraße 12\n10115 Berlin\nDeutschland',
+  },
+  generatedIdLabel: {
+    fr: 'ID',
+    en: 'ID',
+    de: 'ID',
+  },
+  generatedIdHint: {
+    fr: 'Identifiant technique généré automatiquement à partir du nom. Immuable après création.',
+    en: 'Technical identifier generated automatically from the name. Immutable after creation.',
+    de: 'Technische Kennung, automatisch aus dem Namen generiert. Nach Erstellung unveränderlich.', // TODO refine DE copy
+  },
+  // Errors de validation client
+  errNameTooShort: {
+    fr: 'Le nom du club doit contenir au moins 2 caractères.',
+    en: 'Club name must be at least 2 characters long.',
+    de: 'Der Clubname muss mindestens 2 Zeichen lang sein.',
+  },
+  errCountryRequired: {
+    fr: 'Sélectionnez un pays.',
+    en: 'Pick a country.',
+    de: 'Bitte ein Land auswählen.',
+  },
+  errLanguageRequired: {
+    fr: 'Sélectionnez une langue principale.',
+    en: 'Pick a primary language.',
+    de: 'Bitte eine Hauptsprache auswählen.',
+  },
+  errContactFirstName: {
+    fr: 'Prénom du représentant requis.',
+    en: 'Representative first name is required.',
+    de: 'Vorname des Vertreters ist erforderlich.', // TODO refine DE copy
+  },
+  errContactLastName: {
+    fr: 'Nom du représentant requis.',
+    en: 'Representative last name is required.',
+    de: 'Nachname des Vertreters ist erforderlich.', // TODO refine DE copy
+  },
+  errContactEmail: {
+    fr: 'Email du représentant requis (format valide).',
+    en: 'Representative email is required (valid format).',
+    de: 'E-Mail des Vertreters ist erforderlich (gültiges Format).', // TODO refine DE copy
+  },
+  errEmailFormat: {
+    fr: 'Format d’email invalide.',
+    en: 'Invalid email format.',
+    de: 'Ungültiges E-Mail-Format.',
+  },
+  // Edit mode
+  editClubAction: {
+    fr: 'Éditer',
+    en: 'Edit',
+    de: 'Bearbeiten',
+  },
+  cancelEdit: {
+    fr: 'Annuler',
+    en: 'Cancel',
+    de: 'Abbrechen',
+  },
+  saveEdit: {
+    fr: 'Enregistrer',
+    en: 'Save',
+    de: 'Speichern',
+  },
+  notProvided: {
+    fr: 'Non renseigné',
+    en: 'Not provided',
+    de: 'Nicht angegeben',
+  },
+  clubInfoSectionTitle: {
+    fr: 'Informations du club',
+    en: 'Club information',
+    de: 'Club-Informationen',
+  },
   // Card meta
   region:        { fr: 'Région',           en: 'Region',        de: 'Region' },
   contact:       { fr: 'Contact',          en: 'Contact',       de: 'Kontakt' },
@@ -285,3 +514,45 @@ export const CLUB_ROLES = ['club_admin', 'comite', 'jury'];
 
 // Kebab-case validator (mirror du regex SQL '^[a-z][a-z0-9-]{0,49}$')
 export const KEBAB_REGEX = /^[a-z][a-z0-9-]{0,49}$/;
+
+// ── V2.5 — Country & language catalogs ──────────────────────────────────────
+// Liste resserrée des pays Rotary Europe + IT/ES/PT/UK pour la création de club.
+// Labels FR/EN/DE. Code = ISO 3166-1 alpha-2.
+export const COUNTRY_OPTIONS = [
+  { code: 'FR', fr: 'France',         en: 'France',         de: 'Frankreich' },
+  { code: 'DE', fr: 'Allemagne',      en: 'Germany',        de: 'Deutschland' },
+  { code: 'BE', fr: 'Belgique',       en: 'Belgium',        de: 'Belgien' },
+  { code: 'CH', fr: 'Suisse',         en: 'Switzerland',    de: 'Schweiz' },
+  { code: 'LU', fr: 'Luxembourg',     en: 'Luxembourg',     de: 'Luxemburg' },
+  { code: 'IT', fr: 'Italie',         en: 'Italy',          de: 'Italien' },
+  { code: 'ES', fr: 'Espagne',        en: 'Spain',          de: 'Spanien' },
+  { code: 'PT', fr: 'Portugal',       en: 'Portugal',       de: 'Portugal' },
+  { code: 'NL', fr: 'Pays-Bas',       en: 'Netherlands',    de: 'Niederlande' },
+  { code: 'GB', fr: 'Royaume-Uni',    en: 'United Kingdom', de: 'Vereinigtes Königreich' },
+  { code: 'AT', fr: 'Autriche',       en: 'Austria',        de: 'Österreich' },
+  { code: 'IE', fr: 'Irlande',        en: 'Ireland',        de: 'Irland' },
+];
+
+// Langues principales supportées par la plateforme (mirror SQL CHECK).
+export const LANGUAGE_OPTIONS = [
+  { code: 'fr', fr: 'Français',       en: 'French',         de: 'Französisch' },
+  { code: 'en', fr: 'Anglais',        en: 'English',        de: 'Englisch' },
+  { code: 'de', fr: 'Allemand',       en: 'German',         de: 'Deutsch' },
+  { code: 'it', fr: 'Italien',        en: 'Italian',        de: 'Italienisch' },
+  { code: 'es', fr: 'Espagnol',       en: 'Spanish',        de: 'Spanisch' },
+  { code: 'nl', fr: 'Néerlandais',    en: 'Dutch',          de: 'Niederländisch' },
+  { code: 'pt', fr: 'Portugais',      en: 'Portuguese',     de: 'Portugiesisch' },
+];
+
+// Email format minimal (validation client uniquement, le SQL ne vérifie pas).
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Slugify côté client — mirror exact de la génération SQL côté rsa_create_club.
+// Utilisé UNIQUEMENT pour la preview live « ↳ ID : … » sous le nom (l'ID réel
+// est généré côté serveur, source de vérité).
+export function slugifyClubName(name) {
+  if (!name) return '';
+  let slug = String(name).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  slug = slug.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return slug.slice(0, 50).replace(/-+$/g, '');
+}

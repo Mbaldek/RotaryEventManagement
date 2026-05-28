@@ -2,7 +2,8 @@
 //
 // Champs : name, status (enum), dates (4), prix (2), finalists_per_session,
 // public_results_enabled (toggle), description_md (markdown libre),
-// eligibility_rules (JSON éditable avec preview RULE_LABELS).
+// eligibility_rules (édité via <EligibilityRulesEditor> depuis V2.5 — liste
+// lisible de critères, plus de textarea JSON brut).
 //
 // Pas de fenêtre modale séparée : on édite inline dans une carte hairline (le picker
 // d'édition est dans AdminShell, on ne gère donc qu'une édition à la fois ici).
@@ -10,11 +11,11 @@
 // Le SAVE est triggable via le bouton "Enregistrer" en bas du form (pas d'autosave
 // pour éviter les overwrites involontaires sur des champs JSON).
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Loader2, Save } from 'lucide-react';
-import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, GOLD, SERIF } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
-import { RULE_LABELS } from '@/components/rsa/candidature/i18n';
+import EligibilityRulesEditor from '@/components/rsa/eligibility/EligibilityRulesEditor';
 import { UI, SETUP, EDITION_STATUSES } from './i18n';
 import { useUpdateEdition } from './useAdmin';
 
@@ -59,8 +60,7 @@ export default function EditionEditor({ edition }) {
   const update = useUpdateEdition();
 
   const [form, setForm] = useState(() => ({}));
-  const [rulesText, setRulesText] = useState('{}');
-  const [rulesError, setRulesError] = useState(null);
+  const [rules, setRules] = useState({});
   const [dirty, setDirty] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
@@ -82,24 +82,10 @@ export default function EditionEditor({ edition }) {
       public_results_enabled: !!edition.public_results_enabled,
       description_md: edition.description_md || '',
     });
-    setRulesText(JSON.stringify(edition.eligibility_rules || {}, null, 2));
-    setRulesError(null);
+    setRules(edition.eligibility_rules || {});
     setDirty(false);
     setFeedback(null);
   }, [edition?.id]);  // eslint-disable-line react-hooks/exhaustive-deps
-
-  const parsedRules = useMemo(() => {
-    if (!rulesText || !rulesText.trim()) return {};
-    try {
-      const v = JSON.parse(rulesText);
-      if (typeof v !== 'object' || Array.isArray(v) || v === null) {
-        throw new Error('not_object');
-      }
-      return v;
-    } catch (_e) {
-      return null; // signale l'erreur
-    }
-  }, [rulesText]);
 
   function patch(part) {
     setForm((prev) => ({ ...prev, ...part }));
@@ -107,24 +93,14 @@ export default function EditionEditor({ edition }) {
     setFeedback(null);
   }
 
-  function onRulesChange(v) {
-    setRulesText(v);
+  function onRulesChange(nextRules) {
+    setRules(nextRules || {});
     setDirty(true);
     setFeedback(null);
-    try {
-      const parsed = JSON.parse(v);
-      if (typeof parsed !== 'object' || Array.isArray(parsed) || parsed === null) {
-        throw new Error('not_object');
-      }
-      setRulesError(null);
-    } catch {
-      setRulesError(t(SETUP.invalidJson));
-    }
   }
 
   async function onSave() {
     if (!edition) return;
-    if (rulesError || parsedRules == null) return;
     const payload = {
       name: form.name?.trim() || edition.name,
       year: form.year != null ? Number(form.year) : edition.year,
@@ -139,7 +115,7 @@ export default function EditionEditor({ edition }) {
       finalists_per_session: form.finalists_per_session != null ? Number(form.finalists_per_session) : 1,
       public_results_enabled: !!form.public_results_enabled,
       description_md: form.description_md || null,
-      eligibility_rules: parsedRules,
+      eligibility_rules: rules || {},
     };
     try {
       await update.mutateAsync({ id: edition.id, patch: payload });
@@ -238,45 +214,18 @@ export default function EditionEditor({ edition }) {
         />
       </div>
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <FieldLabel htmlFor="ed-rules">{t(SETUP.eligibilityRules)}</FieldLabel>
-          <textarea
-            id="ed-rules"
-            rows={10}
-            value={rulesText}
-            onChange={(e) => onRulesChange(e.target.value)}
-            className="w-full text-[12px] font-mono rounded-[4px] px-2.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-            style={{ background: 'white', border: `1px solid ${rulesError ? '#a23b2d' : CREAM2}`, color: NAVY }}
-          />
-          <p className="mt-1 text-[11px]" style={{ color: rulesError ? '#a23b2d' : MUTED }}>
-            {rulesError || t(SETUP.eligibilityHint)}
-          </p>
-        </div>
-        <div>
-          <FieldLabel>Preview</FieldLabel>
-          <ul className="text-[12.5px] space-y-1.5" style={{ color: INK }}>
-            {parsedRules && Object.entries(parsedRules).map(([key, val]) => {
-              const labelDict = RULE_LABELS[key];
-              const labelTxt = labelDict ? t(labelDict) : key;
-              const behavior = val?.behavior || '—';
-              return (
-                <li key={key} className="flex items-baseline gap-2">
-                  <span className="font-medium" style={{ color: NAVY }}>{labelTxt}</span>
-                  <span style={{ color: MUTED }}>·</span>
-                  <span style={{ color: behavior === 'exclu' ? '#a23b2d' : '#9a6400' }}>{behavior}</span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+      <div className="mt-4">
+        <EligibilityRulesEditor
+          value={rules}
+          onChange={onRulesChange}
+        />
       </div>
 
       <div className="mt-5 flex items-center gap-3">
         <button
           type="button"
           onClick={onSave}
-          disabled={!dirty || update.isPending || !!rulesError}
+          disabled={!dirty || update.isPending}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-[4px] text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] disabled:opacity-50"
           style={{ background: NAVY, color: 'white' }}
         >
