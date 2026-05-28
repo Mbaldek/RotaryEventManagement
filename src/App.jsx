@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { LanguageProvider } from '@/lib/platform/i18n';
 import { PlatformAuthProvider } from '@/lib/platform/auth';
+import ErrorBoundary from '@/lib/ErrorBoundary';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -58,37 +59,44 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Render the main app
+  // Render the main app. ErrorBoundary autour des Routes : une exception jetée dans
+  // n'importe quel composant fils ne fait plus sauter toute la racine React (qui re-mount
+  // immédiatement et redéclenche onAuthStateChange → loadIdentity en cluster — voir
+  // src/lib/ErrorBoundary.jsx pour le contexte du diagnostic /Admin).
   return (
-    <Routes>
-      <Route path="/" element={
-        isPlatformHost()
-          ? <Navigate to="/Login" replace />
-          : (
-            <LayoutWrapper currentPageName={mainPageKey}>
-              <MainPage />
-            </LayoutWrapper>
-          )
-      } />
-      {Object.entries(Pages).map(([path, Page]) => (
-        <Route
-          key={path}
-          path={`/${path}`}
-          element={
-            // Host-gate (Option A) : sur app.rotary-startup.org, les pages déjeuners
-            // redirigent vers /Login pour ne plus "fuiter" sur le domaine plateforme.
-            isPlatformHost() && LUNCH_PAGES.has(path)
-              ? <Navigate to="/Login" replace />
-              : (
-                <LayoutWrapper currentPageName={path}>
-                  <Page />
-                </LayoutWrapper>
-              )
-          }
-        />
-      ))}
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/" element={
+          isPlatformHost()
+            ? <Navigate to="/Login" replace />
+            : (
+              <LayoutWrapper currentPageName={mainPageKey}>
+                <MainPage />
+              </LayoutWrapper>
+            )
+        } />
+        {Object.entries(Pages).map(([path, Page]) => (
+          <Route
+            key={path}
+            path={`/${path}`}
+            element={
+              // Host-gate (Option A) : sur app.rotary-startup.org, les pages déjeuners
+              // redirigent vers /Login pour ne plus "fuiter" sur le domaine plateforme.
+              isPlatformHost() && LUNCH_PAGES.has(path)
+                ? <Navigate to="/Login" replace />
+                : (
+                  <LayoutWrapper currentPageName={path}>
+                    <ErrorBoundary>
+                      <Page />
+                    </ErrorBoundary>
+                  </LayoutWrapper>
+                )
+            }
+          />
+        ))}
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </ErrorBoundary>
   );
 };
 

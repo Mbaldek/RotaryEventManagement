@@ -50,16 +50,36 @@ export function PlatformAuthProvider({ children }) {
   useEffect(() => {
     let active = true;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!active) return;
-      setAuthUser(session?.user ?? null);
-      await loadIdentity(session?.user?.email);
-      if (active) setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!active) return;
+        setAuthUser(session?.user ?? null);
+        await loadIdentity(session?.user?.email);
+      } catch (err) {
+        // Fix défensif : si getSession ou loadIdentity throw, on libère quand même
+        // le verrou de loading (sinon le spinner reste à l'infini sans message d'erreur).
+        // L'erreur reste console.error pour diagnostic, la page passera en "non auth"
+        // (-> /Login) ou rendra son état role-less plutôt que de bloquer le UI.
+        // eslint-disable-next-line no-console
+        console.error('[PlatformAuth] init failed:', err);
+      } finally {
+        if (active) setLoading(false);
+      }
     })();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setAuthUser(session?.user ?? null);
-      await loadIdentity(session?.user?.email);
+      try {
+        setAuthUser(session?.user ?? null);
+        await loadIdentity(session?.user?.email);
+      } catch (err) {
+        // Même garde défensive que l'IIFE : une exception ici (ex. déconnexion réseau
+        // pendant un TOKEN_REFRESHED → la requête /profiles plante) ne doit pas remonter
+        // jusqu'à l'unhandledrejection global ni empêcher le `setLoading(false)` initial
+        // déjà effectué. On dégrade gentiment vers un état role-less, le UI passera en
+        // « non authentifié » ou « pas de rôle » selon le cas.
+        // eslint-disable-next-line no-console
+        console.error('[PlatformAuth] onAuthStateChange failed:', err);
+      }
     });
 
     return () => {
