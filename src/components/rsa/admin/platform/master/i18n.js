@@ -13,9 +13,10 @@ export const TABS = {
   clubs:        { fr: 'Clubs',             en: 'Clubs',           de: 'Clubs' },
   roles:        { fr: 'Rôles globaux',     en: 'Global roles',    de: 'Globale Rollen' },
   finale:       { fr: 'Finale fédérée',    en: 'Federated finale', de: 'Föderierte Finale' },
+  comms:        { fr: 'Communications',    en: 'Communications',  de: 'Kommunikation' },
 };
 
-export const TAB_IDS = ['competitions', 'clubs', 'roles', 'finale'];
+export const TAB_IDS = ['competitions', 'clubs', 'roles', 'finale', 'comms'];
 
 // ── Page header ─────────────────────────────────────────────────────────────
 export const UI = {

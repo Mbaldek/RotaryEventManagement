@@ -26,6 +26,7 @@ import CompetitionsTab from './tabs/CompetitionsTab';
 import ClubsTab from './tabs/ClubsTab';
 import GlobalRolesTab from './tabs/GlobalRolesTab';
 import FederatedFinaleTab from './tabs/FederatedFinaleTab';
+import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
 
 function Tab({ id, label, active, onClick }) {
   return (
@@ -204,6 +205,7 @@ export default function MasterCockpit() {
         {tab === 'clubs'        && <ClubsTab />}
         {tab === 'roles'        && <GlobalRolesTab />}
         {tab === 'finale'       && <FederatedFinaleTab />}
+        {tab === 'comms'        && <EmailStudio /* clubId undefined = master global */ />}
       </div>
     </>
   );
