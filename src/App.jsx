@@ -39,8 +39,14 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  // Sur le domaine plateforme RSA (app.rotary-startup.org), l'AuthProvider hérité
+  // (déjeuners) ne doit PAS gater le rendu : les pages plateforme ont leur propre
+  // auth (PlatformAuthProvider) et l'AuthContext legacy peut rester loading si la
+  // session déjeuners ne répond pas — d'où le spinner perpétuel observé en prod
+  // 2026-05-28. Sur les autres hôtes (déjeuners legacy), on garde le comportement
+  // historique pour ne rien casser tant que l'extraction Option C n'est pas faite.
+  const onPlatform = isPlatformHost();
+  if (!onPlatform && (isLoadingPublicSettings || isLoadingAuth)) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -48,8 +54,9 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
-  if (authError) {
+  // Handle authentication errors (déjeuners legacy seulement — la plateforme RSA gère
+  // ses erreurs auth dans ses propres pages via PlatformAuthProvider).
+  if (!onPlatform && authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
