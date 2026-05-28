@@ -1,0 +1,386 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const sessions = [
+  {
+    emoji: "🌿",
+    theme: "FoodTech & Économie circulaire",
+    date: "30 avril 2026",
+    winner: "KUZOG FRANCE",
+    ranking: [
+      { name: "KUZOG FRANCE", finalist: true },
+      { name: "Kyol" },
+      { name: "KIDIPOWER" },
+      { name: "GREEN OFF GRID SAS" },
+      { name: "Midow" },
+      { name: "DATUS" },
+    ],
+  },
+  {
+    emoji: "💜",
+    theme: "Impact social & Edtech",
+    date: "6 mai 2026",
+    winner: "Buddy",
+    ranking: [
+      { name: "Buddy", finalist: true },
+      { name: "SightKick" },
+      { name: "Hormur" },
+      { name: "Clover" },
+      { name: "Krewzer" },
+    ],
+  },
+  {
+    emoji: "💻",
+    theme: "Tech, AI, Fintech & Mobilité",
+    date: "13 mai 2026",
+    winner: "EVIMO",
+    ranking: [
+      { name: "EVIMO", finalist: true },
+      { name: "Boonty" },
+      { name: "ex9" },
+      { name: "FollowTech" },
+      { name: "DealMatrix" },
+    ],
+  },
+  {
+    emoji: "🩺",
+    theme: "Healthtech & Biotech",
+    date: "21 mai 2026",
+    winner: "Virtuosis Health",
+    ranking: [
+      { name: "Virtuosis Health", finalist: true },
+      { name: "Femnov" },
+      { name: "VAir" },
+      { name: "PEGMATISS BIOTECH" },
+      { name: "IPCURE" },
+      { name: "wilo" },
+    ],
+  },
+  {
+    emoji: "🌿",
+    theme: "Greentech & Environnement",
+    date: "25 mai 2026",
+    winner: "Sycon",
+    ranking: [
+      { name: "Sycon", finalist: true },
+      { name: "reLi Energy" },
+      { name: "Maa Biodiversity" },
+      { name: "SafyPower" },
+      { name: "Vergora" },
+    ],
+  },
+];
+
+const results = [
+  {
+    medal: "🥇",
+    gold: true,
+    name: "KUZOG FRANCE",
+    sectorHtml: "FoodTech &amp; Économie circulaire — <strong>Premier prix 5 000€</strong>",
+    score: "3,76",
+    barWidth: "75.2%",
+    jurors: 12,
+  },
+  {
+    medal: "🥈",
+    name: "Virtuosis Health",
+    sectorHtml: "Healthtech &amp; Biotech",
+    score: "3,62",
+    barWidth: "72.3%",
+    jurors: 12,
+  },
+  {
+    medal: "🥉",
+    name: "Sycon",
+    sectorHtml: "Greentech &amp; Environnement",
+    score: "3,51",
+    barWidth: "70.2%",
+    jurors: 12,
+  },
+  {
+    medal: "4",
+    name: "Buddy",
+    sectorHtml: "Impact social &amp; Edtech",
+    score: "3,38",
+    barWidth: "67.5%",
+    jurors: 12,
+  },
+  {
+    medal: "5",
+    name: "EVIMO",
+    sectorHtml: "Tech, AI, Fintech &amp; Mobilité",
+    score: "3,36",
+    barWidth: "67.2%",
+    jurors: 12,
+  },
+];
+---
+<Layout>
+  <div class="rsa-topbar">🏆 KUZOG FRANCE, lauréate · <strong>Rotary Startup Award 2026</strong> · Rotary Club de Paris &amp; Berlin</div>
+  <div class="rsa-nav-rule"></div>
+
+  <header class="rsa-header">
+    <nav class="rsa-nav">
+      <a class="rsa-brand" href="/">
+        <img src="/logo.svg" alt="Rotary" />
+        <div class="rsa-brand-sep"></div>
+        <div class="rsa-brand-name">
+          Rotary Startup Award<span>Paris · Berlin · 2026</span>
+        </div>
+      </a>
+    </nav>
+  </header>
+
+  <section class="rsa-hero">
+    <div class="rsa-hero-l">
+      <div>
+        <div class="rsa-hero-meta">
+          <span class="rsa-hero-meta-dot"></span>
+          <span>Grande Finale — 26 mai 2026</span>
+          <span class="rsa-hero-meta-dot"></span>
+          <span>Cyrus Conseil, Paris</span>
+        </div>
+        <h1 class="rsa-h1">
+          Palmarès<br />
+          <strong>Rotary</strong>
+          <em>Startup Award</em>
+        </h1>
+        <div class="rsa-rule"></div>
+        <p class="rsa-hero-body">
+          Le 26 mai 2026, chez Cyrus Conseil à Paris, cinq startups finalistes
+          ont pitché devant un jury de <strong>12 membres</strong>.
+          <strong>KUZOG FRANCE</strong> remporte la première édition.
+        </p>
+      </div>
+      <div>
+        <div class="rsa-hero-bottom">
+          <a href="#palmares" class="rsa-btn">Voir le palmarès ↓</a>
+        </div>
+        <p class="rsa-deadline">
+          La Commission Rotary Startup Award — Rotary Club de Paris
+        </p>
+      </div>
+    </div>
+
+    <div class="rsa-hero-r">
+      <img
+        src="https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=900&auto=format&fit=crop&q=70"
+        alt="Grande Finale RSA 2026"
+        loading="eager"
+      />
+      <div class="rsa-hero-badge">
+        <div class="rsa-hb-amount">🏆 1er</div>
+        <div class="rsa-hb-label">KUZOG FRANCE</div>
+      </div>
+      <div class="rsa-hero-caption">
+        <div class="rsa-hc-l">
+          Cyrus Conseil<br />
+          Paris, France
+        </div>
+        <div class="rsa-hc-r">
+          Grande Finale<br />
+          26 mai 2026
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rsa-strip">
+    <div class="rsa-strip-inner">
+      <div class="rsa-si">
+        <div class="rsa-si-n">Startups</div>
+        <div class="rsa-si-val">27</div>
+        <div class="rsa-si-sub">édition 2026</div>
+      </div>
+      <div class="rsa-si">
+        <div class="rsa-si-n">Finalistes</div>
+        <div class="rsa-si-val">5</div>
+        <div class="rsa-si-sub">Grande Finale</div>
+      </div>
+      <div class="rsa-si">
+        <div class="rsa-si-n">Jurés finale</div>
+        <div class="rsa-si-val">12</div>
+        <div class="rsa-si-sub">sur 34 au total</div>
+      </div>
+      <div class="rsa-si">
+        <div class="rsa-si-n">Premier prix</div>
+        <div class="rsa-si-val">5 000 €</div>
+        <div class="rsa-si-sub">3 juin 2026</div>
+      </div>
+      <div class="rsa-si">
+        <div class="rsa-si-n">Pays</div>
+        <div class="rsa-si-val">FR·DE</div>
+        <div class="rsa-si-sub">France &amp; Allemagne</div>
+      </div>
+    </div>
+  </div>
+
+  <section id="palmares" class="rsa-section">
+    <div class="rsa-wrap">
+      <div class="rsa-kicker">Grande Finale — 26 mai 2026</div>
+      <h2>Le palmarès<br /><em>et les scores</em></h2>
+      <div class="rsa-rule"></div>
+
+      <table class="rsa-score-table">
+        <thead>
+          <tr>
+            <th class="num">Rang</th>
+            <th>Startup</th>
+            <th class="num">Score/5</th>
+            <th class="num">Jurés</th>
+          </tr>
+        </thead>
+        <tbody>
+          {results.map((r) => (
+            <tr>
+              <td>
+                <div class={`rsa-score-rank${r.gold ? " gold" : ""}`}>
+                  {r.medal}
+                </div>
+              </td>
+              <td>
+                <div class="rsa-score-name">{r.name}</div>
+                <div class="rsa-score-sector" set:html={r.sectorHtml} />
+                <div class="rsa-score-bar-wrap">
+                  <div class="rsa-score-bar" style={`width:${r.barWidth}`}></div>
+                </div>
+              </td>
+              <td><div class="rsa-score-val">{r.score}</div></td>
+              <td><div class="rsa-score-jurors">{r.jurors}</div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="rsa-score-note">
+        Score moyen / 5 — 12 jurés indépendants.
+      </p>
+    </div>
+  </section>
+
+  <section class="rsa-section">
+    <div class="rsa-wrap">
+      <div class="rsa-kicker">Le parcours vers la finale</div>
+      <h2>Les <em>5 sessions qualificatives</em></h2>
+      <div class="rsa-rule"></div>
+      <p
+        style="font-size:.88rem;color:var(--mid);font-weight:300;line-height:1.75;max-width:680px;margin-bottom:2rem;"
+      >
+        Avant la Grande Finale, 27 startups ont concouru dans 5 sessions
+        qualificatives thématiques. Le vainqueur de chaque session s'est qualifié
+        pour la Grande Finale. Cliquez sur une session pour voir le classement
+        complet.
+      </p>
+
+      {sessions.map((s) => (
+        <div class="rsa-acc">
+          <button class="rsa-acc-h" type="button">
+            <span class="rsa-acc-emo">{s.emoji}</span>
+            <span class="rsa-acc-tit">
+              {s.theme}<small>{s.date}</small>
+            </span>
+            <span class="rsa-acc-win">🥇 {s.winner}</span>
+            <span class="rsa-acc-arr">▼</span>
+          </button>
+          <div class="rsa-acc-body">
+            <ol class="rsa-acc-list">
+              {s.ranking.map((startup, idx) => (
+                <li>
+                  <span class={`rsa-acc-rk${idx === 0 ? " gold" : ""}`}>
+                    {idx === 0 ? "🥇" : idx + 1}
+                  </span>
+                  <span class="rsa-acc-nm">{startup.name}</span>
+                  {startup.finalist && (
+                    <span class="rsa-acc-tag">→ Finaliste</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="rsa-section rsa-section-alt">
+    <div class="rsa-wrap">
+      <div class="rsa-kicker">Remerciements</div>
+      <h2>Une édition<br /><em>rendue possible ensemble</em></h2>
+      <div class="rsa-rule"></div>
+      <div class="rsa-merci-layout">
+        <p class="rsa-merci-text">
+          Cette édition n'aurait pas existé sans les <strong>27 startups</strong>
+          qui ont pitché, les <strong>34 jurés</strong>, les clubs Rotary de
+          Paris et Berlin, et nos partenaires — HEC Paris, SKEMA, Polytechnique,
+          ESCP, AgroParisTech, Paris Dauphine, Telecom Paris–Station F et bien
+          d'autres. Merci à <strong>Cyrus Conseil</strong> pour la Grande Finale
+          et au Rotary Club de Paris pour la cérémonie du 3 juin.
+        </p>
+        <p
+          style="font-size:.85rem;color:#A09890;font-style:italic;font-weight:300;"
+        >
+          La Commission Rotary Startup Award — Rotary Club de Paris
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="rsa-cta-sec">
+    <div class="rsa-cta-l">
+      <div class="rsa-cta-kicker">Rendez-vous en 2027</div>
+      <h2>La prochaine édition<br /><em>arrive bientôt</em></h2>
+    </div>
+    <div class="rsa-cta-r">
+      <p class="rsa-cta-desc">
+        Le Rotary Startup Award reviendra en 2027. Fondateurs, jurés, clubs et
+        partenaires : restez en contact !
+      </p>
+      <div class="rsa-cta-meta">
+        <a href="mailto:contact@rotary-startup.org">contact@rotary-startup.org</a>
+        <a href="https://rotary-startup.org">rotary-startup.org</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="rsa-footer">
+    <div class="rsa-foot-inner">
+      <div class="rsa-foot-l">
+        <a class="rsa-foot-logo" href="/">
+          <img src="/logo.svg" alt="Rotary" />
+        </a>
+        <div class="rsa-foot-sep"></div>
+        <div class="rsa-foot-copy">
+          © 2026 Rotary Club de Paris. Tous droits réservés.
+        </div>
+      </div>
+      <div class="rsa-foot-links">
+        <a
+          href="https://rotary-startup.org/wp-content/uploads/2026/02/Reglement_General_Officiel_Rotary_Startup_Award_2026.pdf"
+          target="_blank"
+          rel="noopener"
+        >Règlement général</a>
+        <a href="mailto:contact@rotary-startup.org">contact@rotary-startup.org</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="rsa-lang-tg">
+    <button data-l="fr" class="act">FR</button>
+    <button data-l="en">EN</button>
+    <button data-l="de">DE</button>
+  </div>
+
+  <script>
+    document.querySelectorAll(".rsa-acc-h").forEach((h) => {
+      h.addEventListener("click", () => {
+        h.parentElement?.classList.toggle("open");
+      });
+    });
+
+    document.querySelectorAll(".rsa-lang-tg button").forEach((b) => {
+      b.addEventListener("click", () => {
+        document.querySelectorAll(".rsa-lang-tg button").forEach((x) => x.classList.remove("act"));
+        b.classList.add("act");
+      });
+    });
+  </script>
+</Layout>

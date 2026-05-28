@@ -1,0 +1,445 @@
+/* Reset minimal */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+img, svg { display: block; max-width: 100%; }
+button { font-family: inherit; }
+
+/* ─── VARS ─── */
+:root {
+  --blue:    #003F87;
+  --blue-dk: #002761;
+  --gold:    #F7A800;
+  --ivory:   #F5F2EC;
+  --ivory2:  #EDE9E1;
+  --warm:    #F9F7F3;
+  --line:    #DDD8CF;
+  --ink:     #141210;
+  --mid:     #6B6560;
+  --light:   #A09890;
+}
+
+body {
+  font-family:'Jost', sans-serif;
+  background:var(--warm);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* ─── TOPBAR ─── */
+.rsa-topbar {
+  background:var(--blue);
+  color:rgba(255,255,255,.75);
+  font-size:.7rem; letter-spacing:.1em; text-align:center;
+  padding:.5rem 1rem; font-weight:300;
+}
+.rsa-topbar strong { color:#fff; font-weight:500; }
+
+/* ─── NAV RULE ─── */
+.rsa-nav-rule { height:3px; background:linear-gradient(90deg,var(--blue) 60%,var(--gold) 100%); }
+
+/* ─── HEADER / NAV ─── */
+.rsa-header {
+  position:sticky; top:0; z-index:99;
+  background:rgba(249,247,243,.97);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.rsa-nav {
+  height:64px; max-width:1200px; margin:0 auto; padding:0 2.5rem;
+  display:flex; align-items:center; justify-content:space-between;
+}
+
+/* Brand */
+.rsa-brand { display:flex; align-items:center; gap:.8rem; text-decoration:none; }
+.rsa-brand img { height:30px; width:auto; }
+.rsa-brand-sep { width:1px; height:20px; background:var(--line); flex-shrink:0; }
+.rsa-brand-name {
+  font-family:'Cormorant Garamond', serif;
+  font-size:.98rem; font-weight:400; color:var(--ink); line-height:1;
+}
+.rsa-brand-name span {
+  display:block;
+  font-family:'Jost', sans-serif; font-size:.55rem;
+  font-weight:300; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--mid); margin-top:.15rem;
+}
+
+/* ─── HERO ─── */
+.rsa-hero {
+  display:grid; grid-template-columns:55% 45%;
+  min-height:88vh; border-bottom:1px solid var(--line);
+}
+
+.rsa-hero-l {
+  background:var(--ivory2); padding:5rem 4rem 4rem;
+  display:flex; flex-direction:column; justify-content:space-between;
+  border-right:1px solid var(--line);
+}
+.rsa-hero-meta {
+  display:flex; align-items:center; gap:1.4rem;
+  font-size:.65rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--mid); font-weight:300; margin-bottom:3rem;
+}
+.rsa-hero-meta-dot { width:5px; height:5px; background:var(--gold); border-radius:50%; flex-shrink:0; }
+
+.rsa-h1 {
+  font-family:'Cormorant Garamond', serif;
+  font-size:clamp(3.2rem, 6vw, 5.8rem);
+  font-weight:300; line-height:.98; letter-spacing:-.02em;
+  margin:0;
+}
+.rsa-h1 strong { font-weight:600; display:block; }
+.rsa-h1 em { font-style:italic; color:var(--blue); display:block; }
+
+.rsa-rule { width:40px; height:2px; background:var(--blue); margin:2.5rem 0; }
+
+.rsa-hero-body {
+  font-size:.92rem; font-weight:300; color:var(--mid);
+  line-height:1.82; max-width:420px; margin:0 0 2rem;
+}
+.rsa-hero-bottom {
+  padding-top:2rem; border-top:1px solid var(--line);
+  display:flex; align-items:center; gap:2rem; flex-wrap:wrap;
+}
+.rsa-btn {
+  font-size:.72rem; font-weight:400; letter-spacing:.1em; text-transform:uppercase;
+  text-decoration:none; color:#fff; background:var(--blue);
+  padding:.75rem 2rem; display:inline-block;
+  transition:background .15s, transform .1s;
+  border:none; cursor:pointer;
+}
+.rsa-btn:hover { background:var(--blue-dk); transform:translateY(-1px); }
+.rsa-deadline {
+  margin-top:.7rem; font-size:.71rem; color:var(--light); font-weight:300;
+  width:100%;
+}
+.rsa-deadline strong { color:var(--mid); font-weight:400; }
+
+.rsa-hero-r {
+  position:relative; overflow:hidden; background:#b8b0a4;
+}
+.rsa-hero-r img {
+  width:100%; height:100%; object-fit:cover; object-position:center top;
+  display:block; filter:sepia(8%) contrast(1.02) brightness(.92);
+}
+.rsa-hero-badge {
+  position:absolute; top:3rem; left:0;
+  background:var(--warm); border:1px solid var(--line); border-left:none;
+  padding:1rem 1.5rem; z-index:2;
+}
+.rsa-hb-amount {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1.7rem; font-weight:300; color:var(--blue); line-height:1;
+}
+.rsa-hb-label {
+  font-size:.6rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--mid); font-weight:300; margin-top:.2rem;
+}
+.rsa-hero-caption {
+  position:absolute; bottom:0; left:0; right:0;
+  background:linear-gradient(transparent, rgba(0,0,0,.55));
+  padding:3rem 2rem 1.8rem;
+  display:flex; justify-content:space-between; align-items:flex-end;
+}
+.rsa-hc-l {
+  font-family:'Cormorant Garamond', serif;
+  font-size:.92rem; font-style:italic;
+  color:rgba(255,255,255,.75); line-height:1.45;
+}
+.rsa-hc-r {
+  font-size:.6rem; letter-spacing:.14em; text-transform:uppercase;
+  color:rgba(255,255,255,.45); font-weight:300; text-align:right;
+}
+
+/* ─── STRIP ─── */
+.rsa-strip { border-bottom:1px solid var(--line); background:var(--ivory); overflow-x:auto; }
+.rsa-strip-inner {
+  display:flex; min-width:600px;
+  border-left:1px solid var(--line);
+  max-width:1200px; margin:0 auto;
+}
+.rsa-si {
+  flex:1; padding:1.6rem 2rem; border-right:1px solid var(--line);
+  transition:background .2s; min-width:0;
+}
+.rsa-si:hover { background:var(--ivory2); }
+.rsa-si-n { font-size:.58rem; letter-spacing:.16em; text-transform:uppercase; color:var(--light); font-weight:300; margin-bottom:.4rem; }
+.rsa-si-val {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1.65rem; font-weight:300; color:var(--blue); line-height:1; margin-bottom:.2rem;
+}
+.rsa-si-sub { font-size:.7rem; color:var(--mid); font-weight:300; }
+
+/* ─── SECTIONS ─── */
+.rsa-section { padding:5.5rem 3rem; border-bottom:1px solid var(--line); }
+.rsa-section-alt { background:var(--ivory); }
+.rsa-wrap { max-width:1200px; margin:0 auto; }
+
+.rsa-kicker {
+  font-size:.63rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--blue); font-weight:400; margin-bottom:.7rem;
+  display:flex; align-items:center; gap:.8rem;
+}
+.rsa-kicker::before { content:''; width:20px; height:1.5px; background:var(--gold); flex-shrink:0; }
+
+.rsa-section h2 {
+  font-family:'Cormorant Garamond', serif;
+  font-size:clamp(2rem, 3.5vw, 3.2rem);
+  font-weight:300; line-height:1.1; letter-spacing:-.015em;
+  margin:0 0 0;
+}
+.rsa-section h2 em  { font-style:italic; color:var(--blue); }
+.rsa-section h2 strong { font-weight:600; }
+
+/* ─── PALMARÈS TABLE ─── */
+.rsa-score-table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:2rem;
+}
+.rsa-score-table th {
+  font-size:.65rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--light); font-weight:300;
+  padding:.8rem 1rem; text-align:left;
+  border-bottom:2px solid var(--blue);
+}
+.rsa-score-table th.num,
+.rsa-score-val, .rsa-score-rank, .rsa-score-jurors { text-align:center; }
+.rsa-score-table td {
+  padding:1.2rem 1rem;
+  border-bottom:1px solid var(--line);
+  vertical-align:middle;
+}
+.rsa-score-table tr:last-child td { border-bottom:none; }
+.rsa-score-table tbody tr:first-child td { background:rgba(247,168,0,.06); }
+.rsa-score-rank {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1.4rem; font-weight:300; color:var(--light);
+}
+.rsa-score-rank.gold { font-size:1.6rem; }
+.rsa-score-name {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1.1rem; font-weight:400; color:var(--ink);
+}
+.rsa-score-sector {
+  font-size:.75rem; color:var(--mid); font-weight:300; margin-top:.15rem;
+}
+.rsa-score-bar-wrap {
+  width:100%; background:var(--ivory2); border-radius:2px; height:6px; margin-top:.4rem;
+}
+.rsa-score-bar { height:6px; border-radius:2px; background:var(--blue); }
+.rsa-score-val {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1.2rem; font-weight:400; color:var(--blue);
+}
+.rsa-score-jurors { font-size:.7rem; color:var(--light); }
+.rsa-score-note {
+  font-size:.7rem; color:var(--light); margin-top:1rem;
+  font-style:italic; text-align:right;
+}
+
+/* ─── ACCORDION SESSIONS ─── */
+.rsa-acc {
+  border:1px solid var(--line);
+  border-radius:6px;
+  margin-bottom:.6rem;
+  background:#fff;
+  overflow:hidden;
+}
+.rsa-acc-h {
+  width:100%;
+  display:grid;
+  grid-template-columns:auto 1fr auto auto;
+  gap:1.2rem;
+  align-items:center;
+  padding:1.1rem 1.4rem;
+  background:none;
+  border:none;
+  cursor:pointer;
+  text-align:left;
+  font-family:'Jost', sans-serif;
+  color:inherit;
+}
+.rsa-acc-h:hover { background:rgba(247,168,0,.04); }
+.rsa-acc-emo { font-size:1.4rem; }
+.rsa-acc-tit {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1.1rem; color:var(--ink);
+}
+.rsa-acc-tit small {
+  display:block;
+  font-family:'Jost', sans-serif;
+  font-size:.65rem;
+  color:var(--light);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  margin-top:.15rem;
+  font-weight:300;
+}
+.rsa-acc-win {
+  font-size:.7rem; color:var(--blue); font-weight:500; letter-spacing:.05em;
+}
+.rsa-acc-arr {
+  font-size:.6rem; color:var(--light); transition:transform .3s;
+}
+.rsa-acc.open .rsa-acc-arr { transform:rotate(180deg); }
+.rsa-acc-body {
+  max-height:0; overflow:hidden;
+  transition:max-height .35s ease;
+}
+.rsa-acc.open .rsa-acc-body { max-height:600px; }
+.rsa-acc-list { list-style:none; padding:0 1.4rem 1.2rem; margin:0; }
+.rsa-acc-list li {
+  padding:.7rem 0;
+  border-bottom:1px solid var(--line);
+  display:grid;
+  grid-template-columns:30px 1fr auto;
+  gap:1rem;
+  align-items:center;
+}
+.rsa-acc-list li:last-child { border-bottom:none; }
+.rsa-acc-rk {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1rem; color:var(--light); text-align:center;
+}
+.rsa-acc-rk.gold { font-size:1.2rem; color:#C9A84C; }
+.rsa-acc-nm { font-size:.88rem; color:var(--ink); }
+.rsa-acc-tag {
+  font-size:.65rem; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--blue); font-weight:500;
+}
+
+/* ─── REMERCIEMENTS ─── */
+.rsa-merci-layout { max-width:720px; }
+.rsa-merci-text {
+  font-size:.95rem; font-weight:300; color:var(--mid);
+  line-height:1.85; margin-bottom:1.2rem;
+}
+
+/* ─── CTA SECTION ─── */
+.rsa-cta-sec {
+  background:var(--blue); padding:6rem 3rem;
+  display:grid; grid-template-columns:1fr 1fr; gap:6rem; align-items:center;
+  border-bottom:none; position:relative; overflow:hidden;
+}
+.rsa-cta-sec::before {
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size:26px 26px; pointer-events:none;
+}
+.rsa-cta-sec > * { position:relative; z-index:1; }
+.rsa-cta-kicker {
+  font-size:.6rem; letter-spacing:.2em; text-transform:uppercase;
+  color:rgba(255,255,255,.4); font-weight:300; margin-bottom:1.5rem;
+  display:flex; align-items:center; gap:.8rem;
+}
+.rsa-cta-kicker::before { content:''; width:20px; height:1px; background:var(--gold); }
+.rsa-cta-sec h2 {
+  font-family:'Cormorant Garamond', serif;
+  font-size:clamp(2.4rem, 4.5vw, 3.8rem);
+  font-weight:300; color:#fff;
+  line-height:1.05; letter-spacing:-.02em;
+  margin:0;
+}
+.rsa-cta-sec h2 em { font-style:italic; color:rgba(255,255,255,.6); }
+.rsa-cta-r {
+  border-left:1px solid rgba(255,255,255,.1);
+  padding-left:5rem;
+  display:flex; flex-direction:column; gap:2rem;
+}
+.rsa-cta-desc {
+  font-size:.9rem; font-weight:300;
+  color:rgba(255,255,255,.6); line-height:1.8;
+  margin:0;
+}
+.rsa-cta-meta {
+  font-size:.72rem; color:rgba(255,255,255,.35); font-weight:300;
+  display:flex; flex-direction:column; gap:.3rem;
+}
+.rsa-cta-meta a {
+  color:rgba(255,255,255,.5); text-decoration:none; transition:color .15s;
+}
+.rsa-cta-meta a:hover { color:#fff; }
+
+/* ─── FOOTER ─── */
+.rsa-footer {
+  background:var(--ivory); border-top:1px solid var(--line); padding:1.8rem 3rem;
+}
+.rsa-foot-inner {
+  max-width:1200px; margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:1rem; flex-wrap:wrap;
+}
+.rsa-foot-l { display:flex; align-items:center; gap:1.4rem; }
+.rsa-foot-logo img { height:26px; opacity:.65; }
+.rsa-foot-sep { width:1px; height:18px; background:var(--line); }
+.rsa-foot-copy { font-size:.72rem; color:var(--light); font-weight:300; }
+.rsa-foot-links { display:flex; gap:2rem; flex-wrap:wrap; }
+.rsa-foot-links a {
+  font-size:.72rem; color:var(--mid); text-decoration:none;
+  font-weight:300; transition:color .15s;
+}
+.rsa-foot-links a:hover { color:var(--ink); }
+
+/* ─── LANG TOGGLE ─── */
+.rsa-lang-tg {
+  position:fixed; top:.5rem; right:1rem; z-index:9999;
+  display:flex; gap:.3rem;
+  background:rgba(255,255,255,.95);
+  padding:.35rem .5rem; border-radius:4px;
+  box-shadow:0 2px 12px rgba(0,0,0,.12);
+}
+.rsa-lang-tg button {
+  background:none; border:none;
+  font:400 .68rem/1 'Jost', sans-serif; letter-spacing:.1em;
+  color:#6B6560; padding:.3rem .5rem; cursor:pointer; border-radius:3px;
+  transition:.2s;
+}
+.rsa-lang-tg button.act { background:var(--blue); color:#fff; }
+.rsa-lang-tg button:hover:not(.act) { background:var(--ivory2); color:var(--blue); }
+
+/* ─── MOBILE ─── */
+@media (max-width:900px) {
+  .rsa-nav { padding:0 1.2rem; }
+  .rsa-brand-name span { display:none; }
+
+  .rsa-hero { grid-template-columns:1fr; min-height:auto; }
+  .rsa-hero-l { padding:3rem 1.5rem; border-right:none; border-bottom:1px solid var(--line); }
+  .rsa-hero-r { height:260px; }
+  .rsa-hero-badge { display:none; }
+  .rsa-h1 { font-size:clamp(2.8rem, 10vw, 4rem); }
+  .rsa-hero-meta { margin-bottom:2rem; }
+  .rsa-rule { margin:1.8rem 0; }
+  .rsa-hero-body { margin-bottom:1.5rem; }
+  .rsa-hero-bottom { gap:1rem; }
+
+  .rsa-strip-inner { min-width:0; flex-wrap:wrap; }
+  .rsa-si { flex:0 0 50%; border-bottom:1px solid var(--line); }
+  .rsa-si:nth-child(odd) { border-right:1px solid var(--line); }
+  .rsa-si:nth-child(even) { border-right:none; }
+  .rsa-si:last-child { flex:0 0 100%; border-right:none; }
+
+  .rsa-section { padding:3.5rem 1.5rem; }
+
+  .rsa-cta-sec { grid-template-columns:1fr; gap:3rem; padding:4rem 1.5rem; }
+  .rsa-cta-r { border-left:none; padding-left:0; border-top:1px solid rgba(255,255,255,.1); padding-top:3rem; }
+  .rsa-cta-sec h2 { font-size:2.6rem; }
+
+  .rsa-footer { padding:1.5rem; }
+  .rsa-foot-inner { flex-direction:column; align-items:flex-start; gap:.8rem; }
+  .rsa-foot-links { gap:1.2rem; }
+}
+
+@media (max-width:640px) {
+  .rsa-acc-h { grid-template-columns:auto 1fr auto; }
+  .rsa-acc-win { display:none; }
+}
+
+@media (max-width:480px) {
+  .rsa-si { flex:0 0 100% !important; border-right:none !important; }
+  .rsa-h1 { font-size:2.6rem; }
+  .rsa-hero-bottom { flex-direction:column; align-items:flex-start; }
+  .rsa-btn { width:100%; text-align:center; }
+  .rsa-cta-btn { width:100%; text-align:center; }
+}
