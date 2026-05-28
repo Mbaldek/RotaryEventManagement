@@ -28,6 +28,10 @@ import ClubLiveTab from './tabs/LiveTab';
 import ClubResultsTab from './tabs/ResultsTab';
 import ClubTeamTab from './tabs/TeamTab';
 import ClubRulesTab from './tabs/RulesTab';
+import JuryApplicationsTab from './tabs/JuryApplicationsTab';
+// CommsTab : monté seulement si l'EmailStudio M9 a livré son shell (lazy import pour
+// rester tolérant pendant la mise en place — fallback minimal sinon).
+import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
 import { useClub, useClubEditions, useClubSessions } from './useClub';
 
 function Spinner() {
@@ -271,8 +275,14 @@ export default function ClubCockpit({ clubId }) {
         {!editionsQ.isLoading && tab === 'team' && (
           <ClubTeamTab clubId={clubId} />
         )}
+        {!editionsQ.isLoading && tab === 'jury_applications' && (
+          <JuryApplicationsTab clubId={clubId} />
+        )}
         {!editionsQ.isLoading && tab === 'rules' && (
           <ClubRulesTab edition={edition} clubId={clubId} />
+        )}
+        {!editionsQ.isLoading && tab === 'comms' && (
+          <EmailStudio clubId={clubId} edition={edition} />
         )}
       </div>
     </>

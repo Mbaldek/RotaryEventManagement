@@ -6,11 +6,13 @@
 // labels génériques (UI.save/cancel/loading…) : on les importe quand nécessaire.
 
 export const CLUB_TABS = {
-  setup:   { fr: 'Configuration', en: 'Setup',       de: 'Konfiguration' },
-  live:    { fr: 'En direct',     en: 'Live',        de: 'Live' },
-  results: { fr: 'Résultats',     en: 'Results',     de: 'Ergebnisse' },
-  team:    { fr: 'Équipe',        en: 'Team',        de: 'Team' },
-  rules:   { fr: "Règles d'éligibilité", en: 'Eligibility rules', de: 'Eignungsregeln' },
+  setup:              { fr: 'Configuration',     en: 'Setup',          de: 'Konfiguration' },
+  live:               { fr: 'En direct',         en: 'Live',           de: 'Live' },
+  results:            { fr: 'Résultats',         en: 'Results',        de: 'Ergebnisse' },
+  team:               { fr: 'Équipe',            en: 'Team',           de: 'Team' },
+  jury_applications:  { fr: 'Candidatures jury', en: 'Jury applications', de: 'Jury-Bewerbungen' },
+  rules:              { fr: "Règles d'éligibilité", en: 'Eligibility rules', de: 'Eignungsregeln' },
+  comms:              { fr: 'Communications',    en: 'Communications', de: 'Kommunikation' },
 };
 
 export const CLUB_UI = {
@@ -101,4 +103,4 @@ export const CLUB_RULES = {
 // Roles disponibles dans la TeamTab (parallèle à ROLE_OPTIONS du legacy).
 export const CLUB_ROLE_OPTIONS = ['club_admin', 'comite', 'jury'];
 
-export const TAB_IDS = ['setup', 'live', 'results', 'team', 'rules'];
+export const TAB_IDS = ['setup', 'live', 'results', 'team', 'jury_applications', 'rules', 'comms'];

@@ -56,6 +56,7 @@ import Features from './pages/Features';
 import FloorPlan from './pages/FloorPlan';
 import Index from './pages/Index';
 import Jury from './pages/Jury';
+import JuryCandidate from './pages/JuryCandidate';
 import Login from './pages/Login';
 import MonDossier from './pages/MonDossier';
 import ReservationRequest from './pages/ReservationRequest';
@@ -88,6 +89,7 @@ export const PAGES = {
     "FloorPlan": FloorPlan,
     "Index": Index,
     "Jury": Jury,
+    "JuryCandidate": JuryCandidate,
     "Login": Login,
     "MonDossier": MonDossier,
     "ReservationRequest": ReservationRequest,
