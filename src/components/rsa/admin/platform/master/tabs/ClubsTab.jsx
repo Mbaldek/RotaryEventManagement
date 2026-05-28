@@ -139,11 +139,12 @@ export default function ClubsTab() {
       <ClubFunnel
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreated={(_row) => {
-          // Best UX : on laisse la modale ouverte (le user finit de remplir
-          // les autres tabs via autosave), il fermera lui-même.
-          // Quand il ferme, on pourra naviguer vers le club via openClub(row.id)
-          // si on le souhaite — pour la V2.5+ on reste sur la liste.
+        onCreated={(row) => {
+          // V2.6 fix N2 : aligne le comportement avec CompetitionsTab —
+          // après fermeture du funnel, on bascule sur la vue édition du
+          // club fraîchement créé (continuité UX, l'autosave a déjà persisté
+          // tous les champs, l'EditView permet d'éditer les Membres en plus).
+          if (row?.id) openClub(row.id);
         }}
       />
 

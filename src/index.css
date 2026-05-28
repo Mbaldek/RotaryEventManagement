@@ -110,3 +110,16 @@
     }
   }
 }
+
+/* ── V2.6 fix Mi1 : backdrop-filter Safari < 15 fallback ────────────────────
+   Tailwind `backdrop-blur-sm` génère `backdrop-filter: blur(4px)` qui n'est
+   pas supporté sur Safari < 15 / Edge < 79. Sans fallback, l'overlay est
+   transparent (pas de brume), ce qui dégrade le contraste du contenu de la
+   modale. On force un overlay opaque NAVY 45% si backdrop-filter n'est PAS
+   supporté (au lieu du 45% transparent qui suppose la brume).
+   ────────────────────────────────────────────────────────────────────────── */
+@supports not (backdrop-filter: blur(4px)) {
+  .rsa-backdrop-blur {
+    background-color: rgba(15, 31, 61, 0.72) !important;
+  }
+}

@@ -47,6 +47,11 @@ export default function useAutosaveClub({
   const inFlightRef = useRef(null);
   // Timer pour repasser 'saved' -> 'idle' après 2s
   const savedTimerRef = useRef(null);
+  // V2.6 fix M1 : tracke si le composant est encore monté pour éviter les
+  // setState après unmount (les RPC en vol au moment de la fermeture de la
+  // modale terminent leur await ; on swallow leur résultat silencieusement
+  // côté UI mais on laisse persist écrire en base — le user a fait son save).
+  const isUnmountedRef = useRef(false);
 
   // Si l'identité du club change, on resync.
   useEffect(() => {
@@ -85,19 +90,25 @@ export default function useAutosaveClub({
         const row = await Club.updateClub({ id, ...patch });
         // Invalidation queries master Pour rafraîchir card list etc.
         qc.invalidateQueries({ queryKey: KEYS.clubs });
-        setStatus('saved');
-        setStatusMessage('');
-        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-        savedTimerRef.current = setTimeout(() => {
-          setStatus('idle');
+        if (!isUnmountedRef.current) {
+          setStatus('saved');
           setStatusMessage('');
-        }, 1800);
+          if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+          savedTimerRef.current = setTimeout(() => {
+            if (!isUnmountedRef.current) {
+              setStatus('idle');
+              setStatusMessage('');
+            }
+          }, 1800);
+        }
         return row;
       } catch (err) {
-        setStatus('error');
-        const msg = err?.message || 'Error';
-        setStatusMessage(msg);
-        setError(msg);
+        if (!isUnmountedRef.current) {
+          setStatus('error');
+          const msg = err?.message || 'Error';
+          setStatusMessage(msg);
+          setError(msg);
+        }
         throw err;
       } finally {
         if (inFlightRef.current === promise) inFlightRef.current = null;
@@ -143,6 +154,9 @@ export default function useAutosaveClub({
 
   // Cleanup au démontage : flush silencieux des changements en attente.
   useEffect(() => () => {
+    // V2.6 fix M1 : marque unmount AVANT le flush final pour que les setState
+    // post-await dans persist() soient bypassés.
+    isUnmountedRef.current = true;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
     const acc = pendingRef.current;

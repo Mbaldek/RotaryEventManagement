@@ -56,6 +56,9 @@ export default function useAutosaveCompetition({
   const debounceRef = useRef(null);
   const inFlightRef = useRef(false);
   const editionIdRef = useRef(editionId);
+  // V2.6 fix M1 : bypass setState après unmount (les mutations en vol au
+  // moment de la fermeture de la modale terminent leur await silencieusement).
+  const isUnmountedRef = useRef(false);
 
   // Garde la référence courante (un editionId qui change en cours est rare —
   // créa puis édition — mais on veut taper le bon ID si une save est en vol).
@@ -78,8 +81,10 @@ export default function useAutosaveCompetition({
     debounceRef.current = null;
     if (!acc || Object.keys(acc).length === 0) return;
     inFlightRef.current = true;
-    setStatus('saving');
-    setErrorMessage(null);
+    if (!isUnmountedRef.current) {
+      setStatus('saving');
+      setErrorMessage(null);
+    }
     try {
       await update.mutateAsync({ id, patch: acc });
       // Si un patch est arrivé en cours, on le sauvegarde tout de suite.
@@ -88,11 +93,15 @@ export default function useAutosaveCompetition({
         await runSave();
         return;
       }
-      setLastSavedAt(Date.now());
-      setStatus('saved');
+      if (!isUnmountedRef.current) {
+        setLastSavedAt(Date.now());
+        setStatus('saved');
+      }
     } catch (err) {
-      setStatus('error');
-      setErrorMessage(err?.message || 'Save failed');
+      if (!isUnmountedRef.current) {
+        setStatus('error');
+        setErrorMessage(err?.message || 'Save failed');
+      }
     } finally {
       inFlightRef.current = false;
     }
@@ -126,6 +135,9 @@ export default function useAutosaveCompetition({
 
   // Flush au démontage (best effort — on swallow l'éventuelle rejection).
   useEffect(() => () => {
+    // V2.6 fix M1 : marque unmount AVANT le flush final pour bypasser les
+    // setState post-await dans runSave().
+    isUnmountedRef.current = true;
     if (debounceRef.current) {
       window.clearTimeout(debounceRef.current);
       debounceRef.current = null;
