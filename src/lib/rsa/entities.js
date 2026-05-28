@@ -740,3 +740,132 @@ export const JuryScore = {
     if (error) throw error;
   },
 };
+
+// ============================================================================
+// V2 MULTI-CLUB — Entités clubs / memberships / edition_clubs
+// ============================================================================
+// Toutes les écritures passent par les RPC SECURITY DEFINER de l'étape 2 (cf.
+// supabase/migrations/20260529_rsa_v2_club_management_rpcs.sql). Les lectures
+// passent par les RPC quand un filtrage par rôle est nécessaire (rsa_list_*),
+// sinon directement via la table (clubs/edition_clubs ont SELECT public).
+
+// Clubs : référence des clubs Rotary participants
+export const Club = {
+  ...createEntity('clubs'),
+
+  // Liste publique des clubs (utilisée par le dropdown candidature multi-club).
+  // Passe par le RPC pour cohérence (et possible filtrage futur).
+  async listAll() {
+    const { data, error } = await supabase.rpc('rsa_list_clubs');
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Création — réservée master_admin (vérifié côté serveur).
+  async createClub({ id, name, region, contactEmail, contactName }) {
+    const { data, error } = await supabase.rpc('rsa_create_club', {
+      p_id: id,
+      p_name: name,
+      p_region: region ?? null,
+      p_contact_email: contactEmail ?? null,
+      p_contact_name: contactName ?? null,
+    });
+    if (error) throw error;
+    return data;
+  },
+};
+
+// ClubMembership : rôles par-club (parallèle à app_user_roles pour les globaux)
+export const ClubMembership = {
+  ...createEntity('club_memberships'),
+
+  // Membres d'un club, joint avec auth.users + profiles (via RPC car JOIN auth).
+  // Réservé master_admin ou club_admin du club (filtrage côté serveur).
+  async listMembers(clubId) {
+    if (!clubId) return [];
+    const { data, error } = await supabase.rpc('rsa_list_club_members', { p_club_id: clubId });
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Mes propres memberships (tous clubs, tous rôles) — lu par PlatformAuthProvider.
+  async myMemberships() {
+    const { data, error } = await supabase.rpc('my_club_memberships');
+    if (error) {
+      // Tolérance : si l'RPC n'existe pas (build local sans migration), on retombe
+      // sur la table directe via la RLS self-read.
+      const { data: rows } = await supabase.from('club_memberships').select('club_id, role');
+      return rows || [];
+    }
+    return data || [];
+  },
+
+  // Assignation — master_admin ou club_admin du club.
+  async assign({ email, clubId, role }) {
+    const { data, error } = await supabase.rpc('rsa_assign_club_role', {
+      p_email: email,
+      p_club_id: clubId,
+      p_role: role,
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  // Retrait — master_admin ou club_admin du club (garde-fou last-admin).
+  async revoke({ email, clubId, role }) {
+    const { error } = await supabase.rpc('rsa_revoke_club_role', {
+      p_email: email,
+      p_club_id: clubId,
+      p_role: role,
+    });
+    if (error) throw error;
+  },
+};
+
+// EditionClub : junction club × compétition (avec override eligibility_rules)
+export const EditionClub = {
+  ...createEntity('edition_clubs'),
+
+  // Clubs participants à une compétition (publique pour le dropdown candidature).
+  async forEdition(editionId) {
+    if (!editionId) return [];
+    const { data, error } = await supabase
+      .from('edition_clubs')
+      .select('*, club:clubs(*)')
+      .eq('edition_id', editionId);
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Attachement d'un club à une compétition (master_admin only).
+  async attach({ editionId, clubId, eligibilityRules }) {
+    const { data, error } = await supabase.rpc('rsa_attach_club_to_edition', {
+      p_edition_id: editionId,
+      p_club_id: clubId,
+      p_eligibility_rules: eligibilityRules ?? {},
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  // Détachement (refusé si startups/sessions existent — intégrité).
+  async detach({ editionId, clubId }) {
+    const { error } = await supabase.rpc('rsa_detach_club_from_edition', {
+      p_edition_id: editionId,
+      p_club_id: clubId,
+    });
+    if (error) throw error;
+  },
+};
+
+// Création de compétition (master_admin only) — wrapper sur le RPC.
+export async function createCompetition({ id, name, year, model = 'monoclub' }) {
+  const { data, error } = await supabase.rpc('rsa_create_competition', {
+    p_id: id,
+    p_name: name,
+    p_year: year,
+    p_model: model,
+  });
+  if (error) throw error;
+  return data;
+}

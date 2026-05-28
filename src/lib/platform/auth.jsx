@@ -27,13 +27,15 @@ const APP_URL = import.meta.env.VITE_APP_URL || (typeof window !== 'undefined' ?
 export function PlatformAuthProvider({ children }) {
   const [authUser, setAuthUser] = useState(null); // session.user (auth.users)
   const [profile, setProfile] = useState(null); // ligne profiles (identité, peut être null)
-  const [roles, setRoles] = useState([]); // app_user_roles.roles
+  const [roles, setRoles] = useState([]); // app_user_roles.roles (globaux)
+  const [clubMemberships, setClubMemberships] = useState([]); // V2 : [{club_id, role}, ...]
   const [loading, setLoading] = useState(true);
 
   const loadIdentity = useCallback(async (email) => {
     if (!email) {
       setProfile(null);
       setRoles([]);
+      setClubMemberships([]);
       return;
     }
     // R-M4 : eq + normalisation lowercase plutôt qu'ilike (wildcards %_ exploitables).
@@ -42,13 +44,21 @@ export function PlatformAuthProvider({ children }) {
     // policy basée sur `auth.jwt() ->> 'email'` (puis `auth_current_email()`) ne
     // matchait pas systématiquement la ligne du user, conduisant à un `/Admin`
     // bloqué en "Forbidden" malgré la présence du rôle 'admin' en base.
+    //
+    // V2 multi-club : on charge AUSSI les club_memberships via le RPC dédié
+    // my_club_memberships (SECURITY DEFINER), pour exposer immédiatement à l'UI
+    // les rôles par-club (club_admin/comite/jury de tel ou tel club). Si l'RPC
+    // n'existe pas encore (build local sans migration V2 appliquée), on retombe
+    // sur un tableau vide — la plateforme reste fonctionnelle en mode V1 global.
     const norm = String(email).trim().toLowerCase();
-    const [{ data: prof }, { data: roles }] = await Promise.all([
+    const [{ data: prof }, rolesRes, cmRes] = await Promise.all([
       supabase.from('profiles').select('id, email, full_name, role').eq('email', norm).maybeSingle(),
       supabase.rpc('rsa_my_roles'),
+      supabase.rpc('my_club_memberships'),
     ]);
     setProfile(prof ?? null);
-    setRoles(Array.isArray(roles) ? roles : []);
+    setRoles(Array.isArray(rolesRes?.data) ? rolesRes.data : []);
+    setClubMemberships(Array.isArray(cmRes?.data) ? cmRes.data : []);
   }, []);
 
   useEffect(() => {
@@ -133,9 +143,21 @@ export function PlatformAuthProvider({ children }) {
     setAuthUser(null);
     setProfile(null);
     setRoles([]);
+    setClubMemberships([]);
   }, []);
 
   const hasRole = useCallback((r) => roles.includes(r), [roles]);
+
+  // V2 — helpers club-scoped
+  const hasClubRole = useCallback(
+    (clubId, role) => clubMemberships.some((m) => m.club_id === clubId && m.role === role),
+    [clubMemberships],
+  );
+
+  // Liste dédupliquée des club_id que le user peut administrer (club_admin direct OU master_admin = tous)
+  // Note : pour les master_admins, "tous les clubs" ne peut être résolu qu'en chargeant Club.listAll()
+  // côté consommateur. Ici on expose uniquement les club_admin directs.
+  const myAdminClubs = clubMemberships.filter((m) => m.role === 'club_admin').map((m) => m.club_id);
 
   const value = {
     authUser,
@@ -146,7 +168,12 @@ export function PlatformAuthProvider({ children }) {
     isJury: roles.includes('jury'),
     isComite: roles.includes('comite'),
     isAdmin: roles.includes('admin'),
+    // V2 multi-club
+    isMasterAdmin: roles.includes('master_admin'),
+    clubMemberships,                                   // [{club_id, role}, ...]
+    myAdminClubs,                                      // string[] (club_admin direct)
     hasRole,
+    hasClubRole,
     signInWithMagicLink,
     signOut,
   };
