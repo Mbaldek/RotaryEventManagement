@@ -54,6 +54,8 @@ import EventPlanning from './pages/EventPlanning';
 import Features from './pages/Features';
 import FloorPlan from './pages/FloorPlan';
 import Index from './pages/Index';
+import Login from './pages/Login';
+import MonDossier from './pages/MonDossier';
 import ReservationRequest from './pages/ReservationRequest';
 import Reservations from './pages/Reservations';
 import RsaAdmin from './pages/RsaAdmin';
@@ -66,6 +68,7 @@ import RsaJuryView from './pages/RsaJuryView';
 import RsaPrintSheets from './pages/RsaPrintSheets';
 import RsaRecap from './pages/RsaRecap';
 import RsaScore from './pages/RsaScore';
+import Selection from './pages/Selection';
 import StartupUpload from './pages/StartupUpload';
 import TableView from './pages/TableView';
 import TableViewMockup from './pages/TableViewMockup';
@@ -81,6 +84,8 @@ export const PAGES = {
     "Features": Features,
     "FloorPlan": FloorPlan,
     "Index": Index,
+    "Login": Login,
+    "MonDossier": MonDossier,
     "ReservationRequest": ReservationRequest,
     "Reservations": Reservations,
     "RsaAdmin": RsaAdmin,
@@ -93,6 +98,7 @@ export const PAGES = {
     "RsaPrintSheets": RsaPrintSheets,
     "RsaRecap": RsaRecap,
     "RsaScore": RsaScore,
+    "Selection": Selection,
     "StartupUpload": StartupUpload,
     "TableView": TableView,
     "TableViewMockup": TableViewMockup,
