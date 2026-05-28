@@ -112,6 +112,20 @@ export const SETUP = {
   kindFinale:       { fr: 'Finale',                en: 'Finale',            de: 'Finale' },
   newSessionDate:   { fr: 'Date',                  en: 'Date',              de: 'Datum' },
   newSessionPos:    { fr: 'Position',              en: 'Position',          de: 'Position' },
+  newSessionTeams:  { fr: 'Lien Teams',            en: 'Teams link',        de: 'Teams-Link' },
+  newSessionTeamsHint: {
+    fr: 'URL Microsoft Teams partagée aux jurés et candidats avant la session.',
+    en: 'Microsoft Teams URL shared with jurors and candidates before the session.',
+    de: 'Microsoft-Teams-URL, die vor der Session an Juroren und Kandidaten geteilt wird.',
+  },
+  newSessionNotes:  { fr: 'Notes internes',        en: 'Internal notes',    de: 'Interne Notizen' },
+  newSessionClub:   { fr: 'Club',                  en: 'Club',              de: 'Club' },
+  newSessionClubHint: {
+    fr: 'Identifiant du club (laisser vide pour une finale fédérée).',
+    en: 'Club identifier (leave empty for a federated finale).',
+    de: 'Club-Kennung (für ein föderiertes Finale leer lassen).',
+  },
+  teamsLinkOpen:    { fr: 'Ouvrir le lien Teams →', en: 'Open Teams link →', de: 'Teams-Link öffnen →' },
   resetSession:     { fr: 'Réinitialiser',         en: 'Reset',             de: 'Zurücksetzen' },
   resetSessionTitle:{ fr: 'Réinitialiser la session', en: 'Reset session', de: 'Session zurücksetzen' },
   resetSessionBody: {

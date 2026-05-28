@@ -71,6 +71,9 @@ export default function SessionList({ sessions, selectedSessionId, onSelect }) {
                   </div>
                   <div className="text-[12px] mt-1" style={{ color: INK }}>
                     {formatShortDate(s.session_date, lang)}
+                    {s.club_id && (
+                      <span className="ml-2" style={{ color: MUTED }}>· {s.club_id}</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <StatusPill

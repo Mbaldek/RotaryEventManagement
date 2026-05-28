@@ -16,6 +16,7 @@ import {
   NAVY,
   INK,
   MUTED,
+  CREAM2,
   SERIF,
 } from '@/components/design';
 import { usePlatformAuth } from '@/lib/platform/auth';
@@ -35,7 +36,7 @@ import {
   useAdminOverride,
 } from '@/components/rsa/selection';
 import { UI } from '@/components/rsa/selection/i18n';
-import { Edition } from '@/lib/rsa/entities';
+import { Club, Edition } from '@/lib/rsa/entities';
 import { useQuery } from '@tanstack/react-query';
 
 function Centered({ children, minHeight = '40vh' }) {
@@ -58,6 +59,11 @@ function Spinner({ size = 6 }) {
 
 // Compute the server filters object passed to the queue from local UI state.
 // quickTab maps onto status filters ; verdict is a single value (kept as array).
+//
+// V2 multi-club : on ajoute clubIdsIn (multi-club allowed pour un master_admin
+// qui inspecterait 2 clubs simultanément ; pour le cas standard 1 seul club, on
+// passe un tableau singleton). Le client-side .pageForStaff ne le supporte pas
+// encore en natif — on filtre donc dans `filteredPages` côté composant.
 function buildFilters({ editionId, quickTab, verdictIn, search }) {
   const filters = {
     editionId: editionId || undefined,
@@ -75,8 +81,39 @@ function buildFilters({ editionId, quickTab, verdictIn, search }) {
 }
 
 export default function Selection() {
-  const { isAuthenticated, isComite, isAdmin, loading: authLoading } = usePlatformAuth();
+  const {
+    isAuthenticated,
+    isComite,
+    isAdmin,
+    isMasterAdmin,
+    clubMemberships,
+    loading: authLoading,
+  } = usePlatformAuth();
   const { t } = useLang();
+
+  // V2 multi-club : périmètre de clubs visibles par défaut.
+  // - master_admin OR admin legacy : voit TOUT (toggle "Tous les clubs / Filtrer")
+  // - club_admin / comite scoped : limité à ses clubs (auto-filter sans toggle)
+  const myComiteClubIds = useMemo(
+    () => (clubMemberships || [])
+      .filter((m) => m.role === 'comite' || m.role === 'club_admin')
+      .map((m) => m.club_id),
+    [clubMemberships],
+  );
+  const canSeeAllClubs = isMasterAdmin || isAdmin;
+  const isClubScoped = !canSeeAllClubs && myComiteClubIds.length > 0;
+
+  // Toggle pour master/admin : 'all' (défaut) ou un club_id particulier.
+  // Pour les club-scoped, le filtre est forcé sur leurs clubs (pas de toggle).
+  const [clubFilter, setClubFilter] = useState('all');
+
+  // Liste des clubs (pour le dropdown master/admin).
+  const { data: allClubs = [] } = useQuery({
+    queryKey: ['rsa', 'selection', 'clubs'],
+    queryFn: () => Club.listAll(),
+    enabled: canSeeAllClubs,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // ── Filtres locaux ──────────────────────────────────────────────────────
   // L'édition active sert de défaut tant que l'utilisateur n'en pick pas une autre.
@@ -121,20 +158,40 @@ export default function Selection() {
   const finalize = useFinalizeReview();
   const override = useAdminOverride();
 
-  // ── Client-side "à valider" filter ─────────────────────────────────────
-  // On filtre les rows non-finales si quickTab === 'toValidate'.
+  // ── Client-side filtres (à valider + club_id) ──────────────────────────
+  // 1. quickTab=='toValidate' : on garde uniquement les rows ayant des reviews
+  //    non-finales.
+  // 2. V2 multi-club : on restreint aux clubs visibles selon le rôle :
+  //    - master/admin avec toggle 'all' : pas de filtre club ;
+  //    - master/admin avec un club choisi : filtre sur ce club ;
+  //    - club-scoped (comite/club_admin) : filtre auto sur ses clubs.
+  const clubAllowList = useMemo(() => {
+    if (isClubScoped) return new Set(myComiteClubIds);
+    if (canSeeAllClubs && clubFilter !== 'all') return new Set([clubFilter]);
+    return null; // null = pas de filtre club (master_admin 'all' OR legacy admin)
+  }, [isClubScoped, myComiteClubIds, canSeeAllClubs, clubFilter]);
+
   const filteredPages = useMemo(() => {
     if (!queue.data) return [];
-    if (quickTab !== 'toValidate') return queue.data.pages || [];
-    return (queue.data.pages || []).map((page) =>
+    const allow = clubAllowList;
+    const pages = queue.data.pages || [];
+    return pages.map((page) =>
       (page || []).filter((row) => {
+        // Club filter (V2)
+        if (allow && row.club_id && !allow.has(row.club_id)) return false;
+        if (allow && !row.club_id && allow.size > 0) {
+          // un dossier sans club_id (legacy 2026 backfillé en 'paris') ne devrait
+          // jamais arriver post-migration ; on le masque par sûreté.
+          return false;
+        }
+        // Validation filter
+        if (quickTab !== 'toValidate') return true;
         const reviews = Array.isArray(row.selection_reviews) ? row.selection_reviews : [];
         if (!reviews.length) return false;
-        // au moins une review existe et aucune n'est is_final
         return !reviews.some((r) => r.is_final);
       }),
     );
-  }, [queue.data, quickTab]);
+  }, [queue.data, quickTab, clubAllowList]);
 
   // ── Auth / role gates ──────────────────────────────────────────────────
   if (authLoading) {
@@ -187,6 +244,9 @@ export default function Selection() {
           style={{ color: GOLD }}
         >
           {t(UI.eyebrow)}
+          {isClubScoped && (
+            <span> · {myComiteClubIds.join(' / ')}</span>
+          )}
         </span>
       </div>
       <h1
@@ -195,9 +255,31 @@ export default function Selection() {
       >
         {t(UI.pageTitle)}
       </h1>
-      <p className="text-[14px] mb-6" style={{ color: INK }}>
+      <p className="text-[14px] mb-4" style={{ color: INK }}>
         {t(UI.pageSubtitle)}
       </p>
+
+      {/* V2 : toggle club (visible UNIQUEMENT pour master_admin / admin legacy) */}
+      {canSeeAllClubs && (
+        <div className="mb-4 flex items-center gap-3 flex-wrap">
+          <span className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: MUTED }}>
+            Club
+          </span>
+          <select
+            value={clubFilter}
+            onChange={(e) => setClubFilter(e.target.value)}
+            className="text-[12.5px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+            style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+          >
+            <option value="all">
+              {t({ fr: 'Tous les clubs', en: 'All clubs', de: 'Alle Clubs' })}
+            </option>
+            {allClubs.map((c) => (
+              <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <FiltersBar
         editions={editions}

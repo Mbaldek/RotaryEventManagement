@@ -1,39 +1,210 @@
-// STUB — Master Cockpit (V2 multi-club)
+// MasterCockpit — coquille du cockpit Master Admin (V2 multi-club).
 //
-// Sera entièrement réécrit par l'agent Étape 5. Ce stub permet juste au build
-// de passer pendant que l'agent travaille. Affiche un placeholder en attendant.
+// Responsabilités :
+//   * pill-toggle Élysée des 4 sous-tabs (COMPÉTITIONS / CLUBS / RÔLES GLOBAUX / FINALE FÉDÉRÉE),
+//   * URL state via useSearchParams (deep-link `?tab=competitions|clubs|roles|finale`,
+//     même patron qu'AdminShell),
+//   * MasterStatusStrip en haut (lecture agrégée : compétition active + counts),
+//   * router des tabs (composants enfants autonomes).
 //
-// Quand l'agent ship, il remplace ce fichier intégralement par le vrai
-// MasterCockpit (tabs Compétitions / Clubs / Rôles globaux / Finale fédérée).
+// Pas de garde de rôle ici : Admin.jsx fait le gate isMasterAdmin avant de monter ce shell.
 
-import React from 'react';
-import { GOLD, NAVY, INK, SERIF } from '@/components/design';
+import React, { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import {
+  CREAM2, NAVY, INK, MUTED, GOLD,
+} from '@/components/design';
+import { useLang } from '@/lib/platform/i18n';
+import { TABS, TAB_IDS, STRIP, UI } from './i18n';
+import {
+  useAllCompetitions,
+  useAllClubs,
+  useCountsForEdition,
+} from './useMaster';
+import CompetitionsTab from './tabs/CompetitionsTab';
+import ClubsTab from './tabs/ClubsTab';
+import GlobalRolesTab from './tabs/GlobalRolesTab';
+import FederatedFinaleTab from './tabs/FederatedFinaleTab';
 
-export default function MasterCockpit() {
+function Tab({ id, label, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="px-4 py-2 rounded-full text-[12.5px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] transition-colors"
+      style={{
+        background: active ? NAVY : 'white',
+        color: active ? 'white' : INK,
+        border: `1px solid ${active ? NAVY : CREAM2}`,
+      }}
+      aria-pressed={active}
+      aria-controls={`master-panel-${id}`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Dot({ color }) {
+  return (
+    <span
+      className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+      style={{ background: color }}
+      aria-hidden
+    />
+  );
+}
+
+// MasterStatusStrip — bande hairline lecture agrégée plateforme.
+// "Compétition active : 2027 (multiclub) · X clubs · Y candidatures · Z sessions"
+function MasterStatusStrip() {
+  const { t } = useLang();
+  const competitions = useAllCompetitions();
+  const clubsAll = useAllClubs();
+
+  // Compétition active : 1re en status 'open'|'sessions'|'finale', sinon la + récente
+  const active = useMemo(() => {
+    const list = competitions.data || [];
+    if (list.length === 0) return null;
+    const open = list.find((c) => ['open', 'sessions', 'finale'].includes(c.status));
+    return open || list[0];
+  }, [competitions.data]);
+
+  const counts = useCountsForEdition(active?.id || null);
+
+  if (competitions.isLoading) {
+    return (
+      <div
+        className="rounded-[4px] px-4 py-2.5 mb-6 flex items-center gap-2"
+        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      >
+        <Loader2 className="w-4 h-4 animate-spin" style={{ color: MUTED }} />
+        <span className="text-[12.5px]" style={{ color: MUTED }}>{t(UI.loading)}</span>
+      </div>
+    );
+  }
+
+  if (!active) {
+    return (
+      <div
+        className="rounded-[4px] px-4 py-2.5 mb-6 text-[12.5px]"
+        style={{ background: 'white', border: `1px solid ${CREAM2}`, color: INK }}
+      >
+        {t(STRIP.noActiveCompetition)}
+      </div>
+    );
+  }
+
+  const c = counts.data || {};
   return (
     <div
-      className="rounded-[4px] p-6 my-4"
-      style={{ background: 'white', border: '1px solid #e8e3d9' }}
+      className="rounded-[4px] px-4 py-2.5 mb-6 flex items-center gap-x-5 gap-y-2 flex-wrap text-[12px]"
+      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
     >
-      <div className="flex items-center gap-2.5 mb-3">
-        <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
+      <span className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: MUTED }}>
+        {t(STRIP.activeCompetition)}
+      </span>
+      <span className="inline-flex items-center gap-1.5" style={{ color: NAVY }}>
+        <Dot color={GOLD} />
+        <strong>{active.name}</strong>
+        <span style={{ color: MUTED }}>·</span>
+        <span style={{ color: INK }}>{active.year}</span>
         <span
-          className="uppercase text-[10px] tracking-[0.18em] font-medium"
-          style={{ color: GOLD }}
+          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ml-1"
+          style={{
+            background: active.model === 'multiclub' ? '#fdf6e8' : '#eff1f6',
+            color: NAVY,
+            border: `1px solid ${CREAM2}`,
+          }}
         >
-          Master Cockpit · V2
+          {active.model}
         </span>
-      </div>
-      <h2
-        className="text-[20px] mb-2"
-        style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-      >
-        Cockpit Master Admin
-      </h2>
-      <p className="text-[13.5px]" style={{ color: INK }}>
-        Le cockpit master (compétitions, clubs, rôles globaux, finale fédérée) est
-        en cours de construction.
-      </p>
+      </span>
+      <span style={{ color: CREAM2 }}>·</span>
+
+      <span className="inline-flex items-center gap-1.5" style={{ color: NAVY }}>
+        <Dot color={GOLD} />
+        <strong className="tabular-nums">{c.clubsCount ?? 0}</strong>
+        <span style={{ color: INK }}>{t(STRIP.clubsCount)}</span>
+      </span>
+      <span className="inline-flex items-center gap-1.5" style={{ color: NAVY }}>
+        <Dot color={GOLD} />
+        <strong className="tabular-nums">{c.startupsCount ?? 0}</strong>
+        <span style={{ color: INK }}>{t(STRIP.startupsCount)}</span>
+      </span>
+      <span className="inline-flex items-center gap-1.5" style={{ color: NAVY }}>
+        <Dot color={GOLD} />
+        <strong className="tabular-nums">{c.sessionsCount ?? 0}</strong>
+        <span style={{ color: INK }}>{t(STRIP.sessionsCount)}</span>
+        {((c.sessionsLive ?? 0) > 0 || (c.sessionsPublished ?? 0) > 0) && (
+          <>
+            <span style={{ color: MUTED }}>(</span>
+            <strong className="tabular-nums">{c.sessionsLive ?? 0}</strong>
+            <span style={{ color: INK }}>{t(STRIP.liveSuffix)}</span>
+            <span style={{ color: MUTED }}>/</span>
+            <strong className="tabular-nums">{c.sessionsPublished ?? 0}</strong>
+            <span style={{ color: INK }}>{t(STRIP.publishedSuffix)}</span>
+            <span style={{ color: MUTED }}>)</span>
+          </>
+        )}
+      </span>
+
+      <span style={{ color: CREAM2 }}>·</span>
+      <span className="inline-flex items-center gap-1.5 ml-auto" style={{ color: MUTED }}>
+        <strong className="tabular-nums" style={{ color: NAVY }}>
+          {(competitions.data || []).length}
+        </strong>
+        <span>{t(STRIP.totalCompetitions)}</span>
+        <span style={{ color: CREAM2 }}>·</span>
+        <strong className="tabular-nums" style={{ color: NAVY }}>
+          {(clubsAll.data || []).length}
+        </strong>
+        <span>{t(STRIP.clubsCount)}</span>
+      </span>
     </div>
+  );
+}
+
+export default function MasterCockpit() {
+  const { t } = useLang();
+  const [params, setParams] = useSearchParams();
+
+  // URL state : ?tab=competitions|clubs|roles|finale
+  const tab = (params.get('tab') && TAB_IDS.includes(params.get('tab')))
+    ? params.get('tab')
+    : 'competitions';
+
+  const setTab = (next) => {
+    const p = new URLSearchParams(params);
+    p.set('tab', next);
+    setParams(p, { replace: true });
+  };
+
+  return (
+    <>
+      <MasterStatusStrip />
+
+      {/* Tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-6" role="tablist">
+        {TAB_IDS.map((id) => (
+          <Tab
+            key={id}
+            id={id}
+            active={tab === id}
+            label={t(TABS[id])}
+            onClick={() => setTab(id)}
+          />
+        ))}
+      </div>
+
+      {/* Panel body */}
+      <div id={`master-panel-${tab}`} role="tabpanel" aria-labelledby={`master-tab-${tab}`}>
+        {tab === 'competitions' && <CompetitionsTab />}
+        {tab === 'clubs'        && <ClubsTab />}
+        {tab === 'roles'        && <GlobalRolesTab />}
+        {tab === 'finale'       && <FederatedFinaleTab />}
+      </div>
+    </>
   );
 }

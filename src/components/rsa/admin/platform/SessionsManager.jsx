@@ -28,6 +28,10 @@ const EMPTY_PAYLOAD = {
   session_date: '',
   position: 0,
   notes: '',
+  teams_link: '',
+  // club_id : prérempli depuis la prop clubId ci-dessous quand fournie ; resté '' sinon
+  // (Master Cockpit pour finale fédérée : laissé vide -> club_id NULL côté DB).
+  club_id: '',
 };
 
 function FieldLabel({ children, htmlFor }) {
@@ -131,14 +135,34 @@ function ResetButton({ sessionId, sessionName, onReset }) {
   );
 }
 
-export default function SessionsManager({ editionId, sessions, isLoading, onSelectSession }) {
+export default function SessionsManager({
+  editionId,
+  sessions,
+  isLoading,
+  onSelectSession,
+  // V2 multi-club : si fourni, la liste est filtrée par club_id et la création
+  // injecte automatiquement ce club_id dans le payload (verrouillé dans le form).
+  clubId = null,
+}) {
   const { t } = useLang();
   const createSession = useCreateSession();
   const resetSession  = useResetSessionTemplate();
 
   const [showForm, setShowForm] = useState(false);
-  const [payload, setPayload] = useState(EMPTY_PAYLOAD);
+  const [payload, setPayload] = useState(() => ({ ...EMPTY_PAYLOAD, club_id: clubId || '' }));
   const [createError, setCreateError] = useState(null);
+
+  // Si on change de club_id (navigation entre Club Cockpits), reset les défauts.
+  React.useEffect(() => {
+    setPayload((p) => ({ ...p, club_id: clubId || '' }));
+  }, [clubId]);
+
+  // Filtrage club-scoped : Club Cockpit ne montre QUE les sessions de son club.
+  // Master Cockpit (clubId=null) montre tout. AdminShell legacy idem.
+  const visibleSessions = React.useMemo(() => {
+    if (!clubId) return sessions || [];
+    return (sessions || []).filter((s) => s.club_id === clubId);
+  }, [sessions, clubId]);
 
   async function onCreate() {
     setCreateError(null);
@@ -160,10 +184,14 @@ export default function SessionsManager({ editionId, sessions, isLoading, onSele
           session_date: payload.session_date || null,
           position: Number(payload.position) || 0,
           notes: payload.notes?.trim() || null,
+          // V2 multi-club : passe teams_link (session_config) + club_id (sessions).
+          // Le RPC rsa_create_session normalise vides → NULL côté SQL.
+          teams_link: payload.teams_link?.trim() || null,
+          club_id: (clubId || payload.club_id?.trim() || null),
         },
       });
       setShowForm(false);
-      setPayload(EMPTY_PAYLOAD);
+      setPayload({ ...EMPTY_PAYLOAD, club_id: clubId || '' });
     } catch (err) {
       setCreateError(err?.message || 'Error');
     }
@@ -180,7 +208,7 @@ export default function SessionsManager({ editionId, sessions, isLoading, onSele
         </h3>
         <span className="text-[12px]" style={{ color: MUTED }}>·</span>
         <span className="text-[12px]" style={{ color: INK }}>
-          {sessions.length} session(s)
+          {visibleSessions.length} session(s)
         </span>
         <button
           type="button"
@@ -269,6 +297,56 @@ export default function SessionsManager({ editionId, sessions, isLoading, onSele
                 style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
+            <div className="md:col-span-2">
+              <FieldLabel htmlFor="new-teams">{t(SETUP.newSessionTeams)}</FieldLabel>
+              <input
+                id="new-teams"
+                type="url"
+                placeholder="https://teams.microsoft.com/l/meetup-join/..."
+                value={payload.teams_link}
+                onChange={(e) => setPayload((p) => ({ ...p, teams_link: e.target.value }))}
+                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              />
+              <p className="text-[11px] mt-1" style={{ color: MUTED }}>{t(SETUP.newSessionTeamsHint)}</p>
+            </div>
+            <div className="md:col-span-2">
+              <FieldLabel htmlFor="new-notes">{t(SETUP.newSessionNotes)}</FieldLabel>
+              <textarea
+                id="new-notes"
+                rows={2}
+                value={payload.notes}
+                onChange={(e) => setPayload((p) => ({ ...p, notes: e.target.value }))}
+                className="w-full text-[13px] rounded-[4px] px-2.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              />
+            </div>
+            {/* Club picker (visible uniquement quand on N'est PAS dans un Club Cockpit).
+                Dans le Club Cockpit, le club_id est verrouillé via la prop clubId. */}
+            {!clubId && (
+              <div className="md:col-span-2">
+                <FieldLabel htmlFor="new-club">{t(SETUP.newSessionClub)}</FieldLabel>
+                <input
+                  id="new-club"
+                  type="text"
+                  placeholder={t(SETUP.newSessionClubHint)}
+                  value={payload.club_id}
+                  onChange={(e) => setPayload((p) => ({ ...p, club_id: e.target.value }))}
+                  className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                  style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                />
+              </div>
+            )}
+            {clubId && (
+              <div className="md:col-span-2">
+                <FieldLabel>{t(SETUP.newSessionClub)}</FieldLabel>
+                <p className="text-[12.5px] px-2.5 py-1.5 rounded-[4px]" style={{
+                  background: '#fdf6e8', border: `1px solid ${CREAM2}`, color: NAVY,
+                }}>
+                  {clubId}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-3 flex items-center gap-3">
@@ -284,7 +362,7 @@ export default function SessionsManager({ editionId, sessions, isLoading, onSele
             </button>
             <button
               type="button"
-              onClick={() => { setShowForm(false); setPayload(EMPTY_PAYLOAD); setCreateError(null); }}
+              onClick={() => { setShowForm(false); setPayload({ ...EMPTY_PAYLOAD, club_id: clubId || '' }); setCreateError(null); }}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px]"
               style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
             >
@@ -303,13 +381,13 @@ export default function SessionsManager({ editionId, sessions, isLoading, onSele
         </div>
       )}
 
-      {!isLoading && sessions.length === 0 && (
+      {!isLoading && visibleSessions.length === 0 && (
         <p className="text-[13px] py-3" style={{ color: MUTED }}>{t(SETUP.noSessions)}</p>
       )}
 
-      {!isLoading && sessions.length > 0 && (
+      {!isLoading && visibleSessions.length > 0 && (
         <ul className="divide-y" style={{ borderColor: CREAM2 }}>
-          {sessions.map((s) => {
+          {visibleSessions.map((s) => {
             const status = s.config?.status || 'draft';
             return (
               <li key={s.id} className="py-3">
@@ -332,7 +410,21 @@ export default function SessionsManager({ editionId, sessions, isLoading, onSele
                     {s.theme && (
                       <p className="text-[12px] mt-0.5" style={{ color: INK }}>{s.theme}</p>
                     )}
-                    <p className="text-[11px] mt-0.5 font-mono" style={{ color: MUTED }}>{s.id}</p>
+                    <p className="text-[11px] mt-0.5 font-mono" style={{ color: MUTED }}>
+                      {s.id}
+                      {s.club_id && (<span> · {s.club_id}</span>)}
+                    </p>
+                    {s.config?.teams_link && (
+                      <a
+                        href={s.config.teams_link}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-[11.5px] underline decoration-1 underline-offset-2 break-all"
+                        style={{ color: NAVY }}
+                      >
+                        {t(SETUP.teamsLinkOpen)}
+                      </a>
+                    )}
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <button
