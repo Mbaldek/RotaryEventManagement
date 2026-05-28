@@ -36,15 +36,19 @@ export function PlatformAuthProvider({ children }) {
       setRoles([]);
       return;
     }
-    // R-M4 : eq + normalisation lowercase plutôt qu'ilike, pour éviter les wildcards
-    // `%`/`_` qui faisaient matcher des emails proches (a_b@x.com ≅ a-b@x.com).
+    // R-M4 : eq + normalisation lowercase plutôt qu'ilike (wildcards %_ exploitables).
+    // Lookup rôles : on passe par le RPC rsa_my_roles (SECURITY DEFINER) pour éviter
+    // toute dépendance à la RLS sur app_user_roles — observation 2026-05-28 : la
+    // policy basée sur `auth.jwt() ->> 'email'` (puis `auth_current_email()`) ne
+    // matchait pas systématiquement la ligne du user, conduisant à un `/Admin`
+    // bloqué en "Forbidden" malgré la présence du rôle 'admin' en base.
     const norm = String(email).trim().toLowerCase();
-    const [{ data: prof }, { data: roleRow }] = await Promise.all([
+    const [{ data: prof }, { data: roles }] = await Promise.all([
       supabase.from('profiles').select('id, email, full_name, role').eq('email', norm).maybeSingle(),
-      supabase.from('app_user_roles').select('roles').eq('email', norm).maybeSingle(),
+      supabase.rpc('rsa_my_roles'),
     ]);
     setProfile(prof ?? null);
-    setRoles(roleRow?.roles ?? []);
+    setRoles(Array.isArray(roles) ? roles : []);
   }, []);
 
   useEffect(() => {
