@@ -90,8 +90,16 @@ export default function MagicLinkLogin({
       if (sbError) throw sbError;
       setStatus("sent");
       onSent?.(value);
-    } catch {
-      setError(L("errGeneric"));
+    } catch (err) {
+      // Diagnostic V2.5 : on expose le vrai message Supabase (rate-limit,
+      // SMTP misconfig, redirect URL non whitelistée…) plutôt que de masquer
+      // sous un générique stérile. On garde le wording Élysée + on append le
+      // détail technique en petit. Console.error pour les power-users qui
+      // ouvrent DevTools.
+      // eslint-disable-next-line no-console
+      console.error("[MagicLinkLogin] signInWithMagicLink failed:", err);
+      const detail = err?.message || err?.error_description || String(err);
+      setError(`${L("errGeneric")} (${detail})`);
       setStatus("error");
     }
   };
