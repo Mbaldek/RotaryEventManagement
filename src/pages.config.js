@@ -54,6 +54,7 @@ import EventPlanning from './pages/EventPlanning';
 import Features from './pages/Features';
 import FloorPlan from './pages/FloorPlan';
 import Index from './pages/Index';
+import Jury from './pages/Jury';
 import Login from './pages/Login';
 import MonDossier from './pages/MonDossier';
 import ReservationRequest from './pages/ReservationRequest';
@@ -84,6 +85,7 @@ export const PAGES = {
     "Features": Features,
     "FloorPlan": FloorPlan,
     "Index": Index,
+    "Jury": Jury,
     "Login": Login,
     "MonDossier": MonDossier,
     "ReservationRequest": ReservationRequest,
