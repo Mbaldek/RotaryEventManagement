@@ -10,9 +10,10 @@
 // inchangée par rapport à l'original.
 
 import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { CREAM2, NAVY, MUTED, INK, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, INK, SERIF, EASE } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { UI, COMP } from './i18n';
@@ -71,7 +72,7 @@ export default function DeleteCompetitionModal({ competition, step, setStep, onD
     }
   }
 
-  if (step === 0 || !competition) return null;
+  const open = step !== 0 && !!competition;
 
   const data           = deps.data || {};
   const sessionsTotal  = data.sessions_total     ?? 0;
@@ -87,16 +88,28 @@ export default function DeleteCompetitionModal({ competition, step, setStep, onD
   const promptParts  = promptRaw.split('{phrase}');
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-      style={{ background: 'rgba(15, 31, 61, 0.45)' }}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        className="bg-white rounded-[4px] max-w-lg w-full p-5"
-        style={{ border: `1px solid ${CREAM2}` }}
-      >
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: EASE }}
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: 'rgba(15, 31, 61, 0.45)' }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <motion.div
+            key="card"
+            initial={{ opacity: 0, scale: 0.97, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 10 }}
+            transition={{ duration: 0.25, ease: EASE }}
+            className="bg-white rounded-[4px] max-w-lg w-full p-5"
+            style={{ border: `1px solid ${CREAM2}` }}
+          >
         {step === 1 && (
           <>
             <h3
@@ -234,7 +247,9 @@ export default function DeleteCompetitionModal({ competition, step, setStep, onD
             </div>
           </>
         )}
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

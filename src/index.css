@@ -86,3 +86,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Élysée press feedback ──────────────────────────────────────────────────
+   Tous les <button> reçoivent un micro-scale subtil sur active (mousedown) —
+   signal tactile premium, jamais bouncy. Désactivable au cas par cas avec
+   `data-no-press`. Désactivé pour les disabled et les utilisateurs avec
+   `prefers-reduced-motion: reduce`. Transition transform ultra-courte
+   (100ms ease-out) pour rester crisp.
+   ────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  button:not(:disabled):not([data-no-press]):active {
+    transform: scale(0.98);
+  }
+  button:not([data-no-press]) {
+    transition: transform 120ms ease-out;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button:not(:disabled):active {
+      transform: none;
+    }
+    button {
+      transition: none;
+    }
+  }
+}

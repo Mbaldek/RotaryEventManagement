@@ -13,8 +13,9 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { GOLD, NAVY, INK, MUTED, CREAM2 } from '@/components/design/tokens';
+import { GOLD, NAVY, INK, MUTED, CREAM2, EASE } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { TABS, UI } from './i18n';
 import ModuleStatusStrip from './ModuleStatusStrip';
@@ -190,27 +191,39 @@ export default function AdminShell() {
             <Spinner />
           </div>
         )}
-        {!editionsQ.isLoading && tab === 'setup' && (
-          <SetupTab
-            edition={edition}
-            sessions={sessions}
-            isSessionsLoading={sessionsQ.isLoading}
-            onSelectSession={setSession}
-          />
-        )}
-        {!editionsQ.isLoading && tab === 'live' && (
-          <LiveTab
-            edition={edition}
-            session={selectedSession}
-          />
-        )}
-        {!editionsQ.isLoading && tab === 'results' && (
-          <ResultsTab
-            edition={edition}
-            session={selectedSession}
-            sessions={sessions}
-            onSelectSession={setSession}
-          />
+        {!editionsQ.isLoading && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2, ease: EASE }}
+            >
+              {tab === 'setup' && (
+                <SetupTab
+                  edition={edition}
+                  sessions={sessions}
+                  isSessionsLoading={sessionsQ.isLoading}
+                  onSelectSession={setSession}
+                />
+              )}
+              {tab === 'live' && (
+                <LiveTab
+                  edition={edition}
+                  session={selectedSession}
+                />
+              )}
+              {tab === 'results' && (
+                <ResultsTab
+                  edition={edition}
+                  session={selectedSession}
+                  sessions={sessions}
+                  onSelectSession={setSession}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
         )}
       </div>
     </>

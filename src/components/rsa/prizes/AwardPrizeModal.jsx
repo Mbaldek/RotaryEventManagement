@@ -12,8 +12,9 @@
 //   busy      : bool
 
 import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, X } from 'lucide-react';
-import { NAVY, INK, MUTED, GOLD, CREAM2, SERIF } from '@/components/design/tokens';
+import { NAVY, INK, MUTED, GOLD, CREAM2, SERIF, EASE } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { Field, Select } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
@@ -47,19 +48,30 @@ export default function AwardPrizeModal({
   }));
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(15,31,61,0.45)' }}
-      role="dialog"
-      aria-modal="true"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}
-    >
-      <div
-        className="rounded-[4px] w-full max-w-[520px] p-5"
-        style={{ background: 'white', border: `1px solid ${GOLD}` }}
+    <AnimatePresence>
+      <motion.div
+        key="overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18, ease: EASE }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ background: 'rgba(15,31,61,0.45)' }}
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose?.();
+        }}
       >
+        <motion.div
+          key="card"
+          initial={{ opacity: 0, scale: 0.97, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97, y: 10 }}
+          transition={{ duration: 0.25, ease: EASE }}
+          className="rounded-[4px] w-full max-w-[520px] p-5"
+          style={{ background: 'white', border: `1px solid ${GOLD}` }}
+        >
         <header className="mb-3 flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 mb-1">
@@ -144,7 +156,8 @@ export default function AwardPrizeModal({
             {busy ? t(AWARD_MODAL.awarding) : t(AWARD_MODAL.confirm)}
           </button>
         </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

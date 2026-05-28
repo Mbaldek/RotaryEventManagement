@@ -50,9 +50,12 @@ export default function TopNav({
 
   // Default role-aware menu. A role-less signed-in user (startup owner) sees only
   // "Mon dossier"; jury/comité/admin see their hubs.
+  // V2.5+ fix Mi3 : on cache /Concours pour les anon — la page redirige sur
+  // /Login si !isAuthenticated, donc l'afficher dans le NavMenu d'un user
+  // non connecté crée un détour (click → /Login → re-login → /Concours).
   const defaultItems = [
     { to: "/MonDossier", label: t(NAV_T.myDossier) },
-    { to: "/Concours", label: t(NAV_T.concours) }, // V2.5 — accessible à tous les authentifiés
+    ...(isAuthenticated ? [{ to: "/Concours", label: t(NAV_T.concours) }] : []),
     { to: "/Jury", label: t(NAV_T.jury), roles: ["jury"] },
     { to: "/Selection", label: t(NAV_T.selection), roles: ["comite"] },
     { to: "/Admin", label: t(NAV_T.admin), roles: ["admin"] },

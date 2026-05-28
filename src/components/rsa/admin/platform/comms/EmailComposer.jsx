@@ -14,8 +14,9 @@
 // un email en EN à un juré allemand sans switcher l'UI.
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Send, Loader2, Eye, CheckCircle2, AlertTriangle, FileText } from 'lucide-react';
-import { CREAM2, NAVY, INK, MUTED, GOLD, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, INK, MUTED, GOLD, SERIF, EASE } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
@@ -71,18 +72,29 @@ function Toast({ tone = 'info', title, body, onClose }) {
 
 // Modale preview destinataires
 function RecipientsPreviewModal({ open, onClose, count, sample, onConfirmSend, sending, t }) {
-  if (!open) return null;
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(15,31,61,0.45)' }}
-      onClick={onClose}
-    >
-      <div
-        className="rounded-[4px] max-w-md w-full p-5"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: EASE }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(15,31,61,0.45)' }}
+          onClick={onClose}
+        >
+          <motion.div
+            key="card"
+            initial={{ opacity: 0, scale: 0.97, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 10 }}
+            transition={{ duration: 0.25, ease: EASE }}
+            className="rounded-[4px] max-w-md w-full p-5"
+            style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+            onClick={(e) => e.stopPropagation()}
+          >
         <h4 className="text-[16px] mb-2" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
           {t(COMMS_COMPOSER.recipientsPreviewTitle)}
         </h4>
@@ -133,12 +145,14 @@ function RecipientsPreviewModal({ open, onClose, count, sample, onConfirmSend, s
             </button>
           )}
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
-export default function EmailComposer({ clubId, initialDraft, onAfterSend }) {
+export default function EmailComposer({ clubId, editionId = null, initialDraft, onAfterSend }) {
   const { t, lang: uiLang } = useLang();
   const { isMasterAdmin } = usePlatformAuth();
   const invalidateSends = useInvalidateSends(clubId);
@@ -317,6 +331,7 @@ export default function EmailComposer({ clubId, initialDraft, onAfterSend }) {
             </div>
             <AudienceSelector
               clubId={clubId}
+              editionId={editionId}
               isMasterAdmin={isMasterAdmin}
               value={audience}
               onChange={setAudience}

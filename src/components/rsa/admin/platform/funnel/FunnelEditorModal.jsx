@@ -40,46 +40,55 @@ const WIDTH_MAP = {
 
 function StatusIndicator({ status, statusMessage }) {
   const { t } = useLang();
-  if (!status || status === 'idle') return null;
 
-  if (status === 'saving') {
-    return (
-      <span
-        className="inline-flex items-center gap-1.5 text-[12px]"
-        style={{ color: MUTED }}
-        aria-live="polite"
-      >
-        <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: GOLD }} aria-hidden />
-        {statusMessage || t(COMP.autosaveSaving)}
-      </span>
-    );
-  }
-
-  if (status === 'saved') {
-    return (
-      <span
-        className="inline-flex items-center gap-1.5 text-[12px] transition-opacity duration-700"
-        style={{ color: MUTED }}
-        aria-live="polite"
-      >
-        <Check className="w-3.5 h-3.5" style={{ color: GREEN_TODAY }} aria-hidden />
-        {statusMessage || t(COMP.autosaveSaved)}
-      </span>
-    );
-  }
-
-  if (status === 'error') {
-    return (
-      <span
-        className="inline-flex items-center gap-1.5 text-[12px]"
-        style={{ color: DANGER }}
-        aria-live="assertive"
-      >
-        {statusMessage || t(COMP.autosaveError)}
-      </span>
-    );
-  }
-  return null;
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {status === 'saving' && (
+        <motion.span
+          key="saving"
+          initial={{ opacity: 0, y: 2 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -2 }}
+          transition={{ duration: 0.2, ease: EASE }}
+          className="inline-flex items-center gap-1.5 text-[12px]"
+          style={{ color: MUTED }}
+          aria-live="polite"
+        >
+          <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: GOLD }} aria-hidden />
+          {statusMessage || t(COMP.autosaveSaving)}
+        </motion.span>
+      )}
+      {status === 'saved' && (
+        <motion.span
+          key="saved"
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.92 }}
+          transition={{ duration: 0.25, ease: EASE }}
+          className="inline-flex items-center gap-1.5 text-[12px]"
+          style={{ color: MUTED }}
+          aria-live="polite"
+        >
+          <Check className="w-3.5 h-3.5" style={{ color: GREEN_TODAY }} aria-hidden />
+          {statusMessage || t(COMP.autosaveSaved)}
+        </motion.span>
+      )}
+      {status === 'error' && (
+        <motion.span
+          key="error"
+          initial={{ opacity: 0, y: 2 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -2 }}
+          transition={{ duration: 0.2, ease: EASE }}
+          className="inline-flex items-center gap-1.5 text-[12px]"
+          style={{ color: DANGER }}
+          aria-live="assertive"
+        >
+          {statusMessage || t(COMP.autosaveError)}
+        </motion.span>
+      )}
+    </AnimatePresence>
+  );
 }
 
 function TabPill({ id, label, active, disabled, onClick }) {
@@ -189,15 +198,17 @@ export default function FunnelEditorModal({
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  if (!open) return null;
-
   const widthClass = WIDTH_MAP[width] || WIDTH_MAP.standard;
 
   return (
     <AnimatePresence>
       {open && (
-        <div
+        <motion.div
           ref={overlayRef}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: EASE }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           aria-hidden={false}
           onMouseDown={(e) => {
@@ -320,7 +331,7 @@ export default function FunnelEditorModal({
               </div>
             </footer>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

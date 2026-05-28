@@ -4,13 +4,15 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { LanguageProvider } from '@/lib/platform/i18n';
 import { PlatformAuthProvider } from '@/lib/platform/auth';
 import ErrorBoundary from '@/lib/ErrorBoundary';
+import { CREAM2, INK } from '@/components/design/tokens';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -35,6 +37,44 @@ const LUNCH_PAGES = new Set([
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
+
+// PageTransition — fade-up subtil sur chaque changement de route.
+// Respecte prefers-reduced-motion via useReducedMotion() (framer-motion).
+const PageTransition = ({ children, locationKey }) => {
+  const reduce = useReducedMotion();
+  const initial = reduce ? { opacity: 0 } : { opacity: 0, y: 6 };
+  const animate = reduce ? { opacity: 1 } : { opacity: 1, y: 0 };
+  return (
+    <motion.div
+      key={locationKey}
+      initial={initial}
+      animate={animate}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// AnimatedRoutesWrapper — fait remonter `location` à <Routes> pour permettre à
+// AnimatePresence de tracker correctement la sortie de la route précédente.
+// L'enfant attendu est une factory `(location) => <Routes location={location}>…`
+// (ou simplement <Routes>...</Routes>, auquel cas React Router v6 utilisera la
+// location courante de toute façon, mais alors l'exit ne montrera pas la page
+// précédente). Notre AuthenticatedApp passe le `Routes` directement — c'est OK
+// pour un fade d'entrée subtil (la page précédente disparaît instantanément),
+// et reste correct pour le sentiment "premium".
+const AnimatedRoutes = ({ children }) => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <PageTransition key={location.pathname} locationKey={location.pathname}>
+        {children}
+      </PageTransition>
+    </AnimatePresence>
+  );
+};
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -70,39 +110,45 @@ const AuthenticatedApp = () => {
   // n'importe quel composant fils ne fait plus sauter toute la racine React (qui re-mount
   // immédiatement et redéclenche onAuthStateChange → loadIdentity en cluster — voir
   // src/lib/ErrorBoundary.jsx pour le contexte du diagnostic /Admin).
+  //
+  // AnimatedRoutes wrapper : fade-up subtil sur chaque changement de route (Élysée),
+  // respecte prefers-reduced-motion. Pattern useLocation().pathname comme key (requis
+  // par AnimatePresence + react-router-dom v6).
   return (
     <ErrorBoundary>
-      <Routes>
-        <Route path="/" element={
-          isPlatformHost()
-            ? <Navigate to="/Login" replace />
-            : (
-              <LayoutWrapper currentPageName={mainPageKey}>
-                <MainPage />
-              </LayoutWrapper>
-            )
-        } />
-        {Object.entries(Pages).map(([path, Page]) => (
-          <Route
-            key={path}
-            path={`/${path}`}
-            element={
-              // Host-gate (Option A) : sur app.rotary-startup.org, les pages déjeuners
-              // redirigent vers /Login pour ne plus "fuiter" sur le domaine plateforme.
-              isPlatformHost() && LUNCH_PAGES.has(path)
-                ? <Navigate to="/Login" replace />
-                : (
-                  <LayoutWrapper currentPageName={path}>
-                    <ErrorBoundary>
-                      <Page />
-                    </ErrorBoundary>
-                  </LayoutWrapper>
-                )
-            }
-          />
-        ))}
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
+      <AnimatedRoutes>
+        <Routes>
+          <Route path="/" element={
+            isPlatformHost()
+              ? <Navigate to="/Login" replace />
+              : (
+                <LayoutWrapper currentPageName={mainPageKey}>
+                  <MainPage />
+                </LayoutWrapper>
+              )
+          } />
+          {Object.entries(Pages).map(([path, Page]) => (
+            <Route
+              key={path}
+              path={`/${path}`}
+              element={
+                // Host-gate (Option A) : sur app.rotary-startup.org, les pages déjeuners
+                // redirigent vers /Login pour ne plus "fuiter" sur le domaine plateforme.
+                isPlatformHost() && LUNCH_PAGES.has(path)
+                  ? <Navigate to="/Login" replace />
+                  : (
+                    <LayoutWrapper currentPageName={path}>
+                      <ErrorBoundary>
+                        <Page />
+                      </ErrorBoundary>
+                    </LayoutWrapper>
+                  )
+              }
+            />
+          ))}
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </AnimatedRoutes>
     </ErrorBoundary>
   );
 };
@@ -120,7 +166,23 @@ function App() {
               <AuthenticatedApp />
             </Router>
             <Toaster />
-            <SonnerToaster />
+            <SonnerToaster
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: 'white',
+                  border: `1px solid ${CREAM2}`,
+                  color: INK,
+                  fontFamily: 'Inter, sans-serif',
+                  borderRadius: 4,
+                },
+                classNames: {
+                  success: 'border-l-2 border-l-[#0f1f3d]',
+                  error: 'border-l-2 border-l-[#a23b2d]',
+                  info: 'border-l-2 border-l-[#c9a84c]',
+                },
+              }}
+            />
           </QueryClientProvider>
         </PlatformAuthProvider>
       </LanguageProvider>

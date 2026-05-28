@@ -11,9 +11,10 @@
 
 import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import {
-  CREAM2, NAVY, INK, MUTED, GOLD,
+  CREAM2, NAVY, INK, MUTED, GOLD, EASE,
 } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { TABS, TAB_IDS, STRIP, UI } from './i18n';
@@ -240,11 +241,21 @@ export default function MasterCockpit() {
 
       {/* Panel body */}
       <div id={`master-panel-${tab}`} role="tabpanel" aria-labelledby={`master-tab-${tab}`}>
-        {tab === 'competitions' && <CompetitionsTab />}
-        {tab === 'clubs'        && <ClubsTab />}
-        {tab === 'roles'        && <GlobalRolesTab />}
-        {tab === 'finale'       && <FederatedFinaleTab />}
-        {tab === 'comms'        && <EmailStudio /* clubId undefined = master global */ />}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.2, ease: EASE }}
+          >
+            {tab === 'competitions' && <CompetitionsTab />}
+            {tab === 'clubs'        && <ClubsTab />}
+            {tab === 'roles'        && <GlobalRolesTab />}
+            {tab === 'finale'       && <FederatedFinaleTab />}
+            {tab === 'comms'        && <EmailStudio /* clubId undefined = master global */ />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </>
   );

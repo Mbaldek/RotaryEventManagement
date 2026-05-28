@@ -33,6 +33,7 @@ import {
   Copy,
   CheckCircle2,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   NAVY,
   GOLD,
@@ -41,6 +42,7 @@ import {
   INK,
   MUTED,
   SERIF,
+  EASE,
 } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER, SUCCESS } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -114,20 +116,31 @@ function RejectModal({ open, onClose, onConfirm, busy }) {
     }
   }, [open]);
 
-  if (!open) return null;
   const expected = t(JURY_TAB_UI.rejectConfirmWord);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(15, 31, 61, 0.45)' }}
-    >
-      <div
-        className="w-full max-w-md rounded-[4px] p-5"
-        style={{ background: CREAM, border: `1px solid ${CREAM2}` }}
-      >
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: EASE }}
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(15, 31, 61, 0.45)' }}
+        >
+          <motion.div
+            key="card"
+            initial={{ opacity: 0, scale: 0.97, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 10 }}
+            transition={{ duration: 0.25, ease: EASE }}
+            className="w-full max-w-md rounded-[4px] p-5"
+            style={{ background: CREAM, border: `1px solid ${CREAM2}` }}
+          >
         <div className="flex items-start gap-2 mb-3">
           <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" style={{ color: DANGER }} />
           <div className="flex-1 min-w-0">
@@ -187,8 +200,10 @@ function RejectModal({ open, onClose, onConfirm, busy }) {
             {t(JURY_TAB_UI.reject)}
           </button>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -218,7 +233,7 @@ function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, bus
 
   return (
     <article
-      className="rounded-[4px] p-4 mb-3"
+      className="group rounded-[4px] p-4 mb-3 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60"
       style={{ background: 'white', border: `1px solid ${CREAM2}` }}
     >
       <header className="flex items-start gap-3 mb-3">

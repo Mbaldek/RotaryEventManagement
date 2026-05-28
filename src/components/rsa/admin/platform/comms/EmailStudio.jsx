@@ -13,7 +13,8 @@
 
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CREAM2, NAVY, INK, GOLD, SERIF } from '@/components/design/tokens';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CREAM2, NAVY, INK, GOLD, SERIF, EASE } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { COMMS_TABS, COMMS_TAB_IDS, COMMS_UI } from './i18n';
 import EmailComposer from './EmailComposer';
@@ -104,20 +105,30 @@ export default function EmailStudio({ clubId = null, edition = null }) {
       </div>
 
       <div id={`comms-panel-${tab}`} role="tabpanel">
-        {tab === 'composer' && (
-          <EmailComposer
-            key={insertedDraft?._key || 'fresh'}
-            clubId={clubId}
-            editionId={editionId}
-            initialDraft={insertedDraft}
-          />
-        )}
-        {tab === 'templates' && (
-          <TemplatesLibrary clubId={clubId} onInsertTemplate={onInsertTemplate} />
-        )}
-        {tab === 'history' && (
-          <SendHistory clubId={clubId} />
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.2, ease: EASE }}
+          >
+            {tab === 'composer' && (
+              <EmailComposer
+                key={insertedDraft?._key || 'fresh'}
+                clubId={clubId}
+                editionId={editionId}
+                initialDraft={insertedDraft}
+              />
+            )}
+            {tab === 'templates' && (
+              <TemplatesLibrary clubId={clubId} onInsertTemplate={onInsertTemplate} />
+            )}
+            {tab === 'history' && (
+              <SendHistory clubId={clubId} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
   );

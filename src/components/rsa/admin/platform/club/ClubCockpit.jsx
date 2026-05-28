@@ -18,8 +18,9 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, MapPin, Mail } from 'lucide-react';
-import { GOLD, NAVY, INK, MUTED, CREAM2, SERIF } from '@/components/design/tokens';
+import { GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { CLUB_TABS, CLUB_UI, TAB_IDS } from './i18n';
 import ClubStatusStrip from './ClubStatusStrip';
@@ -253,41 +254,53 @@ export default function ClubCockpit({ clubId }) {
             <Spinner />
           </div>
         )}
-        {!editionsQ.isLoading && tab === 'setup' && (
-          <ClubSetupTab
-            edition={edition}
-            clubId={clubId}
-            sessions={sessions}
-            isSessionsLoading={sessionsQ.isLoading}
-            onSelectSession={setSession}
-          />
-        )}
-        {!editionsQ.isLoading && tab === 'live' && (
-          <ClubLiveTab edition={edition} clubId={clubId} session={selectedSession} />
-        )}
-        {!editionsQ.isLoading && tab === 'results' && (
-          <ClubResultsTab
-            edition={edition}
-            clubId={clubId}
-            session={selectedSession}
-            sessions={sessions}
-            onSelectSession={setSession}
-          />
-        )}
-        {!editionsQ.isLoading && tab === 'team' && (
-          <ClubTeamTab clubId={clubId} />
-        )}
-        {!editionsQ.isLoading && tab === 'jury_applications' && (
-          <JuryApplicationsTab clubId={clubId} />
-        )}
-        {!editionsQ.isLoading && tab === 'rules' && (
-          <ClubRulesTab edition={edition} clubId={clubId} />
-        )}
-        {!editionsQ.isLoading && tab === 'prizes' && (
-          <PrizesList editionId={editionId} clubId={clubId} scope="club" />
-        )}
-        {!editionsQ.isLoading && tab === 'comms' && (
-          <EmailStudio clubId={clubId} edition={edition} />
+        {!editionsQ.isLoading && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2, ease: EASE }}
+            >
+              {tab === 'setup' && (
+                <ClubSetupTab
+                  edition={edition}
+                  clubId={clubId}
+                  sessions={sessions}
+                  isSessionsLoading={sessionsQ.isLoading}
+                  onSelectSession={setSession}
+                />
+              )}
+              {tab === 'live' && (
+                <ClubLiveTab edition={edition} clubId={clubId} session={selectedSession} />
+              )}
+              {tab === 'results' && (
+                <ClubResultsTab
+                  edition={edition}
+                  clubId={clubId}
+                  session={selectedSession}
+                  sessions={sessions}
+                  onSelectSession={setSession}
+                />
+              )}
+              {tab === 'team' && (
+                <ClubTeamTab clubId={clubId} />
+              )}
+              {tab === 'jury_applications' && (
+                <JuryApplicationsTab clubId={clubId} />
+              )}
+              {tab === 'rules' && (
+                <ClubRulesTab edition={edition} clubId={clubId} />
+              )}
+              {tab === 'prizes' && (
+                <PrizesList editionId={editionId} clubId={clubId} scope="club" />
+              )}
+              {tab === 'comms' && (
+                <EmailStudio clubId={clubId} edition={edition} />
+              )}
+            </motion.div>
+          </AnimatePresence>
         )}
       </div>
     </>

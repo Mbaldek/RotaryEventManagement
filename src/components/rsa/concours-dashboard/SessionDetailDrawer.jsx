@@ -12,8 +12,9 @@
 // l'admin pourrait partager via le pack jury.
 
 import React, { useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X, Calendar, Download, FileText } from 'lucide-react';
-import { NAVY, INK, MUTED, GOLD, CREAM, CREAM2, SERIF } from '@/components/design/tokens';
+import { NAVY, INK, MUTED, GOLD, CREAM, CREAM2, SERIF, EASE } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import ConcoursStatusPill from './ConcoursStatusPill';
 import { UI, formatSessionDate } from './i18n';
@@ -144,8 +145,6 @@ export default function SessionDetailDrawer({ sessionId, onClose }) {
     return undefined;
   }, [sessionId, onClose]);
 
-  if (!sessionId) return null;
-
   const session = data?.session;
   const config = data?.config;
   const startups = data?.startups || [];
@@ -156,21 +155,33 @@ export default function SessionDetailDrawer({ sessionId, onClose }) {
   const dateLabel = formatSessionDate(session?.session_date, lang);
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-stretch md:items-center justify-end md:justify-end"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="concours-drawer-title"
-    >
-      <div
-        className="absolute inset-0"
-        style={{ background: 'rgba(15,31,61,0.45)' }}
-        onClick={onClose}
-      />
-      <aside
-        className="relative w-full md:w-[560px] h-full overflow-y-auto"
-        style={{ background: 'white', borderLeft: `1px solid ${CREAM2}` }}
-      >
+    <AnimatePresence>
+      {sessionId && (
+        <div
+          className="fixed inset-0 z-[60] flex items-stretch md:items-center justify-end md:justify-end"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="concours-drawer-title"
+        >
+          <motion.div
+            key="overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: EASE }}
+            className="absolute inset-0"
+            style={{ background: 'rgba(15,31,61,0.45)' }}
+            onClick={onClose}
+          />
+          <motion.aside
+            key="panel"
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ duration: 0.32, ease: EASE }}
+            className="relative w-full md:w-[560px] h-full overflow-y-auto"
+            style={{ background: 'white', borderLeft: `1px solid ${CREAM2}` }}
+          >
         {/* Sticky close */}
         <div
           className="sticky top-0 z-10 flex items-center justify-between px-5 py-3"
@@ -271,7 +282,9 @@ export default function SessionDetailDrawer({ sessionId, onClose }) {
             </>
           )}
         </div>
-      </aside>
-    </div>
+          </motion.aside>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -58,7 +58,7 @@ export default function SessionCard({ session, t, lang, startupsCount, jurorsCou
           onOpen?.(session);
         }
       }}
-      className="bg-white rounded-[10px] p-5 flex flex-col gap-4 cursor-pointer transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c]"
+      className="bg-white rounded-[10px] p-5 flex flex-col gap-4 cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60 outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c]"
       style={{ border: `1px solid ${CREAM2}` }}
     >
       {/* Header */}

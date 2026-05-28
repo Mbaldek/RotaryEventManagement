@@ -36,3 +36,4 @@ export { default as MagicLinkLogin } from "@/components/design/auth/MagicLinkLog
 
 // — Status & data —
 export { default as StatusPill, STATUS_MAP } from "@/components/design/StatusPill";
+export { default as Skeleton, SkeletonList } from "@/components/design/Skeleton";

@@ -34,9 +34,10 @@
 // read-only (fallback dev/QA), sans jamais redonner la main au textarea.
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import {
-  CREAM, CREAM2, NAVY, MUTED, INK, GOLD, SERIF,
+  CREAM, CREAM2, NAVY, MUTED, INK, GOLD, SERIF, EASE,
 } from '@/components/design/tokens';
 import { DANGER, WARNING } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -62,7 +63,7 @@ function StatusToggle({ active, disabled, onToggle, labelOn, labelOff }) {
       aria-checked={active}
       disabled={disabled}
       onClick={() => !disabled && onToggle(!active)}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] uppercase tracking-[0.14em] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-[#faf7f2] disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] uppercase tracking-[0.14em] font-medium transition-all duration-200 ease-out active:scale-[0.97] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-[#faf7f2] disabled:cursor-not-allowed disabled:opacity-60"
       style={{
         background: active ? NAVY : 'white',
         border: `1px solid ${active ? NAVY : CREAM2}`,
@@ -85,7 +86,7 @@ function DocRequirementRow({ i18nDoc, enabled, behavior, disabled, onToggle, onB
   const behaviorColor = behavior === 'exclu' ? DANGER : WARNING;
   return (
     <li
-      className="flex items-center gap-3 px-3 py-2.5 rounded-[4px]"
+      className="flex items-center gap-3 px-3 py-2.5 rounded-[4px] transition-all duration-200 ease-out"
       style={{
         background: enabled ? 'white' : CREAM,
         border: `1px solid ${enabled ? GOLD : CREAM2}`,
@@ -276,7 +277,7 @@ function CriterionCard({ def, node, disabled, onChangeNode, t }) {
 
   return (
     <article
-      className="rounded-[4px] p-4"
+      className="rounded-[4px] p-4 transition-all duration-200 ease-out"
       style={{
         background: 'white',
         border: `1px solid ${enabled ? GOLD : CREAM2}`,
@@ -314,48 +315,59 @@ function CriterionCard({ def, node, disabled, onChangeNode, t }) {
         )}
       </header>
 
-      {enabled && (
-        isDocs ? (
-          // Layout dédié docs_required : la mini-liste prend toute la largeur.
-          <div className="mt-4">
-            <CriterionParams
-              def={def}
-              params={node.params || {}}
-              disabled={disabled}
-              onChange={(nextParams) => onChangeNode({ ...node, params: nextParams })}
-              t={t}
-            />
-          </div>
-        ) : (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_220px] gap-4">
-            <div>
-              <CriterionParams
-                def={def}
-                params={node.params || {}}
-                disabled={disabled}
-                onChange={(nextParams) => onChangeNode({ ...node, params: nextParams })}
-                t={t}
-              />
-            </div>
-            <div>
-              <Field label={t(UI.behaviorLabel)}>
-                {({ id }) => (
-                  <Select
-                    id={id}
-                    value={node.behavior}
-                    onChange={(e) => onChangeNode({ ...node, behavior: e.target.value })}
+      <AnimatePresence initial={false}>
+        {enabled && (
+          <motion.div
+            key="params"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: EASE }}
+            style={{ overflow: 'hidden' }}
+          >
+            {isDocs ? (
+              // Layout dédié docs_required : la mini-liste prend toute la largeur.
+              <div className="mt-4">
+                <CriterionParams
+                  def={def}
+                  params={node.params || {}}
+                  disabled={disabled}
+                  onChange={(nextParams) => onChangeNode({ ...node, params: nextParams })}
+                  t={t}
+                />
+              </div>
+            ) : (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_220px] gap-4">
+                <div>
+                  <CriterionParams
+                    def={def}
+                    params={node.params || {}}
                     disabled={disabled}
-                    options={[
-                      { value: 'exclu', label: t(UI.behaviorExclu) },
-                      { value: 'flag', label: t(UI.behaviorFlag) },
-                    ]}
+                    onChange={(nextParams) => onChangeNode({ ...node, params: nextParams })}
+                    t={t}
                   />
-                )}
-              </Field>
-            </div>
-          </div>
-        )
-      )}
+                </div>
+                <div>
+                  <Field label={t(UI.behaviorLabel)}>
+                    {({ id }) => (
+                      <Select
+                        id={id}
+                        value={node.behavior}
+                        onChange={(e) => onChangeNode({ ...node, behavior: e.target.value })}
+                        disabled={disabled}
+                        options={[
+                          { value: 'exclu', label: t(UI.behaviorExclu) },
+                          { value: 'flag', label: t(UI.behaviorFlag) },
+                        ]}
+                      />
+                    )}
+                  </Field>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </article>
   );
 }

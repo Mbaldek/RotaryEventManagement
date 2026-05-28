@@ -273,7 +273,7 @@ function PrizeCard({
   const { t } = useLang();
   return (
     <li
-      className="rounded-[4px] p-4"
+      className="group rounded-[4px] p-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60"
       style={{ background: 'white', border: `1px solid ${CREAM2}` }}
     >
       <div className="flex items-start gap-3 flex-wrap">
