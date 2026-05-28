@@ -762,14 +762,33 @@ export const Club = {
   },
 
   // Création — réservée master_admin (vérifié côté serveur).
+  //
+  // V2 hotfix 2026-05-28 : un bug remonté par le user reportait un spinner
+  // perpétuel sur le bouton « Créer ». Pour faciliter le diagnostic, on log
+  // chaque étape en console.debug et on ajoute un watchdog 12s qui REJETTE la
+  // promise si le RPC ne répond pas — sinon TanStack Query reste en isPending
+  // indéfiniment et l'UI semble figée. L'erreur reste visible côté caller via
+  // setFormError.
   async createClub({ id, name, region, contactEmail, contactName }) {
-    const { data, error } = await supabase.rpc('rsa_create_club', {
+    // eslint-disable-next-line no-console
+    console.debug('[Club.createClub] start', { id, name, region, contactEmail, contactName });
+    const rpcPromise = supabase.rpc('rsa_create_club', {
       p_id: id,
       p_name: name,
       p_region: region ?? null,
       p_contact_email: contactEmail ?? null,
       p_contact_name: contactName ?? null,
     });
+    const watchdog = new Promise((_resolve, reject) =>
+      setTimeout(() => reject(new Error('createClub_timeout: pas de réponse après 12s — vérifier réseau, JWT ou Supabase status')), 12000),
+    );
+    const { data, error } = await Promise.race([rpcPromise, watchdog]).catch((timeoutErr) => {
+      // eslint-disable-next-line no-console
+      console.error('[Club.createClub] watchdog fired', timeoutErr);
+      throw timeoutErr;
+    });
+    // eslint-disable-next-line no-console
+    console.debug('[Club.createClub] response', { data, error });
     if (error) throw error;
     return data;
   },
