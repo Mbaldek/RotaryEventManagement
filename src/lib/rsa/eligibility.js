@@ -17,6 +17,10 @@ export const VERDICT = {
 };
 
 // Config par défaut (édition 2026). En prod elle vient de edition.eligibility_rules.
+//
+// V2.5+ — pivot `docs_required` : chaque doc est une clé indépendante portant
+// son propre behavior. Ancien format (`{behavior, docs:[…]}`) reste lu en
+// transparence par evaluateEligibility pour les éditions non encore migrées.
 export const DEFAULT_RULES_2026 = {
   country: { behavior: 'exclu', allowed: ['FR', 'DE'] },
   created_after: { behavior: 'exclu', date: '2020-01-01' },
@@ -24,8 +28,47 @@ export const DEFAULT_RULES_2026 = {
   raised_max: { behavior: 'flag', threshold: 800000 },
   founders_majority: { behavior: 'flag' },
   registration: { behavior: 'flag' },
-  docs_required: { behavior: 'flag', docs: ['pitch_deck', 'exec_summary'] },
+  docs_required: {
+    pitch_deck:   { behavior: 'exclu' },
+    exec_summary: { behavior: 'exclu' },
+  },
 };
+
+// Mapping doc_key -> { column on startups, label court pour le `detail` text }.
+// `column` null ⇒ pas encore stocké dans startups (financials/video_pitch en V2.5+).
+const DOC_FIELD_MAP = {
+  pitch_deck:   { column: 'pitch_deck_path',   label: 'pitch deck' },
+  exec_summary: { column: 'exec_summary_path', label: 'exec summary FR/DE' },
+  financials:   { column: null,                label: 'états financiers' },
+  video_pitch:  { column: null,                label: 'vidéo de pitch' },
+};
+
+// Normalise rules.docs_required vers le format V2.5+ :
+//   { [doc_key]: { behavior } }
+// Accepte les DEUX formats en entrée pour tolérance pendant la migration :
+//   - V2.5+   : { pitch_deck: { behavior }, exec_summary: { behavior } }
+//   - legacy  : { behavior: 'flag', docs: ['pitch_deck','exec_summary'] }
+// Renvoie un objet vide si rien à demander ou si la règle est absente/'off'.
+function normalizeDocsRequired(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  if (raw.behavior === 'off') return {};
+  // legacy
+  if (Array.isArray(raw.docs)) {
+    const beh = raw.behavior === 'exclu' ? 'exclu' : 'flag';
+    const out = {};
+    for (const k of raw.docs) if (typeof k === 'string' && DOC_FIELD_MAP[k]) out[k] = { behavior: beh };
+    return out;
+  }
+  // V2.5+
+  const out = {};
+  for (const key of Object.keys(DOC_FIELD_MAP)) {
+    const entry = raw[key];
+    if (entry && typeof entry === 'object' && entry.behavior && entry.behavior !== 'off') {
+      out[key] = { behavior: entry.behavior === 'exclu' ? 'exclu' : 'flag' };
+    }
+  }
+  return out;
+}
 
 // Numéros d'immatriculation factices repérés dans l'Airtable 2026 ("123 123 123", "000000000").
 function isPlaceholderRegistration(value) {
@@ -76,11 +119,37 @@ export function evaluateEligibility(startup, rules = DEFAULT_RULES_2026) {
     const ok = !isPlaceholderRegistration(startup.registration_number);
     push('registration', ok, rules.registration.behavior, `n° : ${startup.registration_number ?? '—'}`);
   }
-  if (isActive(rules.docs_required)) {
-    const missing = [];
-    if (rules.docs_required.docs.includes('pitch_deck') && !startup.pitch_deck_path) missing.push('pitch deck');
-    if (rules.docs_required.docs.includes('exec_summary') && !startup.exec_summary_path) missing.push('exec summary FR/DE');
-    push('docs_required', missing.length === 0, rules.docs_required.behavior, missing.length ? `manque : ${missing.join(', ')}` : 'complet');
+  // V2.5+ — docs_required : chaque doc a son propre behavior. On collecte les
+  // docs manquants et on regroupe vers UN check (rule='docs_required') dont le
+  // behavior reflète la SÉVÉRITÉ maximale ('exclu' > 'flag') : ainsi la chip et
+  // le verdict global gardent leur sémantique « pire échec », et le `detail`
+  // liste les pièces manquantes (taggées du behavior individuel).
+  const docsCfg = normalizeDocsRequired(rules.docs_required);
+  if (Object.keys(docsCfg).length > 0) {
+    const missingExclu = [];
+    const missingFlag = [];
+    for (const [docKey, cfg] of Object.entries(docsCfg)) {
+      const field = DOC_FIELD_MAP[docKey]?.column;
+      const label = DOC_FIELD_MAP[docKey]?.label || docKey;
+      // Si le champ n'est pas encore stocké (financials/video_pitch), on ne peut
+      // pas détecter de manque côté front ⇒ on n'émet pas de failure (la RPC
+      // serveur n'évalue pas non plus ces clés). Forward-compat : quand on
+      // wirera le champ, on aura juste à l'ajouter dans DOC_FIELD_MAP.
+      if (!field) continue;
+      const present = !!startup[field];
+      if (!present) {
+        if (cfg.behavior === 'exclu') missingExclu.push(label);
+        else missingFlag.push(label);
+      }
+    }
+    const totalMissing = missingExclu.length + missingFlag.length;
+    if (totalMissing > 0) {
+      const worst = missingExclu.length > 0 ? 'exclu' : 'flag';
+      const parts = [];
+      if (missingExclu.length > 0) parts.push(`requis : ${missingExclu.join(', ')}`);
+      if (missingFlag.length > 0) parts.push(`recommandé : ${missingFlag.join(', ')}`);
+      push('docs_required', false, worst, parts.join(' · '));
+    }
   }
 
   const failed = checks.filter((c) => !c.ok);

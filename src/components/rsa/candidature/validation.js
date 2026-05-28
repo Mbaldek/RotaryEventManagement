@@ -110,7 +110,14 @@ export const SECTOR_OPTIONS = [
 // ── Champs requis pour la soumission (blueprint §2.1) ────────────────────────
 // Chaque entrée : { field, step }. traction est requise (recommandation §12.4
 // confirmée par le règlement Art.4 ; on autorise une explication « pré-revenu »).
-export const REQUIRED_FIELDS = [
+//
+// V2.5+ — pivot docs_required : les CHAMPS DOC (pitch_deck_path, exec_summary_path)
+// ne sont PLUS hardcodés ici. Leur caractère bloquant dépend désormais de la
+// configuration `eligibility_rules.docs_required` de l'édition (chaque doc avec
+// behavior='exclu' devient un champ requis ; behavior='flag' = recommandé non
+// bloquant ; clé absente = pas demandé). On expose `requiredDocsFromRules(rules)`
+// pour calculer dynamiquement la liste des champs DOC requis.
+export const REQUIRED_FIELDS_STATIC = [
   { field: 'name', step: 'contact' },
   { field: 'contact_person', step: 'contact' },
   { field: 'email', step: 'contact' },
@@ -124,9 +131,62 @@ export const REQUIRED_FIELDS = [
   { field: 'team', step: 'project' },
   { field: 'traction', step: 'project' },
   { field: 'sectors', step: 'project' },
+];
+
+// Mapping doc_key (catalogue) -> nom de colonne `startups`. null = pas wired.
+const DOC_KEY_TO_FIELD = {
+  pitch_deck:   'pitch_deck_path',
+  exec_summary: 'exec_summary_path',
+  financials:   null,
+  video_pitch:  null,
+};
+
+// Renvoie la liste { field, step, docKey } des docs RÉELLEMENT bloquants
+// d'après les règles d'édition (V2.5+ format ou legacy).
+// Un doc compte comme bloquant SSI behavior='exclu'. On filtre les docs non
+// wired (financials/video_pitch en V2.5+) — ils ne peuvent pas être requis tant
+// qu'il n'y a pas de colonne pour les stocker.
+export function requiredDocsFromRules(rules) {
+  const raw = rules?.docs_required;
+  if (!raw || typeof raw !== 'object') return [];
+  // legacy { behavior, docs:[…] }
+  if (Array.isArray(raw.docs)) {
+    const beh = raw.behavior;
+    if (beh !== 'exclu') return [];
+    return raw.docs
+      .map((k) => DOC_KEY_TO_FIELD[k] ? { field: DOC_KEY_TO_FIELD[k], step: 'documents', docKey: k } : null)
+      .filter(Boolean);
+  }
+  // V2.5+
+  const out = [];
+  for (const [key, entry] of Object.entries(raw)) {
+    if (!entry || typeof entry !== 'object') continue;
+    if (entry.behavior !== 'exclu') continue;
+    const field = DOC_KEY_TO_FIELD[key];
+    if (!field) continue;
+    out.push({ field, step: 'documents', docKey: key });
+  }
+  return out;
+}
+
+// Compat : helper qui combine champs statiques + champs DOC requis dynamiquement
+// dérivés des règles. Pour le code legacy qui n'a pas de `rules`, on retombe sur
+// le comportement historique (pitch_deck + exec_summary requis bloquants).
+const LEGACY_REQUIRED_DOC_FIELDS = [
   { field: 'pitch_deck_path', step: 'documents' },
   { field: 'exec_summary_path', step: 'documents' },
 ];
+
+export function requiredFields(rules) {
+  if (rules === undefined) {
+    return [...REQUIRED_FIELDS_STATIC, ...LEGACY_REQUIRED_DOC_FIELDS];
+  }
+  const docFields = requiredDocsFromRules(rules).map(({ field, step }) => ({ field, step }));
+  return [...REQUIRED_FIELDS_STATIC, ...docFields];
+}
+
+// Compat legacy : REQUIRED_FIELDS = pré-V2.5 (pitch_deck + exec_summary bloquants).
+export const REQUIRED_FIELDS = [...REQUIRED_FIELDS_STATIC, ...LEGACY_REQUIRED_DOC_FIELDS];
 
 // Un champ requis est-il rempli ?
 export function isFilled(startup, field) {
@@ -136,20 +196,21 @@ export function isFilled(startup, field) {
   return !isBlank(v);
 }
 
-// Liste des champs requis manquants (pour la soumission).
-export function requiredMissing(startup) {
-  return REQUIRED_FIELDS.filter((r) => !isFilled(startup, r.field));
+// Liste des champs requis manquants (pour la soumission). Si `rules` est fourni,
+// la liste des docs requis vient des règles ; sinon on retombe sur le défaut.
+export function requiredMissing(startup, rules) {
+  return requiredFields(rules).filter((r) => !isFilled(startup, r.field));
 }
 
 // Première étape contenant un champ requis manquant (pour sauter dessus au submit).
-export function firstStepWithMissing(startup) {
-  const missing = requiredMissing(startup);
+export function firstStepWithMissing(startup, rules) {
+  const missing = requiredMissing(startup, rules);
   return missing.length ? missing[0].step : null;
 }
 
 // Un champ requis manque-t-il dans une étape donnée ? (pour le point « incomplet »)
-export function stepHasMissingRequired(startup, stepId) {
-  return REQUIRED_FIELDS.some((r) => r.step === stepId && !isFilled(startup, r.field));
+export function stepHasMissingRequired(startup, stepId, rules) {
+  return requiredFields(rules).some((r) => r.step === stepId && !isFilled(startup, r.field));
 }
 
 // ── Validation inline par champ (renvoie une clé d'erreur UI ou null) ────────
@@ -193,7 +254,11 @@ export function validateField(field, value, _startup) {
     }
     case 'pitch_deck_path':
     case 'exec_summary_path':
-      return isBlank(value) ? 'errRequired' : null;
+      // V2.5+ : ces champs ne sont bloquants QUE si les règles de l'édition les
+      // marquent en behavior='exclu'. Sans le contexte des règles ici (validateField
+      // signature historique), on reste en mode optionnel : la coupure dure se fait
+      // au niveau du Submit via requiredMissing(rules) qui voit la config réelle.
+      return null;
     default:
       return null;
   }

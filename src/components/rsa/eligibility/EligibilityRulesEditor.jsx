@@ -9,6 +9,16 @@
 //   │  Paramètres (si activé)               Comportement (Select exclu/flag)  │
 //   └─────────────────────────────────────────────────────────────────────────┘
 //
+// V2.5+ — pivot `docs_required` : la card affiche une LISTE de lignes par
+// document, chacune avec son propre toggle + son propre Select behavior. Le
+// critère est globalement "actif" SSI au moins un doc est demandé.
+//
+//   ─── Documents demandés au candidat ─────────
+//   [ ✓ ] Pitch deck (PDF)            [ exclu ▼ ]   ← bloquant
+//   [ ✓ ] Executive summary           [ flag ▼ ]   ← warning comité
+//   [ ✓ ] États financiers            [ flag ▼ ]
+//   [ ✗ ] Vidéo de pitch              [ — ]        ← pas demandé du tout
+//
 // On RÉUTILISE les composants design/form (Field, TextInput, DateField, Select,
 // TagSelect) — pas de re-style ad hoc. Le JSON produit est strictement
 // compatible avec le format historique consommé par rsa_evaluate_eligibility.
@@ -36,7 +46,7 @@ import Select from '@/components/design/form/Select';
 import DateField from '@/components/design/form/DateField';
 import TagSelect from '@/components/design/form/TagSelect';
 import {
-  CRITERIA, rulesToState, stateToRules,
+  CRITERIA, rulesToState, stateToRules, DOC_CATALOG, docsAnyEnabled,
 } from './catalog';
 import {
   UI, CRITERIA as I18N_CRITERIA, COUNTRIES, DOCS,
@@ -65,42 +75,76 @@ function StatusToggle({ active, disabled, onToggle, labelOn, labelOff }) {
   );
 }
 
-// ── MultiCheckbox (docs requis) ──────────────────────────────────────────────
-function MultiCheckbox({ id, value, options, onChange, disabled, t }) {
-  const set = new Set(Array.isArray(value) ? value : []);
-  const toggle = (v) => {
-    if (disabled) return;
-    const next = new Set(set);
-    if (next.has(v)) next.delete(v);
-    else next.add(v);
-    onChange?.(Array.from(next));
-  };
+// ── DocRequirementRow (V2.5+) ────────────────────────────────────────────────
+// Une ligne par document du catalogue. Toggle gauche, label + hint au milieu,
+// Select inline behavior à droite (grisé/masqué si la ligne est désactivée).
+//
+// Le pattern reprend la signature visuelle des cartes critères (chip Élysée +
+// chip behavior à droite) pour rester cohérent avec le reste de l'éditeur.
+function DocRequirementRow({ i18nDoc, enabled, behavior, disabled, onToggle, onBehavior, t }) {
+  const behaviorColor = behavior === 'exclu' ? DANGER : WARNING;
   return (
-    <ul id={id} className="flex flex-wrap gap-1.5 list-none m-0 p-0">
-      {options.map((opt) => {
-        const checked = set.has(opt.value);
-        return (
-          <li key={opt.value}>
-            <button
-              type="button"
-              role="checkbox"
-              aria-checked={checked}
-              disabled={disabled}
-              onClick={() => toggle(opt.value)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] disabled:cursor-not-allowed disabled:opacity-60"
-              style={{
-                background: checked ? CREAM : 'white',
-                border: `1px solid ${checked ? GOLD : CREAM2}`,
-                color: checked ? NAVY : INK,
-              }}
-            >
-              {checked && <Check className="w-3 h-3" aria-hidden style={{ color: GOLD }} />}
-              {t(opt.label)}
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+    <li
+      className="flex items-center gap-3 px-3 py-2.5 rounded-[4px]"
+      style={{
+        background: enabled ? 'white' : CREAM,
+        border: `1px solid ${enabled ? GOLD : CREAM2}`,
+      }}
+    >
+      <StatusToggle
+        active={enabled}
+        disabled={disabled}
+        onToggle={(next) => onToggle(next)}
+        labelOn={t(I18N_CRITERIA.docs_required.requested)}
+        labelOff={t(I18N_CRITERIA.docs_required.notRequested)}
+      />
+      <div className="min-w-0 flex-1">
+        <div
+          className="text-[14px] leading-tight"
+          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+        >
+          {t(i18nDoc.label)}
+        </div>
+        {i18nDoc.hint && (
+          <div className="mt-0.5 text-[12px]" style={{ color: INK }}>
+            {t(i18nDoc.hint)}
+          </div>
+        )}
+      </div>
+      <div className="w-[160px] shrink-0">
+        {enabled ? (
+          <Select
+            value={behavior}
+            onChange={(e) => onBehavior(e.target.value)}
+            disabled={disabled}
+            options={[
+              { value: 'exclu', label: t(UI.behaviorExclu) },
+              { value: 'flag', label: t(UI.behaviorFlag) },
+            ]}
+          />
+        ) : (
+          <div
+            className="text-[12px] uppercase tracking-[0.14em] text-center py-2 rounded-[4px]"
+            style={{
+              background: CREAM,
+              border: `1px dashed ${CREAM2}`,
+              color: MUTED,
+            }}
+            aria-hidden
+          >
+            —
+          </div>
+        )}
+      </div>
+      {enabled && (
+        <span
+          className="hidden sm:inline uppercase tracking-[0.14em] text-[10.5px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
+          style={{ background: 'white', border: `1px solid ${CREAM2}`, color: behaviorColor }}
+        >
+          {behavior === 'exclu' ? t(UI.behaviorExclu) : t(UI.behaviorFlag)}
+        </span>
+      )}
+    </li>
   );
 }
 
@@ -171,20 +215,48 @@ function CriterionParams({ def, params, disabled, onChange, t }) {
       );
     }
     case 'docs': {
-      const i18nDict = I18N_CRITERIA[def.key];
+      // V2.5+ : on rend une LISTE de DocRequirementRow. Chaque doc a son
+      // propre toggle + behavior. `params.docs` = { [key]: { behavior } }.
+      const docsState = params.docs && typeof params.docs === 'object' ? params.docs : {};
+      const docsByKey = Object.fromEntries(DOCS.map((d) => [d.value, d]));
+      const setDoc = (key, next) => {
+        const nextDocs = { ...docsState };
+        if (next === null) delete nextDocs[key];
+        else nextDocs[key] = next;
+        onChange({ ...params, docs: nextDocs });
+      };
       return (
-        <Field label={t(i18nDict.paramLabel)}>
-          {({ id }) => (
-            <MultiCheckbox
-              id={id}
-              value={params.docs || []}
-              options={DOCS}
-              onChange={(next) => onChange({ ...params, docs: next })}
-              disabled={disabled}
-              t={t}
-            />
+        <div>
+          <ul className="flex flex-col gap-2 list-none m-0 p-0">
+            {DOC_CATALOG.map((docDef) => {
+              const i18nDoc = docsByKey[docDef.key];
+              if (!i18nDoc) return null;
+              const entry = docsState[docDef.key];
+              const enabled = !!entry;
+              const behavior = entry?.behavior || docDef.defaultBehavior;
+              return (
+                <DocRequirementRow
+                  key={docDef.key}
+                  i18nDoc={i18nDoc}
+                  enabled={enabled}
+                  behavior={behavior}
+                  disabled={disabled}
+                  t={t}
+                  onToggle={(next) => {
+                    if (next) setDoc(docDef.key, { behavior: docDef.defaultBehavior });
+                    else setDoc(docDef.key, null);
+                  }}
+                  onBehavior={(beh) => setDoc(docDef.key, { behavior: beh })}
+                />
+              );
+            })}
+          </ul>
+          {!docsAnyEnabled(docsState) && (
+            <p className="mt-2 text-[12px]" style={{ color: MUTED }}>
+              {t(I18N_CRITERIA.docs_required.emptyHint)}
+            </p>
           )}
-        </Field>
+        </div>
       );
     }
     case 'none':
@@ -200,6 +272,7 @@ function CriterionCard({ def, node, disabled, onChangeNode, t }) {
   const i18nDict = I18N_CRITERIA[def.key];
   const enabled = !!node.enabled;
   const behaviorColor = node.behavior === 'exclu' ? DANGER : WARNING;
+  const isDocs = def.key === 'docs_required';
 
   return (
     <article
@@ -229,7 +302,9 @@ function CriterionCard({ def, node, disabled, onChangeNode, t }) {
             {t(i18nDict.desc)}
           </p>
         </div>
-        {enabled && (
+        {/* Pour les critères classiques : chip behavior à droite.
+            Pour docs_required : pas de behavior unique — chaque ligne le porte. */}
+        {enabled && !isDocs && (
           <span
             className="uppercase tracking-[0.14em] text-[10.5px] px-2 py-0.5 rounded-full whitespace-nowrap"
             style={{ background: 'white', border: `1px solid ${CREAM2}`, color: behaviorColor }}
@@ -240,8 +315,9 @@ function CriterionCard({ def, node, disabled, onChangeNode, t }) {
       </header>
 
       {enabled && (
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_220px] gap-4">
-          <div>
+        isDocs ? (
+          // Layout dédié docs_required : la mini-liste prend toute la largeur.
+          <div className="mt-4">
             <CriterionParams
               def={def}
               params={node.params || {}}
@@ -250,23 +326,35 @@ function CriterionCard({ def, node, disabled, onChangeNode, t }) {
               t={t}
             />
           </div>
-          <div>
-            <Field label={t(UI.behaviorLabel)}>
-              {({ id }) => (
-                <Select
-                  id={id}
-                  value={node.behavior}
-                  onChange={(e) => onChangeNode({ ...node, behavior: e.target.value })}
-                  disabled={disabled}
-                  options={[
-                    { value: 'exclu', label: t(UI.behaviorExclu) },
-                    { value: 'flag', label: t(UI.behaviorFlag) },
-                  ]}
-                />
-              )}
-            </Field>
+        ) : (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_220px] gap-4">
+            <div>
+              <CriterionParams
+                def={def}
+                params={node.params || {}}
+                disabled={disabled}
+                onChange={(nextParams) => onChangeNode({ ...node, params: nextParams })}
+                t={t}
+              />
+            </div>
+            <div>
+              <Field label={t(UI.behaviorLabel)}>
+                {({ id }) => (
+                  <Select
+                    id={id}
+                    value={node.behavior}
+                    onChange={(e) => onChangeNode({ ...node, behavior: e.target.value })}
+                    disabled={disabled}
+                    options={[
+                      { value: 'exclu', label: t(UI.behaviorExclu) },
+                      { value: 'flag', label: t(UI.behaviorFlag) },
+                    ]}
+                  />
+                )}
+              </Field>
+            </div>
           </div>
-        </div>
+        )
       )}
     </article>
   );
@@ -298,6 +386,23 @@ export default function EligibilityRulesEditor({ value, onChange, disabled = fal
 
   function patchNode(key, nextNode) {
     if (disabled) return;
+    // Cas spécial docs_required : si l'admin désactive la card globalement, on
+    // efface tous les docs ; si l'admin la réactive sans aucun doc, on hydrate
+    // avec les defaults (pitch_deck + exec_summary en exclu).
+    if (key === 'docs_required') {
+      const wasEnabled = !!state.docs_required?.enabled;
+      if (!nextNode.enabled && wasEnabled) {
+        nextNode = { ...nextNode, params: { docs: {} } };
+      } else if (nextNode.enabled && !wasEnabled) {
+        const currentDocs = nextNode.params?.docs;
+        if (!currentDocs || Object.keys(currentDocs).length === 0) {
+          nextNode = {
+            ...nextNode,
+            params: { docs: { pitch_deck: { behavior: 'exclu' }, exec_summary: { behavior: 'exclu' } } },
+          };
+        }
+      }
+    }
     const next = { ...state, [key]: nextNode };
     setState(next);
     onChange?.(stateToRules(next));

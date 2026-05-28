@@ -144,25 +144,34 @@ export const FIELDS = {
     },
   },
 
-  // Step 5 — Documents
+  // Step 5 — Documents (V2.5+ : libellés par doc_key catalogue, requis/recommandé
+  // dérivé dynamiquement de edition.eligibility_rules.docs_required)
   pitch_deck_path: {
-    label: { fr: 'Pitch deck', en: 'Pitch deck', de: 'Pitch-Deck' },
+    label: { fr: 'Pitch deck (PDF)', en: 'Pitch deck (PDF)', de: 'Pitch-Deck (PDF)' },
     help: { fr: 'PDF, PPT ou PPTX · max 50 Mo.', en: 'PDF, PPT or PPTX · max 50 MB.', de: 'PDF, PPT oder PPTX · max. 50 MB.' },
   },
   exec_summary_path: {
-    label: { fr: 'Executive summary (FR & DE)', en: 'Executive summary (FR & DE)', de: 'Executive Summary (FR & DE)' },
+    label: { fr: 'Executive summary', en: 'Executive summary', de: 'Executive Summary' },
     help: {
       fr: 'Un seul document combinant FR & DE. PDF/DOC · max 20 Mo.',
       en: 'A single document combining FR & DE. PDF/DOC · max 20 MB.',
       de: 'Ein Dokument mit FR & DE. PDF/DOC · max. 20 MB.',
     },
   },
-  video_pitch_url: {
-    label: { fr: 'Lien vidéo de pitch', en: 'Pitch video link', de: 'Pitch-Video-Link' },
+  financials_path: {
+    label: { fr: 'États financiers', en: 'Financial statements', de: 'Finanzunterlagen' },
     help: {
-      fr: 'YouTube, Vimeo ou Loom (facultatif).',
-      en: 'YouTube, Vimeo or Loom (optional).',
-      de: 'YouTube, Vimeo oder Loom (optional).',
+      fr: 'Comptes annuels ou prévisionnel signé. PDF/DOC.',
+      en: 'Annual accounts or signed forecast. PDF/DOC.',
+      de: 'Jahresabschluss oder unterzeichnete Prognose. PDF/DOC.',
+    },
+  },
+  video_pitch_url: {
+    label: { fr: 'Vidéo de pitch', en: 'Pitch video', de: 'Pitch-Video' },
+    help: {
+      fr: 'Lien YouTube, Vimeo ou Loom.',
+      en: 'YouTube, Vimeo or Loom link.',
+      de: 'YouTube-, Vimeo- oder Loom-Link.',
     },
   },
 };
@@ -183,6 +192,17 @@ export const UI = {
   notProvided: { fr: 'Non renseigné', en: 'Not provided', de: 'Nicht angegeben' },
   optional: { fr: 'facultatif', en: 'optional', de: 'optional' },
   required: { fr: 'requis', en: 'required', de: 'erforderlich' },
+  recommended: { fr: 'recommandé', en: 'recommended', de: 'empfohlen' },
+  docsFlagNotice: {
+    fr: 'Votre dossier sera marqué pour examen attentif par le comité si vous ne fournissez pas les pièces recommandées.',
+    en: 'Your application will be flagged for close committee review if you do not provide the recommended files.',
+    de: 'Ihre Bewerbung wird zur näheren Prüfung durch das Komitee markiert, wenn Sie die empfohlenen Dokumente nicht beifügen.',
+  },
+  docsNoneRequested: {
+    fr: 'Aucun document n’est demandé pour cette édition.',
+    en: 'No document is requested for this edition.',
+    de: 'Für diese Ausgabe wird kein Dokument angefordert.',
+  },
 
   // Helpers / conventions
   preferEn: {

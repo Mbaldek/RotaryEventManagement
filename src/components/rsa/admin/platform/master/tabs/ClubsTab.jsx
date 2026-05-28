@@ -1,25 +1,26 @@
 // ClubsTab — Master Cockpit, onglet « Clubs ».
 //
-// V2.5 refonte 2026-05-31 :
-//   - Form de création utilise <ClubForm> partagé (4 sections empilées hairline gold)
-//   - ID auto-généré côté serveur depuis le nom — plus de champ "Identifiant" exposé
-//   - Le clic sur un club ouvre le ClubEditor enrichi (lecture seule + bouton Éditer)
-//
-// La gestion des membres reste portée par ClubEditor (inchangée).
+// V2.5+ refonte 2026-05-28 :
+//   - Création d'un club : modal funnel (ClubFunnel) backdrop-blur, autosave
+//     debounced 600 ms après création. Plus de form inline.
+//   - Édition d'un club : navigation URL state `?subview=edit-club&id={clubId}`
+//     pour basculer le cockpit en mode plein-écran ClubEditView. Plus de panel
+//     inline qui se déploie.
+//   - La card Club ne s'expand plus : un click sur "Ouvrir" navigue.
 
 import React, { useMemo, useState } from 'react';
-import { Loader2, Plus, ChevronRight, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Loader2, Plus, ChevronRight } from 'lucide-react';
 import {
   CREAM2, NAVY, MUTED, INK, GOLD, SERIF,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { UI, CLUBS } from '../i18n';
-import { useAllClubs, useCreateClub, useClubMembers } from '../useMaster';
-import ClubEditor from '../ClubEditor';
-import ClubForm from '../ClubForm';
+import { useAllClubs, useClubMembers } from '../useMaster';
+import ClubFunnel from '../ClubFunnel';
 
-function ClubCard({ club, isOpen, onOpen }) {
+function ClubCard({ club, onOpen }) {
   const { t } = useLang();
   const members = useClubMembers(club.id);
   const memberCount = (members.data || []).length;
@@ -31,9 +32,7 @@ function ClubCard({ club, isOpen, onOpen }) {
     return out;
   }, [members.data]);
 
-  // V2.5 : on affiche country (nouveau) ; fallback region pour clubs legacy non backfillés.
   const locTag = club.country || club.region || null;
-  // Représentant : nouveau format (first/last) ; fallback contact_name.
   const repName = (club.contact_first_name || club.contact_last_name)
     ? `${club.contact_first_name || ''} ${club.contact_last_name || ''}`.trim()
     : club.contact_name || null;
@@ -41,10 +40,7 @@ function ClubCard({ club, isOpen, onOpen }) {
   return (
     <li
       className="rounded-[4px] p-4"
-      style={{
-        background: isOpen ? '#fdf6e8' : 'white',
-        border: `1px solid ${isOpen ? GOLD : CREAM2}`,
-      }}
+      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
     >
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -93,20 +89,11 @@ function ClubCard({ club, isOpen, onOpen }) {
         </div>
         <button
           type="button"
-          onClick={() => onOpen(isOpen ? null : club.id)}
+          onClick={() => onOpen(club.id)}
           className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
-          style={{ background: isOpen ? NAVY : 'white', color: isOpen ? 'white' : NAVY, border: `1px solid ${isOpen ? NAVY : CREAM2}` }}
-          aria-expanded={isOpen}
+          style={{ background: 'white', color: NAVY, border: `1px solid ${CREAM2}` }}
         >
-          {isOpen ? (
-            <>
-              <X className="w-3.5 h-3.5" /> {t(UI.close)}
-            </>
-          ) : (
-            <>
-              {t(CLUBS.openClub)} <ChevronRight className="w-3.5 h-3.5" />
-            </>
-          )}
+          {t(CLUBS.openClub)} <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </li>
@@ -115,30 +102,21 @@ function ClubCard({ club, isOpen, onOpen }) {
 
 export default function ClubsTab() {
   const { t } = useLang();
+  const [, setParams] = useSearchParams();
   const list = useAllClubs();
-  const create = useCreateClub();
 
-  const [openId, setOpenId] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [formError, setFormError] = useState(null);
-  // Petite clé qui force le remount de ClubForm pour reset les champs après création.
-  const [formKey, setFormKey] = useState(0);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const clubs = useMemo(() => list.data || [], [list.data]);
-  const openClub = useMemo(() => clubs.find((c) => c.id === openId) || null, [clubs, openId]);
 
-  async function onCreate(payload) {
-    setFormError(null);
-    try {
-      const created = await create.mutateAsync(payload);
-      setShowForm(false);
-      setFormKey((k) => k + 1);
-      if (created?.id) {
-        setOpenId(created.id);
-      }
-    } catch (err) {
-      setFormError(err?.message || 'Error');
-    }
+  function openClub(clubId) {
+    setParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set('tab', 'clubs');
+      p.set('subview', 'edit-club');
+      p.set('id', clubId);
+      return p;
+    }, { replace: false });
   }
 
   return (
@@ -150,11 +128,7 @@ export default function ClubsTab() {
         <span className="text-[12px]" style={{ color: MUTED }}>· {clubs.length}</span>
         <button
           type="button"
-          onClick={() => {
-            setShowForm((v) => !v);
-            setFormError(null);
-            setFormKey((k) => k + 1);
-          }}
+          onClick={() => setCreateOpen(true)}
           className="ml-auto inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
           style={{ background: NAVY, color: 'white' }}
         >
@@ -162,31 +136,16 @@ export default function ClubsTab() {
         </button>
       </header>
 
-      {showForm && (
-        <div
-          className="rounded-[4px] p-5 mb-4"
-          style={{ background: '#fdf6e8', border: `1px solid ${CREAM2}` }}
-        >
-          <h4
-            className="text-[16px] mb-4"
-            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-          >
-            {t(CLUBS.newClub)}
-          </h4>
-          <ClubForm
-            key={formKey}
-            mode="create"
-            submitting={create.isPending}
-            onSubmit={onCreate}
-            onCancel={() => {
-              setShowForm(false);
-              setFormError(null);
-              setFormKey((k) => k + 1);
-            }}
-            submitError={formError}
-          />
-        </div>
-      )}
+      <ClubFunnel
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={(_row) => {
+          // Best UX : on laisse la modale ouverte (le user finit de remplir
+          // les autres tabs via autosave), il fermera lui-même.
+          // Quand il ferme, on pourra naviguer vers le club via openClub(row.id)
+          // si on le souhaite — pour la V2.5+ on reste sur la liste.
+        }}
+      />
 
       {list.isLoading && (
         <div className="py-6 flex justify-center">
@@ -205,18 +164,7 @@ export default function ClubsTab() {
       {!list.isLoading && clubs.length > 0 && (
         <ul className="space-y-3">
           {clubs.map((c) => (
-            <React.Fragment key={c.id}>
-              <ClubCard
-                club={c}
-                isOpen={openId === c.id}
-                onOpen={setOpenId}
-              />
-              {openId === c.id && openClub && (
-                <li>
-                  <ClubEditor club={openClub} onClose={() => setOpenId(null)} />
-                </li>
-              )}
-            </React.Fragment>
+            <ClubCard key={c.id} club={c} onOpen={openClub} />
           ))}
         </ul>
       )}

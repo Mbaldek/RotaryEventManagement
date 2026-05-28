@@ -96,9 +96,9 @@ export const SETUP = {
   descriptionMd:    { fr: 'Description (markdown)', en: 'Description (markdown)', de: 'Beschreibung (Markdown)' },
   eligibilityRules: { fr: 'Règles d’éligibilité (JSON)', en: 'Eligibility rules (JSON)', de: 'Eignungsregeln (JSON)' },
   eligibilityHint:  {
-    fr: 'JSON éditable — clés autorisées : country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required.',
-    en: 'Editable JSON — allowed keys: country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required.',
-    de: 'Bearbeitbares JSON — erlaubte Schlüssel: country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required.',
+    fr: 'JSON éditable — clés autorisées : country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required (V2.5+ : un objet par doc avec son behavior individuel).',
+    en: 'Editable JSON — allowed keys: country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required (V2.5+: one object per doc with its own behavior).',
+    de: 'Bearbeitbares JSON — erlaubte Schlüssel: country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required (V2.5+: ein Objekt pro Dokument mit eigenem Verhalten).',
   },
   invalidJson:      { fr: 'JSON invalide.', en: 'Invalid JSON.', de: 'Ungültiges JSON.' },
 

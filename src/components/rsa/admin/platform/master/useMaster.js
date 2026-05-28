@@ -59,6 +59,25 @@ export function useCreateCompetition() {
   });
 }
 
+// V3 — Update direct d'une compétition (Edition.patch). Utilisé par l'autosave
+// debounced du funnel/CompetitionEditView. Invalide le cache master (catalogue +
+// dépendances) sur succès. Pas de toast ici : le statut "Enregistré il y a Xs"
+// est rendu par <FunnelEditorModal> via useAutosaveCompetition.
+export function useUpdateCompetition() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }) => Edition.patch(id, patch),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: KEYS.competitions });
+      if (vars?.id) {
+        qc.invalidateQueries({
+          queryKey: ['rsa', 'master', 'competition-dependencies', vars.id],
+        });
+      }
+    },
+  });
+}
+
 // V2.5 — Pré-comptage des dépendances pour la modale de suppression de compétition.
 // Retourne un jsonb { name, year, model, clubs_count, sessions_total, sessions_draft,
 // sessions_live, sessions_published, startups_count, reviews_count, scores_count }.

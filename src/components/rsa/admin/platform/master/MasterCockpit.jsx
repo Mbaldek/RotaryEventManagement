@@ -27,6 +27,8 @@ import ClubsTab from './tabs/ClubsTab';
 import GlobalRolesTab from './tabs/GlobalRolesTab';
 import FederatedFinaleTab from './tabs/FederatedFinaleTab';
 import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
+import CompetitionEditView from './CompetitionEditView';
+import ClubEditView from './ClubEditView';
 
 function Tab({ id, label, active, onClick }) {
   return (
@@ -171,16 +173,53 @@ export default function MasterCockpit() {
   const { t } = useLang();
   const [params, setParams] = useSearchParams();
 
-  // URL state : ?tab=competitions|clubs|roles|finale
+  // URL state : ?tab=competitions|clubs|roles|finale|comms
   const tab = (params.get('tab') && TAB_IDS.includes(params.get('tab')))
     ? params.get('tab')
     : 'competitions';
 
+  // V3 — Subview pour les vues d'édition plein-cockpit.
+  //   ?subview=edit-competition&id={editionId} → CompetitionEditView
+  //   ?subview=edit-club&id={clubId}           → ClubEditView
+  const subview = params.get('subview');
+  const subviewId = params.get('id');
+
   const setTab = (next) => {
     const p = new URLSearchParams(params);
     p.set('tab', next);
+    // Quitter le subview quand on bascule de tab.
+    p.delete('subview');
+    p.delete('id');
     setParams(p, { replace: true });
   };
+
+  const clearSubview = () => {
+    const p = new URLSearchParams(params);
+    p.set('tab', tab);
+    p.delete('subview');
+    p.delete('id');
+    setParams(p, { replace: true });
+  };
+
+  // Sous-vue d'édition de compétition — remplace le shell standard.
+  if (subview === 'edit-competition' && subviewId && tab === 'competitions') {
+    return (
+      <CompetitionEditView
+        editionId={subviewId}
+        onClose={clearSubview}
+      />
+    );
+  }
+
+  // Sous-vue d'édition de club — remplace le shell standard.
+  if (subview === 'edit-club' && subviewId && tab === 'clubs') {
+    return (
+      <ClubEditView
+        clubId={subviewId}
+        onClose={clearSubview}
+      />
+    );
+  }
 
   return (
     <>

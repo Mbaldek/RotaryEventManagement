@@ -1,37 +1,30 @@
 // CompetitionsTab — Master Cockpit, onglet « Compétitions ».
 //
-// Liste toutes les compétitions (toutes éditions, ordre desc par year) avec un
-// panneau de création (id, name, year, model). Le clic sur une compétition
-// ouvre le CompetitionEditor en panneau inline. Pattern hérité du SetupTab
-// (Master ne consomme PAS d'editionId via URL — l'éditeur est sélectionné via
-// un state local pour rester sous l'URL `?tab=competitions`).
+// V3 — Refonte UX :
+//   * "Nouvelle compétition" ouvre <CompetitionFunnel /> (modal funnel
+//     backdrop-blur, autosave debounced),
+//   * Le clic sur "Ouvrir l'éditeur" d'une card pousse l'URL
+//     ?subview=edit-competition&id={editionId} ; MasterCockpit intercepte
+//     ce subview pour rendre <CompetitionEditView /> à la place du shell.
+//   * Plus de panel inline qui se déploie sous la carte.
+//
+// La liste des compétitions reste identique côté UI (card + counts + status
+// pill + bouton "Ouvrir l'éditeur").
 
 import React, { useMemo, useState } from 'react';
-import { Loader2, Plus, ChevronRight, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Loader2, Plus, ChevronRight } from 'lucide-react';
 import {
-  CREAM2, NAVY, MUTED, INK, GOLD, SERIF, StatusPill,
+  CREAM2, NAVY, MUTED, INK, SERIF, StatusPill,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
-import { UI, COMP, COMPETITION_MODELS, KEBAB_REGEX } from '../i18n';
+import { UI, COMP } from '../i18n';
 import {
   useAllCompetitions,
-  useCreateCompetition,
   useCountsForEdition,
 } from '../useMaster';
-import CompetitionEditor from '../CompetitionEditor';
-
-function FieldLabel({ children, htmlFor }) {
-  return (
-    <label
-      htmlFor={htmlFor}
-      className="block uppercase tracking-[0.14em] text-[10.5px] mb-1.5"
-      style={{ color: MUTED }}
-    >
-      {children}
-    </label>
-  );
-}
+import CompetitionFunnel from '../CompetitionFunnel';
 
 function ModelBadge({ model }) {
   const isMulti = model === 'multiclub';
@@ -49,7 +42,7 @@ function ModelBadge({ model }) {
   );
 }
 
-function CompetitionCard({ competition, onOpen, isOpen }) {
+function CompetitionCard({ competition, onOpen }) {
   const { t } = useLang();
   const counts = useCountsForEdition(competition.id);
   const c = counts.data || {};
@@ -57,8 +50,8 @@ function CompetitionCard({ competition, onOpen, isOpen }) {
     <li
       className="rounded-[4px] p-4"
       style={{
-        background: isOpen ? '#fdf6e8' : 'white',
-        border: `1px solid ${isOpen ? GOLD : CREAM2}`,
+        background: 'white',
+        border: `1px solid ${CREAM2}`,
       }}
     >
       <div className="flex items-start gap-3 flex-wrap">
@@ -107,20 +100,11 @@ function CompetitionCard({ competition, onOpen, isOpen }) {
         </div>
         <button
           type="button"
-          onClick={() => onOpen(isOpen ? null : competition.id)}
+          onClick={() => onOpen(competition.id)}
           className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
-          style={{ background: isOpen ? NAVY : 'white', color: isOpen ? 'white' : NAVY, border: `1px solid ${isOpen ? NAVY : CREAM2}` }}
-          aria-expanded={isOpen}
+          style={{ background: 'white', color: NAVY, border: `1px solid ${CREAM2}` }}
         >
-          {isOpen ? (
-            <>
-              <X className="w-3.5 h-3.5" /> {t(UI.close)}
-            </>
-          ) : (
-            <>
-              {t(COMP.openEditor)} <ChevronRight className="w-3.5 h-3.5" />
-            </>
-          )}
+          {t(COMP.openEditor)} <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </li>
@@ -130,54 +114,18 @@ function CompetitionCard({ competition, onOpen, isOpen }) {
 export default function CompetitionsTab() {
   const { t } = useLang();
   const list = useAllCompetitions();
-  const create = useCreateCompetition();
+  const [params, setParams] = useSearchParams();
 
-  const [openId, setOpenId] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ id: '', name: '', year: new Date().getFullYear() + 1, model: 'multiclub' });
-  const [formError, setFormError] = useState(null);
+  const [funnelOpen, setFunnelOpen] = useState(false);
 
   const competitions = useMemo(() => list.data || [], [list.data]);
-  const openCompetition = useMemo(
-    () => competitions.find((c) => c.id === openId) || null,
-    [competitions, openId],
-  );
 
-  function resetForm() {
-    setForm({ id: '', name: '', year: new Date().getFullYear() + 1, model: 'multiclub' });
-    setFormError(null);
-  }
-
-  async function onCreate() {
-    setFormError(null);
-    const id = String(form.id || '').trim().toLowerCase();
-    const name = String(form.name || '').trim();
-    const year = Number(form.year);
-    const model = form.model;
-    if (!id || !KEBAB_REGEX.test(id)) {
-      setFormError(t(COMP.invalidId));
-      return;
-    }
-    if (!name) {
-      setFormError(t(COMP.nameLabel));
-      return;
-    }
-    if (!Number.isFinite(year) || year < 2020 || year > 2100) {
-      setFormError(`${t(COMP.yearLabel)}: 2020–2100`);
-      return;
-    }
-    if (!COMPETITION_MODELS.includes(model)) {
-      setFormError(t(COMP.modelLabel));
-      return;
-    }
-    try {
-      await create.mutateAsync({ id, name, year, model });
-      setShowForm(false);
-      resetForm();
-      setOpenId(id);
-    } catch (err) {
-      setFormError(err?.message || 'Error');
-    }
+  function openEditor(id) {
+    const p = new URLSearchParams(params);
+    p.set('tab', 'competitions');
+    p.set('subview', 'edit-competition');
+    p.set('id', id);
+    setParams(p, { replace: false });
   }
 
   return (
@@ -189,109 +137,13 @@ export default function CompetitionsTab() {
         <span className="text-[12px]" style={{ color: MUTED }}>· {competitions.length}</span>
         <button
           type="button"
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => setFunnelOpen(true)}
           className="ml-auto inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
           style={{ background: NAVY, color: 'white' }}
         >
           <Plus className="w-4 h-4" /> {t(COMP.newCompetition)}
         </button>
       </header>
-
-      {/* Form de création */}
-      {showForm && (
-        <div
-          className="rounded-[4px] p-4 mb-4"
-          style={{ background: '#fdf6e8', border: `1px solid ${CREAM2}` }}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <FieldLabel htmlFor="new-comp-id">{t(COMP.idLabel)}</FieldLabel>
-              <input
-                id="new-comp-id"
-                type="text"
-                value={form.id}
-                onChange={(e) => setForm((p) => ({ ...p, id: e.target.value }))}
-                placeholder="2028-pilote"
-                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-              />
-              <p className="mt-1 text-[11px]" style={{ color: MUTED }}>{t(COMP.idHint)}</p>
-            </div>
-            <div>
-              <FieldLabel htmlFor="new-comp-name">{t(COMP.nameLabel)}</FieldLabel>
-              <input
-                id="new-comp-name"
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="Rotary Startup Award 2028"
-                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-              />
-            </div>
-            <div>
-              <FieldLabel htmlFor="new-comp-year">{t(COMP.yearLabel)}</FieldLabel>
-              <input
-                id="new-comp-year"
-                type="number"
-                value={form.year}
-                onChange={(e) => setForm((p) => ({ ...p, year: e.target.value }))}
-                className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-              />
-            </div>
-            <div>
-              <FieldLabel>{t(COMP.modelLabel)}</FieldLabel>
-              <div className="flex flex-col gap-1.5">
-                {COMPETITION_MODELS.map((m) => (
-                  <label key={m} className="inline-flex items-start gap-2 text-[13px]" style={{ color: NAVY }}>
-                    <input
-                      type="radio"
-                      name="comp-model"
-                      value={m}
-                      checked={form.model === m}
-                      onChange={() => setForm((p) => ({ ...p, model: m }))}
-                      className="mt-0.5"
-                    />
-                    <span>
-                      <span className="font-medium">
-                        {m === 'multiclub' ? t(COMP.modelMulti) : t(COMP.modelMono)}
-                      </span>
-                      <span className="block text-[11.5px]" style={{ color: MUTED }}>
-                        {m === 'multiclub' ? t(COMP.multiclubHint) : t(COMP.monoclubHint)}
-                      </span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onCreate}
-              disabled={create.isPending}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px] font-medium disabled:opacity-50"
-              style={{ background: NAVY, color: 'white' }}
-            >
-              {create.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              {t(UI.create)}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowForm(false); resetForm(); }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
-            >
-              {t(UI.cancel)}
-            </button>
-            {formError && (
-              <span className="text-[12px]" style={{ color: DANGER }}>{formError}</span>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Liste */}
       {list.isLoading && (
@@ -311,24 +163,23 @@ export default function CompetitionsTab() {
       {!list.isLoading && competitions.length > 0 && (
         <ul className="space-y-3">
           {competitions.map((c) => (
-            <React.Fragment key={c.id}>
-              <CompetitionCard
-                competition={c}
-                isOpen={openId === c.id}
-                onOpen={setOpenId}
-              />
-              {openId === c.id && openCompetition && (
-                <li>
-                  <CompetitionEditor
-                    competition={openCompetition}
-                    onClose={() => setOpenId(null)}
-                  />
-                </li>
-              )}
-            </React.Fragment>
+            <CompetitionCard
+              key={c.id}
+              competition={c}
+              onOpen={openEditor}
+            />
           ))}
         </ul>
       )}
+
+      <CompetitionFunnel
+        open={funnelOpen}
+        onClose={() => setFunnelOpen(false)}
+        onCreated={(newId) => {
+          // Ouvre directement la vue d'édition de la compétition créée.
+          openEditor(newId);
+        }}
+      />
     </section>
   );
 }

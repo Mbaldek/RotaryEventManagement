@@ -112,7 +112,9 @@ export default function StepReview({ value, onEdit, rules, onSubmit, submitting 
   const v = value || {};
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const missing = useMemo(() => requiredMissing(v), [v]);
+  // V2.5+ : la liste des champs requis dépend de `rules` (docs_required par
+  // édition). requiredMissing(v, rules) délègue à validation.js#requiredFields.
+  const missing = useMemo(() => requiredMissing(v, rules), [v, rules]);
   const canSubmit = missing.length === 0;
   const verdict = useMemo(() => evaluateEligibility(v, rules).verdict, [v, rules]);
 
@@ -126,7 +128,7 @@ export default function StepReview({ value, onEdit, rules, onSubmit, submitting 
 
   const handleSubmitClick = () => {
     if (!canSubmit) {
-      const step = firstStepWithMissing(v);
+      const step = firstStepWithMissing(v, rules);
       if (step) onEdit?.(step, { highlight: true });
       return;
     }

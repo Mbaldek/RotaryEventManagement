@@ -262,6 +262,177 @@ export const COMP = {
     en: 'Only a master_admin can delete a competition.',
     de: 'Nur ein master_admin kann einen Wettbewerb löschen.',
   },
+
+  // ── V3 — Funnel & Edit view (modal création + page édition) ───────────────
+  funnelEyebrow: {
+    fr: 'compétition',
+    en: 'competition',
+    de: 'Wettbewerb',
+  },
+  funnelNewTitle: {
+    fr: 'Nouvelle compétition',
+    en: 'New competition',
+    de: 'Neuer Wettbewerb',
+  },
+  funnelEditTitle: {
+    fr: 'Édition de compétition',
+    en: 'Edit competition',
+    de: 'Wettbewerb bearbeiten',
+  },
+  backToCompetitions: {
+    fr: '← Compétitions',
+    en: '← Competitions',
+    de: '← Wettbewerbe',
+  },
+  // Tabs labels (6)
+  tabIdentity: {
+    fr: 'Identité',
+    en: 'Identity',
+    de: 'Identität',
+  },
+  tabCalendar: {
+    fr: 'Calendrier',
+    en: 'Calendar',
+    de: 'Kalender',
+  },
+  tabClubs: {
+    fr: 'Clubs',
+    en: 'Clubs',
+    de: 'Clubs',
+  },
+  tabRules: {
+    fr: 'Règles',
+    en: 'Rules',
+    de: 'Regeln',
+  },
+  tabPrizes: {
+    fr: 'Prix',
+    en: 'Prizes',
+    de: 'Preise',
+  },
+  tabCommunication: {
+    fr: 'Communication',
+    en: 'Communication',
+    de: 'Kommunikation',
+  },
+  // Autosave status indicator
+  autosaveSaving: {
+    fr: 'Enregistrement…',
+    en: 'Saving…',
+    de: 'Speichern…',
+  },
+  autosaveSaved: {
+    fr: 'Enregistré',
+    en: 'Saved',
+    de: 'Gespeichert',
+  },
+  autosaveError: {
+    fr: 'Erreur d’enregistrement',
+    en: 'Save error',
+    de: 'Speicherfehler',
+  },
+  autosaveJustNow: {
+    fr: 'à l’instant',
+    en: 'just now',
+    de: 'gerade eben',
+  },
+  // Templates "{n}s" / "{n}min" — {n} sera remplacé par le composant
+  autosaveSecondsAgo: {
+    fr: 'il y a {n}s',
+    en: '{n}s ago',
+    de: 'vor {n}s',
+  },
+  autosaveMinutesAgo: {
+    fr: 'il y a {n}min',
+    en: '{n}min ago',
+    de: 'vor {n}min',
+  },
+  autosaveHoursAgo: {
+    fr: 'il y a {n}h',
+    en: '{n}h ago',
+    de: 'vor {n}h',
+  },
+  autosaveSavedAgo: {
+    // {ago} sera remplacé par "à l'instant" / "il y a 3s" / etc.
+    fr: 'Enregistré {ago}',
+    en: 'Saved {ago}',
+    de: 'Gespeichert {ago}',
+  },
+  // Funnel création — messages d'étapes verrouillées
+  identityFirstHint: {
+    fr: 'Renseignez l’identité avant d’accéder aux autres sections.',
+    en: 'Fill in the identity before unlocking the other sections.',
+    de: 'Tragen Sie die Identität ein, bevor Sie die anderen Abschnitte öffnen.',
+  },
+  prizesAfterCreate: {
+    fr: 'Le module Prix sera disponible après la création de la compétition.',
+    en: 'The Prizes module becomes available after the competition is created.',
+    de: 'Das Preise-Modul ist nach der Erstellung des Wettbewerbs verfügbar.',
+  },
+  clubsAfterCreate: {
+    fr: 'Vous pourrez attacher des clubs participants après la création.',
+    en: 'You can attach participating clubs after creation.',
+    de: 'Sie können teilnehmende Clubs nach der Erstellung anhängen.',
+  },
+  clubsMonoclubNote: {
+    fr: 'Compétition monoclub — un seul club participant. Section non applicable.',
+    en: 'Monoclub competition — a single participating club. Section not applicable.',
+    de: 'Monoclub-Wettbewerb — nur ein teilnehmender Club. Abschnitt nicht zutreffend.',
+  },
+  competitionCreated: {
+    fr: 'Compétition créée',
+    en: 'Competition created',
+    de: 'Wettbewerb erstellt',
+  },
+  // Footer / chrome
+  closeModal: {
+    fr: 'Fermer',
+    en: 'Close',
+    de: 'Schließen',
+  },
+  saveInProgressWarn: {
+    fr: 'Enregistrement en cours. Fermer quand même ?',
+    en: 'Save in progress. Close anyway?',
+    de: 'Speichern läuft. Trotzdem schließen?',
+  },
+  // Identity tab specific fields
+  identityIdLabel: {
+    fr: 'Identifiant (kebab-case, immuable)',
+    en: 'Identifier (kebab-case, immutable)',
+    de: 'Kennung (Kebab-Case, unveränderlich)',
+  },
+  identityIdImmutableHint: {
+    fr: 'L’identifiant ne peut plus être modifié après création.',
+    en: 'The identifier cannot be changed after creation.',
+    de: 'Die Kennung kann nach der Erstellung nicht mehr geändert werden.',
+  },
+  // Communication tab
+  publicResultsEnabled: {
+    fr: 'Palmarès public activé',
+    en: 'Public results enabled',
+    de: 'Öffentliche Ergebnisse aktiviert',
+  },
+  publicResultsHint: {
+    fr: 'Quand activé, /Resultats affiche les classements publiés de cette compétition.',
+    en: 'When on, /Resultats shows this competition’s published rankings.',
+    de: 'Wenn aktiviert, zeigt /Resultats die veröffentlichten Rankings dieses Wettbewerbs an.',
+  },
+  publicResultsOpenDate: {
+    fr: 'Date d’ouverture publique',
+    en: 'Public opening date',
+    de: 'Datum der öffentlichen Veröffentlichung',
+  },
+  publicResultsOpenDateHint: {
+    fr: 'Réservé à une activation future — non encore connecté à /Resultats.',
+    en: 'Reserved for future activation — not yet wired to /Resultats.',
+    de: 'Für zukünftige Aktivierung reserviert — noch nicht mit /Resultats verbunden.',
+  },
+  // Creation form actions
+  createAndContinue: {
+    fr: 'Créer et continuer',
+    en: 'Create and continue',
+    de: 'Erstellen und fortfahren',
+  },
 };
 
 // ── Clubs tab ───────────────────────────────────────────────────────────────
@@ -414,6 +585,101 @@ export const CLUBS = {
   openClub:      { fr: 'Ouvrir',           en: 'Open',          de: 'Öffnen' },
   // Editor
   editorTitle:   { fr: 'Éditer le club',   en: 'Edit club',     de: 'Club bearbeiten' },
+
+  // ── V2.5+ Funnel modal (création) + ClubEditView (édition) ────────────────
+  funnelEyebrowCreate: {
+    fr: 'Nouveau club',
+    en: 'New club',
+    de: 'Neuer Club',
+  },
+  funnelTitleCreate: {
+    fr: 'Créer un club',
+    en: 'Create a club',
+    de: 'Club erstellen',
+  },
+  editViewEyebrow: {
+    fr: 'Édition du club',
+    en: 'Edit club',
+    de: 'Club bearbeiten',
+  },
+  // {name} sera remplacé côté composant.
+  editViewTitle: {
+    fr: 'Édition du club · {name}',
+    en: 'Editing club · {name}',
+    de: 'Club bearbeiten · {name}',
+  },
+  backToClubs: {
+    fr: '← Clubs',
+    en: '← Clubs',
+    de: '← Clubs',
+  },
+  tabInfo: {
+    fr: 'Informations',
+    en: 'Information',
+    de: 'Informationen',
+  },
+  tabContact: {
+    fr: 'Représentant',
+    en: 'Representative',
+    de: 'Vertreter',
+  },
+  tabPresident: {
+    fr: 'Président',
+    en: 'President',
+    de: 'Präsident',
+  },
+  tabAddress: {
+    fr: 'Coordonnées',
+    en: 'Contact details',
+    de: 'Kontaktdaten',
+  },
+  tabMembers: {
+    fr: 'Membres',
+    en: 'Members',
+    de: 'Mitglieder',
+  },
+  // Status indicator (partagé avec CompetitionFunnel quand identique)
+  statusSaving: {
+    fr: 'Enregistrement…',
+    en: 'Saving…',
+    de: 'Speichern…',
+  },
+  statusSaved: {
+    fr: 'Enregistré',
+    en: 'Saved',
+    de: 'Gespeichert',
+  },
+  statusError: {
+    fr: 'Erreur d’enregistrement',
+    en: 'Save error',
+    de: 'Speicherfehler',
+  },
+  funnelCreateIntro: {
+    fr: 'Renseignez les informations essentielles du club. Les autres onglets deviendront éditables une fois le club créé — chaque modification est ensuite enregistrée automatiquement.',
+    en: 'Fill in the essential information about the club. The other tabs become editable once the club is created — every change is then autosaved.',
+    de: 'Geben Sie die wesentlichen Informationen des Clubs ein. Die anderen Tabs werden nach der Erstellung bearbeitbar — jede Änderung wird dann automatisch gespeichert.', // TODO refine DE copy
+  },
+  funnelCreateButton: {
+    fr: 'Créer le club',
+    en: 'Create club',
+    de: 'Club erstellen',
+  },
+  funnelTabLockedHint: {
+    fr: 'Disponible après la création du club.',
+    en: 'Available after the club is created.',
+    de: 'Nach der Erstellung des Clubs verfügbar.', // TODO refine DE copy
+  },
+  clubCreatedToast: {
+    fr: 'Club créé',
+    en: 'Club created',
+    de: 'Club erstellt',
+  },
+  inviteAction: {
+    fr: 'Inviter',
+    en: 'Invite',
+    de: 'Einladen',
+  },
+
   membersSection:{ fr: 'Membres du club',  en: 'Club members',  de: 'Clubmitglieder' },
   membersHint: {
     fr: 'club_admin gouverne le club ; comité instruit les dossiers ; jury note les sessions.',

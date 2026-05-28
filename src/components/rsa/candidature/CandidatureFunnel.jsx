@@ -134,14 +134,15 @@ export default function CandidatureFunnel({
   const isLast = currentIndex === STEP_IDS.length - 1;
 
   // Points « incomplet » par étape (champs requis manquants) — sans bloquer.
+  // V2.5+ : `rules` est nécessaire pour déterminer les docs requis dynamiquement.
   const incompleteSteps = useMemo(() => {
     const out = {};
     for (const id of STEP_IDS) {
       if (id === 'review' || id === 'finance') continue; // finance n'a pas de requis
-      if (stepHasMissingRequired(draft, id)) out[id] = true;
+      if (stepHasMissingRequired(draft, id, rules)) out[id] = true;
     }
     return out;
-  }, [draft]);
+  }, [draft, rules]);
 
   // Soumission : valide tout, saute à la 1re étape fautive sinon délègue.
   // R-M1 : on AWAIT le flush avant d'appeler onSubmit pour s'assurer que la dernière
@@ -149,7 +150,7 @@ export default function CandidatureFunnel({
   // post-submit dans le cache TanStack Query.
   const handleSubmit = useCallback(async () => {
     await flushPending();
-    const missingStep = firstStepWithMissing(draft);
+    const missingStep = firstStepWithMissing(draft, rules);
     if (missingStep) {
       // surligne toutes les étapes à problème
       const errs = {};
@@ -160,7 +161,7 @@ export default function CandidatureFunnel({
       return;
     }
     await onSubmit?.(draft);
-  }, [flushPending, draft, validateStep, onSubmit]);
+  }, [flushPending, draft, rules, validateStep, onSubmit]);
 
   // Saut vers une étape depuis le récap (avec surlignage éventuel).
   const editFrom = useCallback(

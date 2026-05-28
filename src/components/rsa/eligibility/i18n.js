@@ -115,13 +115,20 @@ export const CRITERIA = {
     },
   },
   docs_required: {
-    label: { fr: 'Documents requis', en: 'Required documents', de: 'Erforderliche Dokumente' },
+    label: { fr: 'Documents demandés au candidat', en: 'Documents requested from the applicant', de: 'Vom Bewerber angeforderte Dokumente' },
     desc: {
-      fr: 'Cochez les pièces obligatoires pour qu’une candidature soit complète.',
-      en: 'Tick the files that must be provided for an application to be complete.',
-      de: 'Wählen Sie die Dokumente, die für eine vollständige Bewerbung erforderlich sind.',
+      fr: 'Activez chaque pièce attendue et choisissez son comportement : « exclu » bloque le dossier en cas d’absence, « flag » l’envoie pour examen au comité.',
+      en: 'Toggle each expected file and pick its behavior: "exclude" blocks the file if missing, "flag" sends it for committee review.',
+      de: 'Aktivieren Sie jedes erwartete Dokument und wählen Sie das Verhalten: „Ausschluss“ blockiert das Dossier bei Fehlen, „Flag“ sendet es zur Prüfung an das Komitee.',
     },
-    paramLabel: { fr: 'Pièces obligatoires', en: 'Required files', de: 'Pflichtdokumente' },
+    paramLabel: { fr: 'Documents demandés', en: 'Requested documents', de: 'Angeforderte Dokumente' },
+    notRequested: { fr: 'Non demandé', en: 'Not requested', de: 'Nicht angefordert' },
+    requested: { fr: 'Demandé', en: 'Requested', de: 'Angefordert' },
+    emptyHint: {
+      fr: 'Aucun document n’est demandé tant qu’aucune ligne n’est activée.',
+      en: 'No document is requested until at least one row is enabled.',
+      de: 'Es wird kein Dokument angefordert, solange keine Zeile aktiviert ist.',
+    },
   },
 };
 
@@ -144,12 +151,43 @@ export const COUNTRIES = [
 ];
 
 // ── Documents requis (mêmes clés que rsa_evaluate_eligibility) ───────────────
+// V2.5+ : chaque doc est une LIGNE indépendante dans l'éditeur (toggle + behavior
+// individuel). `hint` est rendu en clair à droite du label dans la ligne.
 export const DOCS = [
-  { value: 'pitch_deck', label: { fr: 'Pitch deck', en: 'Pitch deck', de: 'Pitch-Deck' } },
-  { value: 'exec_summary', label: { fr: 'Executive summary', en: 'Executive summary', de: 'Executive Summary' } },
+  {
+    value: 'pitch_deck',
+    label: { fr: 'Pitch deck (PDF)', en: 'Pitch deck (PDF)', de: 'Pitch-Deck (PDF)' },
+    hint: {
+      fr: 'Document de présentation principal pour le jury.',
+      en: 'Main presentation document for the jury.',
+      de: 'Hauptpräsentationsdokument für die Jury.',
+    },
+  },
+  {
+    value: 'exec_summary',
+    label: { fr: 'Executive summary', en: 'Executive summary', de: 'Executive Summary' },
+    hint: {
+      fr: 'Synthèse écrite FR & DE (1 à 2 pages).',
+      en: 'Short written summary FR & DE (1–2 pages).',
+      de: 'Kurze schriftliche Zusammenfassung FR & DE (1–2 Seiten).',
+    },
+  },
   {
     value: 'financials',
-    label: { fr: 'Liasse financière', en: 'Financial statements', de: 'Finanzunterlagen' },
+    label: { fr: 'États financiers', en: 'Financial statements', de: 'Finanzunterlagen' },
+    hint: {
+      fr: 'Comptes annuels ou prévisionnel signé.',
+      en: 'Annual accounts or signed forecast.',
+      de: 'Jahresabschluss oder unterzeichnete Prognose.',
+    },
   },
-  { value: 'video', label: { fr: 'Vidéo de présentation', en: 'Pitch video', de: 'Pitch-Video' } },
+  {
+    value: 'video_pitch',
+    label: { fr: 'Vidéo de pitch', en: 'Pitch video', de: 'Pitch-Video' },
+    hint: {
+      fr: 'Format court (≤ 3 min) — YouTube, Vimeo ou Loom.',
+      en: 'Short format (≤ 3 min) — YouTube, Vimeo or Loom.',
+      de: 'Kurzformat (≤ 3 Min.) — YouTube, Vimeo oder Loom.',
+    },
+  },
 ];
