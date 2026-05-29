@@ -29,12 +29,6 @@ export const UI = {
   behaviorLabel: { fr: 'Comportement', en: 'Behavior', de: 'Verhalten' },
   behaviorExclu: { fr: 'Exclu (bloquant)', en: 'Exclude (blocking)', de: 'Ausschluss (sperrend)' },
   behaviorFlag: { fr: 'Flag (avertissement)', en: 'Flag (warning)', de: 'Flag (Hinweis)' },
-  advancedMode: { fr: 'Mode avancé (JSON)', en: 'Advanced mode (JSON)', de: 'Erweiterter Modus (JSON)' },
-  advancedHint: {
-    fr: 'Aperçu JSON brut en lecture seule — utile pour vérification ou export.',
-    en: 'Raw JSON preview, read-only — useful for verification or export.',
-    de: 'Schreibgeschützte JSON-Rohvorschau — nützlich zur Prüfung oder zum Export.',
-  },
   paramsTitle: { fr: 'Paramètres', en: 'Parameters', de: 'Parameter' },
   noParams: { fr: 'Aucun paramètre — uniquement actif/inactif.', en: 'No parameters — on/off only.', de: 'Keine Parameter — nur aktiv/deaktiviert.' },
 };

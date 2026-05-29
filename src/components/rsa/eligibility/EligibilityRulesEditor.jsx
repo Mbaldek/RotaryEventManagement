@@ -33,9 +33,9 @@
 // Bonus : un toggle "Mode avancé (JSON)" expose un aperçu JSON brut en
 // read-only (fallback dev/QA), sans jamais redonner la main au textarea.
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check } from 'lucide-react';
 import {
   CREAM, CREAM2, NAVY, MUTED, INK, GOLD, SERIF, EASE,
 } from '@/components/design/tokens';
@@ -43,7 +43,6 @@ import { DANGER, WARNING } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import Field from '@/components/design/form/Field';
 import TextInput from '@/components/design/form/TextInput';
-import Select from '@/components/design/form/Select';
 import DateField from '@/components/design/form/DateField';
 import TagSelect from '@/components/design/form/TagSelect';
 import {
@@ -76,6 +75,51 @@ function StatusToggle({ active, disabled, onToggle, labelOn, labelOff }) {
   );
 }
 
+// ── BehaviorToggle (V2.5+) ───────────────────────────────────────────────────
+// Segmented 2-pill toggle entre `flag` (warning) et `exclu` (blocking). Remplace
+// le `<Select>` historique : les deux états sont visibles d'un coup d'œil, plus
+// rapide à scanner pour l'admin qui passe de critère en critère.
+function BehaviorToggle({ value, disabled, onChange, t }) {
+  const isExclu = value === 'exclu';
+  const cellCls =
+    'px-2.5 py-1 rounded-full text-[11px] uppercase tracking-[0.14em] font-medium transition-all duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap';
+  return (
+    <div
+      role="group"
+      aria-label={t(UI.behaviorLabel)}
+      className="inline-flex rounded-full p-0.5"
+      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+    >
+      <button
+        type="button"
+        onClick={() => !disabled && onChange('flag')}
+        disabled={disabled}
+        aria-pressed={!isExclu}
+        className={cellCls}
+        style={{
+          background: !isExclu ? WARNING : 'transparent',
+          color: !isExclu ? 'white' : MUTED,
+        }}
+      >
+        {t(UI.behaviorFlag)}
+      </button>
+      <button
+        type="button"
+        onClick={() => !disabled && onChange('exclu')}
+        disabled={disabled}
+        aria-pressed={isExclu}
+        className={cellCls}
+        style={{
+          background: isExclu ? DANGER : 'transparent',
+          color: isExclu ? 'white' : MUTED,
+        }}
+      >
+        {t(UI.behaviorExclu)}
+      </button>
+    </div>
+  );
+}
+
 // ── DocRequirementRow (V2.5+) ────────────────────────────────────────────────
 // Une ligne par document du catalogue. Toggle gauche, label + hint au milieu,
 // Select inline behavior à droite (grisé/masqué si la ligne est désactivée).
@@ -83,7 +127,6 @@ function StatusToggle({ active, disabled, onToggle, labelOn, labelOff }) {
 // Le pattern reprend la signature visuelle des cartes critères (chip Élysée +
 // chip behavior à droite) pour rester cohérent avec le reste de l'éditeur.
 function DocRequirementRow({ i18nDoc, enabled, behavior, disabled, onToggle, onBehavior, t }) {
-  const behaviorColor = behavior === 'exclu' ? DANGER : WARNING;
   return (
     <li
       className="flex items-center gap-3 px-3 py-2.5 rounded-[4px] transition-all duration-200 ease-out"
@@ -112,20 +155,17 @@ function DocRequirementRow({ i18nDoc, enabled, behavior, disabled, onToggle, onB
           </div>
         )}
       </div>
-      <div className="w-[160px] shrink-0">
+      <div className="shrink-0">
         {enabled ? (
-          <Select
+          <BehaviorToggle
             value={behavior}
-            onChange={(e) => onBehavior(e.target.value)}
             disabled={disabled}
-            options={[
-              { value: 'exclu', label: t(UI.behaviorExclu) },
-              { value: 'flag', label: t(UI.behaviorFlag) },
-            ]}
+            onChange={onBehavior}
+            t={t}
           />
         ) : (
           <div
-            className="text-[12px] uppercase tracking-[0.14em] text-center py-2 rounded-[4px]"
+            className="text-[12px] uppercase tracking-[0.14em] text-center py-1 px-3 rounded-full"
             style={{
               background: CREAM,
               border: `1px dashed ${CREAM2}`,
@@ -137,14 +177,6 @@ function DocRequirementRow({ i18nDoc, enabled, behavior, disabled, onToggle, onB
           </div>
         )}
       </div>
-      {enabled && (
-        <span
-          className="hidden sm:inline uppercase tracking-[0.14em] text-[10.5px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
-          style={{ background: 'white', border: `1px solid ${CREAM2}`, color: behaviorColor }}
-        >
-          {behavior === 'exclu' ? t(UI.behaviorExclu) : t(UI.behaviorFlag)}
-        </span>
-      )}
     </li>
   );
 }
@@ -337,32 +369,24 @@ function CriterionCard({ def, node, disabled, onChangeNode, t }) {
                 />
               </div>
             ) : (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_220px] gap-4">
-                <div>
-                  <CriterionParams
-                    def={def}
-                    params={node.params || {}}
-                    disabled={disabled}
-                    onChange={(nextParams) => onChangeNode({ ...node, params: nextParams })}
-                    t={t}
-                  />
-                </div>
-                <div>
-                  <Field label={t(UI.behaviorLabel)}>
-                    {({ id }) => (
-                      <Select
-                        id={id}
-                        value={node.behavior}
-                        onChange={(e) => onChangeNode({ ...node, behavior: e.target.value })}
-                        disabled={disabled}
-                        options={[
-                          { value: 'exclu', label: t(UI.behaviorExclu) },
-                          { value: 'flag', label: t(UI.behaviorFlag) },
-                        ]}
-                      />
-                    )}
-                  </Field>
-                </div>
+              <div className="mt-4 flex flex-col gap-4">
+                <CriterionParams
+                  def={def}
+                  params={node.params || {}}
+                  disabled={disabled}
+                  onChange={(nextParams) => onChangeNode({ ...node, params: nextParams })}
+                  t={t}
+                />
+                <Field label={t(UI.behaviorLabel)}>
+                  {() => (
+                    <BehaviorToggle
+                      value={node.behavior}
+                      disabled={disabled}
+                      onChange={(beh) => onChangeNode({ ...node, behavior: beh })}
+                      t={t}
+                    />
+                  )}
+                </Field>
               </div>
             )}
           </motion.div>
@@ -382,7 +406,6 @@ function CriterionCard({ def, node, disabled, onChangeNode, t }) {
 export default function EligibilityRulesEditor({ value, onChange, disabled = false }) {
   const { t } = useLang();
   const [state, setState] = useState(() => rulesToState(value));
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Re-hydrate quand la prop value change "de l'extérieur" (rechargement,
   // changement d'édition…). On compare via JSON pour éviter une boucle
@@ -420,11 +443,6 @@ export default function EligibilityRulesEditor({ value, onChange, disabled = fal
     onChange?.(stateToRules(next));
   }
 
-  const previewJson = useMemo(
-    () => JSON.stringify(stateToRules(state), null, 2),
-    [state],
-  );
-
   return (
     <section
       className="rounded-[4px] p-5"
@@ -455,30 +473,6 @@ export default function EligibilityRulesEditor({ value, onChange, disabled = fal
         ))}
       </div>
 
-      {/* Mode avancé : aperçu JSON read-only (dev/QA fallback) */}
-      <div className="mt-4">
-        <button
-          type="button"
-          onClick={() => setShowAdvanced((v) => !v)}
-          className="inline-flex items-center gap-1.5 text-[11.5px] uppercase tracking-[0.14em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
-          style={{ color: MUTED }}
-        >
-          {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" aria-hidden /> : <ChevronDown className="w-3.5 h-3.5" aria-hidden />}
-          {t(UI.advancedMode)}
-        </button>
-        {showAdvanced && (
-          <div className="mt-2">
-            <p className="text-[11px] mb-1" style={{ color: MUTED }}>{t(UI.advancedHint)}</p>
-            <pre
-              className="text-[12px] font-mono rounded-[4px] p-3 overflow-x-auto"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-              aria-readonly="true"
-            >
-              {previewJson}
-            </pre>
-          </div>
-        )}
-      </div>
     </section>
   );
 }
