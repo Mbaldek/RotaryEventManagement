@@ -56,18 +56,12 @@ export default defineConfig({
             ) return 'ui';
             return undefined;
           }
-          // App code — split by feature area pour aider la cache HTTP
-          // (modifier la Selection ne re-télécharge plus le Master Cockpit).
-          if (id.includes('/src/components/rsa/admin/platform/master/')) return 'rsa-master';
-          if (id.includes('/src/components/rsa/admin/platform/club/')) return 'rsa-club';
-          if (id.includes('/src/components/rsa/admin/platform/comms/')) return 'rsa-comms';
-          if (id.includes('/src/components/rsa/communicate/')) return 'rsa-comms';
-          if (id.includes('/src/components/rsa/analytics/')) return 'rsa-analytics';
-          if (id.includes('/src/components/rsa/jury')) return 'rsa-jury';
-          if (id.includes('/src/components/rsa/selection/')) return 'rsa-selection';
-          if (id.includes('/src/components/rsa/candidature/')) return 'rsa-candidature';
-          if (id.includes('/src/components/rsa/extensions/')) return 'rsa-extensions';
-          if (id.includes('/src/components/rsa/results-public/')) return 'rsa-results';
+          // App code: NO manual chunks. Routes are already lazy-loaded via
+          // React.lazy (pages.config.js + App.jsx Suspense). Splitting by
+          // feature area (rsa-master/club/jury/...) caused cross-chunk
+          // circular deps and TDZ errors ("Cannot access 'ye' before
+          // initialization") since these features share internal modules.
+          // Vite auto-chunks shared code into common chunks without cycles.
           return undefined;
         },
       },
