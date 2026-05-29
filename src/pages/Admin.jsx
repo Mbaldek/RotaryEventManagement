@@ -11,6 +11,7 @@ import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import {
   PageShell,
+  PlatformFooter,
   Eyebrow,
   EditorialTitle,
   GOLD,
@@ -70,7 +71,7 @@ export default function Admin() {
 
   if (authLoading) {
     return (
-      <PageShell nav width="wide">
+      <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered>
           <Spinner />
         </Centered>
@@ -82,7 +83,7 @@ export default function Admin() {
   // Aucun rôle admin (master, club_admin ni legacy admin) → Forbidden
   if (!hasMaster && !hasClubAdmin && !hasLegacyAdmin) {
     return (
-      <PageShell nav width="wide">
+      <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered minHeight="50vh">
           <div className="text-center max-w-md">
             <div className="flex items-center justify-center gap-2.5 mb-3">
@@ -121,7 +122,7 @@ export default function Admin() {
   }
 
   return (
-    <PageShell nav width="wide">
+    <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
       {/* ÉQUIPE C (history-nav) : lien "Retour" SAFE — navigate(-1) si history,
           sinon fallback "/" pour ne jamais sortir de l'onglet sur deep-link. */}
       <div className="mb-4">

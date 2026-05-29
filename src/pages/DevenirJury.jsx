@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   PageShell,
+  PlatformFooter,
   GOLD,
   NAVY,
   INK,
@@ -30,7 +31,7 @@ export default function DevenirJury() {
   const reduce = useReducedMotion();
 
   return (
-    <PageShell nav width="narrow">
+    <PageShell nav width="narrow" footer={<PlatformFooter width="narrow" />}>
       {/* Hero H-Vertical-Rule — barre gold gauche + texte stacké. */}
       <motion.header
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}

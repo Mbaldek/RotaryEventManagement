@@ -22,6 +22,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 import {
   PageShell,
+  PlatformFooter,
   Eyebrow,
   Field,
   TextInput,
@@ -804,7 +805,7 @@ export default function JuryCandidate() {
 
   if (clubsQ.isLoading) {
     return (
-      <PageShell>
+      <PageShell footer={<PlatformFooter />}>
         <div
           className="min-h-[40vh] flex items-center justify-center"
           role="status"
@@ -822,7 +823,7 @@ export default function JuryCandidate() {
 
   if (clubsQ.isError) {
     return (
-      <PageShell>
+      <PageShell footer={<PlatformFooter />}>
         <div
           className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-center"
           role="alert"
@@ -845,7 +846,7 @@ export default function JuryCandidate() {
   if (confirmed && selectedClub) {
     const body = (t(JURY_UI.thanksBody) || '').replace('{club}', selectedClub.name || selectedClub.id);
     return (
-      <PageShell>
+      <PageShell footer={<PlatformFooter />}>
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -868,7 +869,7 @@ export default function JuryCandidate() {
   // ── Picker de club (pas de ?club= ou club introuvable) ─────────────────
   if (!clubIdParam) {
     return (
-      <PageShell>
+      <PageShell footer={<PlatformFooter />}>
         <Eyebrow>{t(JURY_UI.eyebrow)}</Eyebrow>
         <h1
           className="text-[28px] md:text-[34px] leading-tight mt-2 mb-3"
@@ -905,7 +906,7 @@ export default function JuryCandidate() {
 
   if (clubIdParam && !selectedClub) {
     return (
-      <PageShell>
+      <PageShell footer={<PlatformFooter />}>
         <div
           className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-center"
           role="alert"
@@ -952,7 +953,7 @@ export default function JuryCandidate() {
   );
 
   return (
-    <PageShell>
+    <PageShell footer={<PlatformFooter />}>
       <header className="mb-6">
         <Eyebrow>{t(JURY_UI.eyebrow)} · {selectedClub.name || selectedClub.id}</Eyebrow>
         <h1

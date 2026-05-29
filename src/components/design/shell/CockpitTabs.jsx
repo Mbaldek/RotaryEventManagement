@@ -38,6 +38,7 @@
 // d'affichage du contenu).
 
 import React, { useCallback, useRef } from 'react';
+import { motion, LayoutGroup, useReducedMotion } from 'framer-motion';
 import {
   NAVY, INK, MUTED, GOLD, CREAM2,
 } from '@/components/design/tokens';
@@ -59,6 +60,7 @@ export default function CockpitTabs({
   className = '',
 }) {
   const refs = useRef({});
+  const reduce = useReducedMotion();
 
   const focusableIds = items.filter((it) => !it.disabled).map((it) => it.id);
 
@@ -90,6 +92,9 @@ export default function CockpitTabs({
       className={`relative ${className}`}
       style={{ borderBottom: `1px solid ${CREAM2}` }}
     >
+      {/* LayoutGroup permet à framer-motion d'animer le sliding underline gold
+          d'un tab à l'autre quand `active` change (shared layout via layoutId). */}
+      <LayoutGroup id={`cockpit-tabs-${idPrefix}`}>
       {/* Scroll container — overflow-x sur mobile, wrap libre au-dessus de lg */}
       <div
         role="tablist"
@@ -160,19 +165,37 @@ export default function CockpitTabs({
                   {item.count}
                 </span>
               )}
-              {/* Underline GOLD 2px sur active — overlay le hairline parent */}
-              <span
-                aria-hidden
-                className="absolute left-0 right-0 bottom-0 transition-colors duration-150"
-                style={{
-                  height: 2,
-                  background: isActive ? GOLD : 'transparent',
-                }}
-              />
+              {/* Underline GOLD 2px sur active — slide animé via framer-motion
+                  layoutId. Sur tab change, l'underline glisse vers le nouveau
+                  tab actif (effet premium Linear/Vercel). */}
+              {isActive ? (
+                reduce ? (
+                  <span
+                    aria-hidden
+                    className="absolute left-0 right-0 bottom-0"
+                    style={{ height: 2, background: GOLD }}
+                  />
+                ) : (
+                  <motion.span
+                    layoutId={`cockpit-tabs-${idPrefix}-underline`}
+                    aria-hidden
+                    className="absolute left-0 right-0 bottom-0"
+                    style={{ height: 2, background: GOLD }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.6 }}
+                  />
+                )
+              ) : (
+                <span
+                  aria-hidden
+                  className="absolute left-0 right-0 bottom-0 transition-colors duration-150"
+                  style={{ height: 2, background: 'transparent' }}
+                />
+              )}
             </button>
           );
         })}
       </div>
+      </LayoutGroup>
     </div>
   );
 }

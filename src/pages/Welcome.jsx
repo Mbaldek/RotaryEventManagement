@@ -20,6 +20,7 @@ import { Navigate, Link, useSearchParams } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   PageShell,
+  PlatformFooter,
   NAVY,
   GOLD,
   CREAM,
@@ -146,7 +147,7 @@ export default function Welcome() {
   const greetingLine = firstName ? `${t(T.greeting)}, ${firstName}.` : `${t(T.greeting)}.`;
 
   return (
-    <PageShell nav>
+    <PageShell nav footer={<PlatformFooter />}>
       {/* Signature M-Editorial-Veil (catalog §16.6) — voile CREAM se lève en 600ms. */}
       {!reduce && (
         <motion.div

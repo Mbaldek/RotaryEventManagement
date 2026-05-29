@@ -19,6 +19,7 @@ export { default as PageShell } from "@/components/design/shell/PageShell";
 export { default as TopNav } from "@/components/design/shell/TopNav";
 export { default as NavMenu } from "@/components/design/shell/NavMenu";
 export { default as Footer } from "@/components/design/shell/Footer";
+export { default as PlatformFooter } from "@/components/design/shell/PlatformFooter";
 export { default as LanguageSwitcher } from "@/components/design/shell/LanguageSwitcher";
 export { default as SkipLink } from "@/components/design/shell/SkipLink";
 export { default as SafeBackLink } from "@/components/design/shell/SafeBackLink";

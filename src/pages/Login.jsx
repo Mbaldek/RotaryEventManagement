@@ -23,7 +23,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Navigate, useLocation } from 'react-router-dom';
-import { PageShell, MagicLinkLogin } from '@/components/design';
+import { PageShell, MagicLinkLogin, PlatformFooter } from '@/components/design';
 import { GOLD, NAVY, SERIF, EASE } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
@@ -112,7 +112,7 @@ export default function Login() {
       de: 'Arbeitsbereich wird geladen…',
     });
     return (
-      <PageShell>
+      <PageShell footer={<PlatformFooter />}>
         <div
           className="min-h-[70vh] flex flex-col items-center justify-center gap-4"
           role="status"
@@ -139,7 +139,7 @@ export default function Login() {
       de: 'Sitzung wird geprüft…',
     });
     return (
-      <PageShell>
+      <PageShell footer={<PlatformFooter />}>
         <div
           className="min-h-[70vh] flex flex-col items-center justify-center gap-4"
           role="status"
@@ -177,7 +177,7 @@ export default function Login() {
   });
 
   return (
-    <PageShell>
+    <PageShell footer={<PlatformFooter />}>
       {/* Hero H-Typo-Only — giant serif greeting + italic tagline, MagicLink dessous. */}
       <div className="min-h-[70vh] flex items-center justify-center px-4 md:px-0">
         <motion.div

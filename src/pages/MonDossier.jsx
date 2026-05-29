@@ -25,6 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2, MapPin } from 'lucide-react';
 import {
   PageShell,
+  PlatformFooter,
   Eyebrow,
   EditorialTitle,
   GOLD,
@@ -299,7 +300,7 @@ export default function MonDossier() {
 
   if (authLoading) {
     return (
-      <PageShell nav>
+      <PageShell nav footer={<PlatformFooter />}>
         <Centered>
           <Spinner />
         </Centered>
@@ -310,7 +311,7 @@ export default function MonDossier() {
 
   if (edLoading || dosLoading) {
     return (
-      <PageShell nav>
+      <PageShell nav footer={<PlatformFooter />}>
         <Centered>
           <div className="text-center">
             <Spinner />
@@ -331,7 +332,7 @@ export default function MonDossier() {
   // Aucune édition ouverte.
   if (!edition) {
     return (
-      <PageShell nav>
+      <PageShell nav footer={<PlatformFooter />}>
         <Centered>
           <p className="text-[15px] text-center" style={{ color: INK }}>
             {t(UI.noOpenEdition)}
@@ -344,7 +345,7 @@ export default function MonDossier() {
   // Erreur de chargement (édition/dossier).
   if (edError || dosError) {
     return (
-      <PageShell nav>
+      <PageShell nav footer={<PlatformFooter />}>
         <Centered>
           <div className="text-center">
             <p className="text-[15px] mb-4" style={{ color: INK }}>
@@ -380,7 +381,7 @@ export default function MonDossier() {
     const needsClubPick = isMulticlub && !chosenClubId;
     const canStart = !closed && !createDraft.isPending && (!isMulticlub || !!chosenClubId);
     return (
-      <PageShell nav>
+      <PageShell nav footer={<PlatformFooter />}>
         {/* Hero H-Vertical-Rule — barre gold gauche + texte stacké, voix dossier personnel. */}
         <header className="mb-10 md:mb-12 pl-6 md:pl-8 relative">
           <span
@@ -579,7 +580,7 @@ export default function MonDossier() {
     // demander un consentement RGPD inutile).
     const showChampionOptIn = ['finaliste', 'laureat', 'champion'].includes(status);
     return (
-      <PageShell nav>
+      <PageShell nav footer={<PlatformFooter />}>
         <CandidatureTracking
           startup={dossier}
           edition={edition}
@@ -605,7 +606,7 @@ export default function MonDossier() {
   // le CandidatureFunnel porte désormais son propre mini-banner contextualisé
   // (toujours visible quel que soit le step). On garde juste l'eyebrow générique.
   return (
-    <PageShell nav>
+    <PageShell nav footer={<PlatformFooter />}>
       <div className="mb-5">
         <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
       </div>

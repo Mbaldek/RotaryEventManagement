@@ -1,7 +1,8 @@
 // KpiCard — carte KPI Élysée (pattern catalog §5.2).
 //
 // Rectangle blanc, hairline CREAM2, label uppercase tracking, valeur tabular-nums
-// 26/32px Inter 500 NAVY, subtitle 11px INK, tooltip optionnel sur le label.
+// 26/32px Inter 500 NAVY (count-up animé au mount), subtitle 11px INK, tooltip
+// optionnel sur le label.
 //
 // Props :
 //   - label       : string (déjà résolu par t())
@@ -12,7 +13,8 @@
 //   - dotActive   : boolean — affiche dot pulsant 'live' à côté du label si true
 //   - loading     : boolean — skeleton si true
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { NAVY, INK, MUTED, CREAM2, GOLD } from '@/components/design/tokens';
 
 function Dot({ color, pulse }) {
@@ -25,6 +27,48 @@ function Dot({ color, pulse }) {
   );
 }
 
+// useCountUp — anime un entier de la valeur précédente vers `target` en
+// `duration` ms via rAF avec un ease-out-quart. Si reduce-motion : pas d'anim.
+// Si target n'est pas un nombre (ex. '—'), renvoie target tel quel.
+function useCountUp(target, duration = 900) {
+  const reduce = useReducedMotion();
+  const isNumber = typeof target === 'number' && Number.isFinite(target);
+  const [display, setDisplay] = useState(isNumber ? (reduce ? target : 0) : target);
+  const fromRef = useRef(0);
+
+  useEffect(() => {
+    if (!isNumber) {
+      setDisplay(target);
+      return undefined;
+    }
+    if (reduce) {
+      setDisplay(target);
+      fromRef.current = target;
+      return undefined;
+    }
+    const from = fromRef.current;
+    const to = target;
+    if (from === to) return undefined;
+    const start = performance.now();
+    let raf;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 4); // ease-out quart
+      const v = Math.round(from + (to - from) * eased);
+      setDisplay(v);
+      if (t < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        fromRef.current = to;
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, reduce, isNumber]);
+
+  return display;
+}
+
 export default function KpiCard({
   label,
   value,
@@ -35,6 +79,7 @@ export default function KpiCard({
   loading = false,
 }) {
   const accentColor = accent === 'navy' ? NAVY : GOLD;
+  const animated = useCountUp(value);
   return (
     <div
       className="rounded-[4px] p-4 md:p-5 flex flex-col gap-1"
@@ -60,7 +105,7 @@ export default function KpiCard({
             className="text-[26px] md:text-[32px] tabular-nums leading-none"
             style={{ color: NAVY, fontWeight: 500 }}
           >
-            {value}
+            {animated}
           </span>
         )}
       </div>

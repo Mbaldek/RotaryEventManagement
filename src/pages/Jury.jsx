@@ -16,6 +16,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import {
   PageShell,
+  PlatformFooter,
   Eyebrow,
   GOLD,
   NAVY,
@@ -67,7 +68,7 @@ export default function Jury() {
   // ── Auth / role gates ──────────────────────────────────────────────────
   if (authLoading) {
     return (
-      <PageShell nav width="wide">
+      <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered>
           <div role="status" aria-live="polite">
             <Spinner
@@ -82,7 +83,7 @@ export default function Jury() {
 
   if (!(isJury || isAdmin)) {
     return (
-      <PageShell nav width="wide">
+      <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered minHeight="50vh">
           <div className="text-center max-w-md" role="status">
             <div className="flex items-center justify-center gap-2.5 mb-3">
@@ -105,7 +106,7 @@ export default function Jury() {
   }
 
   return (
-    <PageShell nav width="wide">
+    <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
       <JuryWorkspace
         authUserId={authUser?.id}
         isAdmin={isAdmin}

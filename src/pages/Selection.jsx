@@ -13,6 +13,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import {
   PageShell,
+  PlatformFooter,
   Eyebrow,
   GOLD,
   NAVY,
@@ -202,7 +203,7 @@ export default function Selection() {
   // ── Auth / role gates ──────────────────────────────────────────────────
   if (authLoading) {
     return (
-      <PageShell nav width="wide">
+      <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered>
           <div role="status" aria-live="polite">
             <Spinner label={t(UI.authLoading)} />
@@ -215,7 +216,7 @@ export default function Selection() {
 
   if (!(isComite || isAdmin)) {
     return (
-      <PageShell nav width="wide">
+      <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered minHeight="50vh">
           <div className="text-center max-w-md" role="status">
             <div className="flex items-center justify-center gap-2.5 mb-3">
@@ -243,7 +244,7 @@ export default function Selection() {
   const handleAdminOverride = (payload) => override.mutate(payload);
 
   return (
-    <PageShell nav width="wide">
+    <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
       {/* En-tête éditorial */}
       <header className="mb-4 md:mb-6">
         <Eyebrow>
