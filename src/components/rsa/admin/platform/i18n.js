@@ -46,6 +46,23 @@ export const UI = {
   roles:        { fr: 'Rôles',                en: 'Roles',                  de: 'Rollen' },
   edition:      { fr: 'Édition',              en: 'Edition',                de: 'Ausgabe' },
   session:      { fr: 'Session',              en: 'Session',                de: 'Session' },
+  // V2 multi-club scope selector (Admin.jsx)
+  viewLabel:    { fr: 'Vue',                  en: 'View',                   de: 'Ansicht' },
+  scopeMaster:  {
+    fr: 'Master Cockpit (plateforme)',
+    en: 'Master Cockpit (platform)',
+    de: 'Master Cockpit (Plattform)',
+  },
+  scopeClub: {
+    fr: (c) => `Club Cockpit · ${c}`,
+    en: (c) => `Club Cockpit · ${c}`,
+    de: (c) => `Club-Cockpit · ${c}`,
+  },
+  scopeLegacy:  {
+    fr: 'Cockpit Admin (V1)',
+    en: 'Admin Cockpit (V1)',
+    de: 'Admin-Cockpit (V1)',
+  },
 };
 
 // ── Module status strip (M1/M2/M3 one-liners) ────────────────────────────────
@@ -196,6 +213,38 @@ export const LIVE = {
     fr: 'Les jurés ne pourront plus modifier leurs notes. Les dossiers en cours passent au statut « évalué ».',
     en: 'Jurors will no longer be able to edit their scores. Pending dossiers move to status “scored”.',
     de: 'Die Juroren können ihre Noten nicht mehr ändern. Offene Bewerbungen wechseln in den Status „bewertet“.',
+  },
+
+  // ── V3 Vague 2 (A.1) — "Conclure la session" : un seul acte = publish + promote
+  concludeAction: {
+    fr: 'Conclure la session et officialiser les résultats et promouvoir le vainqueur en finale',
+    en: 'Conclude the session, officialize results and promote the winner to the finale',
+    de: 'Session abschließen, Ergebnisse offiziell machen und den Gewinner ins Finale befördern',
+  },
+  concludeActionShort: {
+    fr: 'Conclure la session',
+    en: 'Conclude the session',
+    de: 'Session abschließen',
+  },
+  concludeConfirmTitle: {
+    fr: 'Conclure la session et promouvoir en finale',
+    en: 'Conclude the session and promote to the finale',
+    de: 'Session abschließen und ins Finale befördern',
+  },
+  concludeConfirmBody: {
+    fr: 'Cette action est définitive : les notes seront figées, le classement officialisé, et le top-N projeté à la fois en statut « finaliste » sur les dossiers ET dans le pool de la Grande Finale fédérée. Tapez CONCLURE pour confirmer.',
+    en: 'This action is final: scores will be frozen, the ranking officialized, and the top-N projected both as “finalist” on dossiers AND into the federated grand finale pool. Type CONCLUDE to confirm.',
+    de: 'Diese Aktion ist endgültig: Die Bewertungen werden eingefroren, das Ranking offiziell gemacht und die Top-N sowohl als „Finalist“ auf den Dossiers ALS AUCH in den Pool des föderierten Grand Finale projiziert. Geben Sie CONCLURE zur Bestätigung ein.',
+  },
+  concludeTypedWord: {
+    fr: 'CONCLURE',
+    en: 'CONCLUDE',
+    de: 'CONCLURE',
+  },
+  concludeRecap: {
+    fr: 'Effet immédiat : statut session → publié · top-N → finaliste · pool finale enrichi · audit log.',
+    en: 'Immediate effect: session status → published · top-N → finalist · finale pool enriched · audit log.',
+    de: 'Sofortige Wirkung: Session-Status → veröffentlicht · Top-N → Finalist · Finale-Pool erweitert · Audit-Log.',
   },
 };
 

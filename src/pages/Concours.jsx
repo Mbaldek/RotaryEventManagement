@@ -14,7 +14,8 @@ import React, { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { PageShell, TopNav, Footer } from '@/components/design';
-import { NAVY, MUTED, CREAM2 } from '@/components/design/tokens';
+import { NAVY, INK, MUTED, CREAM2 } from '@/components/design/tokens';
+import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
 import ConcoursHero from '@/components/rsa/concours-dashboard/ConcoursHero';
@@ -190,7 +191,11 @@ export default function Concours() {
 
           {overviewQ.isLoading && <CenterSpinner label={t(UI.loading)} />}
           {overviewQ.isError && (
-            <div className="text-[13px] px-4 py-4 rounded-[6px]" style={{ color: '#b91c1c', background: 'white', border: `1px solid ${CREAM2}` }}>
+            <div
+              role="alert"
+              className="text-[13px] px-4 py-4 rounded-[4px]"
+              style={{ color: INK, background: TINT_DANGER, borderLeft: `2px solid ${DANGER}` }}
+            >
               {t(UI.loadError)}
             </div>
           )}
@@ -199,7 +204,8 @@ export default function Concours() {
             <>
               {(overview.clubs || []).length === 0 ? (
                 <div
-                  className="text-[14px] italic px-5 py-6 rounded-[8px] mb-12"
+                  role="status"
+                  className="text-[14px] italic px-6 py-10 text-center rounded-[4px] mb-12"
                   style={{ color: MUTED, background: 'white', border: `1px dashed ${CREAM2}` }}
                 >
                   {t(UI.noClubs)}

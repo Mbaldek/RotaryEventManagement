@@ -33,6 +33,9 @@ import JuryApplicationsTab from './tabs/JuryApplicationsTab';
 // CommsTab : monté seulement si l'EmailStudio M9 a livré son shell (lazy import pour
 // rester tolérant pendant la mise en place — fallback minimal sinon).
 import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
+// V3 Vague 2 — CTA "Communiquer" pré-câblé (Feature B). Affiché au-dessus du
+// shell EmailStudio dans l'onglet Communications du Club Cockpit.
+import CommunicatePanel from '@/components/rsa/communicate/CommunicatePanel';
 // V2.5 — Module Prix
 import PrizesList from '@/components/rsa/prizes/PrizesList';
 // V3.0 — Plugins/Extensions architecture (Vague 1)
@@ -299,7 +302,10 @@ export default function ClubCockpit({ clubId }) {
                 <PrizesList editionId={editionId} clubId={clubId} scope="club" />
               )}
               {tab === 'comms' && (
-                <EmailStudio clubId={clubId} edition={edition} />
+                <>
+                  <CommunicatePanel editionId={editionId} clubId={clubId} />
+                  <EmailStudio clubId={clubId} edition={edition} />
+                </>
               )}
               {tab === 'extensions' && (
                 <ExtensionsList scope="club" clubId={clubId} />

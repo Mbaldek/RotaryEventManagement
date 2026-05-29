@@ -324,6 +324,9 @@ const SAVE_DRAFT_FIELDS = new Set([
   'video_pitch_url',
   'partner_institution',
   'rotary_club',
+  // V3 Vague 2 C — opt-in palmarès public.
+  'champion_photo_optin',
+  'champion_photo_path',
 ]);
 
 // Liste blanche des colonnes filtrables côté staff pour `pageForStaff`. Tout autre
@@ -376,6 +379,50 @@ export const Startup = {
       Object.entries(patch || {}).filter(([key]) => SAVE_DRAFT_FIELDS.has(key)),
     );
     return this.update(id, { ...safe, updated_at: new Date().toISOString() });
+  },
+
+  // V3 — Self-signup : créer un draft « pending » (sans owner_id) depuis la
+  // page publique /Candidater, AVANT auth. Le serveur applique :
+  //  - email regex + lowercase
+  //  - edition existe et status='open' + application_close >= today
+  //  - club_id (si fourni) attaché à l'édition via edition_clubs
+  //  - rate-limit 3 drafts / 24h / email
+  //  - idempotence : si un draft pending existe déjà pour (email, edition),
+  //    on rafraîchit la TTL et renvoie son id (on ne crée pas un nouveau).
+  // Renvoie l'id du startup ; le claim définitif (rattacher owner_id) se fait
+  // au callback post-magic-link via rsa_claim_pending_application().
+  async createPendingApplication({ editionId, clubId = null, email }) {
+    const { data, error } = await supabase.rpc('rsa_create_pending_application', {
+      p_edition_id: editionId,
+      p_club_id: clubId,
+      p_email: email,
+    });
+    if (error) throw error;
+    return data; // uuid
+  },
+
+  // V3 — Claim post-magic-link : rattache tous les drafts pending matching
+  // l'email du JWT au auth.uid() courant. Idempotent (0 si rien à rattacher).
+  async claimPending() {
+    const { data, error } = await supabase.rpc('rsa_claim_pending_application');
+    if (error) throw error;
+    return Number(data) || 0;
+  },
+
+  // V3 — Lecture du draft pending pour l'email courant (post-magic-link, avant
+  // que le claim soit propagé partout). Renvoie le draft pending matching le
+  // JWT.email, ou null. Filtre par edition_id pour scoper.
+  async findPendingForEmail({ editionId }) {
+    if (!editionId) return null;
+    const { data, error } = await supabase
+      .from('startups')
+      .select('*')
+      .eq('edition_id', editionId)
+      .is('owner_id', null)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    return data?.[0] ?? null;
   },
 
   // Soumission : appel du RPC SECURITY DEFINER rsa_submit_dossier. Le serveur

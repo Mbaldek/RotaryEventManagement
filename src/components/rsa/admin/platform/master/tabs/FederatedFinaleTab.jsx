@@ -11,7 +11,7 @@
 // Reste minimaliste : l'essentiel de l'orchestration finale arrive avec M4b.
 
 import React, { useMemo, useState } from 'react';
-import { Loader2, Plus, Trophy } from 'lucide-react';
+import { Loader2, Plus, Trophy, Trash2 } from 'lucide-react';
 import {
   CREAM2, NAVY, MUTED, INK, GOLD, SERIF, StatusPill,
 } from '@/components/design';
@@ -24,6 +24,8 @@ import {
   useFinalistsForEdition,
   useFederatedFinale,
   useCreateFederatedFinale,
+  useFinalePool,
+  useRemoveFinalist,
 } from '../useMaster';
 
 function FieldLabel({ children, htmlFor }) {
@@ -66,9 +68,14 @@ function ChampionsByClub({ competition }) {
   const { t } = useLang();
   const clubs = useClubsForEdition(competition.id);
   const finalists = useFinalistsForEdition(competition.id);
+  const pool = useFinalePool(competition.id);
 
   const clubsList = clubs.data || [];
   const finalistsList = finalists.data || [];
+  const poolStartupIds = useMemo(
+    () => new Set((pool.data || []).map((r) => r.startup_id)),
+    [pool.data],
+  );
 
   // Group finalistes par club_id (depuis startup.club_id), retombe sur session.club_id si manquant.
   const byClubId = useMemo(() => {
@@ -135,39 +142,47 @@ function ChampionsByClub({ competition }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {finalistsForClub.map((s) => (
-                      <tr key={s.id} className="border-t" style={{ borderColor: CREAM2 }}>
-                        <td className="py-2 pr-3 align-top">
-                          <p className="font-medium" style={{ color: NAVY }}>{s.name || s.id}</p>
-                          <StatusPill status="finalist" kind="dossier" label="finaliste" />
-                        </td>
-                        <td className="py-2 pr-3 align-top text-[12px]" style={{ color: INK }}>
-                          {s.session ? (
-                            <>
-                              <span>{s.session.name}</span>
-                              {s.session.session_date && (
-                                <span className="block text-[11px]" style={{ color: MUTED }}>
-                                  {s.session.session_date}
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <span style={{ color: MUTED }}>—</span>
-                          )}
-                        </td>
-                        <td className="py-2 align-top text-right">
-                          <button
-                            type="button"
-                            disabled
-                            title={t(FINALE.promoteTodo)}
-                            className="inline-flex items-center gap-1 text-[11.5px] px-2 py-1 rounded-[4px] opacity-50 cursor-not-allowed"
-                            style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: 'white' }}
-                          >
-                            {t(FINALE.promoteToFinale)}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {finalistsForClub.map((s) => {
+                      const inPool = poolStartupIds.has(s.id);
+                      return (
+                        <tr key={s.id} className="border-t" style={{ borderColor: CREAM2 }}>
+                          <td className="py-2 pr-3 align-top">
+                            <p className="font-medium" style={{ color: NAVY }}>{s.name || s.id}</p>
+                            <StatusPill status="finalist" kind="dossier" label="finaliste" />
+                          </td>
+                          <td className="py-2 pr-3 align-top text-[12px]" style={{ color: INK }}>
+                            {s.session ? (
+                              <>
+                                <span>{s.session.name}</span>
+                                {s.session.session_date && (
+                                  <span className="block text-[11px]" style={{ color: MUTED }}>
+                                    {s.session.session_date}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span style={{ color: MUTED }}>—</span>
+                            )}
+                          </td>
+                          <td className="py-2 align-top text-right">
+                            {inPool ? (
+                              <span
+                                className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-[4px] uppercase tracking-[0.14em]"
+                                style={{ color: GOLD, border: `1px solid ${GOLD}`, background: '#fdf6e8' }}
+                              >
+                                <Trophy className="w-3 h-3" /> {t(FINALE.poolSectionTitle)}
+                              </span>
+                            ) : (
+                              <span
+                                className="text-[11px]"
+                                title={t(FINALE.poolSectionHint)}
+                                style={{ color: MUTED }}
+                              >—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -412,6 +427,7 @@ export default function FederatedFinaleTab() {
       {competition && (
         <>
           <FinaleSection competition={competition} />
+          <FinalePoolSection competition={competition} />
 
           <section className="mb-6">
             <header className="mb-3 flex items-center gap-3 flex-wrap">
@@ -422,6 +438,165 @@ export default function FederatedFinaleTab() {
             <ChampionsByClub competition={competition} />
           </section>
         </>
+      )}
+    </section>
+  );
+}
+
+// ── FinalePoolSection — V3 Vague 2 (A.3) ─────────────────────────────────────
+// Liste les startups membres de platform_finale_membership pour la compétition.
+// Action master_admin only : retirer du pool (typed-confirm "RETIRER").
+function FinalePoolSection({ competition }) {
+  const { t } = useLang();
+  const pool = useFinalePool(competition.id);
+  const remove = useRemoveFinalist();
+  const [confirm, setConfirm] = useState(null); // { startupId, startupName }
+  const [typed, setTyped] = useState('');
+  const [error, setError] = useState(null);
+
+  const list = pool.data || [];
+
+  async function doRemove() {
+    if (!confirm) return;
+    setError(null);
+    try {
+      await remove.mutateAsync({
+        editionId: competition.id,
+        startupId: confirm.startupId,
+      });
+      setConfirm(null);
+      setTyped('');
+    } catch (err) {
+      setError(err?.message || 'Error');
+    }
+  }
+
+  return (
+    <section
+      className="rounded-[4px] p-5 mb-6"
+      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+    >
+      <header className="mb-3 flex items-baseline gap-3 flex-wrap">
+        <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+          {t(FINALE.poolSectionTitle)}
+        </h3>
+        <span className="text-[11.5px]" style={{ color: MUTED }}>· {list.length}</span>
+      </header>
+      <p className="text-[12px] mb-3" style={{ color: MUTED }}>
+        {t(FINALE.poolSectionHint)}
+      </p>
+
+      {pool.isLoading && (
+        <div className="py-4 flex justify-center">
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: MUTED }} />
+        </div>
+      )}
+
+      {!pool.isLoading && list.length === 0 && (
+        <p className="text-[12.5px]" style={{ color: MUTED }}>{t(FINALE.poolEmpty)}</p>
+      )}
+
+      {!pool.isLoading && list.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead>
+              <tr style={{ color: MUTED }}>
+                <th className="text-left uppercase tracking-[0.14em] text-[10.5px] py-2 pr-3">{t(FINALE.poolColStartup)}</th>
+                <th className="text-left uppercase tracking-[0.14em] text-[10.5px] py-2 pr-3">{t(FINALE.poolColClub)}</th>
+                <th className="text-left uppercase tracking-[0.14em] text-[10.5px] py-2 pr-3">{t(FINALE.poolColSource)}</th>
+                <th className="text-left uppercase tracking-[0.14em] text-[10.5px] py-2 pr-3">{t(FINALE.poolColPromotedAt)}</th>
+                <th className="text-right uppercase tracking-[0.14em] text-[10.5px] py-2">{t(FINALE.poolColActions)}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((row) => (
+                <tr key={row.startup_id} className="border-t" style={{ borderColor: CREAM2 }}>
+                  <td className="py-2 pr-3 align-top">
+                    <p className="font-medium" style={{ color: NAVY }}>
+                      {row.startup?.name || t(FINALE.poolUnknownStartup)}
+                    </p>
+                  </td>
+                  <td className="py-2 pr-3 align-top" style={{ color: INK }}>
+                    {row.club?.name || row.startup?.club_id || t(FINALE.poolUnknownClub)}
+                  </td>
+                  <td className="py-2 pr-3 align-top text-[12px]" style={{ color: INK }}>
+                    {row.session ? (
+                      <>
+                        <span>{row.session.name}</span>
+                        {row.session.session_date && (
+                          <span className="block text-[11px]" style={{ color: MUTED }}>{row.session.session_date}</span>
+                        )}
+                      </>
+                    ) : (
+                      <span style={{ color: MUTED }}>—</span>
+                    )}
+                  </td>
+                  <td className="py-2 pr-3 align-top tabular-nums text-[11.5px]" style={{ color: MUTED }}>
+                    {row.promoted_at ? String(row.promoted_at).slice(0, 10) : '—'}
+                  </td>
+                  <td className="py-2 align-top text-right">
+                    <button
+                      type="button"
+                      onClick={() => { setConfirm({ startupId: row.startup_id, startupName: row.startup?.name || row.startup_id }); setTyped(''); setError(null); }}
+                      className="inline-flex items-center gap-1 text-[11.5px] px-2 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                      style={{ color: DANGER, border: `1px solid ${CREAM2}`, background: 'white' }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> {t(FINALE.poolRemoveAction)}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {confirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 31, 61, 0.45)' }}>
+          <div className="bg-white rounded-[4px] max-w-md w-full p-5" style={{ border: `1px solid ${CREAM2}` }}>
+            <h3 className="text-[16px] font-medium mb-2" style={{ color: NAVY, fontFamily: SERIF }}>
+              {t(FINALE.poolRemoveConfirmTitle)}
+            </h3>
+            <p className="text-[13px] mb-2" style={{ color: INK }}>
+              {t(FINALE.poolRemoveConfirmBody)}
+            </p>
+            <p className="text-[12.5px] mb-3" style={{ color: NAVY, fontWeight: 500 }}>
+              {confirm.startupName}
+            </p>
+            <input
+              type="text"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              placeholder={t(FINALE.poolRemoveTypedWord)}
+              className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 mb-3 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+            />
+            {error && (
+              <p className="text-[12px] mb-2" style={{ color: DANGER }}>{error}</p>
+            )}
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setConfirm(null); setTyped(''); setError(null); }}
+                disabled={remove.isPending}
+                className="px-3 py-1.5 text-[12.5px] rounded-[4px]"
+                style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+              >
+                {t(UI.cancel)}
+              </button>
+              <button
+                type="button"
+                onClick={doRemove}
+                disabled={remove.isPending || typed !== t(FINALE.poolRemoveTypedWord)}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-[12.5px] font-medium rounded-[4px] disabled:opacity-50"
+                style={{ background: DANGER, color: 'white' }}
+              >
+                {remove.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {t(FINALE.poolRemoveAction)}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

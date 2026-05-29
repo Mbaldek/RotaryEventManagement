@@ -774,6 +774,46 @@ export const FINALE = {
   championStartupCol: { fr: 'Startup',         en: 'Startup',       de: 'Startup' },
   championSessionCol: { fr: 'Session qualificative', en: 'Qualifying session', de: 'Qualifikations-Session' },
   championActionsCol: { fr: 'Actions',         en: 'Actions',       de: 'Aktionen' },
+
+  // ── V3 Vague 2 (A) — Pool finale fédérée (platform_finale_membership) ──────
+  poolSectionTitle: {
+    fr: 'Pool de la Grande Finale',
+    en: 'Federated finale pool',
+    de: 'Pool des föderierten Finales',
+  },
+  poolSectionHint: {
+    fr: 'Startups promues automatiquement à la Grande Finale après conclusion d’une session qualificative. Seul le master_admin peut retirer une startup du pool.',
+    en: 'Startups automatically promoted to the federated finale once a qualifying session was concluded. Only master_admin can remove a startup from the pool.',
+    de: 'Startups, die nach Abschluss einer Qualifikationssession automatisch ins Grand Finale befördert wurden. Nur master_admin kann eine Startup aus dem Pool entfernen.',
+  },
+  poolEmpty: {
+    fr: 'Le pool est vide. Concluez une session qualifiée pour y promouvoir les vainqueurs.',
+    en: 'The pool is empty. Conclude a qualifying session to promote the winners here.',
+    de: 'Der Pool ist leer. Schließen Sie eine Qualifikationssession ab, um die Gewinner hier zu befördern.',
+  },
+  poolColStartup:    { fr: 'Startup',                en: 'Startup',           de: 'Startup' },
+  poolColClub:       { fr: 'Club d’origine',        en: 'Origin club',       de: 'Herkunftsclub' },
+  poolColSource:     { fr: 'Session source',         en: 'Source session',    de: 'Quell-Session' },
+  poolColPromotedAt: { fr: 'Promu le',               en: 'Promoted on',       de: 'Befördert am' },
+  poolColActions:    { fr: 'Actions',                en: 'Actions',           de: 'Aktionen' },
+  poolRemoveAction:  { fr: 'Retirer',                en: 'Remove',            de: 'Entfernen' },
+  poolRemoveConfirmTitle: {
+    fr: 'Retirer cette startup du pool finale ?',
+    en: 'Remove this startup from the finale pool?',
+    de: 'Diese Startup aus dem Finale-Pool entfernen?',
+  },
+  poolRemoveConfirmBody: {
+    fr: 'La startup sortira du pool de la Grande Finale et sera rétrogradée au statut « évalué ». Action tracée dans l’audit log.',
+    en: 'The startup will leave the finale pool and be downgraded to “scored” status. Tracked in the audit log.',
+    de: 'Die Startup wird aus dem Finale-Pool entfernt und auf „bewertet“ zurückgestuft. Wird im Audit-Log erfasst.',
+  },
+  poolRemoveTypedWord: {
+    fr: 'RETIRER',
+    en: 'REMOVE',
+    de: 'ENTFERNEN',
+  },
+  poolUnknownStartup: { fr: 'Startup inconnue',     en: 'Unknown startup',   de: 'Unbekannte Startup' },
+  poolUnknownClub:    { fr: '—',                     en: '—',                 de: '—' },
 };
 
 // ── Sentinels (mirror SQL CHECK) ────────────────────────────────────────────

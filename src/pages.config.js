@@ -64,6 +64,7 @@ import Login from './pages/Login';
 import MonDossier from './pages/MonDossier';
 import ReservationRequest from './pages/ReservationRequest';
 import Reservations from './pages/Reservations';
+import Resultats from './pages/Resultats';
 import RsaAdmin from './pages/RsaAdmin';
 import RsaDashboard from './pages/RsaDashboard';
 import RsaFinaleResults from './pages/RsaFinaleResults';
@@ -101,6 +102,7 @@ export const PAGES = {
     "MonDossier": MonDossier,
     "ReservationRequest": ReservationRequest,
     "Reservations": Reservations,
+    "Resultats": Resultats,
     "RsaAdmin": RsaAdmin,
     "RsaDashboard": RsaDashboard,
     "RsaFinaleResults": RsaFinaleResults,

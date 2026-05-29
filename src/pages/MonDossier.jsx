@@ -18,7 +18,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, MapPin } from 'lucide-react';
-import { PageShell, GOLD, NAVY, INK, MUTED, CREAM2, SERIF } from '@/components/design';
+import {
+  PageShell,
+  Eyebrow,
+  EditorialTitle,
+  GOLD,
+  NAVY,
+  INK,
+  MUTED,
+  CREAM2,
+  SERIF,
+  DANGER,
+  FOCUS_RING_CLASS,
+} from '@/components/design';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
 import {
@@ -33,6 +45,7 @@ import {
   useSubmitDossier,
   rulesFromEdition,
 } from '@/components/rsa/candidature';
+import ChampionPhotoOptIn from '@/components/rsa/candidature/ChampionPhotoOptIn';
 import { UI } from '@/components/rsa/candidature/i18n';
 import { formatDate } from '@/components/rsa/candidature/validation';
 import { EditionClub } from '@/lib/rsa/entities';
@@ -245,7 +258,7 @@ export default function MonDossier() {
                 refetchEdition();
                 refetchDossier();
               }}
-              className="text-[14px] font-medium px-4 py-2 rounded-[4px] text-white outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+              className={`text-[14px] font-medium px-4 py-2 rounded-[4px] text-white ${FOCUS_RING_CLASS}`}
               style={{ background: NAVY }}
             >
               {t(UI.retry)}
@@ -270,59 +283,42 @@ export default function MonDossier() {
     const canStart = !closed && !createDraft.isPending && (!isMulticlub || !!chosenClubId);
     return (
       <PageShell nav>
-        <div className="flex items-center gap-2.5 mb-4">
-          <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-          <span className="uppercase text-[10px] tracking-[0.18em] font-medium" style={{ color: GOLD }}>
-            {t(UI.eyebrow)}
-          </span>
-        </div>
-        <h1 className="text-[34px] leading-tight mb-3" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
-          {t(UI.introTitle)}
-        </h1>
-        <p className="text-[15px] leading-relaxed mb-2" style={{ color: INK }}>
-          {t(UI.introBody)}
-        </p>
-        <p className="text-[13px] leading-relaxed mb-7" style={{ color: MUTED }}>
-          {t(UI.signedInAs)} <strong style={{ color: INK }}>{authUser?.email}</strong> · {edition.name}
-        </p>
+        <header className="mb-7">
+          <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
+          <EditorialTitle lead={t(UI.introTitle)} size="md" />
+          <p className="mt-4 text-[15px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.65 }}>
+            {t(UI.introBody)}
+          </p>
+          <p className="mt-2 text-[13px]" style={{ color: MUTED, lineHeight: 1.6 }}>
+            {t(UI.signedInAs)} <strong style={{ color: INK }}>{authUser?.email}</strong> · {edition.name}
+          </p>
+        </header>
 
         {/* V2 step — picker de club (compétitions multiclub uniquement) */}
         {isMulticlub && !closed && (
-          <section className="mb-7">
+          <section className="mb-7" aria-label={t(UI.pickClubEyebrow)}>
             <div className="flex items-center gap-2.5 mb-2">
-              <span className="h-[1.5px] w-5" style={{ background: GOLD }} aria-hidden />
+              <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
               <span
                 className="uppercase text-[10.5px] tracking-[0.18em] font-medium"
                 style={{ color: GOLD }}
               >
-                {t({
-                  fr: 'Étape 1 · Choisissez votre club',
-                  en: 'Step 1 · Choose your club',
-                  de: 'Schritt 1 · Wählen Sie Ihren Club',
-                })}
+                {t(UI.pickClubEyebrow)}
               </span>
             </div>
-            <p className="text-[13.5px] mb-4" style={{ color: INK }}>
-              {t({
-                fr: 'Votre candidature sera examinée par le comité du club que vous choisissez. Vous ne pourrez pas changer ce choix après création du dossier.',
-                en: 'Your application will be reviewed by the committee of the club you pick. You will not be able to change this choice after the dossier is created.',
-                de: 'Ihre Bewerbung wird vom Komitee des gewählten Clubs geprüft. Diese Wahl ist nach Erstellung der Bewerbung nicht mehr änderbar.',
-              })}
+            <p className="text-[13.5px] mb-4 max-w-[60ch]" style={{ color: INK, lineHeight: 1.6 }}>
+              {t(UI.pickClubBody)}
             </p>
             {editionClubsQ.isLoading && (
-              <p className="text-[13px]" style={{ color: MUTED }}>{t({ fr: 'Chargement des clubs…', en: 'Loading clubs…', de: 'Clubs werden geladen…' })}</p>
+              <p className="text-[13px]" style={{ color: MUTED }}>{t(UI.pickClubLoading)}</p>
             )}
             {!editionClubsQ.isLoading && editionClubs.length === 0 && (
               <p className="text-[13px]" style={{ color: MUTED }}>
-                {t({
-                  fr: 'Aucun club n’est rattaché à cette compétition pour le moment.',
-                  en: 'No club is attached to this competition yet.',
-                  de: 'Diesem Wettbewerb ist noch kein Club zugeordnet.',
-                })}
+                {t(UI.pickClubEmpty)}
               </p>
             )}
             {editionClubs.length > 0 && (
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup" aria-label={t(UI.pickClubEyebrow)}>
                 {editionClubs.map((row) => {
                   const c = row.club || {};
                   const selected = chosenClubId === row.club_id;
@@ -331,10 +327,12 @@ export default function MonDossier() {
                       <button
                         type="button"
                         onClick={() => setChosenClubId(row.club_id)}
+                        role="radio"
+                        aria-checked={selected}
                         aria-pressed={selected}
-                        className="w-full text-left rounded-[4px] p-4 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+                        className={`w-full text-left rounded-[4px] p-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[#c9a84c]/60 ${FOCUS_RING_CLASS}`}
                         style={{
-                          background: selected ? '#fdf6e8' : 'white',
+                          background: selected ? '#f5ede0' : 'white',
                           border: `1px solid ${selected ? GOLD : CREAM2}`,
                         }}
                       >
@@ -345,13 +343,13 @@ export default function MonDossier() {
                             </p>
                             {c.region && (
                               <p className="text-[12px] mt-1 inline-flex items-center gap-1.5" style={{ color: MUTED }}>
-                                <MapPin className="w-3 h-3" /> {c.region}
+                                <MapPin className="w-3 h-3" aria-hidden /> {c.region}
                               </p>
                             )}
                             <p className="text-[11px] mt-1 font-mono" style={{ color: MUTED }}>{row.club_id}</p>
                           </div>
                           {selected && (
-                            <span className="uppercase text-[10px] tracking-[0.18em]" style={{ color: GOLD }}>·</span>
+                            <span className="uppercase text-[10px] tracking-[0.18em]" style={{ color: GOLD }} aria-hidden>·</span>
                           )}
                         </div>
                       </button>
@@ -372,21 +370,15 @@ export default function MonDossier() {
             type="button"
             onClick={handleStart}
             disabled={!canStart}
-            className="inline-flex items-center gap-2 text-[15px] font-medium px-6 py-3 rounded-[4px] text-white outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] disabled:opacity-50"
-            style={{ background: createDraft.isPending ? '#7a8a9a' : NAVY }}
+            className={`inline-flex items-center gap-2 text-[15px] font-medium px-6 py-3 rounded-[4px] text-white ${FOCUS_RING_CLASS} disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
+            style={{ background: createDraft.isPending ? MUTED : NAVY }}
           >
             {createDraft.isPending && <Loader2 className="w-4 h-4 animate-spin" aria-hidden />}
-            {needsClubPick
-              ? t({
-                  fr: 'Choisissez d’abord un club',
-                  en: 'Pick a club first',
-                  de: 'Wählen Sie zuerst einen Club',
-                })
-              : t(UI.introStart)}
+            {needsClubPick ? t(UI.pickClubFirst) : t(UI.introStart)}
           </button>
         )}
         {createDraft.isError && (
-          <p className="text-[13px] mt-3" style={{ color: '#a23b2d' }}>
+          <p className="text-[13px] mt-3" style={{ color: DANGER }} role="alert">
             {t(UI.loadError)}
           </p>
         )}
@@ -396,6 +388,10 @@ export default function MonDossier() {
 
   // ── Suivi (soumis+) — sauf si l'utilisateur a choisi de modifier ───────────
   if (isSubmitted && !editingSubmitted) {
+    // V3 Vague 2 C — opt-in photo champion : visible quand le dossier a atteint
+    // au moins le statut 'finaliste' (avant : pas pertinent, on évite de
+    // demander un consentement RGPD inutile).
+    const showChampionOptIn = ['finaliste', 'laureat', 'champion'].includes(status);
     return (
       <PageShell nav>
         <CandidatureTracking
@@ -404,6 +400,16 @@ export default function MonDossier() {
           canEdit={canEditSubmitted}
           onEdit={() => setEditingSubmitted(true)}
         />
+        {showChampionOptIn && (
+          <div className="mt-6">
+            <ChampionPhotoOptIn
+              startup={dossier}
+              editionId={editionId}
+              onPatch={(patch) => dossier?.id && saveDraft.mutate({ id: dossier.id, patch })}
+              disabled={saveDraft.isPending}
+            />
+          </div>
+        )}
       </PageShell>
     );
   }
@@ -414,11 +420,8 @@ export default function MonDossier() {
   // (toujours visible quel que soit le step). On garde juste l'eyebrow générique.
   return (
     <PageShell nav>
-      <div className="flex items-center gap-2.5 mb-5">
-        <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-        <span className="uppercase text-[10px] tracking-[0.18em] font-medium" style={{ color: GOLD }}>
-          {t(UI.eyebrow)}
-        </span>
+      <div className="mb-5">
+        <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
       </div>
       <CandidatureFunnel
         startup={dossier}

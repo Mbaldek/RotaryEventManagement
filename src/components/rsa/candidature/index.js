@@ -5,6 +5,10 @@ export { default as Stepper } from './Stepper';
 export { default as StatusTimeline } from './StatusTimeline';
 export { default as EligibilityPreview } from './EligibilityPreview';
 export { default as DocumentDropzone } from './DocumentDropzone';
+// V3 Vague 2 — feature E : /Candidater self-signup public
+export { default as Step1Picker } from './Step1Picker';
+export { default as OnePageDossier } from './OnePageDossier';
+export { default as CollapsibleSection } from './CollapsibleSection';
 
 export {
   KEYS,

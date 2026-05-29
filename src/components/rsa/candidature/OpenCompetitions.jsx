@@ -10,7 +10,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Loader2, ArrowRight, Calendar } from 'lucide-react';
-import { NAVY, GOLD, INK, MUTED, CREAM2, SERIF } from '@/components/design';
+import { NAVY, GOLD, INK, MUTED, CREAM2, SERIF, FOCUS_RING_CLASS } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { Edition } from '@/lib/rsa/entities';
 import { formatDate, formatEur } from '@/components/rsa/candidature/validation';
@@ -85,17 +85,18 @@ function Card({ entry }) {
   const location = club?.region || club?.country || null;
 
   const handleApply = () => {
-    const params = new URLSearchParams({
-      intent: 'candidate',
-      edition: edition.id,
-      club: club?.id || '',
-    });
-    navigate(`/Login?${params.toString()}`);
+    // V3 Vague 2 (feature E) — route directe vers /Candidater avec deep-link
+    // pré-remplissant le Step1Picker. Avant : on routait vers /Login?intent=…
+    // qui forçait l'auth d'abord. Maintenant la self-signup permet de démarrer
+    // un dossier en draft (pending_email) AVANT auth.
+    const params = new URLSearchParams({ edition: edition.id });
+    if (club?.id) params.set('club', club.id);
+    navigate(`/Candidater?${params.toString()}`);
   };
 
   return (
     <article
-      className="rounded-[6px] p-5 md:p-6 bg-white flex flex-col gap-4"
+      className="rounded-[4px] p-5 md:p-6 bg-white flex flex-col gap-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60"
       style={{ border: `1px solid ${CREAM2}` }}
     >
       <div>
@@ -165,7 +166,7 @@ function Card({ entry }) {
         <button
           type="button"
           onClick={handleApply}
-          className="inline-flex items-center gap-1.5 text-[13.5px] font-medium px-4 py-2 rounded-[4px] text-white outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+          className={`inline-flex items-center gap-1.5 text-[13.5px] font-medium px-4 py-2 rounded-[4px] text-white transition-colors ${FOCUS_RING_CLASS}`}
           style={{ background: NAVY }}
         >
           {t(T.cta)}
@@ -198,8 +199,9 @@ export default function OpenCompetitions() {
   if (isError || !data || data.length === 0) {
     return (
       <div
-        className="py-10 px-5 text-center rounded-[6px]"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        className="py-10 px-6 text-center rounded-[4px]"
+        style={{ background: 'white', border: `1px dashed ${CREAM2}` }}
+        role="status"
       >
         <p className="text-[14px]" style={{ color: INK }}>
           {t(T.empty)}

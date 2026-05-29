@@ -1,14 +1,37 @@
-// Candidater — Chantier 2 : page publique (anon OK) qui liste les compétitions
-// RSA ouvertes à candidature. Sert d'entrée découverte / SEO et oriente vers
-// `/Login?intent=candidate&edition=…&club=…` qui retombe sur `/MonDossier`.
+// Candidater — V3 Vague 2, feature E : page publique self-signup.
 //
-// Pas d'auth-gate : tout le monde voit la liste. Le funnel reste protégé par
-// PlatformAuthProvider côté `/MonDossier`.
+// Trois états :
+//   1. Anonyme (discovery)         — Hero éditorial + OpenCompetitions + section
+//                                    Step1Picker pré-remplissable.
+//   2. Anonyme avec ?edition=…    — Step1Picker pré-renseigné (deep link depuis
+//                                    OpenCompetitions card "Candidater").
+//   3. Authentifié (claim=1)      — Auto-claim du draft pending + redirection
+//                                    vers /MonDossier?edition=… (route propre,
+//                                    réutilise toute l'infra existante).
+//
+// SEO :
+//   - document.title (FR/EN/DE selon useLang)
+//   - meta description
+//   - meta og:title / og:description / og:locale dynamiques
+//
+// L'auth-gate de PlatformAuthProvider reste optionnel ici : la page DOIT être
+// publique (anon OK) puisque c'est le point d'entrée des candidatures. La
+// logique d'auth est gérée par les conditions ci-dessous (sans Navigate).
 
-import React from 'react';
-import { PageShell, Footer, GOLD, NAVY, INK, MUTED, SERIF } from '@/components/design';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, MailCheck } from 'lucide-react';
+import {
+  PageShell, Footer,
+  Eyebrow, EditorialTitle,
+  GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE,
+} from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
+import { usePlatformAuth } from '@/lib/platform/auth';
 import OpenCompetitions from '@/components/rsa/candidature/OpenCompetitions';
+import Step1Picker from '@/components/rsa/candidature/Step1Picker';
+import { Startup } from '@/lib/rsa/entities';
 
 const T = {
   eyebrow: { fr: 'Candidatures ouvertes', en: 'Open applications', de: 'Offene Bewerbungen' },
@@ -23,52 +46,228 @@ const T = {
     de: 'Wählen Sie den passenden Wettbewerb. Jede Bewerbung wird vom Komitee des organisierenden Clubs geprüft.',
   },
   sectionEyebrow: { fr: 'Compétitions', en: 'Competitions', de: 'Wettbewerbe' },
+  startEyebrow: { fr: 'Démarrez en 30 secondes', en: 'Get started in 30 seconds', de: 'In 30 Sekunden starten' },
   footerLeft: {
     fr: `© ${new Date().getFullYear()} Rotary Startup Award`,
     en: `© ${new Date().getFullYear()} Rotary Startup Award`,
     de: `© ${new Date().getFullYear()} Rotary Startup Award`,
   },
+  // SEO
+  metaTitle: {
+    fr: 'Candidater — Rotary Startup Award',
+    en: 'Apply — Rotary Startup Award',
+    de: 'Bewerben — Rotary Startup Award',
+  },
+  metaDescription: {
+    fr: "Postulez au Rotary Startup Award. Choisissez votre compétition, démarrez votre dossier en quelques minutes — sans mot de passe.",
+    en: 'Apply to the Rotary Startup Award. Pick your competition and start your application in a few minutes — no password needed.',
+    de: 'Bewerben Sie sich beim Rotary Startup Award. Wählen Sie Ihren Wettbewerb und starten Sie Ihre Bewerbung in wenigen Minuten — ohne Passwort.',
+  },
+  // Claim flow
+  claimingTitle: {
+    fr: 'Connexion en cours…',
+    en: 'Signing you in…',
+    de: 'Anmeldung läuft…',
+  },
+  claimedTitle: {
+    fr: 'Bienvenue — votre dossier est ouvert',
+    en: 'Welcome — your application is open',
+    de: 'Willkommen — Ihr Dossier ist geöffnet',
+  },
+  claimedSubtitle: {
+    fr: 'Nous vous redirigeons vers votre espace candidat.',
+    en: 'Redirecting you to your applicant space.',
+    de: 'Sie werden in Ihren Bewerberbereich weitergeleitet.',
+  },
 };
 
+function useSeoMeta(lang, t) {
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const prevTitle = document.title;
+    document.title = t(T.metaTitle);
+
+    // helpers pour upsert meta tags
+    const setMeta = (selector, attr, value) => {
+      let tag = document.querySelector(selector);
+      if (!tag) {
+        tag = document.createElement('meta');
+        const [, k, v] = selector.match(/\[([^=]+)="([^"]+)"\]/) || [];
+        if (k && v) tag.setAttribute(k, v);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute(attr, value);
+      return tag;
+    };
+
+    const desc = t(T.metaDescription);
+    const title = t(T.metaTitle);
+    setMeta('meta[name="description"]', 'content', desc);
+    setMeta('meta[property="og:title"]', 'content', title);
+    setMeta('meta[property="og:description"]', 'content', desc);
+    setMeta('meta[property="og:type"]', 'content', 'website');
+    setMeta('meta[property="og:locale"]', 'content', lang === 'fr' ? 'fr_FR' : lang === 'de' ? 'de_DE' : 'en_US');
+
+    return () => {
+      document.title = prevTitle;
+    };
+  }, [lang, t]);
+}
+
 export default function Candidater() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isAuthenticated, loading: authLoading, authUser } = usePlatformAuth();
+
+  const claim = searchParams.get('claim') === '1';
+  const editionParam = searchParams.get('edition') || null;
+  const clubParam = searchParams.get('club') || null;
+
+  // SEO meta — toujours actif quel que soit l'état.
+  useSeoMeta(lang, t);
+
+  // ── Claim flow : si on arrive avec ?claim=1 ET un user authentifié,
+  //    on appelle rsa_claim_pending_application puis on route vers /MonDossier.
+  const [claimState, setClaimState] = useState('idle'); // idle | claiming | done | error
+  useEffect(() => {
+    if (!claim) return;
+    if (authLoading) return;
+    if (!isAuthenticated) return; // pas encore signé : on attend l'arrivée du JWT
+    if (claimState !== 'idle') return;
+
+    let active = true;
+    (async () => {
+      setClaimState('claiming');
+      try {
+        await Startup.claimPending();
+        if (!active) return;
+        setClaimState('done');
+        // Petit délai UX pour montrer la confirmation, puis redirect.
+        setTimeout(() => {
+          if (!active) return;
+          const target = editionParam
+            ? `/MonDossier?edition=${encodeURIComponent(editionParam)}`
+            : '/MonDossier';
+          navigate(target, { replace: true });
+        }, 900);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[Candidater] claim failed:', err);
+        if (!active) return;
+        // Échec rare : on route quand même vers /MonDossier — la RLS
+        // pending_self_read autorise toujours la lecture du draft.
+        setClaimState('error');
+        setTimeout(() => {
+          if (!active) return;
+          navigate('/MonDossier', { replace: true });
+        }, 600);
+      }
+    })();
+    return () => { active = false; };
+  }, [claim, authLoading, isAuthenticated, editionParam, navigate, claimState]);
+
+  // Si l'utilisateur est déjà authentifié SANS flag claim : on l'envoie sur
+  // /MonDossier (il est déjà connecté, pas besoin de re-choisir).
+  useEffect(() => {
+    if (claim) return;
+    if (authLoading) return;
+    if (isAuthenticated && authUser) {
+      navigate('/MonDossier', { replace: true });
+    }
+  }, [claim, authLoading, isAuthenticated, authUser, navigate]);
+
+  const initialEdition = useMemo(() => editionParam, [editionParam]);
+  const initialClub = useMemo(() => clubParam, [clubParam]);
+
+  // ── Claim view ─────────────────────────────────────────────────────────────
+  if (claim && (authLoading || claimState === 'claiming' || claimState === 'done')) {
+    return (
+      <PageShell nav width="wide" footer={<Footer width="wide" left={t(T.footerLeft)} />}>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: EASE }}
+            className="text-center max-w-[420px]"
+          >
+            {claimState === 'done' ? (
+              <>
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
+                  style={{ background: '#ecf1e5', border: '1px solid #cfe0bd' }}
+                >
+                  <MailCheck className="w-6 h-6" style={{ color: '#1d6b4f' }} aria-hidden />
+                </div>
+                <h1 className="text-[28px] mb-3" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+                  {t(T.claimedTitle)}
+                </h1>
+                <p className="text-[14px]" style={{ color: INK }}>{t(T.claimedSubtitle)}</p>
+              </>
+            ) : (
+              <>
+                <Loader2 className="w-6 h-6 animate-spin mx-auto mb-4" style={{ color: GOLD }} aria-hidden />
+                <p className="text-[14px]" style={{ color: NAVY, fontFamily: SERIF }}>
+                  {t(T.claimingTitle)}
+                </p>
+              </>
+            )}
+          </motion.div>
+        </div>
+      </PageShell>
+    );
+  }
+
+  // ── Discovery + Step1 (default) ────────────────────────────────────────────
   return (
     <PageShell nav width="wide" footer={<Footer width="wide" left={t(T.footerLeft)} />}>
-      {/* Hero éditorial — eyebrow gold + titre serif + sous-titre court */}
+      {/* Hero éditorial */}
       <header className="mb-12 md:mb-16 max-w-[680px]">
-        <div className="flex items-center gap-2.5 mb-4">
-          <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-          <span
-            className="uppercase text-[10px] tracking-[0.18em] font-medium"
-            style={{ color: GOLD }}
-          >
-            {t(T.eyebrow)}
-          </span>
-        </div>
-        <h1
-          className="text-[34px] md:text-[44px] leading-tight mb-4"
-          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+        <Eyebrow>{t(T.eyebrow)}</Eyebrow>
+        <EditorialTitle lead={t(T.titleLead)} size="md" />
+        <p
+          className="mt-4 text-[15.5px] max-w-[60ch]"
+          style={{ color: INK, lineHeight: 1.65 }}
         >
-          {t(T.titleLead)}
-        </h1>
-        <p className="text-[15.5px] leading-relaxed" style={{ color: INK }}>
           {t(T.subtitle)}
         </p>
       </header>
 
-      <section aria-labelledby="open-competitions-title">
-        <div className="flex items-center gap-2.5 mb-5">
-          <span className="h-[1.5px] w-5" style={{ background: GOLD }} aria-hidden />
-          <h2
-            id="open-competitions-title"
-            className="uppercase text-[11px] tracking-[0.18em] font-medium m-0"
-            style={{ color: MUTED }}
-          >
-            {t(T.sectionEyebrow)}
-          </h2>
-        </div>
-        <OpenCompetitions />
-      </section>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,420px)] gap-10 lg:gap-12">
+        {/* Liste des compétitions ouvertes */}
+        <section aria-labelledby="open-competitions-title">
+          <div className="flex items-center gap-2.5 mb-5">
+            <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
+            <h2
+              id="open-competitions-title"
+              className="uppercase text-[10.5px] tracking-[0.18em] font-medium m-0"
+              style={{ color: MUTED }}
+            >
+              {t(T.sectionEyebrow)}
+            </h2>
+          </div>
+          <OpenCompetitions />
+        </section>
+
+        {/* Picker self-signup (Step1) */}
+        <aside aria-labelledby="start-step1-title">
+          <div className="lg:sticky lg:top-6">
+            <div
+              className="rounded-[4px] p-5 md:p-7"
+              style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+            >
+              <h2 id="start-step1-title" className="sr-only">{t(T.startEyebrow)}</h2>
+              <AnimatePresence mode="wait">
+                <Step1Picker
+                  key="step1"
+                  initialEdition={initialEdition}
+                  initialClub={initialClub}
+                />
+              </AnimatePresence>
+            </div>
+          </div>
+        </aside>
+      </div>
     </PageShell>
   );
 }

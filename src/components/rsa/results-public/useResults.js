@@ -74,21 +74,42 @@ function shapePalmares(rows, requestedEditionId) {
     .sort((a, b) => (a.session_position ?? 0) - (b.session_position ?? 0));
 
   // Lauréat : rank 1 du final_ranking de la finale.
+  // Normalise les deux shapes du snapshot : moderne (rsa_publish_session V3 :
+  // { startup_id, startup, avg, n, final_rank }) et legacy (V1/V2 :
+  // { startup_name, juror_count, final_score, ... }). On expose toujours
+  // .name + .avg + .n côté UI.
+  const normalizeRankEntry = (e) => ({
+    ...e,
+    final_rank: Number(e.final_rank),
+    name: e.startup ?? e.startup_name ?? null,
+    avg: e.avg ?? e.final_score ?? null,
+    n: e.n ?? e.juror_count ?? null,
+  });
   const finaleRanking = Array.isArray(finaleSession?.final_ranking)
-    ? finaleSession.final_ranking
+    ? finaleSession.final_ranking.map(normalizeRankEntry)
     : [];
   const laureat = finaleRanking.find((r) => r.final_rank === 1) || null;
   const specialPrize = finaleRanking.find((r) => r.final_rank === 2) || null;
   // Finalistes = tous ceux qui ont participé à la finale.
   const finalistsFromFinale = finaleRanking;
 
+  // Normalise aussi les sessions qualificatives pour exposer .name/.avg/.n.
+  const normalizedQualifying = qualifyingSessions.map((r) => ({
+    ...r,
+    final_ranking: Array.isArray(r.final_ranking)
+      ? r.final_ranking.map(normalizeRankEntry)
+      : [],
+  }));
+
   return {
     edition,
     finaleSession: finaleSession || null,
-    qualifyingSessions,
+    qualifyingSessions: normalizedQualifying,
     laureat,
     specialPrize,
     finalistsFromFinale,
+    championPhotoPath: finaleSession?.champion_photo_path || null,
+    championName: laureat?.name || finaleSession?.champion_name || null,
     hasResults: Boolean(finaleSession || qualifyingSessions.length),
   };
 }
@@ -148,18 +169,34 @@ export function useOpenEditionLink() {
 }
 
 // Hook principal — la page passe un editionId facultatif (du query param).
+// Charge TOUTES les lignes du palmarès public en une seule requête. Ensuite,
+// l'agrégation côté client retient l'édition demandée (ou la plus récente)
+// et calcule la liste des années disponibles pour le sélecteur.
 export function useResults(editionId) {
   const queryKey = useMemo(
-    () => ['rsa', 'public-palmares', editionId || '__latest__'],
-    [editionId],
+    () => ['rsa', 'public-palmares', 'all'],
+    [],
   );
 
+  // On charge toutes les lignes (par défaut) puis on filtre côté client : ça
+  // donne aussi la liste des années sans appel supplémentaire.
   const query = useQuery({
     queryKey,
-    queryFn: () => fetchPalmaresRows(editionId),
+    queryFn: () => fetchPalmaresRows(null),
     staleTime: STALE_MS,
     refetchOnWindowFocus: false,
   });
+
+  const availableEditions = useMemo(() => {
+    const rows = query.data || [];
+    const map = new Map();
+    for (const r of rows) {
+      if (!map.has(r.edition_id)) {
+        map.set(r.edition_id, { id: r.edition_id, name: r.edition_name, year: r.edition_year });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.year - a.year);
+  }, [query.data]);
 
   const shaped = useMemo(
     () => (query.data ? shapePalmares(query.data, editionId) : null),
@@ -169,5 +206,6 @@ export function useResults(editionId) {
   return {
     ...query,
     palmares: shaped,
+    availableEditions,
   };
 }

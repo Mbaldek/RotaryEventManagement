@@ -15,7 +15,7 @@ import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF } from '@/components/design/token
 import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { weightedScore } from '@/lib/rsa/constants';
-import { UI, RESULTS } from '../i18n';
+import { UI, RESULTS, LIVE } from '../i18n';
 import { exportCsv, useLockSession, usePublishSession, useSessionResults } from '../useAdmin';
 
 function ConfirmModal({ title, body, onConfirm, onCancel, busy, typedWord }) {
@@ -26,7 +26,7 @@ function ConfirmModal({ title, body, onConfirm, onCancel, busy, typedWord }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 31, 61, 0.45)' }}>
       <div className="bg-white rounded-[4px] max-w-md w-full p-5" style={{ border: `1px solid ${CREAM2}` }}>
         <h3 className="text-[16px] font-medium mb-2" style={{ color: NAVY, fontFamily: SERIF }}>{title}</h3>
-        <p className="text-[13px] mb-3" style={{ color: INK }}>{body}</p>
+        <p className="text-[13px] mb-3 whitespace-pre-line" style={{ color: INK }}>{body}</p>
         {typedWord && (
           <input
             type="text"
@@ -168,11 +168,12 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
                 type="button"
                 onClick={() => setConfirmPublish(true)}
                 disabled={publish.isPending}
-                className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] font-medium disabled:opacity-50"
+                title={t(LIVE.concludeAction)}
+                className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-2 rounded-[4px] font-medium disabled:opacity-50 max-w-[420px] text-left leading-tight whitespace-normal"
                 style={{ background: GOLD, color: NAVY }}
               >
-                {publish.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
-                {t(RESULTS.publish)}
+                {publish.isPending ? <Loader2 className="w-4 h-4 shrink-0 animate-spin" /> : <Rocket className="w-4 h-4 shrink-0" />}
+                <span className="block">{t(LIVE.concludeAction)}</span>
               </button>
             )}
             {(status === 'published' || status === 'locked') && (
@@ -288,9 +289,9 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
 
       {confirmPublish && (
         <ConfirmModal
-          title={t(RESULTS.publishConfirmTitle)}
-          body={t(RESULTS.publishConfirmBody)}
-          typedWord="PUBLIER"
+          title={t(LIVE.concludeConfirmTitle)}
+          body={`${t(LIVE.concludeConfirmBody)}\n\n${t(LIVE.concludeRecap)}`}
+          typedWord={t(LIVE.concludeTypedWord)}
           onConfirm={doPublish}
           onCancel={() => setConfirmPublish(false)}
           busy={publish.isPending}

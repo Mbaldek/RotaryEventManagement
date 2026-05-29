@@ -9,7 +9,17 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { PageShell, GOLD, NAVY, INK, MUTED, SERIF } from '@/components/design';
+import {
+  PageShell,
+  Eyebrow,
+  EditorialTitle,
+  GOLD,
+  NAVY,
+  INK,
+  MUTED,
+  CREAM2,
+  FOCUS_RING_CLASS,
+} from '@/components/design';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
 import AdminShell from '@/components/rsa/admin/platform/AdminShell';
@@ -95,9 +105,9 @@ export default function Admin() {
 
   // Construit les options du sélecteur de scope (visible si > 1 option)
   const scopeOptions = [];
-  if (hasMaster)        scopeOptions.push({ value: 'master', label: 'Master Cockpit (plateforme)' });
-  if (hasClubAdmin)     adminClubs.forEach((c) => scopeOptions.push({ value: `club:${c}`, label: `Club Cockpit · ${c}` }));
-  if (hasLegacyAdmin && !hasMaster && !hasClubAdmin) scopeOptions.push({ value: 'legacy', label: 'Cockpit Admin (V1)' });
+  if (hasMaster)        scopeOptions.push({ value: 'master', label: t(UI.scopeMaster) });
+  if (hasClubAdmin)     adminClubs.forEach((c) => scopeOptions.push({ value: `club:${c}`, label: t(UI.scopeClub)(c) }));
+  if (hasLegacyAdmin && !hasMaster && !hasClubAdmin) scopeOptions.push({ value: 'legacy', label: t(UI.scopeLegacy) });
 
   // Rendu du contenu selon le scope
   let body;
@@ -111,35 +121,29 @@ export default function Admin() {
 
   return (
     <PageShell nav width="wide">
-      <div className="flex items-center gap-2.5 mb-3">
-        <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-        <span
-          className="uppercase text-[10px] tracking-[0.18em] font-medium"
-          style={{ color: GOLD }}
-        >
-          {t(UI.eyebrow)}
-        </span>
-      </div>
-      <h1
-        className="text-[32px] leading-tight mb-2"
-        style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-      >
-        {t(UI.pageTitle)}
-      </h1>
-      <p className="text-[14px] mb-4" style={{ color: INK }}>
-        {t(UI.pageSubtitle)}
-      </p>
+      <header className="mb-8 md:mb-10">
+        <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
+        <EditorialTitle lead={t(UI.pageTitle)} size="md" />
+        <p className="mt-3 text-[14px] md:text-[15px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.65 }}>
+          {t(UI.pageSubtitle)}
+        </p>
+      </header>
 
       {scopeOptions.length > 1 && (
-        <div className="mb-5 flex items-center gap-3">
-          <span className="text-[11px] uppercase tracking-[0.16em]" style={{ color: MUTED }}>
-            Vue :
-          </span>
+        <div className="mb-6 flex items-center gap-3 flex-wrap">
+          <label
+            htmlFor="admin-scope"
+            className="text-[10.5px] uppercase tracking-[0.18em] font-medium"
+            style={{ color: MUTED }}
+          >
+            {t(UI.viewLabel)}
+          </label>
           <select
+            id="admin-scope"
             value={scope}
             onChange={(e) => setScope(e.target.value)}
-            className="text-[13px] rounded-[4px] px-3 py-1.5 outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#c9a84c]"
-            style={{ background: 'white', border: '1px solid #e8e3d9', color: NAVY }}
+            className={`text-[13px] rounded-[4px] px-3 py-1.5 ${FOCUS_RING_CLASS}`}
+            style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
           >
             {scopeOptions.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>

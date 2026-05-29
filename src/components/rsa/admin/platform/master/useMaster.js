@@ -32,6 +32,8 @@ export const KEYS = {
   countsForEdition:    (eid) => ['rsa', 'master', 'counts-for-edition', eid],
   // Finalistes par club pour une compétition multiclub (kind='qualifying' + status='finaliste').
   finalistsForEdition: (eid) => ['rsa', 'master', 'finalists', eid],
+  // V3 Vague 2 — Pool de la Grande Finale fédérée (platform_finale_membership).
+  finalePool:          (eid) => ['rsa', 'master', 'finale-pool', eid],
 };
 
 // ── Helper d'invalidation ──────────────────────────────────────────────────
@@ -359,6 +361,80 @@ export function useFederatedFinale(editionId) {
         .maybeSingle();
       if (error) throw error;
       return data ?? null;
+    },
+  });
+}
+
+// ── V3 Vague 2 — Pool finale fédérée (platform_finale_membership) ───────────
+// Lit le pool des startups promues à la Grande Finale d'une édition. La RLS
+// pfm_read autorise master_admin + admin/comité legacy + club_admin pour ses
+// propres startups. On enrichit côté client avec name + club + session source.
+export function useFinalePool(editionId) {
+  return useQuery({
+    queryKey: KEYS.finalePool(editionId),
+    enabled: !!editionId,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      if (!editionId) return [];
+      const { data: rows, error } = await supabase
+        .from('platform_finale_membership')
+        .select('edition_id, startup_id, source_session_id, promoted_at, promoted_by')
+        .eq('edition_id', editionId)
+        .order('promoted_at', { ascending: false });
+      if (error) throw error;
+      const list = rows || [];
+      if (list.length === 0) return [];
+      // Enrichir avec startups + sessions (sources).
+      const startupIds = Array.from(new Set(list.map((r) => r.startup_id)));
+      const sessionIds = Array.from(new Set(list.map((r) => r.source_session_id).filter(Boolean)));
+      const [stRes, sessRes] = await Promise.all([
+        supabase.from('startups').select('id, name, club_id').in('id', startupIds),
+        sessionIds.length > 0
+          ? supabase.from('sessions').select('id, name, session_date, club_id').in('id', sessionIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+      if (stRes.error)  throw stRes.error;
+      if (sessRes.error) throw sessRes.error;
+      const startupsById = new Map((stRes.data || []).map((s) => [s.id, s]));
+      const sessionsById = new Map((sessRes.data || []).map((s) => [s.id, s]));
+      // Récupère aussi le nom du club si possible.
+      const clubIds = Array.from(new Set(
+        (stRes.data || []).map((s) => s.club_id).filter(Boolean),
+      ));
+      let clubsById = new Map();
+      if (clubIds.length > 0) {
+        const clRes = await supabase.from('clubs').select('id, name').in('id', clubIds);
+        if (clRes.error) throw clRes.error;
+        clubsById = new Map((clRes.data || []).map((c) => [c.id, c]));
+      }
+      return list.map((row) => {
+        const startup = startupsById.get(row.startup_id) || null;
+        const session = row.source_session_id
+          ? (sessionsById.get(row.source_session_id) || null)
+          : null;
+        const club = startup?.club_id ? (clubsById.get(startup.club_id) || null) : null;
+        return { ...row, startup, session, club };
+      });
+    },
+  });
+}
+
+// Retire une startup du pool finale (master_admin only ; RPC SECURITY DEFINER).
+// Idempotent côté serveur. Invalide cache pool + finalists + counts.
+export function useRemoveFinalist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ editionId, startupId }) => {
+      const { error } = await supabase.rpc('rsa_remove_finalist', {
+        p_edition_id: editionId,
+        p_startup_id: startupId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: KEYS.finalePool(vars.editionId) });
+      qc.invalidateQueries({ queryKey: KEYS.finalistsForEdition(vars.editionId) });
+      qc.invalidateQueries({ queryKey: KEYS.countsForEdition(vars.editionId) });
     },
   });
 }

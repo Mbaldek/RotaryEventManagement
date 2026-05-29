@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /Resultats
+Allow: /Concours
+Allow: /Candidater
+Allow: /DevenirJury
+Allow: /
+
+# Pages internes (auth) — non utiles côté SEO. On laisse Allow par défaut pour
+# ne pas pénaliser le crawl initial, mais on s'appuie sur l'auth + les redirects
+# côté domaine plateforme pour gérer la visibilité réelle.
+
+Sitemap: https://app.rotary-startup.org/sitemap.xml

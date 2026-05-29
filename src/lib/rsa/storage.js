@@ -17,6 +17,14 @@ import { supabase } from '@/lib/supabase';
 
 export const DOSSIERS_BUCKET = 'dossiers';
 
+// V3 — bucket public dédié aux photos champion (palmarès /Resultats).
+// Public read activé côté Supabase ; écriture scopée owner/staff par policies
+// storage.objects (cf. supabase/migrations/20260601_rsa_v3_public_palmares.sql).
+export const CHAMPIONS_BUCKET = 'champions';
+export const CHAMPION_PHOTO_MAX_SIZE = 8 * 1024 * 1024; // 8 Mo
+export const CHAMPION_PHOTO_EXTS = ['jpg', 'jpeg', 'png', 'webp'];
+export const CHAMPION_PHOTO_ACCEPT = '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp';
+
 // Types de documents -> sous-dossier {kind} dans le chemin + contraintes.
 // 'deck'         : pitch deck, PDF/PPT(X), max 50 Mo (même plafond que StartupUpload).
 // 'exec_summary' : executive summary FR & DE, PDF (+ docx toléré), max 20 Mo.
@@ -169,4 +177,55 @@ export async function removeDossierFile(path) {
   if (!path) return;
   const { error } = await supabase.storage.from(DOSSIERS_BUCKET).remove([path]);
   if (error) throw error;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V3 — Champion photo (bucket public 'champions')
+// ─────────────────────────────────────────────────────────────────────────────
+// Photo affichée sur le palmarès public /Resultats, gateée par l'opt-in
+// (startups.champion_photo_optin = true) + classement #1 + session publiée.
+
+export function validateChampionPhoto(file) {
+  if (!file) return { ok: false, reason: 'format' };
+  const ext = extOf(file.name);
+  if (!CHAMPION_PHOTO_EXTS.includes(ext)) {
+    return { ok: false, reason: 'format', exts: CHAMPION_PHOTO_EXTS };
+  }
+  if (file.size > CHAMPION_PHOTO_MAX_SIZE) {
+    return { ok: false, reason: 'size', max: CHAMPION_PHOTO_MAX_SIZE };
+  }
+  return { ok: true };
+}
+
+export function buildChampionPhotoPath({ editionId, startupId, fileName }) {
+  // Même convention que dossiers : storage.foldername[5] = 'champion_photo'.
+  return `editions/${editionId}/startups/${startupId}/champion_photo/${Date.now()}_${safeFilename(fileName)}`;
+}
+
+export async function uploadChampionPhoto({ editionId, startupId, file }) {
+  const check = validateChampionPhoto(file);
+  if (!check.ok) {
+    const err = new Error(`champion_photo_invalid:${check.reason}`);
+    err.validation = check;
+    throw err;
+  }
+  const path = buildChampionPhotoPath({ editionId, startupId, fileName: file.name });
+  const { error } = await supabase.storage
+    .from(CHAMPIONS_BUCKET)
+    .upload(path, file, { upsert: false, contentType: file.type || 'image/jpeg' });
+  if (error) throw error;
+  return path;
+}
+
+export async function removeChampionPhoto(path) {
+  if (!path) return;
+  const { error } = await supabase.storage.from(CHAMPIONS_BUCKET).remove([path]);
+  if (error) throw error;
+}
+
+// URL publique directe (bucket public) — utilisée par /Resultats côté anon.
+export function championPhotoPublicUrl(path) {
+  if (!path) return null;
+  const { data } = supabase.storage.from(CHAMPIONS_BUCKET).getPublicUrl(path);
+  return data?.publicUrl || null;
 }

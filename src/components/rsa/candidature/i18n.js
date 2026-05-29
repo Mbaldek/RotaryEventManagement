@@ -224,6 +224,33 @@ export const UI = {
   introResume: { fr: 'Reprendre mon dossier', en: 'Resume my application', de: 'Bewerbung fortsetzen' },
   signedInAs: { fr: 'Connecté·e en tant que', en: 'Signed in as', de: 'Angemeldet als' },
 
+  // V2 multi-club — picker de club
+  pickClubEyebrow: {
+    fr: 'Étape 1 · Choisissez votre club',
+    en: 'Step 1 · Choose your club',
+    de: 'Schritt 1 · Wählen Sie Ihren Club',
+  },
+  pickClubBody: {
+    fr: 'Votre candidature sera examinée par le comité du club que vous choisissez. Vous ne pourrez pas changer ce choix après création du dossier.',
+    en: 'Your application will be reviewed by the committee of the club you pick. You will not be able to change this choice after the dossier is created.',
+    de: 'Ihre Bewerbung wird vom Komitee des gewählten Clubs geprüft. Diese Wahl ist nach Erstellung der Bewerbung nicht mehr änderbar.',
+  },
+  pickClubLoading: {
+    fr: 'Chargement des clubs…',
+    en: 'Loading clubs…',
+    de: 'Clubs werden geladen…',
+  },
+  pickClubEmpty: {
+    fr: 'Aucun club n’est rattaché à cette compétition pour le moment.',
+    en: 'No club is attached to this competition yet.',
+    de: 'Diesem Wettbewerb ist noch kein Club zugeordnet.',
+  },
+  pickClubFirst: {
+    fr: 'Choisissez d’abord un club',
+    en: 'Pick a club first',
+    de: 'Wählen Sie zuerst einen Club',
+  },
+
   // Récapitulatif / soumission
   reviewIntro: {
     fr: 'Vérifiez votre dossier avant de le soumettre. Vous pourrez encore le modifier après soumission, jusqu’à la date de clôture.',

@@ -43,7 +43,7 @@ function ConfirmModal({ title, body, onConfirm, onCancel, busy, typedWord, kind 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 31, 61, 0.45)' }}>
       <div className="bg-white rounded-[4px] max-w-md w-full p-5" style={{ border: `1px solid ${CREAM2}` }}>
         <h3 className="text-[16px] font-medium mb-2" style={{ color: NAVY, fontFamily: SERIF }}>{title}</h3>
-        <p className="text-[13px] mb-3" style={{ color: INK }}>{body}</p>
+        <p className="text-[13px] mb-3 whitespace-pre-line" style={{ color: INK }}>{body}</p>
         {typedWord && (
           <input
             type="text"
@@ -283,10 +283,12 @@ export default function LiveTab({ edition, session }) {
               type="button"
               onClick={() => setPending('publish')}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] font-medium disabled:opacity-50"
+              title={t(LIVE.concludeAction)}
+              className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-2 rounded-[4px] font-medium disabled:opacity-50 max-w-[420px] text-left leading-tight whitespace-normal"
               style={{ background: GOLD, color: NAVY }}
             >
-              <Rocket className="w-4 h-4" /> {t(LIVE.publishResults)}
+              <Rocket className="w-4 h-4 shrink-0" />
+              <span className="block">{t(LIVE.concludeAction)}</span>
             </button>
           )}
         </div>
@@ -441,9 +443,9 @@ export default function LiveTab({ edition, session }) {
       )}
       {pending === 'publish' && (
         <ConfirmModal
-          title={t(RESULTS.publishConfirmTitle)}
-          body={t(RESULTS.publishConfirmBody)}
-          typedWord="PUBLIER"
+          title={t(LIVE.concludeConfirmTitle)}
+          body={`${t(LIVE.concludeConfirmBody)}\n\n${t(LIVE.concludeRecap)}`}
+          typedWord={t(LIVE.concludeTypedWord)}
           onConfirm={doPublish}
           onCancel={() => setPending(null)}
           busy={publish.isPending}
