@@ -58,49 +58,66 @@ function Spinner() {
   return <Loader2 className="w-6 h-6 animate-spin" style={{ color: GOLD }} aria-hidden />;
 }
 
-// LoadingWatchdog — après 8s sans résolution, montre une explication + retry
-// button. Évite le spinner infini quand une query Supabase reste pending
-// (CSP, réseau, RLS qui DENY sans erreur surfacée, etc.).
+// LoadingWatchdog — après 6s sans résolution, AUTOMATIQUEMENT clean la session
+// + redirect vers /Login. Évite le spinner infini quand une query Supabase
+// reste pending (zombie state, réseau, etc.). Pas de bouton à cliquer — on
+// fait le ménage tout seul pour l'utilisateur.
 function LoadingWatchdog({ edLoading, dosLoading, onForceRetry }) {
   const [tick, setTick] = useState(0);
+  const [autoHealing, setAutoHealing] = useState(false);
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
-  if (tick < 8) {
+  // Self-healing : au-delà de 6s, on présume client supabase zombie. Clean
+  // localStorage + redirect /Login propre. L'utilisateur re-login fresh.
+  useEffect(() => {
+    if (tick >= 6 && !autoHealing) {
+      setAutoHealing(true);
+      // eslint-disable-next-line no-console
+      console.warn('[MonDossier] watchdog 6s — auto-healing : clearing storage + redirect /Login');
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const toRemove = [];
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const key = window.localStorage.key(i);
+            if (key && (key.startsWith('sb-') || key.startsWith('supabase.auth.'))) {
+              toRemove.push(key);
+            }
+          }
+          toRemove.forEach((k) => window.localStorage.removeItem(k));
+        }
+      } catch {
+        /* localStorage indispo — on tente quand même le redirect */
+      }
+      setTimeout(() => { window.location.href = '/Login?reset=1'; }, 800);
+    }
+  }, [tick, autoHealing]);
+  if (autoHealing) {
     return (
-      <p className="mt-4 text-[12px]" style={{ color: MUTED }}>
-        {tick > 3 ? `Chargement… (${tick}s)` : ''}
-      </p>
+      <div className="mt-6 max-w-[440px] mx-auto text-center">
+        <p className="text-[13.5px] mb-2" style={{ color: INK }}>
+          Session zombie détectée. Nettoyage automatique en cours…
+        </p>
+        <p className="text-[11.5px]" style={{ color: MUTED }}>
+          Vous allez être redirigé vers la page de connexion dans 1 seconde.
+        </p>
+      </div>
     );
   }
+  if (tick < 4) {
+    return null;
+  }
   return (
-    <div className="mt-6 max-w-[440px] mx-auto">
-      <p className="text-[13.5px] mb-2" style={{ color: INK }}>
-        Le chargement prend plus de temps que prévu.
+    <div className="mt-6 max-w-[440px] mx-auto text-center">
+      <p className="text-[12px]" style={{ color: MUTED }}>
+        Chargement… ({tick}s) · edition={edLoading ? '…' : 'ok'} · dossier={dosLoading ? '…' : 'ok'}
       </p>
-      <p className="text-[11.5px] mb-4" style={{ color: MUTED }}>
-        Détail : edition={edLoading ? '…' : 'ok'} · dossier={dosLoading ? '…' : 'ok'}.
-        Ouvrez la console (F12) pour voir les erreurs réseau.
-      </p>
-      <div className="flex items-center justify-center gap-2">
-        <button
-          type="button"
-          onClick={onForceRetry}
-          className={`text-[13px] px-3 py-1.5 rounded-[4px] text-white ${FOCUS_RING_CLASS}`}
-          style={{ background: NAVY }}
-        >
-          Réessayer
-        </button>
-        <button
-          type="button"
-          onClick={() => { window.location.href = '/Login'; }}
-          className={`text-[13px] px-3 py-1.5 rounded-[4px] ${FOCUS_RING_CLASS}`}
-          style={{ background: 'white', color: INK, border: `1px solid ${CREAM2}` }}
-        >
-          Retour /Login
-        </button>
-      </div>
+      {tick >= 5 && (
+        <p className="text-[11.5px] mt-2" style={{ color: MUTED }}>
+          Nettoyage auto dans {6 - tick}s…
+        </p>
+      )}
     </div>
   );
 }

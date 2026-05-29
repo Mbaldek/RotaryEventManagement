@@ -96,10 +96,24 @@ export function PlatformAuthProvider({ children }) {
     // n'existe pas encore (build local sans migration V2 appliquée), on retombe
     // sur un tableau vide — la plateforme reste fonctionnelle en mode V1 global.
     const norm = String(email).trim().toLowerCase();
+    // SELF-HEALING : timeout 4s sur chaque query (cf. observation prod 2026-05-29
+    // où ces queries peuvent hang quand le client supabase est en état zombie).
+    // Sur timeout, on retombe sur {data: null, error: timeout} → roles=[] et
+    // l'utilisateur retourne sur /Login plutôt que de rester bloqué.
+    const withTimeout = (promise, ms, label) =>
+      Promise.race([
+        promise,
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: `${label} timeout ${ms}ms` } }), ms),
+        ),
+      ]);
     const [profRes, rolesRes, cmRes] = await Promise.all([
-      supabase.from('profiles').select('id, email, full_name, role').eq('email', norm).maybeSingle(),
-      supabase.rpc('rsa_my_roles'),
-      supabase.rpc('my_club_memberships'),
+      withTimeout(
+        supabase.from('profiles').select('id, email, full_name, role').eq('email', norm).maybeSingle(),
+        4000, 'profiles',
+      ),
+      withTimeout(supabase.rpc('rsa_my_roles'), 4000, 'rsa_my_roles'),
+      withTimeout(supabase.rpc('my_club_memberships'), 4000, 'my_club_memberships'),
     ]);
     // DIAGNOSTIC : on logge le résultat de chaque promise individuellement pour
     // identifier en prod quelle requête échoue silencieusement (cf. spinner
@@ -121,28 +135,86 @@ export function PlatformAuthProvider({ children }) {
   useEffect(() => {
     let active = true;
 
-    // Garde-fou ABSOLU : si pour une raison quelconque la chaîne init ne fire pas son
-    // `finally` (ex. supabase.auth.getSession() ne résout JAMAIS — observé 2026-05-28
-    // sur app.rotary-startup.org où le `loading` restait true → MagicLinkLogin jamais
-    // monté, donc utilisateur bloqué sur PageShell vide), on force loading=false après
-    // 4s. Pire cas : on rend l'UI "non auth" avec le formulaire dispo, plutôt qu'un
-    // écran figé. Le diagnostic reste visible en console (cf. logs ci-dessous).
+    // SELF-HEALING (2026-05-29) : observé en prod app.rotary-startup.org —
+    // `supabase.auth.getSession()` HANG indéfiniment quand le refresh-token
+    // localStorage est corrompu ou que le client supabase est dans un état
+    // bloqué (souvent post-deploy de breaking changes côté auth). Symptômes :
+    //   * watchdog 4s fire → loading=false mais authUser reste null
+    //   * MAIS onAuthStateChange peut fire plus tard avec une session zombie
+    //     → isAuthenticated devient true → Login redirect /MonDossier
+    //   * /MonDossier appelle des queries qui hang aussi (le client supabase
+    //     est globalement coincé)
+    //
+    // Stratégie : on race getSession() contre un timeout 3s. Si timeout :
+    //   1. Clear localStorage du token d'auth supabase (clés sb-*-auth-token)
+    //   2. supabase.auth.signOut({ scope: 'local' }) pour reset l'état client
+    //      sans appeler le serveur (qui hang lui aussi probablement)
+    //   3. Continue avec session=null → user voit /Login form propre
+    //
+    // L'utilisateur peut alors re-login proprement, sans avoir à clear le
+    // site data manuellement dans DevTools.
     const initWatchdog = setTimeout(() => {
       if (active) {
         // eslint-disable-next-line no-console
-        console.warn('[PlatformAuth] init watchdog fired (4s) — forcing loading=false. ' +
-          'Probable cause: supabase.auth.getSession() did not resolve.');
+        console.warn('[PlatformAuth] init watchdog fired (4s) — forcing loading=false + clean.');
         setLoading(false);
       }
     }, 4000);
 
+    const getSessionWithTimeout = () => {
+      const timeoutMs = 3000;
+      return Promise.race([
+        supabase.auth.getSession(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(`getSession timeout ${timeoutMs}ms`)), timeoutMs),
+        ),
+      ]);
+    };
+
+    const cleanCorruptedSession = async () => {
+      try {
+        // 1. Clear toutes les clés localStorage du client supabase (auth token,
+        //    refresh token, expiry). Pattern sb-{ref}-auth-token + variantes.
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const toRemove = [];
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const key = window.localStorage.key(i);
+            if (key && (key.startsWith('sb-') || key.startsWith('supabase.auth.'))) {
+              toRemove.push(key);
+            }
+          }
+          toRemove.forEach((k) => window.localStorage.removeItem(k));
+          // eslint-disable-next-line no-console
+          console.warn('[PlatformAuth] cleanCorruptedSession cleared keys:', toRemove);
+        }
+        // 2. signOut local (n'appelle pas le serveur — race-safe si serveur hang)
+        await Promise.race([
+          supabase.auth.signOut({ scope: 'local' }),
+          new Promise((resolve) => setTimeout(resolve, 1000)),
+        ]).catch(() => {});
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[PlatformAuth] cleanCorruptedSession failed:', err);
+      }
+    };
+
     (async () => {
       // eslint-disable-next-line no-console
-      console.debug('[PlatformAuth] init start');
+      console.warn('[PlatformAuth] init start');
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        // eslint-disable-next-line no-console
-        console.debug('[PlatformAuth] getSession resolved, session?', !!session);
+        let session = null;
+        try {
+          const res = await getSessionWithTimeout();
+          session = res?.data?.session ?? null;
+          // eslint-disable-next-line no-console
+          console.warn('[PlatformAuth] getSession resolved, session?', !!session);
+        } catch (timeoutErr) {
+          // eslint-disable-next-line no-console
+          console.error('[PlatformAuth] getSession HUNG —', timeoutErr.message,
+            '→ clearing corrupted session');
+          await cleanCorruptedSession();
+          session = null;
+        }
         if (!active) return;
         setAuthUser(session?.user ?? null);
         await loadIdentity(session?.user?.email);
@@ -154,14 +226,15 @@ export function PlatformAuthProvider({ children }) {
           clearSentryUser();
         }
         // eslint-disable-next-line no-console
-        console.debug('[PlatformAuth] loadIdentity done');
+        console.warn('[PlatformAuth] loadIdentity done');
       } catch (err) {
-        // Fix défensif : si getSession ou loadIdentity throw, on libère quand même
-        // le verrou de loading (sinon le spinner reste à l'infini sans message d'erreur).
-        // L'erreur reste console.error pour diagnostic, la page passera en "non auth"
-        // (-> /Login) ou rendra son état role-less plutôt que de bloquer le UI.
+        // Fix défensif : si loadIdentity throw (ex. RPC rsa_my_roles hang), on
+        // libère quand même le verrou de loading + on nettoie la session pour
+        // que le user ne reste pas en zombie auth state.
         // eslint-disable-next-line no-console
         console.error('[PlatformAuth] init failed:', err);
+        await cleanCorruptedSession();
+        if (active) setAuthUser(null);
       } finally {
         if (active) {
           clearTimeout(initWatchdog);
