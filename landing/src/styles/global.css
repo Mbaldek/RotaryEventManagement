@@ -50,6 +50,62 @@ body {
   display:flex; align-items:center; justify-content:space-between;
 }
 
+/* Nav right (login link) */
+.rsa-nav-right { display:flex; align-items:center; gap:1.4rem; }
+.rsa-nav-link {
+  font-size:.72rem; font-weight:400; letter-spacing:.1em; text-transform:uppercase;
+  text-decoration:none; color:var(--ink);
+  display:inline-flex; align-items:center; gap:.45rem;
+  padding:.4rem 0; border-bottom:1.5px solid transparent;
+  transition:border-color .2s, color .15s;
+}
+.rsa-nav-link:hover { color:var(--blue); border-color:var(--gold); }
+.rsa-nav-link-arr { color:var(--gold); transition:transform .2s; }
+.rsa-nav-link:hover .rsa-nav-link-arr { transform:translateX(3px); }
+
+/* ─── BANDEAU 2027 (au-dessus du palmarès, scroll vers #cta-2027) ─── */
+.rsa-banner-2027 {
+  display:block;
+  background:linear-gradient(90deg, var(--ivory2) 0%, var(--ivory) 100%);
+  border-top:1px solid var(--gold);
+  border-bottom:1px solid var(--line);
+  padding:1.1rem 3rem;
+  text-decoration:none;
+  transition:background .2s;
+}
+.rsa-banner-2027:hover { background:linear-gradient(90deg, var(--ivory) 0%, #f7eedb 100%); }
+.rsa-banner-inner {
+  max-width:1200px; margin:0 auto;
+  display:flex; align-items:center; gap:1.4rem; flex-wrap:wrap;
+}
+.rsa-banner-tag {
+  font-size:.6rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--gold); font-weight:500;
+  display:inline-flex; align-items:center; gap:.6rem;
+}
+.rsa-banner-tag::before {
+  content:''; width:18px; height:1.5px; background:var(--gold); flex-shrink:0;
+}
+.rsa-banner-title {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1.05rem; font-style:italic; color:var(--blue);
+  font-weight:400; flex:1;
+}
+.rsa-banner-cta {
+  font-size:.7rem; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink); font-weight:400;
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding-left:1.4rem; border-left:1px solid var(--line);
+}
+.rsa-banner-cta-arr { color:var(--gold); transition:transform .2s; }
+.rsa-banner-2027:hover .rsa-banner-cta-arr { transform:translateX(3px); }
+@media (max-width:900px) {
+  .rsa-banner-2027 { padding:1rem 1.5rem; }
+  .rsa-banner-inner { gap:.8rem; }
+  .rsa-banner-title { font-size:.95rem; flex:1 1 100%; }
+  .rsa-banner-cta { padding-left:0; border-left:none; }
+}
+
 /* Brand */
 .rsa-brand { display:flex; align-items:center; gap:.8rem; text-decoration:none; }
 .rsa-brand img { height:30px; width:auto; }
@@ -317,10 +373,9 @@ body {
   line-height:1.85; margin-bottom:1.2rem;
 }
 
-/* ─── CTA SECTION ─── */
+/* ─── CTA SECTION — 3 portes (2027) ─── */
 .rsa-cta-sec {
-  background:var(--blue); padding:6rem 3rem;
-  display:grid; grid-template-columns:1fr 1fr; gap:6rem; align-items:center;
+  background:var(--blue); padding:6rem 3rem 5rem;
   border-bottom:none; position:relative; overflow:hidden;
 }
 .rsa-cta-sec::before {
@@ -329,38 +384,95 @@ body {
   background-size:26px 26px; pointer-events:none;
 }
 .rsa-cta-sec > * { position:relative; z-index:1; }
+
+.rsa-cta-head { max-width:1200px; margin:0 auto 3.5rem; }
 .rsa-cta-kicker {
   font-size:.6rem; letter-spacing:.2em; text-transform:uppercase;
-  color:rgba(255,255,255,.4); font-weight:300; margin-bottom:1.5rem;
+  color:rgba(255,255,255,.55); font-weight:400; margin-bottom:1.5rem;
   display:flex; align-items:center; gap:.8rem;
 }
 .rsa-cta-kicker::before { content:''; width:20px; height:1px; background:var(--gold); }
 .rsa-cta-sec h2 {
   font-family:'Cormorant Garamond', serif;
-  font-size:clamp(2.4rem, 4.5vw, 3.8rem);
+  font-size:clamp(2.2rem, 4vw, 3.4rem);
   font-weight:300; color:#fff;
   line-height:1.05; letter-spacing:-.02em;
-  margin:0;
+  margin:0 0 1.4rem;
 }
 .rsa-cta-sec h2 em { font-style:italic; color:rgba(255,255,255,.6); }
-.rsa-cta-r {
-  border-left:1px solid rgba(255,255,255,.1);
-  padding-left:5rem;
-  display:flex; flex-direction:column; gap:2rem;
+.rsa-cta-lede {
+  font-size:.95rem; font-weight:300;
+  color:rgba(255,255,255,.65); line-height:1.75;
+  max-width:560px; margin:0;
 }
-.rsa-cta-desc {
-  font-size:.9rem; font-weight:300;
-  color:rgba(255,255,255,.6); line-height:1.8;
-  margin:0;
+
+.rsa-cta-grid {
+  max-width:1200px; margin:0 auto;
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:1.5rem;
 }
-.rsa-cta-meta {
-  font-size:.72rem; color:rgba(255,255,255,.35); font-weight:300;
-  display:flex; flex-direction:column; gap:.3rem;
+
+.rsa-cta-card {
+  position:relative;
+  display:flex; flex-direction:column;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);
+  padding:2.2rem 1.8rem 1.8rem;
+  text-decoration:none;
+  color:#fff;
+  transition:background .2s, border-color .2s, transform .2s;
 }
-.rsa-cta-meta a {
-  color:rgba(255,255,255,.5); text-decoration:none; transition:color .15s;
+.rsa-cta-card:hover {
+  background:rgba(255,255,255,.08);
+  border-color:rgba(247,168,0,.4);
+  transform:translateY(-3px);
 }
-.rsa-cta-meta a:hover { color:#fff; }
+.rsa-cta-card--primary {
+  background:rgba(247,168,0,.08);
+  border-color:rgba(247,168,0,.35);
+}
+.rsa-cta-card--primary:hover {
+  background:rgba(247,168,0,.14);
+  border-color:var(--gold);
+}
+.rsa-cta-card-ico {
+  width:32px; height:32px;
+  color:var(--gold);
+  margin-bottom:1.6rem;
+}
+.rsa-cta-card-tag {
+  font-size:.58rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--gold); font-weight:400; margin-bottom:.8rem;
+}
+.rsa-cta-card-tit {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1.55rem; font-weight:400; color:#fff;
+  line-height:1.15; margin-bottom:1rem;
+}
+.rsa-cta-card-desc {
+  font-size:.85rem; font-weight:300;
+  color:rgba(255,255,255,.65); line-height:1.7;
+  margin:0 0 1.8rem; flex:1;
+}
+.rsa-cta-card-arr {
+  font-size:.7rem; font-weight:400; letter-spacing:.1em; text-transform:uppercase;
+  color:#fff;
+  padding-top:1.2rem; border-top:1px solid rgba(255,255,255,.12);
+  display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+}
+.rsa-cta-card-arr-glyph { color:var(--gold); transition:transform .2s; }
+.rsa-cta-card:hover .rsa-cta-card-arr-glyph { transform:translateX(4px); }
+
+.rsa-cta-meta-row {
+  max-width:1200px; margin:3.5rem auto 0;
+  padding-top:2rem; border-top:1px solid rgba(255,255,255,.1);
+  display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+  font-size:.72rem; color:rgba(255,255,255,.4); font-weight:300;
+}
+.rsa-cta-meta-row a {
+  color:rgba(255,255,255,.55); text-decoration:none; transition:color .15s;
+}
+.rsa-cta-meta-row a:hover { color:#fff; }
+.rsa-cta-meta-sep { color:rgba(255,255,255,.25); }
 
 /* ─── FOOTER ─── */
 .rsa-footer {
@@ -422,9 +534,13 @@ body {
 
   .rsa-section { padding:3.5rem 1.5rem; }
 
-  .rsa-cta-sec { grid-template-columns:1fr; gap:3rem; padding:4rem 1.5rem; }
-  .rsa-cta-r { border-left:none; padding-left:0; border-top:1px solid rgba(255,255,255,.1); padding-top:3rem; }
-  .rsa-cta-sec h2 { font-size:2.6rem; }
+  .rsa-cta-sec { padding:4rem 1.5rem 3.5rem; }
+  .rsa-cta-head { margin-bottom:2.5rem; }
+  .rsa-cta-sec h2 { font-size:2.2rem; }
+  .rsa-cta-grid { grid-template-columns:1fr; gap:1rem; }
+  .rsa-cta-card { padding:1.8rem 1.5rem 1.5rem; }
+  .rsa-cta-card-tit { font-size:1.4rem; }
+  .rsa-cta-meta-row { margin-top:2.5rem; padding-top:1.5rem; gap:.6rem; }
 
   .rsa-footer { padding:1.5rem; }
   .rsa-foot-inner { flex-direction:column; align-items:flex-start; gap:.8rem; }
