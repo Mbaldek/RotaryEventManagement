@@ -13,7 +13,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Loader2, Save } from 'lucide-react';
-import { CREAM2, NAVY, MUTED, GOLD, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, GOLD, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import EligibilityRulesEditor from '@/components/rsa/eligibility/EligibilityRulesEditor';
 import { UI, SETUP, EDITION_STATUSES } from './i18n';
@@ -43,7 +43,7 @@ function TextRow({ id, label, value, onChange, type = 'text', placeholder, step 
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-        style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
       />
     </div>
   );
@@ -131,7 +131,7 @@ export default function EditionEditor({ edition }) {
   return (
     <section
       className="rounded-[4px] p-5 mb-6"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-4 flex items-center gap-3 flex-wrap">
         <h3
@@ -166,7 +166,7 @@ export default function EditionEditor({ edition }) {
             value={form.status || 'draft'}
             onChange={(e) => patch({ status: e.target.value })}
             className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-            style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+            style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
           >
             {EDITION_STATUSES.map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -215,7 +215,7 @@ export default function EditionEditor({ edition }) {
           value={form.description_md || ''}
           onChange={(e) => patch({ description_md: e.target.value })}
           className="w-full text-[13px] rounded-[4px] px-2.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-          style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+          style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
         />
       </div>
 

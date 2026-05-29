@@ -14,7 +14,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, Users, AlertTriangle } from 'lucide-react';
-import { CREAM2, NAVY, INK, MUTED, GOLD } from '@/components/design/tokens';
+import { CREAM2, NAVY, INK, MUTED, GOLD, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import {
@@ -149,7 +149,7 @@ export default function AudienceSelector({
           value={audienceType}
           onChange={(e) => setType(e.target.value)}
           className="w-full text-[13px] rounded-[4px] px-2.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-          style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+          style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
         >
           {types.map((tp) => (
             <option key={tp} value={tp}>{labelForType(tp, t)}</option>
@@ -173,7 +173,7 @@ export default function AudienceSelector({
             onChange={(e) => setFilterField('email', e.target.value)}
             placeholder="contact@exemple.org"
             className="w-full text-[13px] rounded-[4px] px-2.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-            style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+            style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
           />
         </div>
       )}
@@ -193,7 +193,7 @@ export default function AudienceSelector({
               value={audienceFilter.session_id || ''}
               onChange={(e) => setFilterField('session_id', e.target.value)}
               className="w-full text-[13px] rounded-[4px] px-2.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             >
               <option value="">—</option>
               {(sessionsQ.data || []).map((s) => (
@@ -221,7 +221,7 @@ export default function AudienceSelector({
               value={audienceFilter.edition_id || ''}
               onChange={(e) => setFilterField('edition_id', e.target.value)}
               className="w-full text-[13px] rounded-[4px] px-2.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             >
               <option value="">—</option>
               {(editionsQ.data || []).map((e) => (

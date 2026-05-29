@@ -15,7 +15,7 @@ import {
   Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell,
 } from 'recharts';
 import { Loader2 } from 'lucide-react';
-import { CREAM2, NAVY, GOLD, MUTED, INK, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, GOLD, MUTED, INK, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { ANALYTICS_UI, STAGE_LABELS, FUNNEL_ORDER } from './i18n';
 
@@ -68,7 +68,7 @@ export default function FunnelChart({
     return (
       <div
         className="rounded-[4px] flex items-center justify-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}`, height }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, height }}
       >
         <Loader2 className="w-5 h-5 animate-spin" style={{ color: GOLD }} aria-hidden />
         <span className="sr-only">{t(ANALYTICS_UI.loading)}</span>
@@ -79,7 +79,7 @@ export default function FunnelChart({
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}`, height }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, height }}
       >
         <p className="text-[13px]" style={{ color: INK }}>{t(ANALYTICS_UI.errorBody)}</p>
       </div>
@@ -90,7 +90,7 @@ export default function FunnelChart({
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}`, height }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, height }}
       >
         <p
           className="text-[14px] mb-1"
@@ -121,7 +121,7 @@ export default function FunnelChart({
   return (
     <div
       className="rounded-[4px] p-4"
-      style={{ background: 'white', border: `1px solid ${CREAM2}`, height }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, height }}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={ordered} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>

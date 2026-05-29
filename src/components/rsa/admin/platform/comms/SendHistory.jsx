@@ -10,7 +10,7 @@
 
 import React, { useState } from 'react';
 import { Loader2, X, Eye, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
-import { CREAM2, NAVY, INK, MUTED, GOLD, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, INK, MUTED, GOLD, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { COMMS_HISTORY, COMMS_UI } from './i18n';
@@ -197,14 +197,14 @@ export default function SendHistory({ clubId }) {
       {!sendsQ.isLoading && !sendsQ.isError && sends.length === 0 && (
         <div
           className="rounded-[4px] p-6 text-center"
-          style={{ background: 'white', border: `1px dashed ${CREAM2}` }}
+          style={{ background: TINT_ADMIN, border: `1px dashed ${CREAM2}` }}
         >
           <p className="text-[13px]" style={{ color: INK }}>{t(COMMS_HISTORY.noSends)}</p>
         </div>
       )}
 
       {!sendsQ.isLoading && sends.length > 0 && (
-        <ul className="divide-y rounded-[4px]" style={{ borderColor: CREAM2, background: 'white', border: `1px solid ${CREAM2}` }}>
+        <ul className="divide-y rounded-[4px]" style={{ borderColor: CREAM2, background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}>
           {sends.map((s) => (
             <li
               key={s.id}

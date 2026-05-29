@@ -43,6 +43,7 @@ import {
   MUTED,
   SERIF,
   EASE,
+  TINT_ADMIN,
 } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER, SUCCESS } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -92,7 +93,7 @@ function CopyButton({ value, t }) {
         }
       }}
       className="inline-flex items-center gap-1.5 text-[11.5px] px-2 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-      style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: 'white' }}
+      style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
     >
       {done ? <CheckCircle2 className="w-3 h-3" style={{ color: SUCCESS }} /> : <Copy className="w-3 h-3" />}
       {done ? t(JURY_TAB_UI.copied) : t(JURY_TAB_UI.copy)}
@@ -234,7 +235,7 @@ function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, bus
   return (
     <article
       className="group rounded-[4px] p-4 mb-3 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="flex items-start gap-3 mb-3">
         {photoUrl ? (
@@ -364,7 +365,7 @@ function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, bus
             onClick={() => onReject(app)}
             disabled={isBusy}
             className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-            style={{ color: DANGER, border: `1px solid ${CREAM2}`, background: 'white' }}
+            style={{ color: DANGER, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
           >
             <X className="w-3.5 h-3.5" />
             {t(JURY_TAB_UI.reject)}
@@ -507,7 +508,7 @@ export default function JuryApplicationsTab({ clubId }) {
   return (
     <section
       className="rounded-[4px] p-5 mb-6"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-4">
         <div className="flex items-center gap-2.5 mb-2">
@@ -554,7 +555,7 @@ export default function JuryApplicationsTab({ clubId }) {
               onClick={() => setFilter(f)}
               className="px-3 py-1 rounded-full text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
               style={{
-                background: active ? NAVY : 'white',
+                background: active ? NAVY : TINT_ADMIN,
                 color: active ? 'white' : INK,
                 border: `1px solid ${active ? NAVY : CREAM2}`,
               }}

@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { useLang } from '@/lib/platform/i18n';
-import { MUTED, INK, CREAM2, NAVY, GOLD, SERIF, TINT_BEIGE } from '@/components/design/tokens';
+import { MUTED, INK, CREAM2, NAVY, GOLD, SERIF, TINT_BEIGE, TINT_ADMIN } from '@/components/design/tokens';
 import { COMP, FINALE } from '../i18n';
 import { CheckboxRow, FieldLabel, TextRow } from './fields';
 
@@ -84,7 +84,7 @@ export default function FinaleSection({ values = {}, onPatch, disabled = false }
       {enabled && (
         <div
           className="rounded-[4px] p-5 space-y-5"
-          style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+          style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <TextRow

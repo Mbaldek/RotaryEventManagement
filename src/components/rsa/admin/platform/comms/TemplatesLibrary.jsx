@@ -14,7 +14,7 @@
 
 import React, { useState } from 'react';
 import { Loader2, Plus, Trash2, AlertTriangle, ChevronRight, X, FileText } from 'lucide-react';
-import { CREAM2, NAVY, INK, MUTED, GOLD, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, INK, MUTED, GOLD, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { COMMS_TEMPLATES, COMMS_UI, AUDIENCE_TYPES } from './i18n';
@@ -55,7 +55,7 @@ function TemplateRow({ tpl, clubId, onInsert, onEdit, onDelete }) {
   return (
     <li
       className="rounded-[4px] p-3"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -242,7 +242,7 @@ export default function TemplatesLibrary({ clubId, onInsertTemplate }) {
               type="button"
               onClick={() => setEditing(null)}
               className="inline-flex items-center gap-1.5 text-[12px] px-2 py-1 rounded-[4px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
             >
               <X className="w-3.5 h-3.5" /> {t(COMMS_UI.close)}
             </button>
@@ -257,7 +257,7 @@ export default function TemplatesLibrary({ clubId, onInsertTemplate }) {
                 value={editing.name}
                 onChange={(e) => setEditing((p) => ({ ...p, name: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
             <div>
@@ -267,7 +267,7 @@ export default function TemplatesLibrary({ clubId, onInsertTemplate }) {
                 value={editing.audienceType}
                 onChange={(e) => setEditing((p) => ({ ...p, audienceType: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               >
                 {AUDIENCE_TYPES.map((tp) => (
                   <option key={tp} value={tp}>{tp}</option>
@@ -281,7 +281,7 @@ export default function TemplatesLibrary({ clubId, onInsertTemplate }) {
                 value={editing.lang}
                 onChange={(e) => setEditing((p) => ({ ...p, lang: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               >
                 <option value="fr">FR</option>
                 <option value="en">EN</option>
@@ -296,7 +296,7 @@ export default function TemplatesLibrary({ clubId, onInsertTemplate }) {
                 value={editing.subject}
                 onChange={(e) => setEditing((p) => ({ ...p, subject: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
             <div className="md:col-span-2">
@@ -307,7 +307,7 @@ export default function TemplatesLibrary({ clubId, onInsertTemplate }) {
                 onChange={(e) => setEditing((p) => ({ ...p, bodyHtml: e.target.value }))}
                 rows={10}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] font-mono leading-relaxed"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: INK }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: INK }}
               />
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function TemplatesLibrary({ clubId, onInsertTemplate }) {
               type="button"
               onClick={() => setEditing(null)}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
             >
               {t(COMMS_UI.cancel)}
             </button>
@@ -354,7 +354,7 @@ export default function TemplatesLibrary({ clubId, onInsertTemplate }) {
       {!templatesQ.isLoading && !templatesQ.isError && templates.length === 0 && !editing && (
         <div
           className="rounded-[4px] p-6 text-center"
-          style={{ background: 'white', border: `1px dashed ${CREAM2}` }}
+          style={{ background: TINT_ADMIN, border: `1px dashed ${CREAM2}` }}
         >
           <FileText className="w-6 h-6 mx-auto mb-2" style={{ color: GOLD }} />
           <p className="text-[13px]" style={{ color: INK }}>

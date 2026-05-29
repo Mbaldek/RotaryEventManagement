@@ -11,7 +11,7 @@
 // tation côté serveur n'est nécessaire.
 
 import React from 'react';
-import { CREAM2, MUTED } from '@/components/design/tokens';
+import { CREAM2, MUTED, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { LIVE } from '../../i18n';
 import LegacyLiveTab from '../../tabs/LiveTab';
@@ -26,7 +26,7 @@ export default function LiveTab({ edition, clubId, session }) {
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <p className="text-[13px]" style={{ color: MUTED }}>{t(LIVE.pickSession)}</p>
       </div>

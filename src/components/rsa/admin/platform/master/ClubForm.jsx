@@ -19,7 +19,7 @@
 import React, { useMemo, useState } from 'react';
 import { Loader2, Save, Plus } from 'lucide-react';
 import {
-  CREAM2, NAVY, MUTED, INK, GOLD,
+  CREAM2, NAVY, MUTED, INK, GOLD, TINT_ADMIN,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import Field from '@/components/design/form/Field';
@@ -477,7 +477,7 @@ export default function ClubForm({
             onClick={onCancel}
             disabled={submitting}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-[4px] text-[13px] disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
-            style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+            style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
           >
             {t(CLUBS.cancelEdit)}
           </button>

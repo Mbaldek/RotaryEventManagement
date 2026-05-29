@@ -12,7 +12,7 @@ import React, { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Loader2, Plus, ChevronRight } from 'lucide-react';
 import {
-  CREAM2, NAVY, MUTED, INK, GOLD, SERIF,
+  CREAM2, NAVY, MUTED, INK, GOLD, SERIF, TINT_ADMIN,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -40,7 +40,7 @@ function ClubCard({ club, onOpen }) {
   return (
     <li
       className="group rounded-[4px] p-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -91,7 +91,7 @@ function ClubCard({ club, onOpen }) {
           type="button"
           onClick={() => onOpen(club.id)}
           className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
-          style={{ background: 'white', color: NAVY, border: `1px solid ${CREAM2}` }}
+          style={{ background: TINT_ADMIN, color: NAVY, border: `1px solid ${CREAM2}` }}
         >
           {t(CLUBS.openClub)} <ChevronRight className="w-3.5 h-3.5" />
         </button>

@@ -18,7 +18,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import {
-  CREAM2, NAVY, GOLD, INK, MUTED, SERIF,
+  CREAM2, NAVY, GOLD, INK, MUTED, SERIF, TINT_ADMIN,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import CockpitTabs from '@/components/design/shell/CockpitTabs';
@@ -102,7 +102,7 @@ export default function ClubEditView({ clubId, onClose }) {
     return (
       <div
         className="rounded-[4px] p-5 mt-2"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <p className="text-[13px]" style={{ color: INK }}>
           {t({
@@ -115,7 +115,7 @@ export default function ClubEditView({ clubId, onClose }) {
           type="button"
           onClick={onClose}
           className="mt-3 inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
-          style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+          style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
         >
           <ArrowLeft className="w-3.5 h-3.5" /> {t(CLUBS.backToClubs)}
         </button>
@@ -141,7 +141,7 @@ export default function ClubEditView({ clubId, onClose }) {
             onClose?.();
           }}
           className="inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] mb-3"
-          style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+          style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
         >
           <ArrowLeft className="w-3.5 h-3.5" /> {t(CLUBS.backToClubs)}
         </button>
@@ -196,7 +196,7 @@ export default function ClubEditView({ clubId, onClose }) {
         role="tabpanel"
         aria-labelledby={`club-edit-tab-${activeTab}`}
         className="rounded-[4px] p-5"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         {activeTab === 'info' && (
           <InfoTab

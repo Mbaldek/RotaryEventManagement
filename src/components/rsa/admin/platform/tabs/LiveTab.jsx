@@ -18,7 +18,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Loader2, Lock, Play, Rocket, Undo2 } from 'lucide-react';
-import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
@@ -194,7 +194,7 @@ export default function LiveTab({ edition, session }) {
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <p className="text-[13px]" style={{ color: MUTED }}>{t(LIVE.pickSession)}</p>
       </div>
@@ -225,7 +225,7 @@ export default function LiveTab({ edition, session }) {
       {/* Session header */}
       <section
         className="rounded-[4px] p-4 mb-4 flex items-center gap-3 flex-wrap"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -262,7 +262,7 @@ export default function LiveTab({ edition, session }) {
                   onClick={() => setPending('draft')}
                   disabled={busy}
                   className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px]"
-                  style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+                  style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
                 >
                   <Undo2 className="w-3.5 h-3.5" /> {t(LIVE.reopenDraft)}
                 </button>
@@ -304,25 +304,25 @@ export default function LiveTab({ edition, session }) {
       )}
 
       {!grid.isLoading && grid.startups.length === 0 && (
-        <div className="rounded-[4px] p-4" style={{ background: 'white', border: `1px solid ${CREAM2}` }}>
+        <div className="rounded-[4px] p-4" style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}>
           <p className="text-[13px]" style={{ color: MUTED }}>{t(LIVE.noStartups)}</p>
         </div>
       )}
 
       {!grid.isLoading && grid.startups.length > 0 && grid.assignments.length === 0 && (
-        <div className="rounded-[4px] p-4" style={{ background: 'white', border: `1px solid ${CREAM2}` }}>
+        <div className="rounded-[4px] p-4" style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}>
           <p className="text-[13px]" style={{ color: MUTED }}>{t(LIVE.noJurors)}</p>
         </div>
       )}
 
       {!grid.isLoading && grid.startups.length > 0 && grid.assignments.length > 0 && (
-        <div className="overflow-x-auto rounded-[4px]" style={{ background: 'white', border: `1px solid ${CREAM2}` }}>
+        <div className="overflow-x-auto rounded-[4px]" style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}>
           <table className="min-w-full">
             <thead style={{ borderBottom: `1px solid ${CREAM2}` }}>
               <tr>
                 <th
                   className="text-left p-3 sticky left-0 uppercase tracking-[0.14em] text-[10.5px]"
-                  style={{ color: MUTED, background: 'white' }}
+                  style={{ color: MUTED, background: TINT_ADMIN }}
                 >
                   {t(LIVE.startupCol)}
                 </th>
@@ -360,7 +360,7 @@ export default function LiveTab({ edition, session }) {
                 const agg = aggregates.get(s.id) || { n: 0, avg: null };
                 return (
                   <tr key={s.id} style={{ borderTop: i === 0 ? 'none' : `1px solid ${CREAM2}` }}>
-                    <td className="p-3 text-[13px] sticky left-0" style={{ background: 'white', color: NAVY }}>
+                    <td className="p-3 text-[13px] sticky left-0" style={{ background: TINT_ADMIN, color: NAVY }}>
                       <span className="text-[11px] tabular-nums mr-2" style={{ color: MUTED }}>{i + 1}.</span>
                       {s.name}
                     </td>
@@ -466,7 +466,7 @@ export default function LiveTab({ edition, session }) {
 
 function Stat({ label, value, sub }) {
   return (
-    <div className="rounded-[4px] p-3 text-center" style={{ background: 'white', border: `1px solid ${CREAM2}` }}>
+    <div className="rounded-[4px] p-3 text-center" style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}>
       <p className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: MUTED }}>{label}</p>
       <p className="text-[22px] tabular-nums" style={{ color: NAVY, fontFamily: SERIF, fontWeight: 500 }}>{value}</p>
       {sub && <p className="text-[11.5px] mt-0.5" style={{ color: MUTED }}>{sub}</p>}

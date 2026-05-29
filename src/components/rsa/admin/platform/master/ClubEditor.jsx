@@ -14,7 +14,7 @@ import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, X, Trash2, AlertTriangle, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  CREAM2, NAVY, MUTED, INK, GOLD, SERIF,
+  CREAM2, NAVY, MUTED, INK, GOLD, SERIF, TINT_ADMIN,
 } from '@/components/design';
 import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -126,7 +126,7 @@ function ClubInfoSection({ club }) {
   return (
     <section
       className="rounded-[4px] p-5 mb-2"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-4 flex items-center gap-3 flex-wrap">
         <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -137,7 +137,7 @@ function ClubInfoSection({ club }) {
             type="button"
             onClick={() => { setEditing(true); setSubmitError(null); }}
             className="ml-auto inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-            style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: 'white' }}
+            style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
           >
             <Pencil className="w-3.5 h-3.5" /> {t(CLUBS.editClubAction)}
           </button>
@@ -285,7 +285,7 @@ function RevokeButton({ club, member, onRevoke }) {
               onClick={() => { setOpen(false); setError(null); }}
               disabled={busy}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[4px] text-[12px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
             >
               {t(UI.cancel)}
             </button>
@@ -337,7 +337,7 @@ function MembersSection({ club }) {
   return (
     <section
       className="rounded-[4px] p-5 mb-2"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-3 flex items-center gap-3 flex-wrap">
         <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -395,7 +395,7 @@ function MembersSection({ club }) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t(CLUBS.emailPlaceholder)}
               className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             />
           </div>
           <div>
@@ -405,7 +405,7 @@ function MembersSection({ club }) {
               value={role}
               onChange={(e) => setRole(e.target.value)}
               className="text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             >
               {CLUB_ROLES.map((r) => (
                 <option key={r} value={r}>{roleLabelFor(t, r)}</option>
@@ -508,7 +508,7 @@ export default function ClubEditor({ club, onClose }) {
   return (
     <div
       className="rounded-[4px] p-4 mt-2"
-      style={{ background: 'white', border: `1px solid ${GOLD}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${GOLD}` }}
     >
       <header className="mb-4 flex items-center gap-3 flex-wrap">
         <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -524,7 +524,7 @@ export default function ClubEditor({ club, onClose }) {
           type="button"
           onClick={onClose}
           className="ml-auto inline-flex items-center gap-1.5 text-[12px] px-2 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-          style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+          style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
         >
           <X className="w-3.5 h-3.5" /> {t(UI.close)}
         </button>

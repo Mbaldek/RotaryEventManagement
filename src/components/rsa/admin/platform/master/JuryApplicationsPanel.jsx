@@ -33,6 +33,7 @@ import {
   SERIF,
   EASE,
   TINT_SAGE,
+  TINT_ADMIN,
 } from '@/components/design';
 import {
   DANGER,
@@ -96,7 +97,7 @@ function Tab({ label, count, active, onClick }) {
       onClick={onClick}
       className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-colors ${FOCUS_RING_CLASS}`}
       style={{
-        background: active ? NAVY : 'white',
+        background: active ? NAVY : TINT_ADMIN,
         color: active ? 'white' : INK,
         border: `1px solid ${active ? NAVY : CREAM2}`,
       }}
@@ -139,7 +140,7 @@ function QueueCard({ row, active, onClick, t, lang }) {
       onClick={onClick}
       className={`text-left w-full rounded-md p-3.5 transition-colors ${FOCUS_RING_CLASS}`}
       style={{
-        background: active ? CREAM : 'white',
+        background: active ? CREAM : TINT_ADMIN,
         border: `1px solid ${active ? GOLD : CREAM2}`,
       }}
     >
@@ -192,7 +193,7 @@ function DetailPanel({ row, onApprove, onReject, approving, rejecting, t, lang }
     return (
       <div
         className="rounded-md p-8 text-center text-[13px]"
-        style={{ background: 'white', border: `1px solid ${CREAM2}`, color: MUTED }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: MUTED }}
       >
         {t(UI.emptyDetail)}
       </div>
@@ -208,7 +209,7 @@ function DetailPanel({ row, onApprove, onReject, approving, rejecting, t, lang }
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: EASE }}
       className="rounded-md p-5 flex flex-col gap-4"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       {/* En-tête détail */}
       <div className="flex items-start justify-between gap-3">
@@ -291,7 +292,7 @@ function DetailPanel({ row, onApprove, onReject, approving, rejecting, t, lang }
             disabled={approving || rejecting}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-[13px] font-medium ${FOCUS_RING_CLASS}`}
             style={{
-              background: 'white',
+              background: TINT_ADMIN,
               color: DANGER,
               border: `1px solid ${CREAM2}`,
               cursor: 'pointer',
@@ -343,7 +344,7 @@ function DetailPanel({ row, onApprove, onReject, approving, rejecting, t, lang }
               }}
               disabled={rejecting}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-[13px] font-medium ${FOCUS_RING_CLASS}`}
-              style={{ background: 'white', color: INK, border: `1px solid ${CREAM2}` }}
+              style={{ background: TINT_ADMIN, color: INK, border: `1px solid ${CREAM2}` }}
             >
               {t(UI.actionCancel)}
             </button>
@@ -494,7 +495,7 @@ export default function JuryApplicationsPanel() {
             {filtered.length === 0 ? (
               <div
                 className="rounded-md p-5 text-center text-[13px]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: MUTED }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: MUTED }}
               >
                 {t(UI.emptyQueue)}
               </div>

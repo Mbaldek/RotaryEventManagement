@@ -13,7 +13,7 @@
 
 import React, { useState } from 'react';
 import { Loader2, Plus, RotateCcw, AlertTriangle } from 'lucide-react';
-import { CREAM2, NAVY, MUTED, INK, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, INK, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
@@ -104,7 +104,7 @@ function ResetButton({ sessionId, sessionName, onReset }) {
               onChange={(e) => setTyped(e.target.value)}
               placeholder={t(SETUP.resetTypePrompt)}
               className="flex-1 text-[12.5px] rounded-[4px] px-2 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             />
             <button
               type="button"
@@ -121,7 +121,7 @@ function ResetButton({ sessionId, sessionName, onReset }) {
               onClick={() => { setOpen(false); setTyped(''); setError(null); }}
               disabled={busy}
               className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-[4px] text-[12.5px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
             >
               {t(UI.cancel)}
             </button>
@@ -200,7 +200,7 @@ export default function SessionsManager({
   return (
     <section
       className="rounded-[4px] p-5 mb-6"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-4 flex items-center gap-3 flex-wrap">
         <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -234,7 +234,7 @@ export default function SessionsManager({
                 value={payload.id}
                 onChange={(e) => setPayload((p) => ({ ...p, id: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
             <div>
@@ -245,7 +245,7 @@ export default function SessionsManager({
                 value={payload.name}
                 onChange={(e) => setPayload((p) => ({ ...p, name: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
             <div>
@@ -256,7 +256,7 @@ export default function SessionsManager({
                 value={payload.theme}
                 onChange={(e) => setPayload((p) => ({ ...p, theme: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
             <div>
@@ -266,7 +266,7 @@ export default function SessionsManager({
                 value={payload.kind}
                 onChange={(e) => setPayload((p) => ({ ...p, kind: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               >
                 {SESSION_KINDS.map((k) => (
                   <option key={k} value={k}>
@@ -283,7 +283,7 @@ export default function SessionsManager({
                 value={payload.session_date}
                 onChange={(e) => setPayload((p) => ({ ...p, session_date: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
             <div>
@@ -294,7 +294,7 @@ export default function SessionsManager({
                 value={payload.position}
                 onChange={(e) => setPayload((p) => ({ ...p, position: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
             <div className="md:col-span-2">
@@ -306,7 +306,7 @@ export default function SessionsManager({
                 value={payload.teams_link}
                 onChange={(e) => setPayload((p) => ({ ...p, teams_link: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
               <p className="text-[11px] mt-1" style={{ color: MUTED }}>{t(SETUP.newSessionTeamsHint)}</p>
             </div>
@@ -318,7 +318,7 @@ export default function SessionsManager({
                 value={payload.notes}
                 onChange={(e) => setPayload((p) => ({ ...p, notes: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
             {/* Club picker (visible uniquement quand on N'est PAS dans un Club Cockpit).
@@ -333,7 +333,7 @@ export default function SessionsManager({
                   value={payload.club_id}
                   onChange={(e) => setPayload((p) => ({ ...p, club_id: e.target.value }))}
                   className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                  style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                  style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
                 />
               </div>
             )}
@@ -364,7 +364,7 @@ export default function SessionsManager({
               type="button"
               onClick={() => { setShowForm(false); setPayload({ ...EMPTY_PAYLOAD, club_id: clubId || '' }); setCreateError(null); }}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
             >
               {t(UI.cancel)}
             </button>

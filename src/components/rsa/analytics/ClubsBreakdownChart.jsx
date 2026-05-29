@@ -11,7 +11,7 @@ import {
   Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend,
 } from 'recharts';
 import { Loader2 } from 'lucide-react';
-import { CREAM2, NAVY, GOLD, MUTED, INK, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, GOLD, MUTED, INK, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { ANALYTICS_UI } from './i18n';
 
@@ -57,7 +57,7 @@ export default function ClubsBreakdownChart({
     return (
       <div
         className="rounded-[4px] flex items-center justify-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}`, height: 240 }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, height: 240 }}
       >
         <Loader2 className="w-5 h-5 animate-spin" style={{ color: GOLD }} aria-hidden />
         <span className="sr-only">{t(ANALYTICS_UI.loading)}</span>
@@ -68,7 +68,7 @@ export default function ClubsBreakdownChart({
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <p className="text-[13px]" style={{ color: INK }}>{t(ANALYTICS_UI.errorBody)}</p>
       </div>
@@ -78,7 +78,7 @@ export default function ClubsBreakdownChart({
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <p
           className="text-[14px] mb-1"
@@ -104,7 +104,7 @@ export default function ClubsBreakdownChart({
   return (
     <div
       className="rounded-[4px] p-4"
-      style={{ background: 'white', border: `1px solid ${CREAM2}`, height: dynamicHeight }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, height: dynamicHeight }}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart

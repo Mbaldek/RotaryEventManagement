@@ -11,7 +11,7 @@
 // out-of-scope club. La gestion d'équipe scoped club passe par TeamTab.
 
 import React from 'react';
-import { CREAM2, MUTED, INK, GOLD, NAVY, SERIF } from '@/components/design/tokens';
+import { CREAM2, MUTED, INK, GOLD, NAVY, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { UI } from '../../i18n';
 import { CLUB_SETUP } from '../i18n';
@@ -24,7 +24,7 @@ export default function SetupTab({ edition, clubId, sessions, isSessionsLoading,
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <p className="text-[13px]" style={{ color: MUTED }}>{t(UI.loading)}</p>
       </div>
@@ -36,7 +36,7 @@ export default function SetupTab({ edition, clubId, sessions, isSessionsLoading,
       {/* Intro — explique le rôle de cet onglet vs Master Cockpit. */}
       <section
         className="rounded-[4px] p-5 mb-6"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <h3
           className="text-[18px] mb-2"

@@ -16,7 +16,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Send, Loader2, Eye, CheckCircle2, AlertTriangle, FileText } from 'lucide-react';
-import { CREAM2, NAVY, INK, MUTED, GOLD, SERIF, EASE } from '@/components/design/tokens';
+import { CREAM2, NAVY, INK, MUTED, GOLD, SERIF, EASE, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
@@ -322,7 +322,7 @@ export default function EmailComposer({ clubId, editionId = null, initialDraft, 
           {/* Audience */}
           <div
             className="rounded-[4px] p-4"
-            style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+            style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
           >
             <div className="mb-3 flex items-center gap-2">
               <span className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: GOLD }}>
@@ -348,7 +348,7 @@ export default function EmailComposer({ clubId, editionId = null, initialDraft, 
               onChange={(e) => setSubject(e.target.value)}
               placeholder={t(COMMS_COMPOSER.subjectPlaceholder)}
               className="w-full text-[14px] rounded-[4px] px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             />
           </div>
 
@@ -360,7 +360,7 @@ export default function EmailComposer({ clubId, editionId = null, initialDraft, 
               value={emailLang}
               onChange={(e) => setEmailLang(e.target.value)}
               className="w-full text-[13px] rounded-[4px] px-2.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             >
               <option value="fr">Français</option>
               <option value="en">English</option>
@@ -378,7 +378,7 @@ export default function EmailComposer({ clubId, editionId = null, initialDraft, 
               placeholder={t(COMMS_COMPOSER.bodyPlaceholder)}
               rows={14}
               className="w-full text-[14px] rounded-[4px] px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] font-mono leading-relaxed"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: INK }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: INK }}
             />
             <p className="mt-1 text-[11px]" style={{ color: MUTED }}>
               {t(COMMS_COMPOSER.bodyHelper)}
@@ -392,7 +392,7 @@ export default function EmailComposer({ clubId, editionId = null, initialDraft, 
               onClick={onPreviewSend}
               disabled={previewBusy || !subject.trim() || !body.trim() || !audience.audienceType}
               className="inline-flex items-center gap-2 px-3 py-2 rounded-[4px] text-[12.5px] font-medium disabled:opacity-50"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             >
               {previewBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
               {t(COMMS_COMPOSER.previewSend)}
@@ -402,7 +402,7 @@ export default function EmailComposer({ clubId, editionId = null, initialDraft, 
               type="button"
               onClick={() => setShowTemplateForm((v) => !v)}
               className="inline-flex items-center gap-2 px-3 py-2 rounded-[4px] text-[12.5px]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: INK }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: INK }}
             >
               <FileText className="w-4 h-4" />
               {t(COMMS_COMPOSER.saveAsTemplate)}
@@ -414,7 +414,7 @@ export default function EmailComposer({ clubId, editionId = null, initialDraft, 
               type="button"
               onClick={clearForm}
               className="inline-flex items-center gap-2 px-3 py-2 rounded-[4px] text-[12.5px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
             >
               {t(COMMS_UI.cancel)}
             </button>
@@ -434,7 +434,7 @@ export default function EmailComposer({ clubId, editionId = null, initialDraft, 
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   className="flex-1 min-w-[200px] text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                  style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                  style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
                 />
                 <button
                   type="button"
@@ -463,7 +463,7 @@ export default function EmailComposer({ clubId, editionId = null, initialDraft, 
           </div>
           <div
             className="rounded-[4px] overflow-hidden"
-            style={{ background: 'white', border: `1px solid ${CREAM2}`, minHeight: 540 }}
+            style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, minHeight: 540 }}
           >
             <EmailPreview subject={subject || '—'} bodyMarkdown={body} lang={emailLang} />
           </div>

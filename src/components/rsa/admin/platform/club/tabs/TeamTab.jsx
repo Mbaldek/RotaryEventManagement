@@ -15,7 +15,7 @@
 import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { CREAM2, NAVY, MUTED, GOLD, INK, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, GOLD, INK, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { UI } from '../../i18n';
@@ -103,7 +103,7 @@ function RemoveButton({ email, role, onRevoke, busy }) {
               onChange={(e) => setTyped(e.target.value)}
               placeholder={t(CLUB_TEAM.confirmRemoveTyped)}
               className="flex-1 text-[12.5px] rounded-[4px] px-2 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             />
             <button
               type="button"
@@ -120,7 +120,7 @@ function RemoveButton({ email, role, onRevoke, busy }) {
               onClick={() => { setOpen(false); setTyped(''); setError(null); }}
               disabled={busy}
               className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-[4px] text-[12.5px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
             >
               {t(UI.cancel)}
             </button>
@@ -180,7 +180,7 @@ export default function TeamTab({ clubId }) {
   return (
     <section
       className="rounded-[4px] p-5 mb-6"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-4 flex items-center gap-3 flex-wrap">
         <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -238,7 +238,7 @@ export default function TeamTab({ clubId }) {
               onChange={(e) => setNewEmail(e.target.value)}
               placeholder={t(CLUB_TEAM.emailPlaceholder)}
               className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             />
           </div>
           <div>
@@ -248,7 +248,7 @@ export default function TeamTab({ clubId }) {
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
               className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             >
               {CLUB_ROLE_OPTIONS.map((r) => (
                 <option key={r} value={r}>{roleLabelText(r, t)}</option>

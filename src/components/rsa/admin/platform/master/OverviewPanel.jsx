@@ -37,7 +37,7 @@ import { motion } from 'framer-motion';
 import { Trash2, Trophy, Megaphone, ShieldCheck, UserPlus, Users, Sparkles, Activity } from 'lucide-react';
 import {
   Eyebrow, EditorialTitle, CREAM2, NAVY, INK, MUTED, GOLD, GOLD_TEXT,
-  GREEN_TODAY, SERIF, EASE,
+  GREEN_TODAY, SERIF, EASE, TINT_ADMIN,
 } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { OVERVIEW, ROLES } from './i18n';
@@ -164,7 +164,7 @@ function KpiRail({
   return (
     <aside
       className="rounded-[4px] sticky top-4 self-start"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       aria-label={t(OVERVIEW.kpiRailEyebrow)}
     >
       <div className="px-4 pt-4 pb-3">
@@ -231,7 +231,7 @@ function ActivityFeedSection({ feedQ }) {
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px dashed ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px dashed ${CREAM2}` }}
       >
         <Activity
           className="w-5 h-5 mx-auto mb-2"
@@ -413,7 +413,7 @@ export default function OverviewPanel() {
         {!active && (
           <div
             className="rounded-[4px] p-6 text-center"
-            style={{ background: 'white', border: `1px dashed ${CREAM2}` }}
+            style={{ background: TINT_ADMIN, border: `1px dashed ${CREAM2}` }}
           >
             <p className="text-[12.5px]" style={{ color: INK }}>
               {t(OVERVIEW.chartsNoActive)}

@@ -11,7 +11,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Loader2, Save } from 'lucide-react';
-import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import EligibilityRulesEditor from '@/components/rsa/eligibility/EligibilityRulesEditor';
 import { UI } from '../../i18n';
@@ -56,7 +56,7 @@ export default function RulesTab({ edition, clubId }) {
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <p className="text-[13px]" style={{ color: MUTED }}>{t(UI.loading)}</p>
       </div>
@@ -66,7 +66,7 @@ export default function RulesTab({ edition, clubId }) {
   return (
     <section
       className="rounded-[4px] p-5 mb-6"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-4 flex items-center gap-3 flex-wrap">
         <h3

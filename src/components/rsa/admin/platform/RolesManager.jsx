@@ -8,7 +8,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, Save } from 'lucide-react';
-import { CREAM2, NAVY, MUTED, GOLD, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, GOLD, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { UI, SETUP, ROLE_OPTIONS } from './i18n';
@@ -124,7 +124,7 @@ export default function RolesManager() {
   return (
     <section
       className="rounded-[4px] p-5 mb-6"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-4 flex items-center gap-3 flex-wrap">
         <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -151,7 +151,7 @@ export default function RolesManager() {
               onChange={(e) => setNewEmail(e.target.value)}
               placeholder={t(SETUP.emailPlaceholder)}
               className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
             />
           </div>
           <div>

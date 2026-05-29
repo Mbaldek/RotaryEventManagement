@@ -12,7 +12,7 @@
 import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, Trophy, Trash2 } from 'lucide-react';
 import {
-  CREAM2, NAVY, MUTED, INK, GOLD, FOCUS_RING_CLASS, SERIF, StatusPill,
+  CREAM2, NAVY, MUTED, INK, GOLD, FOCUS_RING_CLASS, SERIF, StatusPill, TINT_ADMIN,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -50,7 +50,7 @@ function CompetitionPicker({ value, onChange, options }) {
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         className="rounded-[4px] px-2.5 py-1.5 text-[12.5px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-        style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
       >
         {options.length === 0 && <option value="">—</option>}
         {options.map((c) => (
@@ -111,7 +111,7 @@ function ChampionsByClub({ competition }) {
           <li
             key={club.id}
             className="rounded-[4px] p-4"
-            style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+            style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
           >
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               <Trophy className="w-4 h-4" style={{ color: GOLD }} aria-hidden />
@@ -242,7 +242,7 @@ function FinaleSessionRow({ competition }) {
   return (
     <section
       className="rounded-[4px] p-5 mb-6"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-3 flex items-center gap-3 flex-wrap">
         <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -277,7 +277,7 @@ function FinaleSessionRow({ competition }) {
           <a
             href={`/Admin?tab=live&edition=${encodeURIComponent(competition.id)}&session=${encodeURIComponent(finale.data.id)}`}
             className="inline-flex items-center gap-1 text-[12px] px-2.5 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-            style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: 'white' }}
+            style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
           >
             {t(FINALE.finaleLink)}
           </a>
@@ -312,7 +312,7 @@ function FinaleSessionRow({ competition }) {
                 value={form.id}
                 onChange={(e) => setForm((p) => ({ ...p, id: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
               <p className="mt-1 text-[11px]" style={{ color: MUTED }}>{t(FINALE.finaleIdHint)}</p>
             </div>
@@ -324,7 +324,7 @@ function FinaleSessionRow({ competition }) {
                 value={form.name}
                 onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
             <div>
@@ -335,7 +335,7 @@ function FinaleSessionRow({ competition }) {
                 value={form.session_date}
                 onChange={(e) => setForm((p) => ({ ...p, session_date: e.target.value }))}
                 className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+                style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
               />
             </div>
           </div>
@@ -354,7 +354,7 @@ function FinaleSessionRow({ competition }) {
               type="button"
               onClick={() => { setShowForm(false); setError(null); }}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-[12.5px]"
-              style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+              style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
             >
               {t(UI.cancel)}
             </button>
@@ -483,7 +483,7 @@ function FinalePoolSection({ competition }) {
   return (
     <section
       className="rounded-[4px] p-5 mb-6"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-3 flex items-baseline gap-3 flex-wrap">
         <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -548,7 +548,7 @@ function FinalePoolSection({ competition }) {
                       type="button"
                       onClick={() => { setConfirm({ startupId: row.startup_id, startupName: row.startup?.name || row.startup_id }); setTyped(''); setError(null); }}
                       className="inline-flex items-center gap-1 text-[11.5px] px-2 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-                      style={{ color: DANGER, border: `1px solid ${CREAM2}`, background: 'white' }}
+                      style={{ color: DANGER, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
                     >
                       <Trash2 className="w-3.5 h-3.5" /> {t(FINALE.poolRemoveAction)}
                     </button>

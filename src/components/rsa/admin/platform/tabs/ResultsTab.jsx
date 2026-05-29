@@ -11,7 +11,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Loader2, Rocket, Download } from 'lucide-react';
-import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { weightedScore } from '@/lib/rsa/constants';
@@ -141,7 +141,7 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <p className="text-[13px]" style={{ color: MUTED }}>{t(RESULTS.noPublishedYet)}</p>
       </div>
@@ -153,7 +153,7 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
       {/* A. Per-session palmares */}
       <section
         className="rounded-[4px] p-5 mb-6"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <header className="mb-4 flex items-center gap-3 flex-wrap">
           <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -181,7 +181,7 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
                 type="button"
                 onClick={downloadCsv}
                 className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px]"
-                style={{ color: INK, border: `1px solid ${CREAM2}`, background: 'white' }}
+                style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
               >
                 <Download className="w-4 h-4" /> {t(RESULTS.csv)}
               </button>
@@ -238,7 +238,7 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
       {/* B. Cross-session view */}
       <section
         className="rounded-[4px] p-5 mb-6"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <header className="mb-4 flex items-center gap-3 flex-wrap">
           <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
@@ -257,7 +257,7 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
                 <li
                   key={s.id}
                   className="rounded-[4px] p-3"
-                  style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+                  style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
                 >
                   <div className="flex items-start gap-2 flex-wrap">
                     <div className="flex-1 min-w-0">
@@ -304,7 +304,7 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
 function RankingTable({ rows, variant, startupsById }) {
   const { t } = useLang();
   return (
-    <div className="overflow-x-auto rounded-[4px]" style={{ background: 'white', border: `1px solid ${CREAM2}` }}>
+    <div className="overflow-x-auto rounded-[4px]" style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}>
       <table className="min-w-full">
         <thead style={{ borderBottom: `1px solid ${CREAM2}` }}>
           <tr>

@@ -16,7 +16,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import {
-  CREAM2, GOLD, MUTED, NAVY, SERIF,
+  CREAM2, GOLD, MUTED, NAVY, SERIF, TINT_ADMIN,
 } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import CockpitTabs from '@/components/design/shell/CockpitTabs';
@@ -152,7 +152,7 @@ export default function CompetitionEditView({ editionId, onClose }) {
           type="button"
           onClick={onClose}
           className="mt-3 inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px]"
-          style={{ background: 'white', color: NAVY, border: `1px solid ${CREAM2}` }}
+          style={{ background: TINT_ADMIN, color: NAVY, border: `1px solid ${CREAM2}` }}
         >
           <ArrowLeft className="w-4 h-4" /> {t(COMP.backToCompetitions)}
         </button>
@@ -168,7 +168,7 @@ export default function CompetitionEditView({ editionId, onClose }) {
           type="button"
           onClick={onClose}
           className="inline-flex items-center gap-1.5 text-[12.5px] px-2.5 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
-          style={{ background: 'white', color: NAVY, border: `1px solid ${CREAM2}` }}
+          style={{ background: TINT_ADMIN, color: NAVY, border: `1px solid ${CREAM2}` }}
         >
           <ArrowLeft className="w-4 h-4" aria-hidden />
           {t(COMP.backToCompetitions)}
@@ -218,7 +218,7 @@ export default function CompetitionEditView({ editionId, onClose }) {
         role="tabpanel"
         aria-labelledby={`competition-edit-tab-${activeTab}`}
         className="rounded-[4px] p-5 mb-4"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         {tabs.find((tab) => tab.id === activeTab)?.render?.()}
       </div>

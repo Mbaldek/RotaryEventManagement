@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Plus, Check, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
-  NAVY, INK, GOLD, CREAM2, MUTED, SERIF, EASE,
+  NAVY, INK, GOLD, CREAM2, MUTED, SERIF, EASE, TINT_ADMIN,
 } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -43,7 +43,7 @@ function KindFilter({ value, onChange }) {
             onClick={() => onChange(p.id)}
             className="px-3 py-1 rounded-full text-[11.5px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] transition-colors"
             style={{
-              background: active ? NAVY : 'white',
+              background: active ? NAVY : TINT_ADMIN,
               color: active ? 'white' : INK,
               border: `1px solid ${active ? NAVY : CREAM2}`,
             }}
@@ -65,7 +65,7 @@ function Card({ extension, isInstalled, onInstall, busy, t }) {
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.22, ease: EASE }}
       className="rounded-[4px] p-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <div className="flex items-start gap-2 mb-2 flex-wrap">
         <span
@@ -76,7 +76,7 @@ function Card({ extension, isInstalled, onInstall, busy, t }) {
         </span>
         <span
           className="inline-flex items-center text-[10.5px] uppercase tracking-[0.14em] font-medium px-2 py-0.5 rounded-full"
-          style={{ background: 'white', color: MUTED, border: `1px solid ${CREAM2}` }}
+          style={{ background: TINT_ADMIN, color: MUTED, border: `1px solid ${CREAM2}` }}
         >
           {t(MARKETPLACE_UI.badgeMaster)}
         </span>
@@ -101,7 +101,7 @@ function Card({ extension, isInstalled, onInstall, busy, t }) {
           disabled={isInstalled || busy}
           className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] disabled:opacity-50"
           style={{
-            background: isInstalled ? 'white' : NAVY,
+            background: isInstalled ? TINT_ADMIN : NAVY,
             color: isInstalled ? NAVY : 'white',
             border: `1px solid ${NAVY}`,
           }}
@@ -164,7 +164,7 @@ export default function MarketplaceTab({ clubId }) {
   return (
     <section
       className="rounded-[4px] p-5 mb-6"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-3 flex items-baseline justify-between flex-wrap gap-2">
         <div>
@@ -221,7 +221,7 @@ export default function MarketplaceTab({ clubId }) {
       {!masterExtsQ.isLoading && filtered.length === 0 && (
         <div
           className="rounded-[4px] p-6 text-center"
-          style={{ background: 'white', border: `1px dashed ${CREAM2}` }}
+          style={{ background: TINT_ADMIN, border: `1px dashed ${CREAM2}` }}
         >
           <h4
             className="text-[15px] mb-1"

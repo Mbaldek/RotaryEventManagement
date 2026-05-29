@@ -12,7 +12,7 @@
 // sont déjà nécessaires en SETUP/LIVE).
 
 import React from 'react';
-import { CREAM2, NAVY, MUTED, GOLD, INK } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, GOLD, INK, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { STRIP } from './i18n';
 import { useSessionsAdmin, useStartupsSummary } from './useAdmin';
@@ -37,7 +37,7 @@ export default function ModuleStatusStrip({ edition }) {
     return (
       <div
         className="rounded-[4px] px-4 py-2.5 mb-5 text-[12.5px]"
-        style={{ background: 'white', border: `1px solid ${CREAM2}`, color: INK }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: INK }}
       >
         {t(STRIP.noEdition)}
       </div>
@@ -53,7 +53,7 @@ export default function ModuleStatusStrip({ edition }) {
   return (
     <div
       className="rounded-[4px] px-4 py-2.5 mb-6 flex items-center gap-x-5 gap-y-2 flex-wrap text-[12px]"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <span className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: MUTED }}>
         {t(STRIP.m4Label)} · {edition.name}

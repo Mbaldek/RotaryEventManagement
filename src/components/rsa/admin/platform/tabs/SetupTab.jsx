@@ -6,7 +6,7 @@
 // `edition` et `sessions` sont fournis par AdminShell pour éviter les doubles fetch.
 
 import React from 'react';
-import { CREAM2, MUTED } from '@/components/design/tokens';
+import { CREAM2, MUTED, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { UI } from '../i18n';
 import EditionEditor from '../EditionEditor';
@@ -20,7 +20,7 @@ export default function SetupTab({ edition, sessions, isSessionsLoading, onSelec
     return (
       <div
         className="rounded-[4px] p-6 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         <p className="text-[13px]" style={{ color: MUTED }}>{t(UI.loading)}</p>
       </div>
