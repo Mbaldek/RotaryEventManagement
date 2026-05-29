@@ -40,6 +40,13 @@ pin admi
 secrets/
 *.secret
 
+# OAuth client secret JSONs (Google Cloud Console, Azure download)
+# JAMAIS commit ces fichiers — secrets en clair dedans.
+client_secret_*.json
+*-oauth-client.json
+google-credentials.json
+azure-credentials.json
+
 # Playwright artifacts
 playwright-report/
 test-results/
