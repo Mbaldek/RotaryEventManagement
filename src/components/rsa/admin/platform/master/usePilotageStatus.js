@@ -29,6 +29,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { usePlatformAuth } from '@/lib/platform/auth';
 import { useClubsForEdition, useCountsForEdition } from './useMaster';
 
 // Champs identité/calendrier/règles pris en compte pour le "step 1 done %".
@@ -81,6 +82,16 @@ export default function usePilotageStatus({ competition }) {
   const editionId = competition?.id || null;
   const isMonoclub = (competition?.model || 'multiclub') === 'monoclub';
 
+  // V3 — Fallback "couverture admin" : un master_admin global ou un
+  // competition_admin de cette édition couvre tous les clubs (peuvent agir sur
+  // n'importe quel club de l'édition via les RPC étendues 20260602/20260603).
+  // Si l'un des deux existe, on considère que chaque club a un admin "couvert",
+  // même sans club_admin local — sinon le step 3 reste TODO en permanence pour
+  // les éditions pilotées en central.
+  const { isMasterAdmin, isCompetitionAdminOf } = usePlatformAuth();
+  const editionHasGlobalCoverage =
+    !!editionId && (isMasterAdmin || isCompetitionAdminOf?.(editionId));
+
   // 1) Clubs attachés (junction edition_clubs)
   const attachedQ = useClubsForEdition(editionId);
   const attached = useMemo(() => attachedQ.data || [], [attachedQ.data]);
@@ -123,9 +134,13 @@ export default function usePilotageStatus({ competition }) {
       name: row.club?.name || row.club_id,
     }));
 
-    const clubsMissingAdmin = attachedListEnriched.filter(
-      (c) => !clubsWithAdminSet.has(c.id),
-    );
+    // V3 — Si un master_admin OU competition_admin couvre toute l'édition,
+    // chaque club est implicitement "administré" (ils peuvent agir sur tous les
+    // clubs via les RPC étendues 20260602/20260603). Sinon, on retombe sur la
+    // règle d'origine : il faut un club_admin local à chaque club.
+    const clubsMissingAdmin = editionHasGlobalCoverage
+      ? []
+      : attachedListEnriched.filter((c) => !clubsWithAdminSet.has(c.id));
     const clubsMissingSessions = attachedListEnriched.filter(
       (c) => !clubsWithSessionsSet.has(c.id),
     );

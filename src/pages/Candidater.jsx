@@ -37,6 +37,7 @@ import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import OpenCompetitions from '@/components/rsa/candidature/OpenCompetitions';
 import Step1Picker from '@/components/rsa/candidature/Step1Picker';
+import PublicEventBadge from '@/components/rsa/public/PublicEventBadge';
 import { Startup } from '@/lib/rsa/entities';
 
 const T = {
@@ -268,6 +269,12 @@ export default function Candidater() {
         >
           {t(T.subtitle)}
         </p>
+        <PublicEventBadge
+          editionId={initialEdition}
+          clubId={initialClub}
+          kind="startup"
+          className="mt-6"
+        />
       </header>
 
       {/* Rail de progression candidat — cohérent avec MonDossier. Étape 1 = Dossier. */}

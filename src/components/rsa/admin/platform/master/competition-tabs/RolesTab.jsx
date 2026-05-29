@@ -286,7 +286,7 @@ function CompetitionAdminsSection({ editionId, editionName, canMutate, t, lang }
         </form>
       )}
 
-      <div className="rounded-[4px] overflow-hidden" style={{ background: 'white', border: `1px solid ${CREAM2}` }}>
+      <div className="rounded-[4px] overflow-hidden" style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}>
         {adminsQ.isLoading && (
           <div className="py-6 flex justify-center">
             <Loader2 className="w-5 h-5 animate-spin" style={{ color: MUTED }} />
@@ -392,13 +392,13 @@ function ClubTeamPanel({ club, editionId, defaultOpen, t }) {
   return (
     <li
       className="rounded-[4px] overflow-hidden"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={`w-full flex items-center gap-3 px-4 py-3 text-left ${FOCUS_RING_CLASS}`}
-        style={{ background: open ? TINT_ADMIN : 'white' }}
+        style={{ background: open ? '#fdf6e8' : TINT_ADMIN }}
         aria-expanded={open}
       >
         {open

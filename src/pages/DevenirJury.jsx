@@ -24,6 +24,7 @@ import {
 } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import JuryApplicationForm from '@/components/rsa/jury-application/JuryApplicationForm';
+import PublicEventBadge from '@/components/rsa/public/PublicEventBadge';
 import { UI } from '@/components/rsa/jury-application/i18n';
 
 export default function DevenirJury() {
@@ -98,6 +99,11 @@ export default function DevenirJury() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE, delay: 0.45 }}
       >
+        <PublicEventBadge
+          editionId={initialEdition}
+          clubId={initialClub}
+          kind="jury"
+        />
         <JuryApplicationForm
           initialEdition={initialEdition}
           initialClub={initialClub}

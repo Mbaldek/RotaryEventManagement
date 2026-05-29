@@ -46,9 +46,10 @@ export default function FinaleSection({ values = {}, onPatch, disabled = false }
 
   return (
     <div
-      className="space-y-5"
+      className="rounded-[4px] p-5 space-y-5"
       role="region"
       aria-labelledby="competition-finale-section-heading"
+      style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <header className="space-y-2">
         <h3
@@ -84,7 +85,7 @@ export default function FinaleSection({ values = {}, onPatch, disabled = false }
       {enabled && (
         <div
           className="rounded-[4px] p-5 space-y-5"
-          style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+          style={{ background: 'white', border: `1px solid ${CREAM2}` }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <TextRow

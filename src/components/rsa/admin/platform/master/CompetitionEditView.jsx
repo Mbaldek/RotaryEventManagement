@@ -35,6 +35,7 @@ import PrizesTab from './competition-tabs/PrizesTab';
 import CommunicationTab from './competition-tabs/CommunicationTab';
 import CommunicationTabRefonte from './competition-tabs/CommunicationTabRefonte';
 import RolesTab from './competition-tabs/RolesTab';
+import SessionsTab from './competition-tabs/SessionsTab';
 import FinaleSection from './competition-tabs/FinaleSection';
 import { FinaleManagement } from './tabs/FinaleTab';
 import DeleteCompetitionModal from './DeleteCompetitionModal';
@@ -152,6 +153,11 @@ export default function CompetitionEditView({ editionId, onClose }) {
       id: 'prizes',
       label: t(COMP.tabPrizes),
       render: () => <PrizesTab competition={competitionRef} mode="edit" />,
+    },
+    {
+      id: 'sessions',
+      label: t(COMP.tabSessions),
+      render: () => <SessionsTab editionId={editionId} />,
     },
     {
       id: 'finale',

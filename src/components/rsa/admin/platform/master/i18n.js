@@ -483,6 +483,11 @@ export const COMP = {
     en: 'Roles',
     de: 'Rollen',
   },
+  tabSessions: {
+    fr: 'Sessions',
+    en: 'Sessions',
+    de: 'Sessions',
+  },
   // Autosave status indicator
   autosaveSaving: {
     fr: 'Enregistrement…',
@@ -609,9 +614,9 @@ export const COMP = {
 // sessions à configurer, finale à activer, URLs publiques à diffuser).
 export const PILOTAGE = {
   tabLabel: {
-    fr: 'Pilotage',
-    en: 'Pilot',
-    de: 'Steuerung',
+    fr: 'Vue d’ensemble',
+    en: 'Overview',
+    de: 'Übersicht',
   },
   eyebrow: {
     fr: 'Mise en route',
