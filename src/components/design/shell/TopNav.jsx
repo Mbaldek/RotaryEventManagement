@@ -86,6 +86,8 @@ export default function TopNav({
 
   return (
     <header
+      id="nav"
+      role="banner"
       className="sticky top-0 z-50"
       style={{ background: NAVY, borderBottom: "1px solid rgba(201,168,76,0.18)" }}
     >

@@ -64,3 +64,13 @@ export function useActivateExtension() {
     onSuccess: () => invalidateExtensions(qc),
   });
 }
+
+// V4 Marketplace — installe une extension master vers un club (clone côté SQL).
+export function useInstallExtensionToClub() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ masterExtensionId, clubId }) =>
+      Extension.installToClub({ masterExtensionId, clubId }),
+    onSuccess: () => invalidateExtensions(qc),
+  });
+}

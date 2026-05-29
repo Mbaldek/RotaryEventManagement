@@ -29,7 +29,7 @@ import { Check, Loader2, X } from 'lucide-react';
 import {
   CREAM, CREAM2, NAVY, GOLD, INK, MUTED, SERIF, EASE, TINT_SAGE, GREEN_TODAY,
 } from '@/components/design/tokens';
-import { DANGER } from '@/components/design/tokens.app';
+import { DANGER, GOLD_TEXT } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { COMP, UI } from '../master/i18n';
 
@@ -128,6 +128,9 @@ export default function FunnelEditorModal({
   const { t } = useLang();
   const overlayRef = useRef(null);
   const dialogRef = useRef(null);
+  const titleId = useRef(`funnel-modal-title-${Math.random().toString(36).slice(2, 8)}`).current;
+  // WCAG 2.4.3 — restore focus to the trigger element when the dialog closes.
+  const triggerRef = useRef(null);
   const [requestClose, setRequestClose] = useState(false);
 
   const handleAttemptedClose = useCallback(() => {
@@ -154,9 +157,13 @@ export default function FunnelEditorModal({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, handleAttemptedClose]);
 
-  // Body scroll lock + focus initial.
+  // Body scroll lock + focus initial + focus restoration on close (WCAG 2.4.3).
   useEffect(() => {
     if (!open) return undefined;
+    // Remember the element that had focus right before the modal opened, so we
+    // can restore focus to it when the dialog closes — required for accessible
+    // dialog patterns (return-focus to the trigger).
+    triggerRef.current = (typeof document !== 'undefined' && document.activeElement) || null;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     // Place le focus sur le dialog au mount (focus trap minimal).
@@ -170,6 +177,14 @@ export default function FunnelEditorModal({
     }
     return () => {
       document.body.style.overflow = prev;
+      // Restore focus to the trigger after the modal is gone. We defer to the
+      // next tick so any focus-stealing exit animation has settled.
+      const toRestore = triggerRef.current;
+      if (toRestore && typeof toRestore.focus === 'function') {
+        setTimeout(() => {
+          try { toRestore.focus({ preventScroll: true }); } catch { /* noop */ }
+        }, 0);
+      }
     };
   }, [open]);
 
@@ -232,7 +247,7 @@ export default function FunnelEditorModal({
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
-            aria-label={title}
+            aria-labelledby={titleId}
             initial={{ opacity: 0, scale: 0.97, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -253,12 +268,13 @@ export default function FunnelEditorModal({
                 {eyebrow && (
                   <p
                     className="uppercase tracking-[0.18em] text-[10.5px] font-medium mb-1"
-                    style={{ color: GOLD }}
+                    style={{ color: GOLD_TEXT }}
                   >
                     {eyebrow}
                   </p>
                 )}
                 <h2
+                  id={titleId}
                   className="text-[22px] md:text-[26px] leading-tight"
                   style={{ fontFamily: SERIF, color: NAVY, fontWeight: 400 }}
                 >

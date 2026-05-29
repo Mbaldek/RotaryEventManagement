@@ -20,6 +20,7 @@
 import React from "react";
 import { CREAM, NAVY, FONTS_IMPORT } from "@/components/design/tokens";
 import TopNav from "@/components/design/shell/TopNav";
+import SkipLink from "@/components/design/shell/SkipLink";
 
 const SHELL_CSS = `
 ${FONTS_IMPORT}
@@ -49,6 +50,7 @@ export default function PageShell({
   nav = false,
   footer = null,
   halo = true,
+  skipLink = true,
   className = "",
   children,
 }) {
@@ -57,6 +59,9 @@ export default function PageShell({
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: CREAM, color: NAVY }}>
       <style>{SHELL_CSS}</style>
+
+      {/* WCAG 2.1 SC 2.4.1 bypass-block — visible only on keyboard focus. */}
+      {skipLink && <SkipLink />}
 
       {halo && (
         <>
@@ -76,9 +81,13 @@ export default function PageShell({
       {/* Top nav: pass a node, or `true` for the default role-aware TopNav. */}
       {nav === true ? <TopNav /> : nav}
 
-      <div className={`relative ${container} mx-auto px-5 md:px-8 pt-10 md:pt-16 pb-20 ${className}`}>
+      <main
+        id="main"
+        tabIndex={-1}
+        className={`relative ${container} mx-auto px-5 md:px-8 pt-10 md:pt-16 pb-20 outline-none ${className}`}
+      >
         {children}
-      </div>
+      </main>
 
       {footer}
     </div>

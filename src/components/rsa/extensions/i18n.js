@@ -86,6 +86,65 @@ export const EXT_UI = {
   },
 };
 
+// ── Marketplace V4 ─────────────────────────────────────────────────────────
+export const MARKETPLACE_UI = {
+  navTitle: { fr: 'Marketplace', en: 'Marketplace', de: 'Marktplatz' },
+  navSubtitle: {
+    fr: 'Catalogue d’extensions de la plateforme',
+    en: 'Platform extensions catalogue',
+    de: 'Katalog der Plattform-Erweiterungen',
+  },
+  eyebrow: {
+    fr: 'Marketplace',
+    en: 'Marketplace',
+    de: 'Marktplatz',
+  },
+  pageTitle: {
+    fr: 'Étendez votre cockpit avec les extensions de la plateforme',
+    en: 'Extend your cockpit with the platform extensions',
+    de: 'Erweitern Sie Ihr Cockpit mit den Plattform-Erweiterungen',
+  },
+  pageSubtitle: {
+    fr: 'Les extensions ci-dessous sont publiées par les administrateurs de la plateforme. Activez-en une dans votre club pour en disposer immédiatement.',
+    en: 'The extensions below are published by the platform administrators. Activate one for your club to start using it right away.',
+    de: 'Die folgenden Erweiterungen werden von den Plattform-Administratoren bereitgestellt. Aktivieren Sie eine für Ihren Club, um sie sofort zu nutzen.',
+  },
+  loading:    { fr: 'Chargement…',  en: 'Loading…',  de: 'Wird geladen…' },
+  emptyTitle: { fr: 'Aucune extension publiée', en: 'No published extension', de: 'Keine veröffentlichte Erweiterung' },
+  emptyBody: {
+    fr: 'Le catalogue est vide pour l’instant. Le master admin doit publier des extensions scope=plateforme actives.',
+    en: 'The catalogue is empty for now. The master admin must publish active platform-scope extensions.',
+    de: 'Der Katalog ist derzeit leer. Der Master-Admin muss aktive Plattform-Erweiterungen veröffentlichen.',
+  },
+  filterAll: { fr: 'Tous',          en: 'All',        de: 'Alle' },
+  install:   { fr: 'Activer pour mon club', en: 'Activate for my club', de: 'Für meinen Club aktivieren' },
+  installing: { fr: 'Activation…',  en: 'Activating…', de: 'Aktivierung…' },
+  installed: { fr: 'Activée',       en: 'Activated',   de: 'Aktiviert' },
+  installAnother: { fr: 'Choisir un autre club', en: 'Pick another club', de: 'Anderen Club wählen' },
+  pickClub: {
+    fr: 'Pour quel club ?',
+    en: 'For which club?',
+    de: 'Für welchen Club?',
+  },
+  notSignedIn: {
+    fr: 'Connectez-vous pour activer une extension dans votre club.',
+    en: 'Sign in to activate an extension for your club.',
+    de: 'Melden Sie sich an, um eine Erweiterung für Ihren Club zu aktivieren.',
+  },
+  noClubRole: {
+    fr: 'Vous devez être administrateur d’au moins un club pour activer une extension.',
+    en: 'You must be admin of at least one club to activate an extension.',
+    de: 'Sie müssen Administrator mindestens eines Clubs sein, um eine Erweiterung zu aktivieren.',
+  },
+  errorTitle: { fr: 'Erreur',       en: 'Error',       de: 'Fehler' },
+  installSuccess: {
+    fr: 'Extension activée. Vous pouvez la retrouver dans l’onglet Extensions du Cockpit Club.',
+    en: 'Extension activated. You can find it in the Extensions tab of the Club Cockpit.',
+    de: 'Erweiterung aktiviert. Sie finden sie im Tab „Erweiterungen“ des Club-Cockpits.',
+  },
+  badgeMaster: { fr: 'Plateforme',  en: 'Platform',    de: 'Plattform' },
+};
+
 // ── Kind labels (badges + sélecteurs) ───────────────────────────────────────
 export const EXT_KIND_LABELS = {
   funnel_step: {

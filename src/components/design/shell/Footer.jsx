@@ -24,7 +24,12 @@ export default function Footer({ left, right, width = "narrow", className = "" }
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative" style={{ borderTop: `1px solid ${CREAM2}` }}>
+    <footer
+      id="footer"
+      role="contentinfo"
+      className="relative"
+      style={{ borderTop: `1px solid ${CREAM2}` }}
+    >
       <div
         className={`${container} mx-auto px-5 md:px-8 py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ${className}`}
       >

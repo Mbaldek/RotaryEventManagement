@@ -21,7 +21,7 @@ const T = {
   empty: {
     fr: 'Aucune candidature ouverte pour le moment.',
     en: 'No application open at the moment.',
-    de: 'Derzeit ist keine Bewerbung möffnet.',
+    de: 'Derzeit ist keine Bewerbung geöffnet.',
   },
   cta: { fr: 'Candidater', en: 'Apply', de: 'Bewerben' },
   deadline: { fr: 'Clôture le', en: 'Closes on', de: 'Anmeldeschluss' },

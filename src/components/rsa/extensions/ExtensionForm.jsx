@@ -16,6 +16,7 @@
 // côté client). Le JSON schema autogen arrive en V4 (un schema par kind).
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import { Field, TextInput, Textarea, Select } from '@/components/design';
 import { NAVY, INK, GOLD, CREAM2, MUTED } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
@@ -23,6 +24,7 @@ import { useLang } from '@/lib/platform/i18n';
 import FunnelEditorModal from '../admin/platform/funnel/FunnelEditorModal';
 import { EXT_FORM, EXT_UI, EXT_KIND_LABELS, EXT_SCOPE_LABELS } from './i18n';
 import { EXTENSION_KINDS } from '@/lib/rsa/extensions';
+import { EXAMPLE_CONFIGS, validateExtensionConfig } from './schemas';
 
 function safeStringify(obj) {
   try {
@@ -84,6 +86,15 @@ export default function ExtensionForm({
 
   const configParsed = useMemo(() => parseJsonOrError(configRaw), [configRaw]);
 
+  // V4 — validation côté client de p_config selon le kind sélectionné.
+  // Le RPC reste la source de vérité côté serveur, mais on rejette tôt pour
+  // éviter le round-trip + remonter des messages d'erreur précis avant submit.
+  const schemaIssues = useMemo(() => {
+    if (configParsed.error || !configParsed.value) return [];
+    const r = validateExtensionConfig(kind, configParsed.value);
+    return r.ok ? [] : r.errors;
+  }, [kind, configParsed.error, configParsed.value]);
+
   const errors = useMemo(() => {
     const out = {};
     if (!name || name.trim().length < 2) {
@@ -91,9 +102,16 @@ export default function ExtensionForm({
     }
     if (configParsed.error) {
       out.config = t(EXT_FORM.configInvalid);
+    } else if (schemaIssues.length > 0) {
+      out.config = schemaIssues.join(' · ');
     }
     return out;
-  }, [name, configParsed.error, t]);
+  }, [name, configParsed.error, schemaIssues, t]);
+
+  function loadExampleForKind() {
+    const ex = EXAMPLE_CONFIGS[kind];
+    if (ex) setConfigRaw(JSON.stringify(ex, null, 2));
+  }
 
   async function handleSubmit() {
     setError(null);
@@ -219,6 +237,26 @@ export default function ExtensionForm({
 
   const renderConfig = () => (
     <div className="flex flex-col gap-5">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-[12px]" style={{ color: MUTED }}>
+          {t({
+            fr: `Schéma attendu pour le type « ${t(EXT_KIND_LABELS[kind])} ». La configuration est validée côté client avant envoi.`,
+            en: `Schema expected for kind "${t(EXT_KIND_LABELS[kind])}". Configuration is validated client-side before submit.`,
+            de: `Schema erwartet für Art „${t(EXT_KIND_LABELS[kind])}“. Die Konfiguration wird client-seitig validiert.`,
+          })}
+        </p>
+        <button
+          type="button"
+          onClick={loadExampleForKind}
+          disabled={status === 'saving'}
+          className="inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+          style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: 'white' }}
+        >
+          <Sparkles className="w-3 h-3" style={{ color: GOLD }} aria-hidden />
+          {t({ fr: 'Charger un exemple', en: 'Load example', de: 'Beispiel laden' })}
+        </button>
+      </div>
+
       <Field
         label={t(EXT_FORM.configLabel)}
         helper={t(EXT_FORM.configHint)}
@@ -238,6 +276,24 @@ export default function ExtensionForm({
           />
         )}
       </Field>
+
+      {schemaIssues.length > 0 && !configParsed.error && (
+        <div
+          className="rounded-[4px] p-2.5 text-[11.5px]"
+          style={{ background: 'white', color: INK, border: `1px solid ${CREAM2}` }}
+          role="alert"
+          aria-live="polite"
+        >
+          <p className="uppercase tracking-[0.14em] text-[10.5px] mb-1" style={{ color: MUTED }}>
+            {t({ fr: 'Validation du schéma', en: 'Schema validation', de: 'Schemavalidierung' })}
+          </p>
+          <ul className="list-disc ml-4">
+            {schemaIssues.slice(0, 6).map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 

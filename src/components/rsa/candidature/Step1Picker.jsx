@@ -28,7 +28,7 @@ import {
   NAVY, GOLD, INK, MUTED, CREAM2, SERIF, EASE,
   Field, TextInput, Select,
 } from '@/components/design';
-import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
+import { DANGER, TINT_DANGER, GOLD_TEXT } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { Edition, Startup } from '@/lib/rsa/entities';
@@ -263,7 +263,7 @@ export default function Step1Picker({ initialEdition = null, initialClub = null,
           <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
           <span
             className="uppercase text-[10px] tracking-[0.18em] font-medium"
-            style={{ color: GOLD }}
+            style={{ color: GOLD_TEXT }}
           >
             {t(T.eyebrow)}
           </span>

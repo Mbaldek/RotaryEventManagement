@@ -26,9 +26,9 @@ import {
   Loader2, Send, CheckCircle2, AlertTriangle, Users, RotateCcw,
 } from 'lucide-react';
 import {
-  GOLD, NAVY, INK, MUTED, CREAM2, CREAM, SERIF, EASE,
+  NAVY, INK, MUTED, CREAM2, CREAM, SERIF, EASE,
 } from '@/components/design/tokens';
-import { DANGER } from '@/components/design/tokens.app';
+import { DANGER, GOLD_TEXT } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { supabase } from '@/lib/supabase';
 import { sendBulk } from '@/lib/platform/bulk';
@@ -369,7 +369,7 @@ function TemplateView({
       <div className="lg:col-span-2">
         <p
           className="uppercase tracking-[0.14em] text-[10.5px] mb-1.5"
-          style={{ color: GOLD }}
+          style={{ color: GOLD_TEXT }}
         >
           {t(COMMUNICATE_MODAL.previewTitle)}
         </p>

@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -5,14 +7,14 @@ import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion, MotionConfig } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { LanguageProvider } from '@/lib/platform/i18n';
 import { PlatformAuthProvider } from '@/lib/platform/auth';
 import ErrorBoundary from '@/lib/ErrorBoundary';
-import { CREAM2, INK } from '@/components/design/tokens';
+import { CREAM2, INK, GOLD } from '@/components/design/tokens';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -37,6 +39,20 @@ const LUNCH_PAGES = new Set([
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
+
+// V3 Vague 4 — Loader doré centré pendant le download d'un chunk lazy.
+// Couleur GOLD (#c9a84c) cohérente avec le design system Élysée.
+// On centre verticalement avec fixed inset-0 pour qu'on voie quelque chose
+// même quand la page lazy est lourde (Admin, Selection, RsaDashboard).
+const RouteFallback = () => (
+  <div
+    className="fixed inset-0 flex items-center justify-center"
+    role="status"
+    aria-label="Chargement de la page"
+  >
+    <Loader2 className="h-8 w-8 animate-spin" style={{ color: GOLD }} />
+  </div>
+);
 
 // PageTransition — fade-up subtil sur chaque changement de route.
 // Respecte prefers-reduced-motion via useReducedMotion() (framer-motion).
@@ -114,40 +130,48 @@ const AuthenticatedApp = () => {
   // AnimatedRoutes wrapper : fade-up subtil sur chaque changement de route (Élysée),
   // respecte prefers-reduced-motion. Pattern useLocation().pathname comme key (requis
   // par AnimatePresence + react-router-dom v6).
+  // V3 Vague 4 — <Suspense> wrappe les routes lazy-loaded. Toutes les pages
+  // sont désormais des React.lazy() chunks (cf. src/pages.config.js), donc on
+  // a besoin d'un fallback pendant le download du chunk JS de la page cible.
+  // Le Suspense est placé À L'INTÉRIEUR d'AnimatedRoutes pour que la page
+  // précédente ne disparaisse pas instantanément (AnimatePresence garde son
+  // exit animation côté ancienne route).
   return (
     <ErrorBoundary>
       <AnimatedRoutes>
-        <Routes>
-          <Route path="/" element={
-            isPlatformHost()
-              ? <Navigate to="/Login" replace />
-              : (
-                <LayoutWrapper currentPageName={mainPageKey}>
-                  <MainPage />
-                </LayoutWrapper>
-              )
-          } />
-          {Object.entries(Pages).map(([path, Page]) => (
-            <Route
-              key={path}
-              path={`/${path}`}
-              element={
-                // Host-gate (Option A) : sur app.rotary-startup.org, les pages déjeuners
-                // redirigent vers /Login pour ne plus "fuiter" sur le domaine plateforme.
-                isPlatformHost() && LUNCH_PAGES.has(path)
-                  ? <Navigate to="/Login" replace />
-                  : (
-                    <LayoutWrapper currentPageName={path}>
-                      <ErrorBoundary>
-                        <Page />
-                      </ErrorBoundary>
-                    </LayoutWrapper>
-                  )
-              }
-            />
-          ))}
-          <Route path="*" element={<PageNotFound />} />
-        </Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={
+              isPlatformHost()
+                ? <Navigate to="/Login" replace />
+                : (
+                  <LayoutWrapper currentPageName={mainPageKey}>
+                    <MainPage />
+                  </LayoutWrapper>
+                )
+            } />
+            {Object.entries(Pages).map(([path, Page]) => (
+              <Route
+                key={path}
+                path={`/${path}`}
+                element={
+                  // Host-gate (Option A) : sur app.rotary-startup.org, les pages déjeuners
+                  // redirigent vers /Login pour ne plus "fuiter" sur le domaine plateforme.
+                  isPlatformHost() && LUNCH_PAGES.has(path)
+                    ? <Navigate to="/Login" replace />
+                    : (
+                      <LayoutWrapper currentPageName={path}>
+                        <ErrorBoundary>
+                          <Page />
+                        </ErrorBoundary>
+                      </LayoutWrapper>
+                    )
+                }
+              />
+            ))}
+            <Route path="*" element={<PageNotFound />} />
+          </Routes>
+        </Suspense>
       </AnimatedRoutes>
     </ErrorBoundary>
   );
@@ -161,12 +185,17 @@ function App() {
       <LanguageProvider>
         <PlatformAuthProvider>
           <QueryClientProvider client={queryClientInstance}>
-            <Router>
-              <NavigationTracker />
-              <AuthenticatedApp />
-            </Router>
-            <Toaster />
-            <SonnerToaster
+            {/* MotionConfig reducedMotion="user" — WCAG 2.3.3 : Framer-Motion respects */}
+            {/* prefers-reduced-motion globally (page transitions, modal exits, …) when */}
+            {/* the OS / browser sets the preference. Components keep their motion */}
+            {/* definitions as-is — the runtime just zero-duration the values. */}
+            <MotionConfig reducedMotion="user">
+              <Router>
+                <NavigationTracker />
+                <AuthenticatedApp />
+              </Router>
+              <Toaster />
+              <SonnerToaster
               position="bottom-right"
               toastOptions={{
                 style: {
@@ -183,6 +212,7 @@ function App() {
                 },
               }}
             />
+            </MotionConfig>
           </QueryClientProvider>
         </PlatformAuthProvider>
       </LanguageProvider>

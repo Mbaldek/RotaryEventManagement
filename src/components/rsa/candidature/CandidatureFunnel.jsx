@@ -22,6 +22,9 @@ import StepProject from './steps/StepProject';
 import StepFinance from './steps/StepFinance';
 import StepDocuments from './steps/StepDocuments';
 import StepReview from './steps/StepReview';
+// V3 Vague 4 — extensions funnel_step rendues sous le step Documents (les
+// custom fields master/club sont persistés dans draft.extension_inputs).
+import ExtensionSlot from '@/components/rsa/extensions/ExtensionSlot';
 
 const AUTOSAVE_MS = 800;
 
@@ -194,15 +197,49 @@ export default function CandidatureFunnel({
     stepNode = <StepFinance value={draft} onChange={handleField} errors={errsFor('finance')} rules={rules} disabled={readOnly} />;
   } else if (step === 'documents') {
     stepNode = (
-      <StepDocuments
-        value={draft}
-        onChange={handleField}
-        errors={errsFor('documents')}
-        rules={rules}
-        editionId={edition?.id}
-        startupId={startup?.id}
-        disabled={readOnly}
-      />
+      <>
+        <StepDocuments
+          value={draft}
+          onChange={handleField}
+          errors={errsFor('documents')}
+          rules={rules}
+          editionId={edition?.id}
+          startupId={startup?.id}
+          disabled={readOnly}
+        />
+        {/* V3 Vague 4 — funnel_step extensions actives au scope master (visibles
+            par tous) + scope club du club d'examen.
+            NOTE V4.1 : la persistance de ces inputs dans une colonne JSONB de
+            la table startups arrive avec une migration dédiée. Pour V4, on
+            stocke dans draft.extension_inputs (state local) — l'autosave passe
+            mais le champ n'a pas encore de support DB, ce qui donne un retour
+            d'erreur silencieux (déjà swallow par TanStack Query onError). */}
+        <ExtensionSlot
+          kind="funnel_step"
+          scope="master"
+          values={draft.extension_inputs || {}}
+          onChange={(extId, vals) => {
+            setDraft((d) => ({
+              ...d,
+              extension_inputs: { ...(d.extension_inputs || {}), [extId]: vals },
+            }));
+          }}
+        />
+        {startup?.club_id && (
+          <ExtensionSlot
+            kind="funnel_step"
+            scope="club"
+            clubId={startup.club_id}
+            values={draft.extension_inputs || {}}
+            onChange={(extId, vals) => {
+              setDraft((d) => ({
+                ...d,
+                extension_inputs: { ...(d.extension_inputs || {}), [extId]: vals },
+              }));
+            }}
+          />
+        )}
+      </>
     );
   } else if (step === 'review') {
     stepNode = (

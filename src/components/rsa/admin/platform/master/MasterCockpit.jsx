@@ -37,6 +37,8 @@ import CompetitionEditView from './CompetitionEditView';
 import ClubEditView from './ClubEditView';
 // V3.0 — Plugins/Extensions architecture (Vague 1)
 import ExtensionsList from '@/components/rsa/extensions/ExtensionsList';
+// V4 — slot pour rendre les cockpit_tab + webhook scope=master au-dessus du CRUD
+import ExtensionSlot from '@/components/rsa/extensions/ExtensionSlot';
 // V3.0 Vague 3 — Analytics real-time (Feature F)
 import AnalyticsPanel from '@/components/rsa/analytics/AnalyticsPanel';
 
@@ -288,7 +290,14 @@ export default function MasterCockpit() {
                 clubId={null}
               />
             )}
-            {tab === 'extensions'   && <ExtensionsList scope="master" />}
+            {tab === 'extensions'   && (
+              <>
+                {/* V4 — rendu réel des cockpit_tab + webhook scope=master au-dessus du CRUD. */}
+                <ExtensionSlot kind="cockpit_tab" scope="master" />
+                <ExtensionSlot kind="webhook" scope="master" />
+                <ExtensionsList scope="master" />
+              </>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

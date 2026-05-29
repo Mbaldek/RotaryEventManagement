@@ -19,6 +19,10 @@ import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { COMMS_TEMPLATES, COMMS_UI, AUDIENCE_TYPES } from './i18n';
 import { useEmailTemplates, useSaveTemplate, useDeleteTemplate } from './useComms';
+// V3 Vague 4 — extensions kind='email_template' apparaissent ici comme
+// templates "marketplace" insérables (clic → composer). Source = table
+// extensions (RLS scope=master public-read + club_admin du club courant).
+import ExtensionSlot from '@/components/rsa/extensions/ExtensionSlot';
 
 function FieldLabel({ children, htmlFor }) {
   return (
@@ -373,6 +377,37 @@ export default function TemplatesLibrary({ clubId, onInsertTemplate }) {
           ))}
         </ul>
       )}
+
+      {/* V3 Vague 4 — templates publiés via le système d'extensions. Les
+          extensions scope=master sont publiques en lecture (RLS) ; les
+          extensions scope=club du club courant sont également listées. */}
+      <div className="mt-4 space-y-2">
+        <ExtensionSlot
+          kind="email_template"
+          scope="master"
+          onInsertDraft={(draft) => onInsertTemplate?.({
+            subject: draft.subject,
+            body: draft.bodyHtml,
+            audienceType: draft.audienceType,
+            audienceFilter: clubId ? { club_id: clubId } : {},
+            lang: draft.lang,
+          })}
+        />
+        {clubId && (
+          <ExtensionSlot
+            kind="email_template"
+            scope="club"
+            clubId={clubId}
+            onInsertDraft={(draft) => onInsertTemplate?.({
+              subject: draft.subject,
+              body: draft.bodyHtml,
+              audienceType: draft.audienceType,
+              audienceFilter: clubId ? { club_id: clubId } : {},
+              lang: draft.lang,
+            })}
+          />
+        )}
+      </div>
     </section>
   );
 }

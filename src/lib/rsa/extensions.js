@@ -111,6 +111,20 @@ export const Extension = {
     if (error) throw error;
     return unwrap(data);
   },
+
+  // V4 — Marketplace : clone une extension scope='master' active=true vers un
+  // club. Retourne la ligne créée (ou l'existante si kind+name déjà installés
+  // pour ce club, idempotence soft côté SQL).
+  async installToClub({ masterExtensionId, clubId }) {
+    if (!masterExtensionId) throw new Error('Extension.installToClub: masterExtensionId requis');
+    if (!clubId)            throw new Error('Extension.installToClub: clubId requis');
+    const { data, error } = await supabase.rpc('rsa_install_extension_to_club', {
+      p_master_extension_id: masterExtensionId,
+      p_club_id:             clubId,
+    });
+    if (error) throw error;
+    return unwrap(data);
+  },
 };
 
 export default Extension;

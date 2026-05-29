@@ -169,13 +169,20 @@ export default function Candidater() {
 
   // Si l'utilisateur est déjà authentifié SANS flag claim : on l'envoie sur
   // /MonDossier (il est déjà connecté, pas besoin de re-choisir).
+  // V3 bug bash V4 — préserve les query params `?edition=…&club=…` pour que les
+  // deep-links partagés par les clubs (ex. "candidatez à RSA 2027 - Paris") ne
+  // perdent pas leur contexte quand le destinataire est déjà loggé.
   useEffect(() => {
     if (claim) return;
     if (authLoading) return;
     if (isAuthenticated && authUser) {
-      navigate('/MonDossier', { replace: true });
+      const params = new URLSearchParams();
+      if (editionParam) params.set('edition', editionParam);
+      if (clubParam) params.set('club', clubParam);
+      const qs = params.toString();
+      navigate(qs ? `/MonDossier?${qs}` : '/MonDossier', { replace: true });
     }
-  }, [claim, authLoading, isAuthenticated, authUser, navigate]);
+  }, [claim, authLoading, isAuthenticated, authUser, navigate, editionParam, clubParam]);
 
   const initialEdition = useMemo(() => editionParam, [editionParam]);
   const initialClub = useMemo(() => clubParam, [clubParam]);

@@ -1,69 +1,61 @@
 // ExtensionSlot — point d'extension générique pour rendre les extensions
-// actives matching un scope donné (V3.0).
+// actives matching un scope donné.
 //
-// Usage futur (V4 marketplace) :
-//   <ExtensionSlot kind="funnel_step" scope="club" clubId={clubId} editionId={editionId} />
-//   <ExtensionSlot kind="cockpit_tab" scope="club" clubId={clubId} />
-//   <ExtensionSlot kind="email_template" scope="master" />
-//
-// Pour V1, ExtensionSlot rend un placeholder Élysée par extension active matching
-// le scope (carte hairline cream avec "Extension: {name}"). Le but est de
-// vérifier que le pipeline DB → entity → hook → composant fonctionne de bout
-// en bout.
-//
-// V4 ajoutera :
-//   - render dynamique selon kind (JSON-schema autogen pour funnel_step,
-//     iframe sandboxée pour cockpit_tab, MJML pour email_template, …)
-//   - sandbox de sécurité (CSP, validation schema, eval guard)
+// V3.0 (V1) : placeholder Élysée uniquement (carte hairline cream + Sparkle).
+// V4 : rendu réel selon kind avec sous-composants dédiés.
+//   - funnel_step     → <ExtensionFunnelStep>     (mini-form auto-généré)
+//   - cockpit_tab     → <ExtensionCockpitTab>     (iframe sandbox strict)
+//   - email_template  → <ExtensionEmailTemplate>  (card insertable composer)
+//   - webhook         → <ExtensionWebhookCard>    (config-only doc card)
 //
 // Props :
-//   kind      : 'funnel_step' | 'cockpit_tab' | 'email_template' | 'webhook'
-//   scope     : 'master' | 'club' | 'edition'
-//   clubId    : string? (filtre côté query si scope='club'/'edition')
-//   editionId : string? (filtre côté query si scope='edition')
-//   fallback  : ReactNode? (rendu quand aucune extension active match)
+//   kind        : 'funnel_step' | 'cockpit_tab' | 'email_template' | 'webhook'
+//   scope       : 'master' | 'club' | 'edition'
+//   clubId      : string? (filtre côté query si scope='club'/'edition')
+//   editionId   : string? (filtre côté query si scope='edition')
+//   fallback    : ReactNode? (rendu quand aucune extension active match)
+//   values      : object? — pour funnel_step controlled (clé extension.id → fieldValues)
+//   onChange    : (extId, values) => void — pour funnel_step
+//   onInsertDraft : (draft) => void — pour email_template
+//
+// Sécurité : validateExtensionConfig() côté sous-composants — toute config
+// invalide rend un message d'erreur Élysée plutôt que le widget réel.
 
 import React from 'react';
-import { Loader2, Sparkles } from 'lucide-react';
-import { CREAM, GOLD, INK, MUTED, NAVY, SERIF } from '@/components/design/tokens';
-import { useLang } from '@/lib/platform/i18n';
+import { Loader2 } from 'lucide-react';
+import { MUTED } from '@/components/design/tokens';
 import { useExtensions } from './useExtensions';
-import { EXT_UI, EXT_KIND_LABELS } from './i18n';
+import ExtensionFunnelStep from './ExtensionFunnelStep';
+import ExtensionCockpitTab from './ExtensionCockpitTab';
+import ExtensionEmailTemplate from './ExtensionEmailTemplate';
+import ExtensionWebhookCard from './ExtensionWebhookCard';
 
-function ExtensionPlaceholder({ extension }) {
-  const { t } = useLang();
-  return (
-    <div
-      className="rounded-[4px] p-3 flex items-start gap-2.5"
-      style={{ background: CREAM, border: `1px dashed ${GOLD}` }}
-      data-extension-id={extension.id}
-      data-extension-kind={extension.kind}
-      data-extension-scope={extension.scope}
-    >
-      <Sparkles className="w-4 h-4 mt-0.5 shrink-0" style={{ color: GOLD }} aria-hidden />
-      <div className="flex-1 min-w-0">
-        <p className="text-[12.5px]" style={{ color: NAVY }}>
-          <span className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: MUTED }}>
-            {t(EXT_UI.slotPlaceholder)} · {t(EXT_KIND_LABELS[extension.kind] || { fr: extension.kind, en: extension.kind, de: extension.kind })}
-          </span>
-        </p>
-        <p
-          className="text-[14px] mt-0.5 leading-tight"
-          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-        >
-          {extension.name}
-        </p>
-        {extension.description && (
-          <p className="text-[12px] mt-1" style={{ color: INK }}>
-            {extension.description}
-          </p>
-        )}
-        <p className="text-[11px] mt-1.5" style={{ color: MUTED }}>
-          {t(EXT_UI.slotPlaceholderHint)}
-        </p>
-      </div>
-    </div>
-  );
+function renderOne({ extension, values, onChange, onInsertDraft }) {
+  switch (extension.kind) {
+    case 'funnel_step':
+      return (
+        <ExtensionFunnelStep
+          key={extension.id}
+          extension={extension}
+          values={values?.[extension.id] || {}}
+          onChange={(next) => typeof onChange === 'function' && onChange(extension.id, next)}
+        />
+      );
+    case 'cockpit_tab':
+      return <ExtensionCockpitTab key={extension.id} extension={extension} />;
+    case 'email_template':
+      return (
+        <ExtensionEmailTemplate
+          key={extension.id}
+          extension={extension}
+          onInsertDraft={onInsertDraft}
+        />
+      );
+    case 'webhook':
+      return <ExtensionWebhookCard key={extension.id} extension={extension} />;
+    default:
+      return null;
+  }
 }
 
 export default function ExtensionSlot({
@@ -72,6 +64,9 @@ export default function ExtensionSlot({
   clubId = null,
   editionId = null,
   fallback = null,
+  values,
+  onChange,
+  onInsertDraft,
 }) {
   const queryArgs = (() => {
     if (scope === 'master')  return { scope: 'master', kind };
@@ -97,11 +92,17 @@ export default function ExtensionSlot({
     return fallback || null;
   }
 
+  // email_template a un layout naturellement list (TemplatesLibrary <ul>) ;
+  // les autres sont des sections empilées.
+  const isListLayout = kind === 'email_template';
+  const Container = isListLayout ? 'ul' : 'div';
+
   return (
-    <div className="flex flex-col gap-2" data-extension-slot={`${scope}-${kind}`}>
-      {active.map((ext) => (
-        <ExtensionPlaceholder key={ext.id} extension={ext} />
-      ))}
-    </div>
+    <Container
+      className="flex flex-col gap-2"
+      data-extension-slot={`${scope}-${kind}`}
+    >
+      {active.map((ext) => renderOne({ extension: ext, values, onChange, onInsertDraft }))}
+    </Container>
   );
 }

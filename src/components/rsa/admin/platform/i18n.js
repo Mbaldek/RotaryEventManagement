@@ -234,12 +234,12 @@ export const LIVE = {
   concludeConfirmBody: {
     fr: 'Cette action est définitive : les notes seront figées, le classement officialisé, et le top-N projeté à la fois en statut « finaliste » sur les dossiers ET dans le pool de la Grande Finale fédérée. Tapez CONCLURE pour confirmer.',
     en: 'This action is final: scores will be frozen, the ranking officialized, and the top-N projected both as “finalist” on dossiers AND into the federated grand finale pool. Type CONCLUDE to confirm.',
-    de: 'Diese Aktion ist endgültig: Die Bewertungen werden eingefroren, die Rangliste wird offiziell, und die Top-N erhalten den Status „Finalist“ auf den Dossiers UND werden in den Pool des föderierten Grand Finale aufgenommen. Geben Sie CONCLURE zur Bestätigung ein.',
+    de: 'Diese Aktion ist endgültig: Die Bewertungen werden eingefroren, die Rangliste wird offiziell, und die Top-N erhalten den Status „Finalist“ auf den Dossiers UND werden in den Pool des föderierten Grand Finale aufgenommen. Geben Sie ABSCHLIESSEN zur Bestätigung ein.',
   },
   concludeTypedWord: {
     fr: 'CONCLURE',
     en: 'CONCLUDE',
-    de: 'CONCLURE',
+    de: 'ABSCHLIESSEN',
   },
   concludeRecap: {
     fr: 'Effet immédiat : statut session → publié · top-N → finaliste · pool finale enrichi · audit log.',

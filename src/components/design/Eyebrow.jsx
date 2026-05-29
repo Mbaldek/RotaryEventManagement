@@ -12,8 +12,15 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { GOLD, EASE } from "@/components/design/tokens";
+import { GOLD_TEXT } from "@/components/design/tokens.app";
 
-export default function Eyebrow({ children, color = GOLD }) {
+// `color` controls the decorative rule (graphical, no contrast requirement).
+// `textColor` controls the actual TEXT — defaults to GOLD_TEXT so the label
+// passes WCAG AA on CREAM/white surfaces (~5.6:1) while the rule stays GOLD.
+// Pass `textColor={color}` to opt out (e.g. on dark surfaces where pure GOLD
+// already passes AA on NAVY at ~5.7:1).
+export default function Eyebrow({ children, color = GOLD, textColor }) {
+  const labelColor = textColor || (color === GOLD ? GOLD_TEXT : color);
   return (
     <div className="flex items-center gap-2.5 mb-3">
       <motion.span
@@ -27,7 +34,7 @@ export default function Eyebrow({ children, color = GOLD }) {
       />
       <motion.span
         className="uppercase text-[10px] tracking-[0.18em] font-medium"
-        style={{ color }}
+        style={{ color: labelColor }}
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "-20% 0px" }}
