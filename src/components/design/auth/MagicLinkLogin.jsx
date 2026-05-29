@@ -3,10 +3,10 @@
 // Calls usePlatformAuth().signInWithMagicLink(email, redirectPath). Fully trilingual
 // via useLang (copy overridable through `labels`).
 //
-// V3.0 — SSO Google + Microsoft (Azure AD) en haut du form, en parallèle du
+// V3.0 — SSO Google (Azure deferred V3.1+) en haut du form, en parallèle du
 // magic-link. Cible : jurés CEO de grands groupes dont l'email DLP/throttling
 // bloque souvent les magic-links Resend. Le magic-link reste accessible pour les
-// candidats / users qui n'ont ni Google ni Microsoft 365. Cf. docs/onboarding/sso-setup.md.
+// candidats / users qui n'ont pas de compte Google. Cf. docs/onboarding/sso-setup.md.
 //
 // Single door: there is no role chooser here — everyone (startup / jury / comité /
 // admin) signs in with the same magic link OR SSO; roles are resolved server-side

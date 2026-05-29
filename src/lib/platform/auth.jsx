@@ -96,12 +96,23 @@ export function PlatformAuthProvider({ children }) {
     // n'existe pas encore (build local sans migration V2 appliquée), on retombe
     // sur un tableau vide — la plateforme reste fonctionnelle en mode V1 global.
     const norm = String(email).trim().toLowerCase();
-    const [{ data: prof }, rolesRes, cmRes] = await Promise.all([
+    const [profRes, rolesRes, cmRes] = await Promise.all([
       supabase.from('profiles').select('id, email, full_name, role').eq('email', norm).maybeSingle(),
       supabase.rpc('rsa_my_roles'),
       supabase.rpc('my_club_memberships'),
     ]);
-    setProfile(prof ?? null);
+    // DIAGNOSTIC : on logge le résultat de chaque promise individuellement pour
+    // identifier en prod quelle requête échoue silencieusement (cf. spinner
+    // infini /MonDossier 2026-05-29 — sans log, impossible de distinguer un
+    // rolesRes.error d'un rolesRes.data=[]).
+    // eslint-disable-next-line no-console
+    console.info('[PlatformAuth] loadIdentity result', {
+      email_fp: emailFingerprint(email),
+      profile: { data: !!profRes?.data, error: profRes?.error?.message ?? null },
+      roles: { data: rolesRes?.data, error: rolesRes?.error?.message ?? null },
+      clubMemberships: { data: cmRes?.data, error: cmRes?.error?.message ?? null },
+    });
+    setProfile(profRes?.data ?? null);
     setRoles(Array.isArray(rolesRes?.data) ? rolesRes.data : []);
     setClubMemberships(Array.isArray(cmRes?.data) ? cmRes.data : []);
   }, []);

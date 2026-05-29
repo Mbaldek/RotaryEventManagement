@@ -58,6 +58,53 @@ function Spinner() {
   return <Loader2 className="w-6 h-6 animate-spin" style={{ color: GOLD }} aria-hidden />;
 }
 
+// LoadingWatchdog — après 8s sans résolution, montre une explication + retry
+// button. Évite le spinner infini quand une query Supabase reste pending
+// (CSP, réseau, RLS qui DENY sans erreur surfacée, etc.).
+function LoadingWatchdog({ edLoading, dosLoading, onForceRetry }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (tick < 8) {
+    return (
+      <p className="mt-4 text-[12px]" style={{ color: MUTED }}>
+        {tick > 3 ? `Chargement… (${tick}s)` : ''}
+      </p>
+    );
+  }
+  return (
+    <div className="mt-6 max-w-[440px] mx-auto">
+      <p className="text-[13.5px] mb-2" style={{ color: INK }}>
+        Le chargement prend plus de temps que prévu.
+      </p>
+      <p className="text-[11.5px] mb-4" style={{ color: MUTED }}>
+        Détail : edition={edLoading ? '…' : 'ok'} · dossier={dosLoading ? '…' : 'ok'}.
+        Ouvrez la console (F12) pour voir les erreurs réseau.
+      </p>
+      <div className="flex items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={onForceRetry}
+          className={`text-[13px] px-3 py-1.5 rounded-[4px] text-white ${FOCUS_RING_CLASS}`}
+          style={{ background: NAVY }}
+        >
+          Réessayer
+        </button>
+        <button
+          type="button"
+          onClick={() => { window.location.href = '/Login'; }}
+          className={`text-[13px] px-3 py-1.5 rounded-[4px] ${FOCUS_RING_CLASS}`}
+          style={{ background: 'white', color: INK, border: `1px solid ${CREAM2}` }}
+        >
+          Retour /Login
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function MonDossier() {
   const { isAuthenticated, loading: authLoading, authUser } = usePlatformAuth();
   const { t, lang } = useLang();
@@ -209,6 +256,15 @@ export default function MonDossier() {
   }, [editionParam, clubParam, edition, authUser, dossier, createDraft, closed]);
 
   // ── États de garde ─────────────────────────────────────────────────────────
+  // DIAGNOSTIC : log l'état des queries à chaque render pour debug spinner infini
+  // (à retirer une fois la cause root identifiée).
+  // eslint-disable-next-line no-console
+  console.debug('[MonDossier]', {
+    authLoading, isAuthenticated, edLoading, dosLoading,
+    editionId, edition: edition?.id, edError, dosError,
+    dossierId: dossier?.id, editionParam,
+  });
+
   if (authLoading) {
     return (
       <PageShell nav>
@@ -224,7 +280,17 @@ export default function MonDossier() {
     return (
       <PageShell nav>
         <Centered>
-          <Spinner />
+          <div className="text-center">
+            <Spinner />
+            <LoadingWatchdog
+              edLoading={edLoading}
+              dosLoading={dosLoading}
+              onForceRetry={() => {
+                refetchEdition();
+                refetchDossier();
+              }}
+            />
+          </div>
         </Centered>
       </PageShell>
     );

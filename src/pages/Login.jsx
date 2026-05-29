@@ -91,6 +91,11 @@ export default function Login() {
       editionId: query.edition,
       clubId: query.club,
     });
+    // DIAGNOSTIC : tracer le redirect post-login pour debugger les routages
+    // inattendus (ex. master_admin envoyé sur /MonDossier alors que /Admin
+    // attendu — observé 2026-05-29). À retirer une fois la cause identifiée.
+    // eslint-disable-next-line no-console
+    console.info('[Login] redirect →', target, { roles, clubMemberships: clubMemberships?.length, query });
     return <Navigate to={target} replace />;
   }
 
