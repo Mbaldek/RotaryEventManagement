@@ -9,26 +9,25 @@
 
 // ── Tabs ────────────────────────────────────────────────────────────────────
 export const TABS = {
+  overview:     { fr: "Vue d'ensemble",    en: 'Overview',        de: 'Übersicht' },
   competitions: { fr: 'Compétitions',     en: 'Competitions',    de: 'Wettbewerbe' },
   clubs:        { fr: 'Clubs',             en: 'Clubs',           de: 'Clubs' },
   roles:        { fr: 'Rôles globaux',     en: 'Global roles',    de: 'Globale Rollen' },
   jury_apps:    { fr: 'Candidatures jury', en: 'Jury applications', de: 'Jury-Bewerbungen' },
-  finale:       { fr: 'Finale fédérée',    en: 'Federated finale', de: 'Föderiertes Finale' },
-  comms:        { fr: 'Communications',    en: 'Communications',  de: 'Kommunikation' },
-  analytics:    { fr: 'Analytics',          en: 'Analytics',       de: 'Analytics' },
-  extensions:   { fr: 'Extensions',        en: 'Extensions',      de: 'Erweiterungen' },
+  finale:       { fr: 'Finale',            en: 'Finale',          de: 'Finale' },
+  advanced:     { fr: 'Outils avancés',    en: 'Advanced tools',  de: 'Erweiterte Tools' },
 };
 
-export const TAB_IDS = ['competitions', 'clubs', 'roles', 'jury_apps', 'finale', 'comms', 'analytics', 'extensions'];
+export const TAB_IDS = ['overview', 'competitions', 'clubs', 'roles', 'jury_apps', 'finale', 'advanced'];
 
 // ── Page header ─────────────────────────────────────────────────────────────
 export const UI = {
   eyebrow:    { fr: 'Master Cockpit',     en: 'Master Cockpit',  de: 'Master-Cockpit' },
   pageTitle:  { fr: 'Pilotage plateforme', en: 'Platform pilot',  de: 'Plattform-Steuerung' },
   pageSubtitle: {
-    fr: 'Compétitions, clubs participants, rôles globaux et grande finale fédérée — vue plateforme.',
-    en: 'Competitions, participating clubs, global roles and the federated grand finale — platform view.',
-    de: 'Wettbewerbe, teilnehmende Clubs, globale Rollen und föderiertes Grand Finale — Plattform-Übersicht.',
+    fr: 'Compétitions, clubs participants, rôles globaux et Grande Finale — vue plateforme.',
+    en: 'Competitions, participating clubs, global roles and the Grand Finale — platform view.',
+    de: 'Wettbewerbe, teilnehmende Clubs, globale Rollen und Grand Finale — Plattform-Übersicht.',
   },
   // Generic actions
   save:       { fr: 'Enregistrer',         en: 'Save',           de: 'Speichern' },
@@ -96,9 +95,9 @@ export const COMP = {
     de: 'Nur ein teilnehmender Club (historisches Modell Paris).',
   },
   multiclubHint: {
-    fr: 'Plusieurs clubs participants + Grande Finale fédérée.',
-    en: 'Multiple participating clubs plus a federated grand finale.',
-    de: 'Mehrere teilnehmende Clubs sowie ein föderiertes Grand Finale.',
+    fr: 'Plusieurs clubs participants + Grande Finale.',
+    en: 'Multiple participating clubs plus a Grand Finale.',
+    de: 'Mehrere teilnehmende Clubs sowie ein Grand Finale.',
   },
   invalidId: {
     fr: 'L’identifiant doit être en kebab-case (a-z, 0-9, tiret), commencer par une lettre, max 50 caractères.',
@@ -731,13 +730,13 @@ export const ROLES = {
   },
 };
 
-// ── Federated Finale tab ────────────────────────────────────────────────────
+// ── Finale tab ──────────────────────────────────────────────────────────────
 export const FINALE = {
-  sectionTitle:  { fr: 'Grande Finale fédérée', en: 'Federated grand finale', de: 'Föderiertes Grand Finale' },
+  sectionTitle:  { fr: 'Grande Finale', en: 'Grand Finale', de: 'Grand Finale' },
   needMulticlub: {
-    fr: 'La finale fédérée n’existe que pour les compétitions multiclub. Sélectionnez ou créez-en une.',
-    en: 'The federated finale only applies to multiclub competitions. Select or create one.',
-    de: 'Das föderierte Finale ist nur für Multiclub-Wettbewerbe vorgesehen. Bitte wählen oder erstellen Sie einen solchen.',
+    fr: 'La finale n’existe que pour les compétitions multiclub. Sélectionnez ou créez-en une.',
+    en: 'The finale only applies to multiclub competitions. Select or create one.',
+    de: 'Das Finale ist nur für Multiclub-Wettbewerbe vorgesehen. Bitte wählen oder erstellen Sie einen solchen.',
   },
   championsPerClub: { fr: 'Championnes & champions par club', en: 'Club champions', de: 'Club-Champions' },
   noChampions: {
@@ -753,14 +752,14 @@ export const FINALE = {
   },
   finaleSection: { fr: 'Configuration de la finale', en: 'Finale configuration', de: 'Finale-Konfiguration' },
   finaleExists: {
-    fr: 'Une session « finale fédérée » existe pour cette compétition.',
-    en: 'A federated finale session exists for this competition.',
-    de: 'Für diesen Wettbewerb besteht bereits eine Session „föderiertes Finale".',
+    fr: 'Une session « finale » existe pour cette compétition.',
+    en: 'A finale session exists for this competition.',
+    de: 'Für diesen Wettbewerb besteht bereits eine Session „Finale".',
   },
   finaleMissing: {
-    fr: 'Aucune session « finale fédérée » pour l’instant. Créez-en une pour orchestrer la finale.',
-    en: 'No federated finale session yet. Create one to orchestrate the finale.',
-    de: 'Noch keine Session „föderiertes Finale" angelegt. Erstellen Sie eine, um das Finale zu organisieren.',
+    fr: 'Aucune session « finale » pour l’instant. Créez-en une pour orchestrer la finale.',
+    en: 'No finale session yet. Create one to orchestrate the finale.',
+    de: 'Noch keine Session „Finale" angelegt. Erstellen Sie eine, um das Finale zu organisieren.',
   },
   createFinale:   { fr: 'Créer la Grande Finale', en: 'Create the grand finale', de: 'Grand Finale erstellen' },
   finaleSessionName: { fr: 'Nom de la session', en: 'Session name', de: 'Session-Name' },
@@ -776,15 +775,15 @@ export const FINALE = {
   championSessionCol: { fr: 'Session qualificative', en: 'Qualifying session', de: 'Qualifikations-Session' },
   championActionsCol: { fr: 'Actions',         en: 'Actions',       de: 'Aktionen' },
 
-  // ── V3 Vague 2 (A) — Pool finale fédérée (platform_finale_membership) ──────
+  // ── V3 Vague 2 (A) — Pool finale (platform_finale_membership) ─────────────
   poolSectionTitle: {
     fr: 'Pool de la Grande Finale',
-    en: 'Federated finale pool',
-    de: 'Pool des föderierten Finales',
+    en: 'Finale pool',
+    de: 'Pool des Finales',
   },
   poolSectionHint: {
     fr: 'Startups promues automatiquement à la Grande Finale après conclusion d’une session qualificative. Seul le master_admin peut retirer une startup du pool.',
-    en: 'Startups automatically promoted to the federated finale once a qualifying session was concluded. Only master_admin can remove a startup from the pool.',
+    en: 'Startups automatically promoted to the finale once a qualifying session was concluded. Only master_admin can remove a startup from the pool.',
     de: 'Startups, die nach Abschluss einer Qualifikationssession automatisch ins Grand Finale befördert wurden. Nur master_admin kann eine Startup aus dem Pool entfernen.',
   },
   poolEmpty: {
@@ -815,6 +814,220 @@ export const FINALE = {
   },
   poolUnknownStartup: { fr: 'Startup inconnue',     en: 'Unknown startup',   de: 'Unbekannte Startup' },
   poolUnknownClub:    { fr: '—',                     en: '—',                 de: '—' },
+};
+
+// ── Overview tab (master cockpit landing) ───────────────────────────────────
+export const OVERVIEW = {
+  eyebrow:       { fr: 'Plateforme master', en: 'Master platform',  de: 'Master-Plattform' },
+  titleLead:     { fr: 'Cockpit',           en: 'Cockpit',          de: 'Cockpit' },
+  titleItalic:   { fr: 'master',            en: 'master',           de: 'master' },
+  pulseNoActive: {
+    fr: 'Aucune compétition active. Le pouls de la plateforme reprendra dès qu’une édition sera ouverte.',
+    en: 'No active competition yet. The platform pulse will resume as soon as an edition opens.',
+    de: 'Noch kein aktiver Wettbewerb. Der Plattform-Puls setzt wieder ein, sobald eine Ausgabe eröffnet wird.',
+  },
+  // Pulse template — {name} et {applied}/{sessions}/{clubs} sont remplacés côté composant.
+  pulseTemplate: {
+    fr: '{name} est en cours — {applied} candidature(s), {sessions} session(s) sur {clubs} club(s) participant(s).',
+    en: '{name} is live — {applied} application(s), {sessions} session(s) across {clubs} participating club(s).',
+    de: '{name} läuft — {applied} Bewerbung(en), {sessions} Session(s) über {clubs} teilnehmende Club(s).',
+  },
+
+  // Activity feed
+  feedEyebrow:   { fr: 'Plateforme master', en: 'Master platform',  de: 'Master-Plattform' },
+  feedTitle:     { fr: 'Fil d’activité',    en: 'Activity feed',    de: 'Aktivitäts-Feed' },
+  feedHint: {
+    fr: 'Dix dernières actions auditées sur la plateforme — suppression de compétitions, promotion de finalistes, déclenchements de sessions.',
+    en: 'Last ten audited actions across the platform — competition deletions, finalist promotions, session triggers.',
+    de: 'Die zehn letzten geprüften Plattform-Aktionen — Wettbewerbslöschungen, Finalisten-Beförderungen, Session-Auslöser.',
+  },
+  feedEmpty: {
+    fr: 'Aucune action auditée pour l’instant. Les évènements critiques apparaîtront ici en temps réel.',
+    en: 'No audited action yet. Critical events will surface here in real time.',
+    de: 'Noch keine geprüften Aktionen. Kritische Ereignisse erscheinen hier in Echtzeit.',
+  },
+  feedTime: {
+    fr: 'à l’instant',  en: 'just now',         de: 'gerade eben',
+  },
+  feedMinutesAgo: { fr: 'il y a {n} min', en: '{n} min ago', de: 'vor {n} Min.' },
+  feedHoursAgo:   { fr: 'il y a {n} h',   en: '{n} h ago',   de: 'vor {n} Std.' },
+  feedDaysAgo:    { fr: 'il y a {n} j',   en: '{n} d ago',   de: 'vor {n} Tagen' },
+
+  // Action labels (admin_audit_log.action)
+  actionCompetitionDeleted: {
+    fr: 'Compétition supprimée',
+    en: 'Competition deleted',
+    de: 'Wettbewerb gelöscht',
+  },
+  actionFinalistPromoted: {
+    fr: 'Finaliste promu en Grande Finale',
+    en: 'Finalist promoted to Grand Finale',
+    de: 'Finalist ins Grand Finale befördert',
+  },
+  actionFinalistRemoved: {
+    fr: 'Finaliste retiré du pool',
+    en: 'Finalist removed from pool',
+    de: 'Finalist aus dem Pool entfernt',
+  },
+  actionSessionPublished: {
+    fr: 'Session publiée',
+    en: 'Session published',
+    de: 'Session veröffentlicht',
+  },
+  actionSessionConcluded: {
+    fr: 'Session conclue',
+    en: 'Session concluded',
+    de: 'Session abgeschlossen',
+  },
+  actionClubRoleAssigned: {
+    fr: 'Rôle club assigné',
+    en: 'Club role assigned',
+    de: 'Club-Rolle zugewiesen',
+  },
+  actionClubRoleRevoked: {
+    fr: 'Rôle club retiré',
+    en: 'Club role revoked',
+    de: 'Club-Rolle entzogen',
+  },
+  actionClubCreated: {
+    fr: 'Club créé',
+    en: 'Club created',
+    de: 'Club erstellt',
+  },
+  actionGeneric: {
+    fr: 'Action',
+    en: 'Action',
+    de: 'Aktion',
+  },
+
+  // KPI rail — bande hairline éditoriale
+  kpiRailEyebrow: {
+    fr: 'Pouls plateforme',
+    en: 'Platform pulse',
+    de: 'Plattform-Puls',
+  },
+  kpiCompetitions: { fr: 'compétition(s)',  en: 'competition(s)',  de: 'Wettbewerb(e)' },
+  kpiClubs:        { fr: 'club(s)',          en: 'club(s)',         de: 'Club(s)' },
+  kpiApplications: { fr: 'candidature(s)',   en: 'application(s)',  de: 'Bewerbung(en)' },
+  kpiSessions:     { fr: 'session(s)',       en: 'session(s)',      de: 'Session(s)' },
+  kpiLiveSessions: { fr: 'en direct',        en: 'live',            de: 'live' },
+
+  // Quick actions (raccourcis création)
+  quickActionsEyebrow: {
+    fr: 'Lancer un cycle',
+    en: 'Kick off a cycle',
+    de: 'Zyklus starten',
+  },
+  quickCreateCompetition: {
+    fr: 'Nouvelle compétition',
+    en: 'New competition',
+    de: 'Neuer Wettbewerb',
+  },
+  quickCreateCompetitionHint: {
+    fr: 'Ouvre le funnel — identité, calendrier, clubs participants.',
+    en: 'Opens the funnel — identity, calendar, participating clubs.',
+    de: 'Öffnet den Funnel — Identität, Kalender, teilnehmende Clubs.',
+  },
+  quickCreateClub: {
+    fr: 'Nouveau club Rotary',
+    en: 'New Rotary club',
+    de: 'Neuer Rotary-Club',
+  },
+  quickCreateClubHint: {
+    fr: 'Funnel club — informations, représentant, président.',
+    en: 'Club funnel — information, representative, president.',
+    de: 'Club-Funnel — Informationen, Vertreter, Präsident.',
+  },
+  quickInviteMember: {
+    fr: 'Inviter un administrateur',
+    en: 'Invite an administrator',
+    de: 'Administrator·in einladen',
+  },
+  quickInviteMemberHint: {
+    fr: 'Provisionne un rôle global (master_admin / admin legacy).',
+    en: 'Provision a global role (master_admin / legacy admin).',
+    de: 'Globale Rolle bereitstellen (master_admin / Legacy-Admin).',
+  },
+
+  // Chart sections
+  chartsEyebrow: {
+    fr: 'Tableau de bord',
+    en: 'Live dashboard',
+    de: 'Live-Dashboard',
+  },
+  chartsHint: {
+    fr: 'Lecture temps réel — funnel agrégé de la compétition active et activité comparée des clubs.',
+    en: 'Real-time read — aggregated funnel of the active competition and comparative club activity.',
+    de: 'Echtzeit-Lesung — aggregierter Funnel des aktiven Wettbewerbs und vergleichende Club-Aktivität.',
+  },
+  chartFunnelTitle: {
+    fr: 'Funnel candidatures',
+    en: 'Application funnel',
+    de: 'Bewerbungs-Funnel',
+  },
+  chartClubsTitle: {
+    fr: 'Activité par club',
+    en: 'Activity by club',
+    de: 'Aktivität nach Club',
+  },
+  chartJuryTitle: {
+    fr: 'Activité jury',
+    en: 'Jury activity',
+    de: 'Jury-Aktivität',
+  },
+  chartsNoActive: {
+    fr: 'Les tableaux apparaîtront dès qu’une compétition aura une édition active.',
+    en: 'Charts will appear as soon as one competition has an active edition.',
+    de: 'Diagramme erscheinen, sobald ein Wettbewerb eine aktive Ausgabe hat.',
+  },
+};
+
+// ── Advanced tools tab ──────────────────────────────────────────────────────
+export const ADVANCED = {
+  eyebrow:      { fr: 'Outils avancés',     en: 'Advanced tools',   de: 'Erweiterte Tools' },
+  titleLead:    { fr: 'Outils',             en: 'Tools',            de: 'Werkzeuge' },
+  titleItalic:  { fr: 'avancés',            en: 'advanced',         de: 'erweitert' },
+  intro: {
+    fr: 'Réglages d’infrastructure et leviers cross-clubs réservés au master_admin. Chaque module est autonome — entrez quand vous en avez besoin.',
+    en: 'Infrastructure controls and cross-club levers reserved for the master_admin. Each module is self-contained — enter when needed.',
+    de: 'Infrastruktur-Steuerung und cross-club Hebel, dem master_admin vorbehalten. Jedes Modul ist eigenständig — bei Bedarf öffnen.',
+  },
+  // 3 sub-cards
+  extensionsTitle: {
+    fr: 'Extensions actives',
+    en: 'Active extensions',
+    de: 'Aktive Erweiterungen',
+  },
+  extensionsLede: {
+    fr: 'Cockpit tabs, webhooks et templates email rendus au niveau plateforme. Toute extension scope=master est listée ici.',
+    en: 'Cockpit tabs, webhooks and email templates rendered at the platform level. Every scope=master extension is listed here.',
+    de: 'Cockpit-Tabs, Webhooks und E-Mail-Vorlagen auf Plattformebene. Sämtliche scope=master-Erweiterungen werden hier aufgeführt.',
+  },
+  marketplaceTitle: {
+    fr: 'Marketplace',
+    en: 'Marketplace',
+    de: 'Marketplace',
+  },
+  marketplaceLede: {
+    fr: 'Catalogue complet des modules publiés. À installer en mode cross-clubs depuis la route /Marketplace.',
+    en: 'Full catalogue of published modules. Install cross-club from the /Marketplace route.',
+    de: 'Vollständiger Katalog veröffentlichter Module. Cross-Club-Installation über /Marketplace.',
+  },
+  marketplaceCta: {
+    fr: 'Ouvrir le catalogue',
+    en: 'Open catalogue',
+    de: 'Katalog öffnen',
+  },
+  emailStudioTitle: {
+    fr: 'Studio email global',
+    en: 'Global email studio',
+    de: 'Globales E-Mail-Studio',
+  },
+  emailStudioLede: {
+    fr: 'Diffusion master cross-clubs — communiqués Rotary France ou rappels plateforme. Audience résolue par édition active.',
+    en: 'Cross-club master broadcast — Rotary France notices or platform reminders. Audience resolved on the active edition.',
+    de: 'Cross-Club-Master-Versand — Rotary-France-Mitteilungen oder Plattform-Hinweise. Zielgruppe der aktiven Ausgabe.',
+  },
 };
 
 // ── Sentinels (mirror SQL CHECK) ────────────────────────────────────────────

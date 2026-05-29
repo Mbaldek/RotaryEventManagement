@@ -36,7 +36,7 @@ Sept   Création édition N+1 + ouverture clubs
 Oct    Invite club_admins → ils configurent leurs sessions
 Nov-Jan  /Candidater ouvert
 Fév    Sessions club (sélection comité + pitch jury) → promote_to_finale
-Mar-Avr  Préparation Grande Finale (jury fédéré, RSVPs)
+Mar-Avr  Préparation Grande Finale (jury, RSVPs)
 Mai    Grande Finale chez Cyrus Conseil
 Juin   Publish résultats fédération + archive
 ```
@@ -69,7 +69,7 @@ Onglets :
 - **Date** : mardi de mai (2026 = 26 mai 16h-19h chez Cyrus Conseil, 50 bd Haussmann Paris 9). Voir [memory file finale](../../C:/Users/mathi/.claude/projects/c--Users-mathi-Desktop-Active-projects-RotaryEventManagement/memory/project_rsa_finale.md).
 - **Process** :
   1. Récupérer les top promus auto par club (`rsa_promote_to_finale` a fait le boulot).
-  2. Constituer le **jury fédéré** (10-12 personnes, mix corporates + investisseurs).
+  2. Constituer le **jury de la finale** (10-12 personnes, mix corporates + investisseurs).
   3. Sessions consécutives 20 min × N startups (typiquement 6-8).
   4. À la fin, **délibération** + saisie scores → `rsa_finalize_results` →
      classement final + bonus/fix-rank si décision jury.

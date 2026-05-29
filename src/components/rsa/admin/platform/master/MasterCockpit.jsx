@@ -1,7 +1,7 @@
 // MasterCockpit — coquille du cockpit Master Admin (V2 multi-club).
 //
 // Responsabilités :
-//   * pill-toggle Élysée des 4 sous-tabs (COMPÉTITIONS / CLUBS / RÔLES GLOBAUX / FINALE FÉDÉRÉE),
+//   * pill-toggle Élysée des 4 sous-tabs (COMPÉTITIONS / CLUBS / RÔLES GLOBAUX / FINALE),
 //   * URL state via useSearchParams (deep-link `?tab=competitions|clubs|roles|finale`,
 //     même patron qu'AdminShell),
 //   * MasterStatusStrip en haut (lecture agrégée : compétition active + counts),
@@ -26,21 +26,14 @@ import {
 import CompetitionsTab from './tabs/CompetitionsTab';
 import ClubsTab from './tabs/ClubsTab';
 import GlobalRolesTab from './tabs/GlobalRolesTab';
-import FederatedFinaleTab from './tabs/FederatedFinaleTab';
-import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
-// V3 Vague 2 — CTA "Communiquer" pré-câblé (Feature B). Côté master, on cible
-// la compétition active (ou la plus récente faute de mieux) pour résoudre
-// l'audience non-sélectionnés / sélectionnés.
-import CommunicatePanel from '@/components/rsa/communicate/CommunicatePanel';
+import FinaleTab from './tabs/FinaleTab';
 import JuryApplicationsPanel from './JuryApplicationsPanel';
 import CompetitionEditView from './CompetitionEditView';
 import ClubEditView from './ClubEditView';
-// V3.0 — Plugins/Extensions architecture (Vague 1)
-import ExtensionsList from '@/components/rsa/extensions/ExtensionsList';
-// V4 — slot pour rendre les cockpit_tab + webhook scope=master au-dessus du CRUD
-import ExtensionSlot from '@/components/rsa/extensions/ExtensionSlot';
-// V3.0 Vague 3 — Analytics real-time (Feature F)
-import AnalyticsPanel from '@/components/rsa/analytics/AnalyticsPanel';
+// Équipe A — Overview landing + Advanced consolidation. Les tabs comms /
+// extensions / analytics / marketplace sont absorbés ici (voir TAB_IDS).
+import OverviewPanel from './OverviewPanel';
+import AdvancedSection from './AdvancedSection';
 
 function Tab({ id, label, active, onClick }) {
   return (
@@ -185,22 +178,11 @@ export default function MasterCockpit() {
   const { t } = useLang();
   const [params, setParams] = useSearchParams();
 
-  // ── Compétition active pour CommunicatePanel (V3 Vague 2) ────────────────
-  // On résout la même édition que MasterStatusStrip (1re en open/sessions/finale,
-  // sinon la + récente). Le CommunicatePanel a besoin d'un editionId pour
-  // résoudre l'audience non-sélectionnés / sélectionnés.
-  const allCompetitions = useAllCompetitions();
-  const activeCompetition = useMemo(() => {
-    const list = allCompetitions.data || [];
-    if (list.length === 0) return null;
-    const open = list.find((c) => ['open', 'sessions', 'finale'].includes(c.status));
-    return open || list[0];
-  }, [allCompetitions.data]);
-
-  // URL state : ?tab=competitions|clubs|roles|finale|comms
+  // URL state : ?tab=overview|competitions|clubs|roles|jury_apps|finale|advanced
+  // Default = 'overview' (équipe A — landing dashboard).
   const tab = (params.get('tab') && TAB_IDS.includes(params.get('tab')))
     ? params.get('tab')
-    : 'competitions';
+    : 'overview';
 
   // V3 — Subview pour les vues d'édition plein-cockpit.
   //   ?subview=edit-competition&id={editionId} → CompetitionEditView
@@ -272,32 +254,13 @@ export default function MasterCockpit() {
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2, ease: EASE }}
           >
+            {tab === 'overview'     && <OverviewPanel />}
             {tab === 'competitions' && <CompetitionsTab />}
             {tab === 'clubs'        && <ClubsTab />}
             {tab === 'roles'        && <GlobalRolesTab />}
             {tab === 'jury_apps'    && <JuryApplicationsPanel />}
-            {tab === 'finale'       && <FederatedFinaleTab />}
-            {tab === 'comms'        && (
-              <>
-                <CommunicatePanel editionId={activeCompetition?.id || null} clubId={null} />
-                <EmailStudio /* clubId undefined = master global */ />
-              </>
-            )}
-            {tab === 'analytics'    && (
-              <AnalyticsPanel
-                scope="master"
-                editionId={activeCompetition?.id || null}
-                clubId={null}
-              />
-            )}
-            {tab === 'extensions'   && (
-              <>
-                {/* V4 — rendu réel des cockpit_tab + webhook scope=master au-dessus du CRUD. */}
-                <ExtensionSlot kind="cockpit_tab" scope="master" />
-                <ExtensionSlot kind="webhook" scope="master" />
-                <ExtensionsList scope="master" />
-              </>
-            )}
+            {tab === 'finale'       && <FinaleTab />}
+            {tab === 'advanced'     && <AdvancedSection />}
           </motion.div>
         </AnimatePresence>
       </div>

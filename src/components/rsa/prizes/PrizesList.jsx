@@ -244,7 +244,7 @@ function useSessionsForScope({ editionId, clubId, scope }) {
         .eq('edition_id', editionId)
         .order('position', { ascending: true });
       if (scope === 'club' && clubId) {
-        // Sessions du club + finales (club_id IS NULL → finale fédérée)
+        // Sessions du club + finales (club_id IS NULL → finale)
         // PostgREST .or() prend une chaîne ; on filtre côté client pour rester simple.
         const { data, error } = await q;
         if (error) throw error;

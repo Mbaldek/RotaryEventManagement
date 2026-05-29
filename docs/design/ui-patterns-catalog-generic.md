@@ -1527,7 +1527,7 @@ ship an SVG mark (must be ≤ 30 px tall, monochrome — re-tinted to the active
 Same pattern as wordmark — the `Footer` accepts `left` / `right` nodes;
 white-labeled clubs override to "Club Rotary de {name} — RSA". The default
 "Rotary Startup Award — Commission Rotary Club de Paris" remains for the
-federation surface.
+platform surface.
 
 ---
 

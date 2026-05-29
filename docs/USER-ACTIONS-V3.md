@@ -344,7 +344,7 @@ Table `admin_audit_log` continue d'être alimentée silencieusement (commit V1.3
 3. Master Cockpit → créer/configurer une session → assigner jurés
 4. Jury → noter via `/Jury`
 5. Comité → review
-6. Club Cockpit > Live → "Conclure la session" → vérifier auto-promote en finale fédérée
+6. Club Cockpit > Live → "Conclure la session" → vérifier auto-promote en finale
 7. Club Cockpit > Communications → "Annoncer aux sélectionnés" → dry-run → envoyer
 8. `/Resultats` (anon, incognito) → palmarès visible avec photo champion opt-in
 

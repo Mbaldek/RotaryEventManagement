@@ -32,8 +32,10 @@ export const KEYS = {
   countsForEdition:    (eid) => ['rsa', 'master', 'counts-for-edition', eid],
   // Finalistes par club pour une compétition multiclub (kind='qualifying' + status='finaliste').
   finalistsForEdition: (eid) => ['rsa', 'master', 'finalists', eid],
-  // V3 Vague 2 — Pool de la Grande Finale fédérée (platform_finale_membership).
+  // V3 Vague 2 — Pool de la Grande Finale (platform_finale_membership).
   finalePool:          (eid) => ['rsa', 'master', 'finale-pool', eid],
+  // V3+ — Activity feed (admin_audit_log) pour le panneau Overview.
+  activityFeed:        (limit) => ['rsa', 'master', 'activity-feed', limit || 10],
 };
 
 // ── Helper d'invalidation ──────────────────────────────────────────────────
@@ -299,7 +301,7 @@ export function useCountsForEdition(editionId) {
         sessionsLive,
         sessionsPublished,
         byClub:            Array.from(byClub.values()),
-        // raw sessions kept for downstream (FederatedFinaleTab finds finale session)
+        // raw sessions kept for downstream (FinaleTab finds finale session)
         sessions,
       };
     },
@@ -342,12 +344,12 @@ export function useFinalistsForEdition(editionId) {
 }
 
 // ── Finale session (kind='finale' AND club_id IS NULL) ──────────────────────
-// Retourne la session de Grande Finale fédérée pour une compétition, si elle existe.
+// Retourne la session de Grande Finale pour une compétition, si elle existe.
 // Lit via les sessions déjà chargées par useCountsForEdition côté consommateur quand
 // possible. Hook autonome ici pour les cas où on n'a pas le contexte.
-export function useFederatedFinale(editionId) {
+export function useFinale(editionId) {
   return useQuery({
-    queryKey: ['rsa', 'master', 'federated-finale', editionId],
+    queryKey: ['rsa', 'master', 'finale', editionId],
     enabled: !!editionId,
     staleTime: 30 * 1000,
     queryFn: async () => {
@@ -365,7 +367,7 @@ export function useFederatedFinale(editionId) {
   });
 }
 
-// ── V3 Vague 2 — Pool finale fédérée (platform_finale_membership) ───────────
+// ── V3 Vague 2 — Pool finale (platform_finale_membership) ──────────────────
 // Lit le pool des startups promues à la Grande Finale d'une édition. La RLS
 // pfm_read autorise master_admin + admin/comité legacy + club_admin pour ses
 // propres startups. On enrichit côté client avec name + club + session source.
@@ -439,17 +441,38 @@ export function useRemoveFinalist() {
   });
 }
 
-// ── Création session finale fédérée ─────────────────────────────────────────
+// ── Activity feed (admin_audit_log via RPC rsa_list_audit_log) ──────────────
+// V3+ — alimente le panneau Overview du Master Cockpit. Lit les N dernières
+// actions auditées (limite hard côté RPC : 500, on en prend 10 par défaut pour
+// le widget de landing). RPC SECURITY DEFINER : seul master_admin OR admin
+// legacy reçoit des lignes. RLS aal_select autorise déjà la lecture mais on
+// passe par la RPC pour la pagination et la stabilité du contrat.
+export function useActivityFeed({ limit = 10 } = {}) {
+  return useQuery({
+    queryKey: KEYS.activityFeed(limit),
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('rsa_list_audit_log', {
+        p_limit: limit,
+        p_action: null,
+      });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+// ── Création session finale ─────────────────────────────────────────────────
 // Wrap RsaSession.createWithConfig en forçant kind='finale' et club_id=null.
 // Le RPC rsa_create_session accepte un payload avec club_id explicite.
-export function useCreateFederatedFinale() {
+export function useCreateFinale() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ editionId, payload }) => {
       const full = {
         ...payload,
         kind: 'finale',
-        // club_id explicitement null pour la finale fédérée
+        // club_id explicitement null pour la finale
         club_id: null,
       };
       return RsaSession.createWithConfig({ editionId, payload: full });

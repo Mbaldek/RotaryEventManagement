@@ -55,7 +55,7 @@ ouvrir le `DossierDrawer` pour consultation.
 - Vue grid en temps réel des scores qui rentrent (via Supabase Realtime).
 - Quand tous les jurés ont saved, bouton **"Conclure la session"** apparaît →
   appelle `rsa_finalize_session` (lock scores + averages) puis
-  `rsa_promote_to_finale(top_n)` (auto-promote des N premiers en finale fédérée).
+  `rsa_promote_to_finale(top_n)` (auto-promote des N premiers en finale).
 - N par défaut = 1. Pour le configurer voir
   [USER-ACTIONS § E.2](../USER-ACTIONS-V3.md#e2--editions--promote_top_n-config).
 

@@ -89,7 +89,7 @@ droits élevés temporaires, passe par une RPC `SECURITY DEFINER` plutôt que pa
 | `rsa_finalize_review(p_review_id)` | comité du club | locke la review, déclenche notif |
 | `rsa_save_score(p_score)` | juré assigné | upsert un score par critère |
 | `rsa_finalize_session(p_session_id)` | club_admin | calcule moyennes pondérées, freeze scores |
-| `rsa_promote_to_finale(p_session_id, p_top_n)` | club_admin | auto-promote N premiers en finale fédérée |
+| `rsa_promote_to_finale(p_session_id, p_top_n)` | club_admin | auto-promote N premiers en finale |
 | `rsa_finalize_results(p_edition_id)` | master_admin | classement final + applique bonus/fix-rank |
 | `has_platform_role(p_role)` | helper RLS | check booléen utilisé dans toutes les policies |
 | `rsa_cleanup_expired_pending_drafts()` | pg_cron | TTL 7j drafts non confirmés |

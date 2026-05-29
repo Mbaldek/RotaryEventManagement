@@ -19,6 +19,7 @@ import {
   MUTED,
   CREAM2,
   FOCUS_RING_CLASS,
+  SafeBackLink,
 } from '@/components/design';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
@@ -121,6 +122,11 @@ export default function Admin() {
 
   return (
     <PageShell nav width="wide">
+      {/* ÉQUIPE C (history-nav) : lien "Retour" SAFE — navigate(-1) si history,
+          sinon fallback "/" pour ne jamais sortir de l'onglet sur deep-link. */}
+      <div className="mb-4">
+        <SafeBackLink to="/" label="Retour" />
+      </div>
       <header className="mb-8 md:mb-10">
         <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
         <EditorialTitle lead={t(UI.pageTitle)} size="md" />

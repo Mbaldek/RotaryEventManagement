@@ -30,7 +30,7 @@ const EMPTY_PAYLOAD = {
   notes: '',
   teams_link: '',
   // club_id : prérempli depuis la prop clubId ci-dessous quand fournie ; resté '' sinon
-  // (Master Cockpit pour finale fédérée : laissé vide -> club_id NULL côté DB).
+  // (Master Cockpit pour finale : laissé vide -> club_id NULL côté DB).
   club_id: '',
 };
 

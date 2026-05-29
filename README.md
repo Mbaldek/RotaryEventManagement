@@ -21,7 +21,7 @@
 ## Ce que c'est
 
 RSA est la plateforme officielle qui orchestre les Rotary Startup Awards : un concours
-fédéré entre clubs Rotary, structuré en quatre modules — **Candidature**, **Sélection**,
+multi-club entre clubs Rotary, structuré en quatre modules — **Candidature**, **Sélection**,
 **Jury**, **Finale & résultats**. La plateforme adresse 4 rôles distincts (candidat,
 juré, club_admin, master_admin) et expose une API REST + RPC Supabase sécurisée par RLS.
 

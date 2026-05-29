@@ -1,4 +1,4 @@
-// FederatedFinaleSection — bloc dédié à la Grande Finale fédérée (V2.5).
+// FinaleSection — bloc dédié à la Grande Finale (V2.5).
 //
 // Pattern : inspiré du FinaleCard de RsaJuryHub V1, mais repensé en gold/cream
 // éditorial (pas de gradient or vif type "trophy"). Si l'édition n'a pas
@@ -16,7 +16,7 @@ import ConcoursStatusPill from './ConcoursStatusPill';
 import { UI, formatSessionDate } from './i18n';
 import { createPageUrl } from '@/utils';
 
-export default function FederatedFinaleSection({
+export default function FinaleSection({
   edition,
   finaleSession,
   finalists,

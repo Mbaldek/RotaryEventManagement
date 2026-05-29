@@ -21,6 +21,7 @@ export { default as NavMenu } from "@/components/design/shell/NavMenu";
 export { default as Footer } from "@/components/design/shell/Footer";
 export { default as LanguageSwitcher } from "@/components/design/shell/LanguageSwitcher";
 export { default as SkipLink } from "@/components/design/shell/SkipLink";
+export { default as SafeBackLink } from "@/components/design/shell/SafeBackLink";
 
 // — Form controls —
 export { default as Field } from "@/components/design/form/Field";

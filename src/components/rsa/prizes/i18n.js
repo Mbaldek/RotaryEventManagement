@@ -19,9 +19,9 @@ export const PRIZES_UI = {
     de: 'Club-Preise',
   },
   sectionHintCompetition: {
-    fr: 'Les prix au niveau compétition (grand prix, finale fédérée). Gérés par le master admin.',
-    en: 'Competition-level prizes (grand prize, federated finale). Managed by the master admin.',
-    de: 'Preise auf Wettbewerbsebene (Hauptpreis, föderiertes Finale). Werden vom Master-Administrator verwaltet.',
+    fr: 'Les prix au niveau compétition (grand prix, finale). Gérés par le master admin.',
+    en: 'Competition-level prizes (grand prize, finale). Managed by the master admin.',
+    de: 'Preise auf Wettbewerbsebene (Hauptpreis, Finale). Werden vom Master-Administrator verwaltet.',
   },
   sectionHintClub: {
     fr: 'Définissez les prix spéciaux offerts par votre club, vos partenaires ou votre comité.',
@@ -74,8 +74,8 @@ export const PRIZE_FORM = {
   kindSpecial:   { fr: 'Prix spécial',       en: 'Special prize',      de: 'Sonderpreis' },
   kindHintCompetition: {
     fr: 'Grand prix = remis lors de la grande finale. Prix spécial = remis lors d’une session ou hors finale.',
-    en: 'Grand prize = awarded at the federated finale. Special prize = awarded at a session or outside the finale.',
-    de: 'Hauptpreis = wird beim föderierten Grand Finale verliehen. Sonderpreis = bei einer Session oder außerhalb des Finales.',
+    en: 'Grand prize = awarded at the Grand Finale. Special prize = awarded at a session or outside the finale.',
+    de: 'Hauptpreis = wird beim Grand Finale verliehen. Sonderpreis = bei einer Session oder außerhalb des Finales.',
   },
   kindHintClub: {
     fr: 'Un club ne peut définir que des prix spéciaux. Le grand prix reste du ressort de la compétition.',

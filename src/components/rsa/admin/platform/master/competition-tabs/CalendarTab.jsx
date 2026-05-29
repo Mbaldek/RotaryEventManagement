@@ -4,7 +4,7 @@
 //   * application_open  : ouverture des candidatures
 //   * application_close : clôture des candidatures
 //   * selection_date    : date de sélection (comité)
-//   * finale_date       : date de la Grande Finale fédérée
+//   * finale_date       : date de la Grande Finale
 //   * awards_date       : date de remise des prix
 //
 // Hint éditorial — les dates ordonnent la timeline plateforme et nourrissent les

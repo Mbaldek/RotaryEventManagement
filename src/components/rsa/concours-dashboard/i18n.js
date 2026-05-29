@@ -178,11 +178,11 @@ export const UI = {
     de: 'Nicht verfügbar',
   },
 
-  // ── Federated finale ──────────────────────────────────────────────────────
+  // ── Finale ────────────────────────────────────────────────────────────────
   finaleEyebrow: {
-    fr: 'Grande Finale fédérée',
-    en: 'Federated Grand Final',
-    de: 'Föderiertes Grand Finale',
+    fr: 'Grande Finale',
+    en: 'Grand Final',
+    de: 'Grand Finale',
   },
   finaleTitle: {
     fr: 'La Grande Finale',

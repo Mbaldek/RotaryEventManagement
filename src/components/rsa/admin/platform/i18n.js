@@ -138,9 +138,9 @@ export const SETUP = {
   newSessionNotes:  { fr: 'Notes internes',        en: 'Internal notes',    de: 'Interne Notizen' },
   newSessionClub:   { fr: 'Club',                  en: 'Club',              de: 'Club' },
   newSessionClubHint: {
-    fr: 'Identifiant du club (laisser vide pour une finale fédérée).',
-    en: 'Club identifier (leave empty for a federated finale).',
-    de: 'Club-Kennung (für ein föderiertes Finale leer lassen).',
+    fr: 'Identifiant du club (laisser vide pour une finale).',
+    en: 'Club identifier (leave empty for a finale).',
+    de: 'Club-Kennung (für ein Finale leer lassen).',
   },
   teamsLinkOpen:    { fr: 'Ouvrir le lien Teams →', en: 'Open Teams link →', de: 'Teams-Link öffnen →' },
   resetSession:     { fr: 'Réinitialiser',         en: 'Reset',             de: 'Zurücksetzen' },
@@ -232,9 +232,9 @@ export const LIVE = {
     de: 'Sitzung abschließen und ins Finale weiterleiten',
   },
   concludeConfirmBody: {
-    fr: 'Cette action est définitive : les notes seront figées, le classement officialisé, et le top-N projeté à la fois en statut « finaliste » sur les dossiers ET dans le pool de la Grande Finale fédérée. Tapez CONCLURE pour confirmer.',
-    en: 'This action is final: scores will be frozen, the ranking officialized, and the top-N projected both as “finalist” on dossiers AND into the federated grand finale pool. Type CONCLUDE to confirm.',
-    de: 'Diese Aktion ist endgültig: Die Bewertungen werden eingefroren, die Rangliste wird offiziell, und die Top-N erhalten den Status „Finalist“ auf den Dossiers UND werden in den Pool des föderierten Grand Finale aufgenommen. Geben Sie ABSCHLIESSEN zur Bestätigung ein.',
+    fr: 'Cette action est définitive : les notes seront figées, le classement officialisé, et le top-N projeté à la fois en statut « finaliste » sur les dossiers ET dans le pool de la Grande Finale. Tapez CONCLURE pour confirmer.',
+    en: 'This action is final: scores will be frozen, the ranking officialized, and the top-N projected both as “finalist” on dossiers AND into the Grand Finale pool. Type CONCLUDE to confirm.',
+    de: 'Diese Aktion ist endgültig: Die Bewertungen werden eingefroren, die Rangliste wird offiziell, und die Top-N erhalten den Status „Finalist“ auf den Dossiers UND werden in den Pool des Grand Finale aufgenommen. Geben Sie ABSCHLIESSEN zur Bestätigung ein.',
   },
   concludeTypedWord: {
     fr: 'CONCLURE',

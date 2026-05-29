@@ -97,7 +97,11 @@ export default function Login() {
     // par le niveau "Default" Chrome (info caché).
     // eslint-disable-next-line no-console
     console.warn('[Login] redirect →', target, { roles, clubMemberships: clubMemberships?.length, query });
-    return <Navigate to={target} replace />;
+    // ÉQUIPE C (history-nav) : on N'utilise PAS `replace` ici.
+    // Conserver /Login dans l'history permet à un "back" depuis /Admin (ou
+    // toute target post-login) de revenir au formulaire de login plutôt que
+    // de sortir de l'app. Cf. docs/audit history-nav bug.
+    return <Navigate to={target} />;
   }
 
   // — État 2 : authentifié mais en attente de résolution rôles → workspace spinner. —

@@ -20,7 +20,7 @@ import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
 import ConcoursHero from '@/components/rsa/concours-dashboard/ConcoursHero';
 import ClubSection from '@/components/rsa/concours-dashboard/ClubSection';
-import FederatedFinaleSection from '@/components/rsa/concours-dashboard/FederatedFinaleSection';
+import FinaleSection from '@/components/rsa/concours-dashboard/FinaleSection';
 import SessionDetailDrawer from '@/components/rsa/concours-dashboard/SessionDetailDrawer';
 import {
   useEditionsAvailable,
@@ -67,7 +67,7 @@ export default function Concours() {
   const kpis = useMemo(() => {
     if (!overview) return null;
     const clubsCount = (overview.clubs || []).length;
-    // Sessions: tout sauf la finale fédérée ; le compte « done » = status 'published'.
+    // Sessions: tout sauf la finale ; le compte « done » = status 'published'.
     let total = 0;
     let done = 0;
     let nextSession = null;
@@ -225,7 +225,7 @@ export default function Concours() {
                 ))
               )}
 
-              <FederatedFinaleSection
+              <FinaleSection
                 edition={edition}
                 finaleSession={finaleSession}
                 finalists={finaleFinalists}

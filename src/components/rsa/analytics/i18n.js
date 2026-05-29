@@ -76,9 +76,9 @@ export const ANALYTICS_UI = {
     de: 'Dossiers mit mindestens einer finalen Bewertung (bewertet, Finalist, Preisträger).',
   },
   tooltipFinaliste: {
-    fr: 'Dossiers promus en finale fédérée (finaliste, lauréat).',
-    en: 'Dossiers promoted to the federated finale (finalist, laureate).',
-    de: 'Ins föderierte Finale beförderte Dossiers (Finalist, Preisträger).',
+    fr: 'Dossiers promus en finale (finaliste, lauréat).',
+    en: 'Dossiers promoted to the finale (finalist, laureate).',
+    de: 'Ins Finale beförderte Dossiers (Finalist, Preisträger).',
   },
   tooltipLaureat: {
     fr: 'Lauréates et lauréats de la Grande Finale.',

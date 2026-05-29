@@ -1,19 +1,18 @@
-// FederatedFinaleTab — Master Cockpit, onglet « Finale fédérée ».
+// FinaleTab — Master Cockpit, onglet « Pool Finale ».
 //
-// Contenu (compétition multiclub uniquement) :
-//   * Section "Championnes & champions par club" — startups en status='finaliste'
-//     attachées à une session qualificative du club (kind='qualifying').
-//     Le bouton "Promouvoir vers Grande Finale" est en placeholder M4b (disabled).
-//   * Section "Grande Finale" — si une session kind='finale' AND club_id=NULL existe
-//     pour la compétition, affichage de sa config. Sinon, bouton de création
-//     (form ID + name + date) qui appelle rsa_create_session avec kind='finale'.
+// La Finale est désormais une entité configurable attachée à toute édition
+// (monoclub OU multiclub). Cet onglet pilote le POOL d'une édition donnée :
+// championnes par club, pool de la Finale (platform_finale_membership) et,
+// si elle existe, la session-instance kind='finale'.
 //
-// Reste minimaliste : l'essentiel de l'orchestration finale arrive avec M4b.
+// La CONFIGURATION éditoriale (has_finale, name, date, lieu, format, top-N)
+// vit dans l'édition de compétition (CompetitionEditView/CompetitionFunnel,
+// tab "Finale"). Cet onglet ne configure rien, il opère.
 
 import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, Trophy, Trash2 } from 'lucide-react';
 import {
-  CREAM2, NAVY, MUTED, INK, GOLD, SERIF, StatusPill,
+  CREAM2, NAVY, MUTED, INK, GOLD, FOCUS_RING_CLASS, SERIF, StatusPill,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -22,8 +21,8 @@ import {
   useAllCompetitions,
   useClubsForEdition,
   useFinalistsForEdition,
-  useFederatedFinale,
-  useCreateFederatedFinale,
+  useFinale,
+  useCreateFinale,
   useFinalePool,
   useRemoveFinalist,
 } from '../useMaster';
@@ -194,15 +193,15 @@ function ChampionsByClub({ competition }) {
   );
 }
 
-function FinaleSection({ competition }) {
+function FinaleSessionRow({ competition }) {
   const { t } = useLang();
-  const finale = useFederatedFinale(competition.id);
-  const create = useCreateFederatedFinale();
+  const finale = useFinale(competition.id);
+  const create = useCreateFinale();
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     id: `finale_${competition.year || 'edition'}`,
-    name: 'Grande Finale',
+    name: 'Finale',
     session_date: '',
   });
   const [error, setError] = useState(null);
@@ -212,8 +211,7 @@ function FinaleSection({ competition }) {
     const id = String(form.id || '').trim();
     const name = String(form.name || '').trim();
     if (!id || !KEBAB_REGEX.test(id.replace(/_/g, '-'))) {
-      // Note : session IDs autorisent l'underscore (legacy 'dev_s1_foodtech').
-      // On valide qu'il commence par a-z et reste alphanum+_- max 50 chars.
+      // Session IDs autorisent l'underscore (legacy 'dev_s1_foodtech').
       if (!/^[a-z][a-z0-9_-]{0,49}$/.test(id)) {
         setError(t({ fr: 'Identifiant invalide.', en: 'Invalid identifier.', de: 'Ungültige Kennung.' }));
         return;
@@ -370,20 +368,23 @@ function FinaleSection({ competition }) {
   );
 }
 
-export default function FederatedFinaleTab() {
+export default function FinaleTab() {
   const { t } = useLang();
   const competitions = useAllCompetitions();
   const list = competitions.data || [];
 
-  // Multiclub competitions only (la finale fédérée n'a de sens qu'en multi).
-  // On préfère par défaut la première en status open/sessions/finale, sinon la
-  // plus récente. L'utilisateur peut changer.
-  const multiclub = useMemo(() => list.filter((c) => c.model === 'multiclub'), [list]);
+  // Éditions ayant has_finale=true (mono OU multi). On garde un fallback safe
+  // pour les éditions legacy qui n'ont pas encore la colonne ou pas activé le
+  // flag : on les expose si elles sont multiclub (cas historique).
+  const withFinale = useMemo(() => {
+    return list.filter((c) => c.has_finale === true || c.model === 'multiclub');
+  }, [list]);
+
   const initialId = useMemo(() => {
-    if (multiclub.length === 0) return null;
-    const ranked = multiclub.find((c) => ['sessions', 'finale', 'open'].includes(c.status)) || multiclub[0];
+    if (withFinale.length === 0) return null;
+    const ranked = withFinale.find((c) => ['sessions', 'finale', 'open'].includes(c.status)) || withFinale[0];
     return ranked.id;
-  }, [multiclub]);
+  }, [withFinale]);
 
   const [editionId, setEditionId] = useState(initialId);
 
@@ -393,22 +394,30 @@ export default function FederatedFinaleTab() {
   }, [editionId, initialId]);
 
   const competition = useMemo(
-    () => multiclub.find((c) => c.id === editionId) || null,
-    [multiclub, editionId],
+    () => withFinale.find((c) => c.id === editionId) || null,
+    [withFinale, editionId],
   );
 
   return (
-    <section className="mb-6">
+    <section
+      className="mb-6"
+      role="region"
+      aria-labelledby="finale-tab-section-heading"
+    >
       <header className="mb-4 flex items-center gap-3 flex-wrap">
-        <h3 className="text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+        <h3
+          id="finale-tab-section-heading"
+          className="text-[18px]"
+          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+        >
           {t(FINALE.sectionTitle)}
         </h3>
         <div className="ml-auto">
-          {multiclub.length > 0 && (
+          {withFinale.length > 0 && (
             <CompetitionPicker
               value={editionId}
               onChange={setEditionId}
-              options={multiclub}
+              options={withFinale}
             />
           )}
         </div>
@@ -420,13 +429,13 @@ export default function FederatedFinaleTab() {
         </div>
       )}
 
-      {!competitions.isLoading && multiclub.length === 0 && (
+      {!competitions.isLoading && withFinale.length === 0 && (
         <p className="text-[13px] py-3" style={{ color: MUTED }}>{t(FINALE.needMulticlub)}</p>
       )}
 
       {competition && (
         <>
-          <FinaleSection competition={competition} />
+          <FinaleSessionRow competition={competition} />
           <FinalePoolSection competition={competition} />
 
           <section className="mb-6">

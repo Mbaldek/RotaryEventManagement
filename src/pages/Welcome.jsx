@@ -79,9 +79,9 @@ const T = {
     master_admin: {
       title: { fr: 'Vous êtes désormais master admin.', en: 'You are now master admin.', de: 'Sie sind nun Master-Administrator·in.' },
       body: {
-        fr: 'Le cockpit Master pilote toute la plateforme : compétitions, clubs, rôles globaux et finale fédérée.',
-        en: 'The Master cockpit drives the whole platform: competitions, clubs, global roles and federated finale.',
-        de: 'Das Master-Cockpit steuert die gesamte Plattform: Wettbewerbe, Clubs, globale Rollen und föderiertes Finale.',
+        fr: 'Le cockpit Master pilote toute la plateforme : compétitions, clubs, rôles globaux et finale.',
+        en: 'The Master cockpit drives the whole platform: competitions, clubs, global roles and finale.',
+        de: 'Das Master-Cockpit steuert die gesamte Plattform: Wettbewerbe, Clubs, globale Rollen und Finale.',
       },
       cta: { fr: 'Accéder au cockpit Master', en: 'Open Master cockpit', de: 'Master-Cockpit öffnen' },
       to: '/Admin',
