@@ -14,19 +14,18 @@ export const TABS = {
   clubs:              { fr: 'Clubs',              en: 'Clubs',                   de: 'Clubs' },
   roles:              { fr: 'Rôles globaux',      en: 'Global roles',            de: 'Globale Rollen' },
   competition_admins: { fr: 'Admins compétition', en: 'Competition admins',      de: 'Wettbewerbs-Administratoren' },
-  finale:             { fr: 'Finale',             en: 'Finale',                  de: 'Finale' },
   advanced:           { fr: 'Outils avancés',     en: 'Advanced tools',          de: 'Erweiterte Tools' },
 };
 
-// Ordre : roles → competition_admins. jury_apps RETIRÉ (2026-05-29) — les candidatures
-// jury sont scopées (edition_id, club_id), reviewed par club_admin dans son cockpit.
+// Ordre : roles → competition_admins. jury_apps + finale RETIRÉS (2026-05-29) :
+// candidatures jury scopées (edition_id, club_id) gérées par club_admin ;
+// Finale est un attribut d'edition, gérée dans CompetitionEditView > tab Finale.
 export const TAB_IDS = [
   'overview',
   'competitions',
   'clubs',
   'roles',
   'competition_admins',
-  'finale',
   'advanced',
 ];
 

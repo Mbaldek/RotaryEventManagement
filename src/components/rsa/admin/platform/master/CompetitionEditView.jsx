@@ -33,6 +33,8 @@ import ClubsTab from './competition-tabs/ClubsTab';
 import RulesTab from './competition-tabs/RulesTab';
 import PrizesTab from './competition-tabs/PrizesTab';
 import CommunicationTab from './competition-tabs/CommunicationTab';
+import FinaleSection from './competition-tabs/FinaleSection';
+import { FinaleManagement } from './tabs/FinaleTab';
 import DeleteCompetitionModal from './DeleteCompetitionModal';
 
 export default function CompetitionEditView({ editionId, onClose }) {
@@ -150,11 +152,23 @@ export default function CompetitionEditView({ editionId, onClose }) {
       render: () => <PrizesTab competition={competitionRef} mode="edit" />,
     },
     {
+      id: 'finale',
+      label: t({ fr: 'Finale', en: 'Finale', de: 'Finale' }),
+      render: () => (
+        <>
+          <FinaleSection values={values} onPatch={patch} />
+          {(values.has_finale || competition?.has_finale) && (
+            <FinaleManagement competition={pilotageCompetition} />
+          )}
+        </>
+      ),
+    },
+    {
       id: 'comm',
       label: t(COMP.tabCommunication),
       render: () => <CommunicationTab values={values} onPatch={patch} />,
     },
-  ]), [t, values, patch, competitionRef, pilotageCompetition]);
+  ]), [t, values, patch, competitionRef, pilotageCompetition, editionId, competition?.has_finale]);
 
   if (competitions.isLoading) {
     return (

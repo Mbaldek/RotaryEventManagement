@@ -368,6 +368,39 @@ function FinaleSessionRow({ competition }) {
   );
 }
 
+// ── FinaleManagement — inner UI (sans picker) pour usage dans CompetitionEditView
+// La finale est un attribut d'une compétition (editions.has_finale + finale_config),
+// pas un objet plateforme : on rend champions + pool + session pour LA compétition
+// fournie en prop. Pas de CompetitionPicker.
+export function FinaleManagement({ competition }) {
+  const { t } = useLang();
+  if (!competition) return null;
+  return (
+    <section
+      className="mb-6"
+      role="region"
+      aria-labelledby="finale-management-section-heading"
+    >
+      <h3 id="finale-management-section-heading" className="sr-only">
+        {t(FINALE.sectionTitle)}
+      </h3>
+      <FinaleSessionRow competition={competition} />
+      <FinalePoolSection competition={competition} />
+      <section className="mb-6">
+        <header className="mb-3 flex items-center gap-3 flex-wrap">
+          <h4 className="text-[16px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+            {t(FINALE.championsPerClub)}
+          </h4>
+        </header>
+        <ChampionsByClub competition={competition} />
+      </section>
+    </section>
+  );
+}
+
+// FinaleTab (legacy master cockpit tab) — déprécié 2026-05-29. La Finale vit
+// désormais dans CompetitionEditView > tab Finale (combine FinaleSection toggle
+// + FinaleManagement contenu). Composant gardé pour transition.
 export default function FinaleTab() {
   const { t } = useLang();
   const competitions = useAllCompetitions();

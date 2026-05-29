@@ -27,7 +27,10 @@ import CompetitionsTab from './tabs/CompetitionsTab';
 import ClubsTab from './tabs/ClubsTab';
 import GlobalRolesTab from './tabs/GlobalRolesTab';
 import CompetitionAdminsTab from './tabs/CompetitionAdminsTab';
-import FinaleTab from './tabs/FinaleTab';
+// FinaleTab retiré du master cockpit 2026-05-29 : la Finale est un attribut
+// d'une compétition (editions.has_finale), elle vit dans CompetitionEditView
+// > tab Finale (combine FinaleSection toggle + FinaleManagement contenu).
+// Pas un objet plateforme standalone.
 // JuryApplicationsPanel retiré du master cockpit 2026-05-29 : les candidatures
 // jury sont scopées (edition_id, club_id) et arrivent directement chez le
 // club_admin du club concerné via /DevenirJury?edition=X&club=Y. Le master_admin
@@ -252,7 +255,6 @@ export default function MasterCockpit() {
             {tab === 'clubs'              && <ClubsTab />}
             {tab === 'roles'              && <GlobalRolesTab />}
             {tab === 'competition_admins' && <CompetitionAdminsTab />}
-            {tab === 'finale'             && <FinaleTab />}
             {tab === 'advanced'           && <AdvancedSection />}
           </motion.div>
         </AnimatePresence>
