@@ -93,9 +93,10 @@ export default function Login() {
     });
     // DIAGNOSTIC : tracer le redirect post-login pour debugger les routages
     // inattendus (ex. master_admin envoyé sur /MonDossier alors que /Admin
-    // attendu — observé 2026-05-29). À retirer une fois la cause identifiée.
+    // attendu — observé 2026-05-29). console.warn pour ne pas être filtré
+    // par le niveau "Default" Chrome (info caché).
     // eslint-disable-next-line no-console
-    console.info('[Login] redirect →', target, { roles, clubMemberships: clubMemberships?.length, query });
+    console.warn('[Login] redirect →', target, { roles, clubMemberships: clubMemberships?.length, query });
     return <Navigate to={target} replace />;
   }
 

@@ -92,14 +92,25 @@ export const Edition = {
   // L'édition active pour la candidature : la plus récente en statut 'open'.
   // (Le blueprint §12.8 suppose une seule édition 'open' ; en cas de pluralité on
   //  retient la plus récente par année puis date d'ouverture.)
+  // DIAGNOSTIC 2026-05-29 : timeout 6s force throw pour éviter spinner infini si
+  // la requête Supabase hang (cf. /MonDossier stuck). Au moins on a une erreur
+  // claire dans la console + le user voit le watchdog avec retry.
   async active() {
-    const { data, error } = await supabase
+    const query = supabase
       .from('editions')
       .select('*')
       .eq('status', 'open')
       .order('year', { ascending: false })
       .order('application_open', { ascending: false })
       .limit(1);
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('[Edition.active] timeout 6s — Supabase request never resolved')), 6000),
+    );
+    // eslint-disable-next-line no-console
+    console.warn('[Edition.active] start request');
+    const { data, error } = await Promise.race([query, timeout]);
+    // eslint-disable-next-line no-console
+    console.warn('[Edition.active] result', { data, error: error?.message ?? null });
     if (error) throw error;
     return data?.[0] ?? null;
   },

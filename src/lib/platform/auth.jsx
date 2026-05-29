@@ -104,9 +104,10 @@ export function PlatformAuthProvider({ children }) {
     // DIAGNOSTIC : on logge le résultat de chaque promise individuellement pour
     // identifier en prod quelle requête échoue silencieusement (cf. spinner
     // infini /MonDossier 2026-05-29 — sans log, impossible de distinguer un
-    // rolesRes.error d'un rolesRes.data=[]).
+    // rolesRes.error d'un rolesRes.data=[]). console.warn pour ne pas être filtré
+    // par le niveau "Default" de la console Chrome qui masque info.
     // eslint-disable-next-line no-console
-    console.info('[PlatformAuth] loadIdentity result', {
+    console.warn('[PlatformAuth] loadIdentity result', {
       email_fp: emailFingerprint(email),
       profile: { data: !!profRes?.data, error: profRes?.error?.message ?? null },
       roles: { data: rolesRes?.data, error: rolesRes?.error?.message ?? null },
