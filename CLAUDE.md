@@ -47,3 +47,12 @@ npm run lint         → ESLint
 - File upload : Supabase Storage bucket "uploads"
 - Auth : Supabase Auth (email), profil dans table profiles
 - Notifications : NotificationProvider avec subscriptions temps réel
+
+## Docs canoniques pour les évolutions
+Toute évolution (design, feature, refonte) passe par ces 4 docs — pas de doc parallèle :
+- `docs/design/design-upgrade-audit.md` → constat / inventaire de l'existant avant refonte
+- `docs/design/design-upgrade-blueprint.md` → plan de refonte design (variantes, règles, pool)
+- `docs/blueprints/<feature>.md` → blueprint feature (architecture, schéma, migration, UX flow) — un fichier par feature
+- `docs/design/ui-patterns-catalog-generic.md` → catalogue des patterns UI premium réutilisables (référence à citer dans les blueprints)
+
+Avant de coder une évolution : 1) update l'audit si nécessaire, 2) écrire/maj le blueprint feature, 3) référencer les patterns de ui-patterns-catalog-generic.

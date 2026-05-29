@@ -544,6 +544,43 @@ est passée ; reconstruction plateforme RSA en cours
 
 **À discuter avec PM avant toute deprecation.**
 
+### 4.17 Cockpit admin — Finale fold into SessionsTab
+
+**Surface.** `CompetitionEditView` (master/competition cockpit). Pas une page,
+une architecture d'onglets.
+
+**Constat (audit [§3.7](./design-upgrade-audit.md#37-schisme-architectural-finalesessions-cockpit-admin)).**
+L'onglet `Finale` duplique la primitive « session » avec son propre flag
+(`editions.has_finale`), sa propre config (`editions.finale_config`) et son
+propre formulaire de création (`FinaleSessionRow` + `useCreateFinale`). C'est
+juste `sessions.kind='finale'` au final.
+
+**Cible.** Drop l'onglet `Finale`. Le bandeau « Grande Finale » s'affiche en
+tête de `SessionsTab` ; sa création passe par le même `SessionsManager` que
+les sessions qualificatives (avec `kind='finale'`, `club_id=null` pré-remplis).
+Le drawer d'une session de `kind='finale'` montre les blocs bonus (pool,
+champions, sources) en accordéon — pas en onglet séparé. Cf. pattern
+[`D-K` au catalog §5.9](./ui-patterns-catalog-generic.md#59-kind-aware-session-detail-drawer).
+
+**Pourquoi ici plutôt qu'en feature blueprint pur.** L'évolution est portée
+par le **principe anti-template** : deux UIs (Sessions + Finale) qui font la
+même chose, à un kind près, sont une réplique inutile. La fusion est autant
+une décision design qu'archi.
+
+**Variantes / patterns mobilisés :**
+- Liste : `L-Grouped-Hairline` (groupes : Grande Finale → puis 1 groupe par
+  club).
+- Empty state Grande Finale : `E-CTA-Inline` (« Aucune grande finale planifiée
+  — *Créer* »).
+- Détail : drawer kind-aware `D-K` (catalog §5.9).
+- Micro : `M-Hairline-Reveal` sur l'ouverture des blocs bonus.
+
+**Plan détaillé** (migration SQL, ordre code/schema, critères d'acceptation,
+risques) : [`blueprints/sessions-finale-unification.md`](../blueprints/sessions-finale-unification.md).
+
+**Estim.** 5h30 (4h code + 1h SQL + 30 min cleanup). À planifier après
+stabilisation V2.
+
 ---
 
 ## 5. Phasing & priorités

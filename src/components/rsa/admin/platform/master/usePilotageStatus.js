@@ -19,18 +19,22 @@
 //   steps = [
 //     { id: 'created'|'clubs'|'admins'|'sessions'|'finale'|'links',
 //       done:    boolean,
-//       optional?: boolean,    // step5 si has_finale === false
+//       optional?: boolean,    // step5 optional si aucune session finale
 //       blockedBy?: string,    // step depends on previous (UI peut griser)
 //       missingClubs?: Array<{ id, name }>,  // step3, step4
 //       firstMissing?: { id, name },         // first club sans admin/session
 //     }, ...
 //   ]
+//
+// V2.6 sessions-finale unification : step 'finale' est dérivé de useFinale
+// (sessions kind='finale' AND club_id IS NULL), plus de lecture du flag
+// editions.has_finale (deprecated, drop Phase 2).
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { usePlatformAuth } from '@/lib/platform/auth';
-import { useClubsForEdition, useCountsForEdition } from './useMaster';
+import { useClubsForEdition, useCountsForEdition, useFinale } from './useMaster';
 
 // Champs identité/calendrier/règles pris en compte pour le "step 1 done %".
 // On compte chaque champ rempli ; le pourcentage = filled / total.
@@ -120,8 +124,15 @@ export default function usePilotageStatus({ competition }) {
     [adminsQ.data],
   );
 
-  const isLoading = attachedQ.isLoading || countsQ.isLoading || adminsQ.isLoading;
-  const isError = attachedQ.isError || countsQ.isError || adminsQ.isError;
+  // 4) Grande Finale fédérée — V2.6 sessions-finale unification : on dérive
+  // l'existence de la finale depuis sessions (kind='finale', club_id IS NULL)
+  // au lieu de lire editions.has_finale (column deprecated, drop en Phase 2).
+  // Cf. docs/blueprints/sessions-finale-unification.md.
+  const finaleQ = useFinale(editionId);
+  const finaleSession = finaleQ.data || null;
+
+  const isLoading = attachedQ.isLoading || countsQ.isLoading || adminsQ.isLoading || finaleQ.isLoading;
+  const isError = attachedQ.isError || countsQ.isError || adminsQ.isError || finaleQ.isError;
 
   // ── Composition des steps ────────────────────────────────────────────────
   return useMemo(() => {
@@ -194,25 +205,29 @@ export default function usePilotageStatus({ competition }) {
       firstMissing: clubsMissingSessions[0] || attachedListEnriched[0] || null,
     };
 
-    // Step 5 — Finale configurée (optional si has_finale=false)
-    const hasFinale = !!competition?.has_finale;
+    // Step 5 — Grande Finale configurée (optional si pas de session finale).
+    // V2.6 : dérivé de l'existence d'une session kind='finale' AND club_id IS
+    // NULL (cf. useFinale). Plus de lecture de editions.has_finale.
+    // Les champs éditoriaux (location) restent lus depuis editions.finale_config
+    // tant que la colonne existe — Phase 2 les migrera dans session_config.
+    const hasFinale = !!finaleSession;
     const finaleCfg = (competition?.finale_config && typeof competition.finale_config === 'object')
       ? competition.finale_config
       : {};
-    const finaleHasDate = !!finaleCfg.date;
-    const finaleHasLocation = !!finaleCfg.location;
-    const finaleHasName = !!finaleCfg.name;
-    const step5Done = hasFinale && finaleHasDate && finaleHasLocation && finaleHasName;
+    const finaleDate = finaleSession?.session_date || finaleCfg.date || null;
+    const finaleName = finaleSession?.name || finaleCfg.name || null;
+    const finaleLocation = finaleCfg.location || null;
+    const step5Done = hasFinale && !!finaleDate && !!finaleLocation && !!finaleName;
     const step5 = {
       id: 'finale',
       done: step5Done,
       optional: !hasFinale,
       enabled: hasFinale,
-      date:     finaleCfg.date || null,
-      location: finaleCfg.location || null,
-      name:     finaleCfg.name || null,
-      missingDate: hasFinale && !finaleHasDate,
-      missingLocation: hasFinale && !finaleHasLocation,
+      date:     finaleDate,
+      location: finaleLocation,
+      name:     finaleName,
+      missingDate: hasFinale && !finaleDate,
+      missingLocation: hasFinale && !finaleLocation,
     };
 
     // Step 6 — URLs publiques (toujours "open" — pas de "done" automatique,
@@ -299,9 +314,11 @@ export default function usePilotageStatus({ competition }) {
     attached,
     clubsWithAdminSet,
     clubsWithSessionsSet,
+    finaleSession,
     editionId,
     isMonoclub,
     isLoading,
     isError,
+    editionHasGlobalCoverage,
   ]);
 }

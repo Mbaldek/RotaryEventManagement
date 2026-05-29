@@ -37,8 +37,6 @@ import CommunicationTab from './competition-tabs/CommunicationTab';
 import CommunicationTabRefonte from './competition-tabs/CommunicationTabRefonte';
 import RolesTab from './competition-tabs/RolesTab';
 import SessionsTab from './competition-tabs/SessionsTab';
-import FinaleSection from './competition-tabs/FinaleSection';
-import { FinaleManagement } from './tabs/FinaleTab';
 import DeleteCompetitionModal from './DeleteCompetitionModal';
 
 export default function CompetitionEditView({ editionId, onClose }) {
@@ -169,19 +167,10 @@ export default function CompetitionEditView({ editionId, onClose }) {
     {
       id: 'sessions',
       label: t(COMP.tabSessions),
-      render: () => <SessionsTab editionId={editionId} />,
-    },
-    {
-      id: 'finale',
-      label: t({ fr: 'Finale', en: 'Finale', de: 'Finale' }),
-      render: () => (
-        <>
-          <FinaleSection values={values} onPatch={patch} />
-          {(values.has_finale || competition?.has_finale) && (
-            <FinaleManagement competition={pilotageCompetition} />
-          )}
-        </>
-      ),
+      // V2.6 — La Grande Finale est rendue en tête de SessionsTab (une finale
+      // n'est qu'une session de plus — `kind='finale'`, `club_id IS NULL` pour
+      // la fédérée). Cf. docs/blueprints/sessions-finale-unification.md.
+      render: () => <SessionsTab editionId={editionId} competition={pilotageCompetition} />,
     },
     {
       id: 'comm',
@@ -210,7 +199,7 @@ export default function CompetitionEditView({ editionId, onClose }) {
       label: t(COMP.tabRoles),
       render: () => <RolesTab editionId={editionId} editionName={values.name} />,
     },
-  ]), [t, values, patch, competitionRef, pilotageCompetition, editionId, competition?.has_finale]);
+  ]), [t, values, patch, competitionRef, pilotageCompetition, editionId]);
 
   if (competitions.isLoading) {
     return (

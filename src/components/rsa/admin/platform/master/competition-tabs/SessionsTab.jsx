@@ -27,6 +27,10 @@ import { StatusPill as JuryStatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { useClubsForEdition, useCountsForEdition } from '../useMaster';
 import { useSessionsAdmin } from '../../useAdmin';
+// V2.6 sessions-finale unification — la Grande Finale est rendue en tête de
+// cet onglet (une finale n'est qu'une session de plus, kind='finale'
+// + club_id=NULL pour la fédérée). Cf. docs/blueprints/sessions-finale-unification.md.
+import { FinaleManagement } from '../tabs/FinaleTab';
 
 const COPY = {
   intro: {
@@ -101,6 +105,26 @@ const COPY = {
   },
   kindQualifying: { fr: 'Qualificative', en: 'Qualifying', de: 'Qualifikation' },
   kindFinale:     { fr: 'Finale',        en: 'Finale',     de: 'Finale' },
+  finaleEyebrow: {
+    fr: 'Grande Finale',
+    en: 'Grand Finale',
+    de: 'Grand Finale',
+  },
+  finaleTitle: {
+    fr: 'Session fédérée',
+    en: 'Federated session',
+    de: 'Föderierte Session',
+  },
+  finaleIntro: {
+    fr: 'La Grande Finale est une session multi-club (kind=finale, sans club). Elle se crée et se pilote ici, au-dessus des sessions qualificatives.',
+    en: 'The Grand Finale is a multi-club session (kind=finale, no club). It is created and run here, above the qualifying sessions.',
+    de: 'Das Grand Finale ist eine multi-club Session (kind=finale, ohne Club). Sie wird hier oberhalb der Qualifikations-Sessions erstellt und gesteuert.',
+  },
+  clubsEyebrow: {
+    fr: 'Sessions qualificatives par club',
+    en: 'Qualifying sessions per club',
+    de: 'Qualifikations-Sessions pro Club',
+  },
 };
 
 function StatusPill({ kind, label }) {
@@ -262,7 +286,7 @@ function ClubRow({ club, sessions, totals, isLoadingSessions, expanded, onToggle
   );
 }
 
-export default function SessionsTab({ editionId }) {
+export default function SessionsTab({ editionId, competition }) {
   const { t } = useLang();
   const navigate = useNavigate();
   const clubsQ    = useClubsForEdition(editionId);
@@ -313,18 +337,59 @@ export default function SessionsTab({ editionId }) {
 
   // Navigation SPA — pas de window.location.href : un full reload casse la
   // session master_admin (le legacy gate kick l'utilisateur vers MonDossier).
+  // Refonte hiérarchie : on pousse le scope canonique club:{eid}/{cid} pour
+  // conserver le breadcrumb Master ▸ Compétition ▸ Club.
   const gotoClubCockpit = (clubId) => {
-    navigate(`/Admin?scope=club:${encodeURIComponent(clubId)}`);
+    navigate(`/Admin?scope=club:${encodeURIComponent(editionId)}/${encodeURIComponent(clubId)}`);
   };
 
   const isLoading = clubsQ.isLoading || countsQ.isLoading;
   const isError = clubsQ.isError || countsQ.isError;
+
+  // FinaleManagement n'a besoin que de competition.id + competition.year (pour
+  // pré-remplir l'identifiant de la session finale). Fallback safe si la prop
+  // competition n'est pas passée (ancien call site).
+  const competitionForFinale = competition || { id: editionId };
 
   return (
     <section>
       <p className="text-[13px] mb-5" style={{ color: INK }}>
         {t(COPY.intro)}
       </p>
+
+      {editionId && (
+        <div className="mb-6">
+          <div className="mb-3">
+            <p
+              className="uppercase tracking-[0.18em] text-[10.5px] font-medium"
+              style={{ color: GOLD }}
+            >
+              {t(COPY.finaleEyebrow)}
+            </p>
+            <h3
+              className="text-[17px] mt-0.5"
+              style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+            >
+              {t(COPY.finaleTitle)}
+            </h3>
+            <p className="text-[12.5px] mt-1.5" style={{ color: INK }}>
+              {t(COPY.finaleIntro)}
+            </p>
+          </div>
+          <FinaleManagement competition={competitionForFinale} />
+        </div>
+      )}
+
+      {!isLoading && !isError && clubs.length > 0 && (
+        <div className="mb-3" style={{ borderTop: `1px solid ${CREAM2}`, paddingTop: 18 }}>
+          <p
+            className="uppercase tracking-[0.18em] text-[10.5px] font-medium"
+            style={{ color: GOLD }}
+          >
+            {t(COPY.clubsEyebrow)}
+          </p>
+        </div>
+      )}
 
       {isLoading && (
         <div className="py-6 flex justify-center">

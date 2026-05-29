@@ -44,7 +44,7 @@
 2. [Layout patterns](#2-layout-patterns) — PageShell, header, sections, footer, grid
 3. [Navigation](#3-navigation) — TopNav, pill tabs, URL state, breadcrumbs, selectors, command palette
 4. [Forms](#4-forms) — Field + controls, V3.0 additions (combobox, multi-select, stepper, color, rich text), validation, autosave
-5. [Data display](#5-data-display) — tables, KPI cards, charts, empty/loading/error states, cards, status pills
+5. [Data display](#5-data-display) — tables, KPI cards, charts, empty/loading/error states, cards, status pills, kind-aware drawer (`D-K`)
 6. [Overlays](#6-overlays) — modals, drawers, popovers, toasts, typed-confirm
 7. [Feedback & communication](#7-feedback--communication) — email templates, banners, progress, spinners
 8. [Microinteractions](#8-microinteractions) — press, hover, tab transitions, modal, autosave indicator
@@ -979,6 +979,84 @@ export function SkeletonChart({ height = 240 }) {
   </div>
 </div>
 ```
+
+### 5.9 Kind-aware session detail drawer (pattern `D-K`)
+
+> **When to use.** A list shows multiple items of the same primitive table
+> (`sessions`, `prizes`, `events`…) but with a discriminator column (`kind`,
+> `type`, `category`) that should reveal *additional* blocks — not a different
+> screen. Resist the urge to fork into two pages or two tabs.
+
+**Principle.** One drawer. One header. One identity form. Bonus blocks render
+**conditionally on `kind`**, as collapsible sections below the common payload.
+No second tab, no second route, no second mental model.
+
+**Anti-pattern caught.** RSA admin cockpit used to expose
+[`competition-tabs/FinaleSection.jsx`](../../src/components/rsa/admin/platform/master/competition-tabs/FinaleSection.jsx)
++ [`tabs/FinaleTab.jsx`](../../src/components/rsa/admin/platform/master/tabs/FinaleTab.jsx)
+as a parallel UI for `kind='finale'`, with its own boolean flag
+(`editions.has_finale`) and its own jsonb config (`editions.finale_config`).
+This duplicated the `SessionsManager` primitive for no semantic gain. Cf.
+audit [§3.7](./design-upgrade-audit.md#37-schisme-architectural-finalesessions-cockpit-admin)
+and blueprint feature
+[`sessions-finale-unification.md`](../blueprints/sessions-finale-unification.md).
+
+**Anatomy.**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ Eyebrow · Session ID                            [Status]   │  ← common
+│ Editorial Title (session name)                              │
+├────────────────────────────────────────────────────────────┤
+│ Identity (name, date, location, format)                     │  ← common
+│ Teams link                                                  │  ← common
+│ Jury assigned                                               │  ← common
+├──── if kind='qualifying' ──────────────────────────────────┤
+│ ▸ Startups affectées                                        │  ← bonus
+│ ▸ Top-N à promouvoir (session_config.promote_top_n)         │  ← bonus
+├──── if kind='finale' ──────────────────────────────────────┤
+│ ▸ Pool des finalistes promus                                │  ← bonus
+│ ▸ Sources des qualifiés (sessions qualif → ce finale)       │  ← bonus
+│ ▸ Champions par club  (if club_id IS NULL)                  │  ← bonus
+└────────────────────────────────────────────────────────────┘
+```
+
+**Rules.**
+
+1. The header (eyebrow + title + status) is **identical** across kinds. Only
+   a discreet pill (`Finale` / `Qualificative`) differentiates — never a
+   recolored bar or a different icon scheme that would scream "different
+   thing".
+2. Common blocks render **above** kind-specific blocks. The user always sees
+   identity first.
+3. Kind-specific blocks are **collapsed by default** when their count is high
+   (e.g. champions-by-club). Expand reveals via `M-Hairline-Reveal`.
+4. Creation form reuses the same `kind` select. Default is `qualifying` unless
+   the caller pre-fills (e.g. SessionsTab > "Créer la grande finale" button
+   sets `kind='finale'` + `club_id=null` + `position=999`).
+5. **No** parallel route, no parallel hook namespace. Hooks read from the
+   same `sessions` query; bonus blocks read auxiliary tables
+   (`platform_finale_membership`, `startups` projection) only when their
+   `kind` requires it.
+
+**Composition with `L-Grouped-Hairline`.** Pair this drawer with a list that
+groups sessions by their natural axis (`club_id` for qualifying sessions, a
+top-of-list "Grande Finale" group for `kind='finale' AND club_id IS NULL`).
+The drawer/list duo is the canonical surface for any "same primitive, kind
+discriminator" admin flow.
+
+**Don't.**
+
+- Don't create a `Finale` tab. Don't create a `Finale` route. Don't add a
+  `has_kind` boolean flag mirroring an `EXISTS (… WHERE kind = X)` query.
+- Don't store kind-specific editorial config on the *parent* row
+  (`editions.finale_config`) when the *session* row's `session_config` jsonb
+  is the natural home.
+- Don't introduce visual chrome (gradient, hero, ornament) that turns one
+  kind into a "special" UI. Discrete pill only.
+
+**Reference impl.** Pending — first delivery will be the SessionsTab fold
+described in [`sessions-finale-unification.md`](../blueprints/sessions-finale-unification.md).
 
 ---
 

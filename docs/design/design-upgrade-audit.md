@@ -293,6 +293,41 @@ prendre : deprecate ou aligner.
 legacy), `MasterCockpit`, `ClubCockpit`. Ces sub-cockpits sont à auditer
 séparément (hors ce doc).
 
+### 3.7 Schisme architectural Finale/Sessions (cockpit admin)
+
+**Surface.** `CompetitionEditView` > onglet `Finale` + onglet `Sessions`.
+
+**Constat.** Le cockpit traite la **finale** comme une entité distincte d'une
+**session**, alors qu'au niveau DB c'est juste `sessions.kind='finale'`. Deux
+chemins parallèles construisent le même objet :
+
+| Aspect | Onglet `Sessions` | Onglet `Finale` |
+| ------ | ----------------- | --------------- |
+| Création | `SessionsManager` → RPC `rsa_create_session` (`kind='qualifying'`) | `FinaleSessionRow` → `useCreateFinale` → RPC `rsa_create_session` (`kind='finale'`) |
+| Config éditoriale | `session_config` jsonb (date, format, top-N) | `editions.finale_config` jsonb (date, format, top-N, lieu, jury_pool_size) — **redondant** |
+| Flag | aucun | `editions.has_finale` boolean — **redondant avec l'existence d'une ligne `sessions` `kind='finale'`** |
+| Lifecycle | StatusPill `draft/live/published` | Pas de pill cohérente |
+
+**Smells dominants.** #1 (clone visuel de la grammaire de section) + un smell
+hors-catalogue : **duplication de primitive**. L'UI laisse penser que la finale
+est un module à part, ce qui :
+
+- empêche la création d'une finale **interne de club** (cas V2.5+, un club qui
+  veut sa propre finale en plus de ses sessions qualificatives) ;
+- produit un crash silencieux au check de la case `has_finale` (le composant
+  `FinaleManagement` se monte avec des hooks qui assument des données pas
+  encore présentes — état local pas hydraté depuis `competition.has_finale` /
+  `competition.finale_config`) ;
+- alourdit le pilotage (`PilotageTab` doit lire `has_finale` au lieu de
+  dériver depuis la liste des sessions).
+
+**Action.** Fold l'onglet `Finale` dans `Sessions`. Cf.
+[`blueprints/sessions-finale-unification.md`](../blueprints/sessions-finale-unification.md)
+pour le plan détaillé (migration SQL, drawer kind-aware, dérivation du flag).
+
+**Priorité.** Mid (pas event-critical, mais bloque la V2.5 multi-club et
+masque un crash).
+
 ---
 
 ## 4. Quick-wins vs deep-refactor

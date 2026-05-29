@@ -327,7 +327,10 @@ export default function PilotageTab({ competition, setActiveTab }) {
     setActiveTab?.('clubs');
   }
   function gotoFinaleTab() {
-    setActiveTab?.('finale');
+    // V2.6 sessions-finale unification — la Grande Finale vit désormais en tête
+    // de l'onglet Sessions (une finale n'est qu'une session de plus). Cf.
+    // docs/blueprints/sessions-finale-unification.md.
+    setActiveTab?.('sessions');
   }
   function gotoMasterRoles() {
     // Navigation intra-cockpit (MasterCockpit lit ?tab= depuis useSearchParams).
@@ -339,15 +342,15 @@ export default function PilotageTab({ competition, setActiveTab }) {
   }
   function gotoClubCockpit(clubId) {
     if (!clubId) return;
-    // Admin.jsx tient le `scope` dans son useState et ne le ré-lit pas depuis
-    // l'URL — un setSearchParams n'aurait pas d'effet. On force une navigation
-    // pleine (location.href) pour ré-instancier Admin avec le bon scope. Le
-    // backlog mentionne déjà cette amélioration : Admin devrait dériver scope
-    // depuis searchParams. Pour B-pilotage-tab on garde l'URL propre dans la
-    // barre d'adresse et on assure que ça fonctionne dès aujourd'hui.
-    if (typeof window !== 'undefined') {
-      window.location.href = `/Admin?scope=club:${encodeURIComponent(clubId)}`;
-    }
+    // Refonte hiérarchie : Admin.jsx dérive désormais le scope depuis l'URL
+    // (useSearchParams), donc setSearchParams suffit (plus de window.location.href
+    // qui forcait un reload). On pousse le scope canonique club:{eid}/{cid}
+    // pour conserver le breadcrumb Master ▸ Compétition ▸ Club.
+    const editionId = competition?.id;
+    if (!editionId) return;
+    const next = new URLSearchParams();
+    next.set('scope', `club:${editionId}/${clubId}`);
+    setSearchParams(next, { replace: false });
   }
 
   // ── Mapping steps[] → JSX par id ─────────────────────────────────────────
