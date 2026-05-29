@@ -38,7 +38,10 @@ export default defineConfig({
             if (id.includes('@tanstack')) return 'query';
             if (id.includes('framer-motion')) return 'motion';
             if (id.includes('@sentry')) return 'sentry';
-            if (id.includes('recharts') || id.includes('d3-')) return 'charts';
+            // NB: recharts/d3 NOT split — recharts has internal circular deps
+            // that break with manualChunks (TDZ: "Cannot access 'T' before
+            // initialization"). Let Vite auto-chunk it alongside its importers
+            // (rsa-analytics). Cf. recharts issues #4823, #3615.
             if (
               id.includes('react-router') ||
               id.includes('node_modules/react/') ||
