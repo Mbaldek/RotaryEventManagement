@@ -356,14 +356,23 @@ const STAFF_FILTER_KEYS = new Set([
 export const Startup = {
   ...createEntity('startups'),
 
-  // Le dossier unique du candidat courant pour une édition (RLS scope à owner_id).
-  // On ne filtre PAS par owner_id côté client (la RLS s'en charge) — uniquement par
-  // edition_id, puis on prend le plus récent. Renvoie null si aucun dossier.
+  // Le dossier unique du candidat courant pour une édition.
+  //
+  // BUG FIX 2026-05-29 (hardening R-L3) : on filtre EXPLICITEMENT par
+  // owner_id = auth.uid(). Avant : on faisait confiance à la RLS pour scoper,
+  // mais staff/admin (master_admin notamment) ont une policy de read élargie
+  // (staff_read sur toutes les startups). Conséquence : un master_admin
+  // arrivant sur /MonDossier voyait la startup d'UN AUTRE candidat (la plus
+  // récemment mise à jour de l'édition), pas la sienne. Plus de surprise.
+  // Renvoie null si aucun dossier pour CE user dans cette édition.
   async mine(editionId) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) return null;
     const { data, error } = await supabase
       .from('startups')
       .select('*')
       .eq('edition_id', editionId)
+      .eq('owner_id', user.id)
       .order('updated_at', { ascending: false })
       .limit(1);
     if (error) throw error;

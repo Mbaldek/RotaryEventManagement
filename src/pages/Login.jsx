@@ -30,10 +30,13 @@ import { usePlatformAuth } from '@/lib/platform/auth';
 import { computeLandingRoute, parseLoginQuery } from '@/lib/platform/postLoginRoute';
 
 // Délai max avant de considérer que la résolution rôles+clubs est terminée.
-// On ne déclenche ce timeout QUE dans le cas où `loading` est encore true OU
-// roles/clubMemberships sont encore en train d'arriver — pour le user
-// authentifié role-less avéré, la résolution est immédiate (cf. F2).
-const ROLE_RESOLVE_TIMEOUT_MS = 200;
+// Bumped 200ms → 1500ms : sur SSO Google, `onAuthStateChange SIGNED_IN` fire
+// après le callback OAuth alors que `loading` est DÉJÀ false (l'IIFE init a
+// résolu vite). loadIdentity démarre alors mais n'est pas instantané (4 RPC
+// parallèles). Le 200ms était trop court → /MonDossier fallback car roles=[].
+// Maintenant : on attend identityLoaded (V3) qui passe à true à la FIN du
+// loadIdentity, sans dépendre d'un timeout arbitraire.
+const ROLE_RESOLVE_TIMEOUT_MS = 1500;
 
 export default function Login() {
   const { t } = useLang();
@@ -43,6 +46,7 @@ export default function Login() {
     loading,
     roles,
     clubMemberships,
+    identityLoaded,
   } = usePlatformAuth();
 
   // Parse ?next=&intent=&edition=&club= une seule fois par changement de search.
@@ -58,13 +62,19 @@ export default function Login() {
     }
   }, [isAuthenticated]);
 
-  // Résolution rôles — trois branches (F2) :
+  // Résolution rôles — quatre branches :
   //   a) on a déjà au moins un rôle ou un club membership → résolu immédiat
-  //   b) PlatformAuth a fini son init (loading=false) ET roles=[] ET
-  //      clubMemberships=[] → user role-less avéré, résolu immédiat (pas
-  //      d'attente artificielle)
-  //   c) sinon (init pas terminée) → fallback setTimeout 200ms au cas où
-  //      loadIdentity tarde, pour ne pas rester bloqué sur le spinner.
+  //   b) V3 — identityLoaded passé à true (loadIdentity terminé, succès ou
+  //      échec total) → on peut trancher : si roles=[] c'est un vrai candidat
+  //   c) sinon (identité pas encore chargée, ex. SSO callback en cours) →
+  //      fallback setTimeout 1500ms pour ne pas rester bloqué si l'init hang
+  //   d) si pas authentifié → reset resolved par l'effet précédent
+  //
+  // BUG ROOT CAUSE (2026-05-29) : sur SSO Google, l'event SIGNED_IN fire
+  // alors que loading=false (l'IIFE init avait fini sans session). loadIdentity
+  // était alors en flight, mais la branche `if (!loading)` résolvait immédiat
+  // avec roles=[] → fallback /MonDossier au lieu de /Admin. Le flag
+  // identityLoaded (V3) attend la fin de loadIdentity avant de trancher.
   useEffect(() => {
     if (!isAuthenticated) return undefined;
     const hasRoles = (roles && roles.length) || (clubMemberships && clubMemberships.length);
@@ -72,14 +82,17 @@ export default function Login() {
       setResolved(true);
       return undefined;
     }
-    if (!loading) {
-      // Init terminée ET aucun rôle : c'est un candidat, on résout direct.
+    if (identityLoaded) {
+      // loadIdentity a terminé (succès ou erreur totale). Si roles toujours [],
+      // c'est un candidat avéré.
       setResolved(true);
       return undefined;
     }
+    // identityLoaded encore false → on attend, mais on cap à 1500ms pour ne
+    // jamais bloquer indéfiniment si l'init hang (rare).
     const id = setTimeout(() => setResolved(true), ROLE_RESOLVE_TIMEOUT_MS);
     return () => clearTimeout(id);
-  }, [isAuthenticated, loading, roles, clubMemberships]);
+  }, [isAuthenticated, loading, roles, clubMemberships, identityLoaded]);
 
   // — État 1 : déjà authentifié + résolu → redirect computé. —
   if (!loading && isAuthenticated && resolved) {
