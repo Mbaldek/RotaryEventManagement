@@ -98,10 +98,15 @@ export function PlatformAuthProvider({ children }) {
     // n'existe pas encore (build local sans migration V2 appliquée), on retombe
     // sur un tableau vide — la plateforme reste fonctionnelle en mode V1 global.
     const norm = String(email).trim().toLowerCase();
-    // SELF-HEALING : timeout 4s sur chaque query (cf. observation prod 2026-05-29
-    // où ces queries peuvent hang quand le client supabase est en état zombie).
-    // Sur timeout, on retombe sur {data: null, error: timeout} → roles=[] et
-    // l'utilisateur retourne sur /Login plutôt que de rester bloqué.
+    // SELF-HEALING : timeout 8s sur chaque query (cf. observation prod 2026-06-05
+    // où ces queries peuvent hang quand le client supabase est en état zombie ou
+    // sur réseau froid mobile / cold-start Edge).
+    // 2026-06-05 — bumped 4000 → 8000ms. Le 4s killait des roles VALIDES sur
+    // réseau froid (cold-start mobile, refresh post-veille). Aligné avec
+    // getSession timeout (8s) pour homogénéité.
+    // Sur timeout, on retombe sur {data: null, error: timeout} → roles=[] —
+    // mais grâce au skip loadIdentity sur TOKEN_REFRESHED (cf. onAuthStateChange
+    // plus bas), ce cas ne survient qu'au boot initial.
     const withTimeout = (promise, ms, label) =>
       Promise.race([
         promise,
@@ -117,11 +122,11 @@ export function PlatformAuthProvider({ children }) {
     const [profRes, rolesRes, cmRes, caRes] = await Promise.all([
       withTimeout(
         supabase.from('profiles').select('id, email, full_name, role').eq('email', norm).maybeSingle(),
-        4000, 'profiles',
+        8000, 'profiles',
       ),
-      withTimeout(supabase.rpc('rsa_my_roles'), 4000, 'rsa_my_roles'),
-      withTimeout(supabase.rpc('my_club_memberships'), 4000, 'my_club_memberships'),
-      withTimeout(supabase.rpc('my_competition_admin_editions'), 4000, 'my_competition_admin_editions'),
+      withTimeout(supabase.rpc('rsa_my_roles'), 8000, 'rsa_my_roles'),
+      withTimeout(supabase.rpc('my_club_memberships'), 8000, 'my_club_memberships'),
+      withTimeout(supabase.rpc('my_competition_admin_editions'), 8000, 'my_competition_admin_editions'),
     ]);
     // DIAGNOSTIC : on logge le résultat de chaque promise individuellement pour
     // identifier en prod quelle requête échoue silencieusement (cf. spinner
@@ -284,6 +289,30 @@ export function PlatformAuthProvider({ children }) {
       console.warn('[PlatformAuth] onAuthStateChange', { event: _event, hasSession: !!session?.user });
       try {
         setAuthUser(session?.user ?? null);
+        // FIX 2026-06-05 — Cause root du kick-out master_admin observé en prod :
+        // TOKEN_REFRESHED (auto-refresh Supabase toutes les ~30-50min) ré-déclenchait
+        // loadIdentity → 4 RPC en parallèle dont rsa_my_roles. Si une timeout (4s
+        // était court sur réseau froid), setRoles([]) → l'utilisateur perdait ses
+        // rôles instantanément → /Admin tombait en "Forbidden" alors qu'il était
+        // master_admin la seconde d'avant.
+        //
+        // Le token est juste rafraîchi (access_token mis à jour) ; l'identité
+        // (email, rôles, club_memberships, competition_admin_editions) ne change
+        // PAS. On skip loadIdentity pour ces événements :
+        //   * TOKEN_REFRESHED : rien à recharger côté identité
+        //   * INITIAL_SESSION : déjà chargé par l'IIFE init au mount (race évitée)
+        //
+        // On garde le rechargement pour SIGNED_IN (nouveau login), SIGNED_OUT (clear),
+        // USER_UPDATED (email/profile peut avoir changé), PASSWORD_RECOVERY.
+        const IDENTITY_NOOP_EVENTS = new Set(['TOKEN_REFRESHED', 'INITIAL_SESSION']);
+        if (IDENTITY_NOOP_EVENTS.has(_event)) {
+          // eslint-disable-next-line no-console
+          console.warn('[PlatformAuth] onAuthStateChange skipping loadIdentity for', _event);
+          if (session?.user) {
+            setSentryUser({ id: session.user.id, email: session.user.email });
+          }
+          return;
+        }
         await loadIdentity(session?.user?.email);
         if (session?.user) {
           setSentryUser({ id: session.user.id, email: session.user.email });
