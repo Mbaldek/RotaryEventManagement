@@ -8,9 +8,10 @@
 
 import React from 'react';
 import { useLang } from '@/lib/platform/i18n';
-import { MUTED } from '@/components/design/tokens';
+import { MUTED, CREAM2 } from '@/components/design/tokens';
 import { COMP } from '../i18n';
 import { CheckboxRow, TextRow } from './fields';
+import DiffusionSection from './DiffusionSection';
 
 export default function CommunicationTab({ values = {}, onPatch, disabled = false }) {
   const { t } = useLang();
@@ -42,6 +43,13 @@ export default function CommunicationTab({ values = {}, onPatch, disabled = fals
             de: 'Reserviert — noch nicht mit der Datenbank verknüpft.',
           })}
         </p>
+      </div>
+
+      {/* Équipe D — Bloc « URLs à diffuser » : 3 cartes (Candidat / Juré / Public)
+          avec copie clipboard + QR + ouverture nouvel onglet. Wire via
+          buildPublicUrl helper (resp. VITE_APP_URL ou origin runtime). */}
+      <div className="pt-3" style={{ borderTop: `1px solid ${CREAM2}` }}>
+        <DiffusionSection edition={values} />
       </div>
     </div>
   );

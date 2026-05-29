@@ -25,6 +25,7 @@ export { default as LanguageSwitcher } from "@/components/design/shell/LanguageS
 export { default as SkipLink } from "@/components/design/shell/SkipLink";
 export { default as SafeBackLink } from "@/components/design/shell/SafeBackLink";
 export { default as CockpitTabs } from "@/components/design/shell/CockpitTabs";
+export { default as PersonaPreviewBanner } from "@/components/design/shell/PersonaPreviewBanner";
 
 // — Form controls —
 export { default as Field } from "@/components/design/form/Field";

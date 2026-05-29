@@ -92,46 +92,14 @@ function InviteCompetitionAdminModal({ editionId, editionName, onClose, onSucces
     }
     setSubmitting(true);
     try {
-      // L'edge function `invite-user` reçoit role='competition_admin'. Si le
-      // contrat ALLOWED_ROLES côté lib est strict, on tombe en validation
-      // locale "invalid_role:competition_admin" — auquel cas on bascule sur
-      // un fallback direct RPC. Cf. lib/platform/userManagement.js qui définit
-      // un Set explicite (à étendre côté équipe back en parallèle).
       const res = await inviteUser({
         email: normalized,
         role: 'competition_admin',
-        clubId: undefined,
-        customMessage: undefined,
+        editionId,
         lang,
-        // Note : on attache l'edition_id via une 2e RPC après création si
-        // l'edge function actuelle ne le porte pas encore (équipe A).
       });
       if (!res?.ok) {
-        // Fallback : si invite-user refuse le rôle competition_admin, on
-        // essaie la RPC dédiée rsa_grant_competition_admin (création + email
-        // via une route alternative côté serveur).
-        if (String(res?.error || '').toLowerCase().includes('invalid_role')) {
-          const grant = await supabase.rpc('rsa_grant_competition_admin', {
-            p_edition_id: editionId,
-            p_email: normalized,
-          });
-          if (grant.error) throw grant.error;
-        } else {
-          throw new Error(res?.error || 'invite_failed');
-        }
-      } else {
-        // Si invite-user n'attache pas encore le scope édition, on complète
-        // via la RPC dédiée (idempotente côté serveur).
-        const grant = await supabase.rpc('rsa_grant_competition_admin', {
-          p_edition_id: editionId,
-          p_email: normalized,
-        });
-        if (grant.error) {
-          // Pas bloquant pour l'UX : l'invite-user a déjà envoyé le mail ;
-          // on remonte l'erreur en toast soft.
-          // eslint-disable-next-line no-console
-          console.warn('[CompetitionAdminsTab] grant after invite failed:', grant.error.message);
-        }
+        throw new Error(res?.error || 'invite_failed');
       }
       onSuccess?.(normalized);
     } catch (err) {

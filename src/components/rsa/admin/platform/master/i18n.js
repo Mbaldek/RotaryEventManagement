@@ -593,6 +593,241 @@ export const COMP = {
   },
 };
 
+// ── Pilotage tab (B-pilotage-tab) ───────────────────────────────────────────
+// Checklist visuelle "next steps" rendue par défaut après création d'une
+// compétition pour guider le master_admin (clubs à attacher, admins à inviter,
+// sessions à configurer, finale à activer, URLs publiques à diffuser).
+export const PILOTAGE = {
+  tabLabel: {
+    fr: 'Pilotage',
+    en: 'Pilot',
+    de: 'Steuerung',
+  },
+  eyebrow: {
+    fr: 'Mise en route',
+    en: 'Onboarding',
+    de: 'Inbetriebnahme',
+  },
+  checklistTitle: {
+    fr: 'Étapes de configuration',
+    en: 'Setup checklist',
+    de: 'Konfigurationsschritte',
+  },
+  checklistIntro: {
+    fr: 'Suivez ces étapes dans l’ordre pour amener la compétition jusqu’à la diffusion publique.',
+    en: 'Follow these steps in order to bring the competition from draft to public launch.',
+    de: 'Folgen Sie diesen Schritten in dieser Reihenfolge, um den Wettbewerb bis zur öffentlichen Bekanntgabe zu führen.',
+  },
+  completionLabel: {
+    fr: 'Avancement',
+    en: 'Progress',
+    de: 'Fortschritt',
+  },
+  // {percent} sera remplacé côté composant.
+  completionTemplate: {
+    fr: '{percent} % configuré',
+    en: '{percent} % configured',
+    de: '{percent} % konfiguriert',
+  },
+  statusDone: {
+    fr: 'Terminé',
+    en: 'Done',
+    de: 'Erledigt',
+  },
+  statusPending: {
+    fr: 'À faire',
+    en: 'To do',
+    de: 'Offen',
+  },
+  statusOptional: {
+    fr: 'Optionnel',
+    en: 'Optional',
+    de: 'Optional',
+  },
+
+  // Step 1 — Compétition créée
+  step1Title: {
+    fr: 'Compétition créée',
+    en: 'Competition created',
+    de: 'Wettbewerb erstellt',
+  },
+  step1Subtitle: {
+    fr: 'Identité, calendrier et règles enregistrés.',
+    en: 'Identity, calendar and rules saved.',
+    de: 'Identität, Kalender und Regeln gespeichert.',
+  },
+  // {percent} = % de champs identité/calendrier/règles remplis.
+  step1Fill: {
+    fr: 'Identité, calendrier, règles configurés à {percent} %.',
+    en: 'Identity, calendar, rules configured at {percent} %.',
+    de: 'Identität, Kalender, Regeln zu {percent} % konfiguriert.',
+  },
+  step1CtaEditIdentity: {
+    fr: 'Compléter l’identité',
+    en: 'Complete identity',
+    de: 'Identität ergänzen',
+  },
+
+  // Step 2 — Clubs participants attachés
+  step2Title: {
+    fr: 'Clubs participants attachés',
+    en: 'Participating clubs attached',
+    de: 'Teilnehmende Clubs zugeordnet',
+  },
+  // {count} = clubs attachés, {recommended} = min recommandé selon model.
+  step2Count: {
+    fr: '{count}/{recommended} clubs attachés',
+    en: '{count}/{recommended} clubs attached',
+    de: '{count}/{recommended} Clubs zugeordnet',
+  },
+  step2EmptyMulti: {
+    fr: 'Aucun club attaché. Pour une compétition multiclub, attache au moins 2 clubs.',
+    en: 'No club attached yet. For a multiclub competition, attach at least 2 clubs.',
+    de: 'Noch kein Club zugeordnet. Für einen Multiclub-Wettbewerb mindestens 2 Clubs zuordnen.',
+  },
+  step2EmptyMono: {
+    fr: 'Aucun club attaché. Une compétition monoclub doit avoir exactement 1 club.',
+    en: 'No club attached yet. A monoclub competition needs exactly 1 club.',
+    de: 'Noch kein Club zugeordnet. Ein Monoclub-Wettbewerb benötigt genau 1 Club.',
+  },
+  step2CtaAttach: {
+    fr: 'Attacher un club',
+    en: 'Attach a club',
+    de: 'Club zuordnen',
+  },
+
+  // Step 3 — Club admins assignés
+  step3Title: {
+    fr: 'Club admins assignés',
+    en: 'Club admins assigned',
+    de: 'Club-Administratoren zugewiesen',
+  },
+  // {with} = clubs avec >=1 admin, {total} = clubs attachés
+  step3Count: {
+    fr: '{with}/{total} clubs ont un admin',
+    en: '{with}/{total} clubs have an admin',
+    de: '{with}/{total} Clubs haben eine·n Administrator·in',
+  },
+  step3MissingHeading: {
+    fr: 'Clubs sans admin :',
+    en: 'Clubs without an admin:',
+    de: 'Clubs ohne Administrator·in:',
+  },
+  step3CtaInvite: {
+    fr: 'Inviter club admins',
+    en: 'Invite club admins',
+    de: 'Club-Administrator·innen einladen',
+  },
+  step3NoClubsYet: {
+    fr: 'Attache d’abord des clubs avant d’assigner des admins.',
+    en: 'Attach clubs first before assigning admins.',
+    de: 'Bitte zuerst Clubs zuordnen, bevor Administrator·innen zugewiesen werden.',
+  },
+
+  // Step 4 — Sessions configurées
+  step4Title: {
+    fr: 'Sessions configurées',
+    en: 'Sessions configured',
+    de: 'Sessions konfiguriert',
+  },
+  // {with} = clubs avec >=1 session, {total} = clubs attachés
+  step4Count: {
+    fr: '{with}/{total} clubs ont une session',
+    en: '{with}/{total} clubs have a session',
+    de: '{with}/{total} Clubs haben eine Session',
+  },
+  step4NeedsAdmin: {
+    fr: 'Les sessions seront configurées par les club_admins une fois assignés.',
+    en: 'Sessions will be configured by club admins once assigned.',
+    de: 'Sessions werden von den Club-Administrator·innen konfiguriert, sobald diese benannt sind.',
+  },
+  // {clubName} sera remplacé côté composant.
+  step4CtaCockpit: {
+    fr: 'Ouvrir le cockpit de {clubName}',
+    en: 'Open the {clubName} cockpit',
+    de: 'Cockpit von {clubName} öffnen',
+  },
+  step4MissingHeading: {
+    fr: 'Clubs sans session :',
+    en: 'Clubs without a session:',
+    de: 'Clubs ohne Session:',
+  },
+
+  // Step 5 — Finale configurée
+  step5Title: {
+    fr: 'Finale configurée',
+    en: 'Finale configured',
+    de: 'Finale konfiguriert',
+  },
+  step5Disabled: {
+    fr: 'Finale non activée — cette compétition n’a pas de Grande Finale.',
+    en: 'Finale not enabled — this competition has no Grand Finale.',
+    de: 'Finale nicht aktiviert — dieser Wettbewerb hat kein Grand Finale.',
+  },
+  step5CtaEnable: {
+    fr: 'Activer la Finale',
+    en: 'Enable the Finale',
+    de: 'Finale aktivieren',
+  },
+  step5CtaConfigure: {
+    fr: 'Configurer la Finale',
+    en: 'Configure the Finale',
+    de: 'Finale konfigurieren',
+  },
+  step5MissingDate: {
+    fr: 'Date non définie',
+    en: 'Date not set',
+    de: 'Datum nicht festgelegt',
+  },
+  step5MissingLocation: {
+    fr: 'Lieu non défini',
+    en: 'Location not set',
+    de: 'Ort nicht festgelegt',
+  },
+
+  // Step 6 — URLs publiques
+  step6Title: {
+    fr: 'URLs publiques à diffuser',
+    en: 'Public URLs to share',
+    de: 'Öffentliche URLs zum Teilen',
+  },
+  step6Intro: {
+    fr: 'Trois liens à diffuser pour ouvrir la compétition au public et au jury.',
+    en: 'Three links to share to open the competition to candidates and jury.',
+    de: 'Drei Links zur Verbreitung, um Bewerbungen und Jury anzusprechen.',
+  },
+  step6LinkApply: {
+    fr: 'Candidater (startups)',
+    en: 'Apply (startups)',
+    de: 'Bewerben (Startups)',
+  },
+  step6LinkJury: {
+    fr: 'Rejoindre le jury',
+    en: 'Join the jury',
+    de: 'Der Jury beitreten',
+  },
+  step6LinkPublic: {
+    fr: 'Page publique',
+    en: 'Public page',
+    de: 'Öffentliche Seite',
+  },
+  step6Copy: {
+    fr: 'Copier',
+    en: 'Copy',
+    de: 'Kopieren',
+  },
+  step6Copied: {
+    fr: 'Copié',
+    en: 'Copied',
+    de: 'Kopiert',
+  },
+  step6CopyError: {
+    fr: 'Échec de copie',
+    en: 'Copy failed',
+    de: 'Kopieren fehlgeschlagen',
+  },
+};
+
 // ── Clubs tab ───────────────────────────────────────────────────────────────
 export const CLUBS = {
   sectionTitle:  { fr: 'Clubs',            en: 'Clubs',         de: 'Clubs' },
@@ -874,6 +1109,146 @@ export const CLUBS = {
   memberColRole:  { fr: 'Rôle',            en: 'Role',          de: 'Rolle' },
   memberColGranted: { fr: 'Provisionné le', en: 'Granted on',   de: 'Zugewiesen am' },
   memberColActions: { fr: 'Actions',       en: 'Actions',       de: 'Aktionen' },
+};
+
+// ── Cross-cockpit deep-links + Club row actions (équipe C) ──────────────────
+// Strings pour les boutons inline "Cockpit / Inviter admin / Stats" placés sur
+// chaque row de la liste des clubs attachés à une compétition, plus la modale
+// d'invitation club_admin et le popover de stats compact.
+export const CLUB_ROW_ACTIONS = {
+  // Row buttons ---------------------------------------------------------------
+  openCockpit: {
+    fr: 'Cockpit',
+    en: 'Cockpit',
+    de: 'Cockpit',
+  },
+  openCockpitTitle: {
+    fr: 'Ouvrir le cockpit de ce club',
+    en: 'Open this club’s cockpit',
+    de: 'Cockpit dieses Clubs öffnen',
+  },
+  inviteAdmin: {
+    fr: 'Inviter admin',
+    en: 'Invite admin',
+    de: 'Admin einladen',
+  },
+  inviteAdminTitle: {
+    fr: 'Inviter un club_admin pour ce club',
+    en: 'Invite a club_admin for this club',
+    de: 'club_admin für diesen Club einladen',
+  },
+  viewStats: {
+    fr: 'Stats',
+    en: 'Stats',
+    de: 'Stats',
+  },
+  viewStatsTitle: {
+    fr: 'Aperçu des compteurs (candidatures, sessions, finalistes)',
+    en: 'Counter overview (applications, sessions, finalists)',
+    de: 'Übersicht der Zähler (Bewerbungen, Sessions, Finalisten)',
+  },
+  // Stat popover --------------------------------------------------------------
+  statPopoverTitle: {
+    fr: 'Aperçu du club',
+    en: 'Club at a glance',
+    de: 'Club im Überblick',
+  },
+  statApplications: {
+    fr: 'Candidatures',
+    en: 'Applications',
+    de: 'Bewerbungen',
+  },
+  statSessions: {
+    fr: 'Sessions',
+    en: 'Sessions',
+    de: 'Sessions',
+  },
+  statFinalists: {
+    fr: 'Finalistes',
+    en: 'Finalists',
+    de: 'Finalisten',
+  },
+  statLoading: {
+    fr: 'Chargement…',
+    en: 'Loading…',
+    de: 'Lädt…',
+  },
+  statError: {
+    fr: 'Compteurs indisponibles.',
+    en: 'Counters unavailable.',
+    de: 'Zähler nicht verfügbar.',
+  },
+  // Invite club admin modal --------------------------------------------------
+  inviteModalEyebrow: {
+    fr: 'Nouvel admin de club',
+    en: 'New club admin',
+    de: 'Neuer Club-Administrator',
+  },
+  inviteModalTitle: {
+    fr: 'Inviter un admin de club',
+    en: 'Invite a club admin',
+    de: 'Club-Administrator·in einladen',
+  },
+  inviteModalSubtitle: {
+    fr: 'L’invité recevra un magic-link et le rôle club_admin pour ce club.',
+    en: 'The invitee will receive a magic-link and the club_admin role for this club.',
+    de: 'Die eingeladene Person erhält einen Magic-Link und die Rolle club_admin für diesen Club.',
+  },
+  inviteEmailLabel: {
+    fr: 'Email',
+    en: 'Email',
+    de: 'E-Mail',
+  },
+  inviteEmailPlaceholder: {
+    fr: 'utilisateur@rotary-club.org',
+    en: 'user@rotary-club.org',
+    de: 'benutzer@rotary-club.org',
+  },
+  inviteEmailHelper: {
+    fr: 'Adresse à laquelle envoyer le magic-link. Doit appartenir à un membre Rotary du club.',
+    en: 'Email address to receive the magic-link. Must belong to a Rotary member of this club.',
+    de: 'E-Mail-Adresse für den Magic-Link. Muss einer Rotary-Person dieses Clubs gehören.',
+  },
+  inviteMessageLabel: {
+    fr: 'Message personnel (optionnel)',
+    en: 'Custom message (optional)',
+    de: 'Persönliche Nachricht (optional)',
+  },
+  inviteMessagePlaceholder: {
+    fr: 'Mot personnalisé inclus dans l’email d’invitation…',
+    en: 'A note included in the invitation email…',
+    de: 'Persönliche Notiz, die der Einladungs-E-Mail beigefügt wird…',
+  },
+  inviteSubmit: {
+    fr: 'Envoyer l’invitation',
+    en: 'Send invitation',
+    de: 'Einladung senden',
+  },
+  inviteSending: {
+    fr: 'Envoi…',
+    en: 'Sending…',
+    de: 'Wird gesendet…',
+  },
+  inviteSuccess: {
+    fr: 'Invitation envoyée.',
+    en: 'Invitation sent.',
+    de: 'Einladung versendet.',
+  },
+  inviteErrPrefix: {
+    fr: 'Échec de l’envoi : ',
+    en: 'Could not send invitation: ',
+    de: 'Senden fehlgeschlagen: ',
+  },
+  inviteInvalidEmail: {
+    fr: 'Adresse email invalide.',
+    en: 'Invalid email address.',
+    de: 'Ungültige E-Mail-Adresse.',
+  },
+  inviteCancel: {
+    fr: 'Annuler',
+    en: 'Cancel',
+    de: 'Abbrechen',
+  },
 };
 
 // ── Global roles tab ────────────────────────────────────────────────────────
@@ -1200,6 +1575,118 @@ export const ADVANCED = {
     fr: 'Diffusion master cross-clubs — communiqués Rotary France ou rappels plateforme. Audience résolue par édition active.',
     en: 'Cross-club master broadcast — Rotary France notices or platform reminders. Audience resolved on the active edition.',
     de: 'Cross-Club-Master-Versand — Rotary-France-Mitteilungen oder Plattform-Hinweise. Zielgruppe der aktiven Ausgabe.',
+  },
+};
+
+// ── Diffusion section (URLs publiques à partager) ──────────────────────────
+// Affichée en bas du Pilotage tab (step 6) ou en tab dédié "Diffusion".
+// Le master_admin diffuse 3 URLs : candidat startup, juré self-apply, vue publique.
+export const DIFFUSION = {
+  sectionTitle: {
+    fr: 'URLs à diffuser',
+    en: 'URLs to share',
+    de: 'Zu verteilende URLs',
+  },
+  sectionEyebrow: {
+    fr: 'Diffusion',
+    en: 'Broadcast',
+    de: 'Verteilung',
+  },
+  sectionLede: {
+    fr: 'Trois URLs publiques à diffuser pour ouvrir le cycle : candidatures startups, candidatures jurés et vue publique des résultats.',
+    en: 'Three public URLs to share to open the cycle: startup applications, jury self-apply and the public results view.',
+    de: 'Drei öffentliche URLs zur Eröffnung des Zyklus: Startup-Bewerbungen, Jury-Selbstbewerbung und die öffentliche Ergebnisansicht.',
+  },
+  // Card a) Candidat startup
+  candidatTitle: {
+    fr: 'Candidater (startup)',
+    en: 'Apply (startup)',
+    de: 'Bewerben (Startup)',
+  },
+  candidatDesc: {
+    fr: 'Lien à diffuser aux startups éligibles. Ouvre le funnel de candidature pré-renseigné sur cette édition.',
+    en: 'Link to share with eligible startups. Opens the application funnel prefilled for this edition.',
+    de: 'Link, der an förderfähige Startups verteilt wird. Öffnet den Bewerbungs-Funnel, vorausgefüllt für diese Ausgabe.',
+  },
+  // Card b) Juré self-apply
+  juryTitle: {
+    fr: 'Devenir juré',
+    en: 'Become a juror',
+    de: 'Juror·in werden',
+  },
+  juryDesc: {
+    fr: 'Lien à diffuser aux entrepreneurs et experts Rotary souhaitant rejoindre le jury de cette édition.',
+    en: 'Link for entrepreneurs and Rotary experts who wish to join the jury for this edition.',
+    de: 'Link für Unternehmer·innen und Rotary-Expert·innen, die der Jury dieser Ausgabe beitreten möchten.',
+  },
+  // Card c) Vue publique
+  publicTitle: {
+    fr: 'Vue publique du concours',
+    en: 'Public competition view',
+    de: 'Öffentliche Wettbewerbsansicht',
+  },
+  publicDesc: {
+    fr: 'Lien à diffuser largement (presse, communication Rotary). Affiche le palmarès une fois les résultats publiés.',
+    en: 'Link for broad distribution (press, Rotary communication). Shows the rankings once results are published.',
+    de: 'Link zur breiten Verteilung (Presse, Rotary-Kommunikation). Zeigt die Rangliste, sobald die Ergebnisse veröffentlicht sind.',
+  },
+  // Actions
+  urlLabel: {
+    fr: 'URL publique',
+    en: 'Public URL',
+    de: 'Öffentliche URL',
+  },
+  copyButton: {
+    fr: 'Copier',
+    en: 'Copy',
+    de: 'Kopieren',
+  },
+  copySuccess: {
+    fr: 'Lien copié dans le presse-papier',
+    en: 'Link copied to clipboard',
+    de: 'Link in die Zwischenablage kopiert',
+  },
+  copyError: {
+    fr: 'Copie impossible',
+    en: 'Could not copy',
+    de: 'Kopieren nicht möglich',
+  },
+  qrButton: {
+    fr: 'QR Code',
+    en: 'QR code',
+    de: 'QR-Code',
+  },
+  qrModalTitle: {
+    fr: 'QR Code à scanner',
+    en: 'QR code to scan',
+    de: 'QR-Code zum Scannen',
+  },
+  qrModalHint: {
+    fr: 'Scannez ce QR ou utilisez le lien ci-dessous pour partager.',
+    en: 'Scan this QR or use the link below to share.',
+    de: 'Scannen Sie diesen QR-Code oder verwenden Sie den Link unten zum Teilen.',
+  },
+  openTab: {
+    fr: 'Ouvrir dans un nouvel onglet',
+    en: 'Open in new tab',
+    de: 'In neuem Tab öffnen',
+  },
+  closeModal: {
+    fr: 'Fermer',
+    en: 'Close',
+    de: 'Schließen',
+  },
+  // Compteur clics — placeholder V3.1, pas encore branché
+  clicksLabel: {
+    fr: 'clic(s)',
+    en: 'click(s)',
+    de: 'Klick(s)',
+  },
+  // a11y aria labels
+  ariaCardRegion: {
+    fr: 'URL publique à diffuser',
+    en: 'Public URL to share',
+    de: 'Öffentliche URL zum Teilen',
   },
 };
 

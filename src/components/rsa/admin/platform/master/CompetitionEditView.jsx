@@ -24,8 +24,9 @@ import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
 import { StatusIndicator } from '../funnel/FunnelEditorModal';
 import useAutosaveCompetition from '../funnel/useAutosaveCompetition';
-import { COMP, UI } from './i18n';
+import { COMP, PILOTAGE, UI } from './i18n';
 import { useAllCompetitions } from './useMaster';
+import PilotageTab from './competition-tabs/PilotageTab';
 import IdentityTab from './competition-tabs/IdentityTab';
 import CalendarTab from './competition-tabs/CalendarTab';
 import ClubsTab from './competition-tabs/ClubsTab';
@@ -43,7 +44,11 @@ export default function CompetitionEditView({ editionId, onClose }) {
     [competitions.data, editionId],
   );
 
-  const [activeTab, setActiveTab] = useState('identity');
+  // B-pilotage-tab — la tab "Pilotage" est rendue en premier et sélectionnée
+  // par défaut : guide l'admin avec un checklist visuel des étapes restantes
+  // (clubs, admins, sessions, finale, URLs publiques) avant d'aller éditer les
+  // détails. Les autres tabs (identité, calendrier, …) restent accessibles.
+  const [activeTab, setActiveTab] = useState('pilotage');
   const [deleteStep, setDeleteStep] = useState(0);
 
   // Init des valeurs autosave depuis la compétition. On remonte un hook par
@@ -97,7 +102,27 @@ export default function CompetitionEditView({ editionId, onClose }) {
     model: values.model,
   }), [editionId, values.name, values.model]);
 
+  // Snapshot fusionné pour la PilotageTab : merge des champs serveur (has_finale,
+  // finale_config, hero_*) + des champs autosave en cours (values). Garantit que
+  // le checklist reflète l'état "vu" par l'utilisateur même quand l'autosave est
+  // en cours (pending ou debounced).
+  const pilotageCompetition = useMemo(() => ({
+    ...(competition || {}),
+    ...values,
+    id:    editionId,
+  }), [competition, values, editionId]);
+
   const tabs = useMemo(() => ([
+    {
+      id: 'pilotage',
+      label: t(PILOTAGE.tabLabel),
+      render: () => (
+        <PilotageTab
+          competition={pilotageCompetition}
+          setActiveTab={setActiveTab}
+        />
+      ),
+    },
     {
       id: 'identity',
       label: t(COMP.tabIdentity),
@@ -129,7 +154,7 @@ export default function CompetitionEditView({ editionId, onClose }) {
       label: t(COMP.tabCommunication),
       render: () => <CommunicationTab values={values} onPatch={patch} />,
     },
-  ]), [t, values, patch, competitionRef]);
+  ]), [t, values, patch, competitionRef, pilotageCompetition]);
 
   if (competitions.isLoading) {
     return (

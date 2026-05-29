@@ -54,14 +54,30 @@ export const UI = {
     de: 'Master Cockpit (Plattform)',
   },
   scopeClub: {
-    fr: (c) => `Club Cockpit · ${c}`,
-    en: (c) => `Club Cockpit · ${c}`,
-    de: (c) => `Club-Cockpit · ${c}`,
+    fr: (c) => `Club admin · ${c}`,
+    en: (c) => `Club admin · ${c}`,
+    de: (c) => `Club-Admin · ${c}`,
+  },
+  scopeCompetition: {
+    fr: (c) => `Admin compétition · ${c}`,
+    en: (c) => `Competition admin · ${c}`,
+    de: (c) => `Wettbewerbs-Admin · ${c}`,
   },
   scopeLegacy:  {
     fr: 'Cockpit Admin (V1)',
     en: 'Admin Cockpit (V1)',
     de: 'Admin-Cockpit (V1)',
+  },
+  // V3 — PersonaPreviewBanner (master_admin aperçoit une vue club/compétition)
+  personaPreviewBanner: {
+    fr: (scope) => `Vue aperçu : ${scope}`,
+    en: (scope) => `Preview view: ${scope}`,
+    de: (scope) => `Vorschau: ${scope}`,
+  },
+  returnToMaster: {
+    fr: 'Retour à Master',
+    en: 'Back to Master',
+    de: 'Zurück zu Master',
   },
 };
 

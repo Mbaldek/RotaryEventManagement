@@ -17,11 +17,13 @@ import { supabase } from '@/lib/supabase';
 const ALLOWED_ROLES = new Set([
   'master_admin',
   'admin',
+  'competition_admin',
   'club_admin',
   'comite',
   'jury',
 ]);
 const CLUB_SCOPED_ROLES = new Set(['club_admin', 'comite', 'jury']);
+const EDITION_SCOPED_ROLES = new Set(['competition_admin']);
 const ALLOWED_LANGS = new Set(['fr', 'en', 'de']);
 
 async function extractFnError(error) {
@@ -50,8 +52,9 @@ async function extractFnError(error) {
  *
  * @param {object} args
  * @param {string} args.email
- * @param {('master_admin'|'admin'|'club_admin'|'comite'|'jury')} args.role
+ * @param {('master_admin'|'admin'|'competition_admin'|'club_admin'|'comite'|'jury')} args.role
  * @param {string} [args.clubId]              — requis si role club-scoped
+ * @param {string} [args.editionId]           — requis si role='competition_admin'
  * @param {string} [args.customMessage]       — note libre, max ~300c
  * @param {('fr'|'en'|'de')} [args.lang='fr']
  * @returns {Promise<
@@ -59,7 +62,7 @@ async function extractFnError(error) {
  *   | { ok: false, error: string }
  * >}
  */
-export async function inviteUser({ email, role, clubId, customMessage, lang = 'fr' }) {
+export async function inviteUser({ email, role, clubId, editionId, customMessage, lang = 'fr' }) {
   // ── validation locale (court-circuite le réseau si invalide) ──
   if (typeof email !== 'string' || !email.includes('@')) {
     return { ok: false, error: 'invalid_email' };
@@ -73,6 +76,9 @@ export async function inviteUser({ email, role, clubId, customMessage, lang = 'f
   if (CLUB_SCOPED_ROLES.has(role) && (!clubId || typeof clubId !== 'string')) {
     return { ok: false, error: 'club_id_required_for_role' };
   }
+  if (EDITION_SCOPED_ROLES.has(role) && (!editionId || typeof editionId !== 'string')) {
+    return { ok: false, error: 'edition_id_required_for_role' };
+  }
 
   try {
     const { data: res, error } = await supabase.functions.invoke('invite-user', {
@@ -80,6 +86,7 @@ export async function inviteUser({ email, role, clubId, customMessage, lang = 'f
         email: String(email).trim().toLowerCase(),
         role,
         club_id: clubId || undefined,
+        edition_id: editionId || undefined,
         custom_message: typeof customMessage === 'string' ? customMessage.trim() : undefined,
         lang,
       },
