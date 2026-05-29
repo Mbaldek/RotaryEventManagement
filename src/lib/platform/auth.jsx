@@ -16,7 +16,7 @@
 // continue de comparer via lower(...) sur la colonne et sur l'email du JWT, donc reste
 // insensible à la casse, ce qui est cohérent avec la normalisation côté client.
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { setSentryUser, clearSentryUser, captureException, Sentry } from '@/lib/observability/sentry';
 
@@ -83,7 +83,18 @@ export function PlatformAuthProvider({ children }) {
   // réseau froid. Cf. docs/deepsolve/auth-rights-stability.md.
   const [identityLoaded, setIdentityLoaded] = useState(false);
 
-  const loadIdentity = useCallback(async (email) => {
+  // FIX 2026-06-04 — Single-flight loadIdentity contre les concurrent calls
+  // déclenchés par le double SIGNED_IN de React StrictMode + le re-emit
+  // immédiat de onAuthStateChange à la subscribe. Symptôme observé en prod :
+  // navigator.locks (sb-*-auth-token) sont stolen entre les 2 loadIdentity
+  // concurrents → AbortError uncaught + 4 RPC failed → master_admin perd ses
+  // rôles instantanément. Au lieu de paralléliser, on serialize : si une
+  // loadIdentity est en flight, on enregistre l'email demandé en pending et
+  // on relance UNE FOIS à la fin si l'email demandé a changé.
+  const loadInFlightRef = useRef(false);
+  const pendingEmailRef = useRef(null);
+
+  const loadIdentityImpl = useCallback(async (email) => {
     if (!email) {
       setProfile(null);
       setRoles([]);
@@ -114,13 +125,22 @@ export function PlatformAuthProvider({ children }) {
     // Sur timeout, on retombe sur {data: null, error: timeout} → roles=[] —
     // mais grâce au skip loadIdentity sur TOKEN_REFRESHED (cf. onAuthStateChange
     // plus bas), ce cas ne survient qu'au boot initial.
-    const withTimeout = (promise, ms, label) =>
-      Promise.race([
+    // FIX 2026-06-04 — Catch silencieux des late rejections : si la promise
+    // sous-jacente est ABORTED après que le timeout a déjà gagné la race
+    // (cas typique du navigator.locks "steal" sur sb-*-auth-token entre 2
+    // tabs / StrictMode double-mount), Promise.race a déjà résolu mais la
+    // promise originale rejette plus tard → "Uncaught (in promise) AbortError"
+    // dans la console. On attache un .catch() no-op pour que l'erreur soit
+    // "handled" même si plus personne n'attend la valeur.
+    const withTimeout = (promise, ms, label) => {
+      promise.catch(() => {});
+      return Promise.race([
         promise,
         new Promise((resolve) =>
           setTimeout(() => resolve({ data: null, error: { message: `${label} timeout ${ms}ms` } }), ms),
         ),
       ]);
+    };
     // V3 — 4e appel parallèle : my_competition_admin_editions (RPC SECURITY
     // DEFINER, retourne text[] des éditions que le user administre). Si l'RPC
     // n'existe pas encore en local (migration V3 non appliquée), withTimeout
@@ -191,6 +211,33 @@ export function PlatformAuthProvider({ children }) {
     return { anySuccess };
   }, []);
 
+  // Wrapper single-flight autour de loadIdentityImpl : sérialise les appels
+  // concurrents. Si un loadIdentity est en cours et qu'un autre est demandé
+  // avec un email différent, on stocke l'email en "pending" et on rejoue
+  // une fois à la fin. Si même email, on no-op pour éviter le double-load.
+  const loadIdentity = useCallback(async (email) => {
+    if (loadInFlightRef.current) {
+      pendingEmailRef.current = email ?? null;
+      return undefined;
+    }
+    loadInFlightRef.current = true;
+    let result;
+    try {
+      result = await loadIdentityImpl(email);
+    } finally {
+      loadInFlightRef.current = false;
+    }
+    // Replay si une demande différente est arrivée pendant qu'on tournait.
+    if (pendingEmailRef.current !== null && pendingEmailRef.current !== email) {
+      const next = pendingEmailRef.current;
+      pendingEmailRef.current = null;
+      // récursion contrôlée — single-flight ré-acquiert le lock pour next.
+      return loadIdentity(next);
+    }
+    pendingEmailRef.current = null;
+    return result;
+  }, [loadIdentityImpl]);
+
   useEffect(() => {
     let active = true;
 
@@ -233,8 +280,14 @@ export function PlatformAuthProvider({ children }) {
     // zombie (hang indéfini) bloquer l'utilisateur.
     const getSessionWithTimeout = () => {
       const timeoutMs = 8000;
+      // FIX 2026-06-04 — late rejection swallow : même pattern que withTimeout.
+      // Si le timeout gagne la race et que supabase.auth.getSession() rejette
+      // ensuite (steal du navigator.locks par le 2e StrictMode mount), pas de
+      // "Uncaught (in promise) AbortError".
+      const sessionPromise = supabase.auth.getSession();
+      sessionPromise.catch(() => {});
       return Promise.race([
-        supabase.auth.getSession(),
+        sessionPromise,
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error(`getSession timeout ${timeoutMs}ms`)), timeoutMs),
         ),
