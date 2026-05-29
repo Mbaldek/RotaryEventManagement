@@ -165,15 +165,15 @@ export default function Login() {
   // donc pas besoin du garde `!loading &&` autour de la motion entry.
   const redirectPath = buildRedirectPath(query);
 
-  const greeting = t({
-    fr: 'Connectez-vous.',
-    en: 'Sign in.',
-    de: 'Anmelden.',
-  });
   const tagline = t({
     fr: 'au programme Rotary Startup Award',
     en: 'to the Rotary Startup Award programme',
     de: 'beim Rotary Startup Award',
+  });
+  const logoAlt = t({
+    fr: 'Logo Rotary',
+    en: 'Rotary logo',
+    de: 'Rotary-Logo',
   });
 
   return (
@@ -186,18 +186,16 @@ export default function Login() {
           transition={{ duration: 0.28, ease: EASE }}
           className="w-full max-w-[520px]"
         >
-          <h1
-            className="font-normal mb-3"
+          <img
+            src="/favicon.svg"
+            alt={logoAlt}
+            className="mb-6"
             style={{
-              fontFamily: SERIF,
-              color: NAVY,
-              fontSize: 'clamp(48px, 8vw, 88px)',
-              lineHeight: 0.95,
-              letterSpacing: '-0.01em',
+              width: 'clamp(96px, 14vw, 140px)',
+              height: 'auto',
+              display: 'block',
             }}
-          >
-            {greeting}
-          </h1>
+          />
           <p
             className="italic mb-10"
             style={{
