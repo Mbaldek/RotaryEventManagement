@@ -35,6 +35,8 @@ import JuryApplicationsTab from './tabs/JuryApplicationsTab';
 import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
 // V2.5 — Module Prix
 import PrizesList from '@/components/rsa/prizes/PrizesList';
+// V3.0 — Plugins/Extensions architecture (Vague 1)
+import ExtensionsList from '@/components/rsa/extensions/ExtensionsList';
 import { useClub, useClubEditions, useClubSessions } from './useClub';
 
 function Spinner() {
@@ -298,6 +300,9 @@ export default function ClubCockpit({ clubId }) {
               )}
               {tab === 'comms' && (
                 <EmailStudio clubId={clubId} edition={edition} />
+              )}
+              {tab === 'extensions' && (
+                <ExtensionsList scope="club" clubId={clubId} />
               )}
             </motion.div>
           </AnimatePresence>

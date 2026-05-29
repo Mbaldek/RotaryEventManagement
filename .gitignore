@@ -39,3 +39,8 @@ briefings/
 pin admi
 secrets/
 *.secret
+
+# Playwright artifacts
+playwright-report/
+test-results/
+

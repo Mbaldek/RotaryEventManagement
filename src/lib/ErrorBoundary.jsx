@@ -11,6 +11,7 @@
 // intacte. console.error pousse aussi l'erreur dans les Vercel runtime logs.
 
 import React from 'react';
+import { captureException } from '@/lib/observability/sentry';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -25,6 +26,12 @@ export default class ErrorBoundary extends React.Component {
   componentDidCatch(error, info) {
     // eslint-disable-next-line no-console
     console.error('[ErrorBoundary] caught render error:', error, info);
+    // Sentry : capture explicite avec le componentStack pour reconstituer
+    // l'arborescence React au moment du crash. No-op si Sentry pas init.
+    captureException(error, {
+      source: 'ErrorBoundary',
+      componentStack: info?.componentStack ?? null,
+    });
     this.setState({ error, info });
   }
 

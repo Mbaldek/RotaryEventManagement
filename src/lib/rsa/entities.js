@@ -120,6 +120,77 @@ export const Edition = {
   async patch(id, patch) {
     return this.update(id, { ...patch });
   },
+
+  // Lecture d'une édition par ID (Chantier 2 : candidature contextualisée).
+  // SELECT * — la RLS publique filtre les éditions 'draft' à l'anon.
+  async get(id) {
+    if (!id) return null;
+    const { data, error } = await supabase
+      .from('editions')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ?? null;
+  },
+
+  // Chantier 2 — Liste les compétitions ouvertes à candidature (édition × club).
+  //
+  // Forme retournée : [{ edition, club, rules }] où rules = merge des règles
+  // globales d'édition + override edition_clubs.eligibility_rules (le per-club
+  // écrase les clés correspondantes).
+  //
+  // "Ouverte" = editions.status='open' AND (application_close >= today OR null).
+  // - monoclub : 1 ligne par édition avec le club implicite via edition_clubs
+  //   (backfill 'paris' pour les éditions historiques) ; si aucun lien n'existe,
+  //   on tombe sur null pour le club (UX : on saute l'entrée plutôt que de mentir).
+  // - multiclub : 1 ligne par (edition_id, club_id) attaché.
+  async openForApply() {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: editions, error: e1 } = await supabase
+      .from('editions')
+      .select('*')
+      .eq('status', 'open')
+      .or(`application_close.is.null,application_close.gte.${today}`)
+      .order('year', { ascending: false })
+      .order('application_open', { ascending: false });
+    if (e1) throw e1;
+    const list = editions || [];
+    if (!list.length) return [];
+    const ids = list.map((e) => e.id);
+    // JOIN sur edition_clubs (lecture publique, cf. ec_read policy) avec le club.
+    const { data: links, error: e2 } = await supabase
+      .from('edition_clubs')
+      .select('edition_id, club_id, eligibility_rules, club:clubs(*)')
+      .in('edition_id', ids);
+    if (e2) throw e2;
+    const linksByEdition = new Map();
+    for (const row of links || []) {
+      const arr = linksByEdition.get(row.edition_id) || [];
+      arr.push(row);
+      linksByEdition.set(row.edition_id, arr);
+    }
+    const out = [];
+    for (const edition of list) {
+      const baseRules =
+        edition.eligibility_rules && typeof edition.eligibility_rules === 'object'
+          ? edition.eligibility_rules
+          : {};
+      const rows = linksByEdition.get(edition.id) || [];
+      for (const row of rows) {
+        const override =
+          row.eligibility_rules && typeof row.eligibility_rules === 'object'
+            ? row.eligibility_rules
+            : {};
+        out.push({
+          edition,
+          club: row.club || { id: row.club_id, name: row.club_id },
+          rules: { ...baseRules, ...override },
+        });
+      }
+    }
+    return out;
+  },
 };
 
 // sessions : clusters thématiques + finale. PK text. Nom 'RsaSession' (cf. en-tête).
@@ -938,6 +1009,25 @@ export const EditionClub = {
       p_club_id: clubId,
     });
     if (error) throw error;
+  },
+
+  // Chantier 2 — Renvoie l'objet eligibility_rules per-club (JSONB) pour
+  // (editionId, clubId). Utilisé par useEditionClubRules pour fusionner avec
+  // les règles globales d'édition. null si la junction n'existe pas, {} si
+  // elle existe mais sans override.
+  async rulesForClub(editionId, clubId) {
+    if (!editionId || !clubId) return null;
+    const { data, error } = await supabase
+      .from('edition_clubs')
+      .select('eligibility_rules')
+      .eq('edition_id', editionId)
+      .eq('club_id', clubId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return data.eligibility_rules && typeof data.eligibility_rules === 'object'
+      ? data.eligibility_rules
+      : {};
   },
 };
 

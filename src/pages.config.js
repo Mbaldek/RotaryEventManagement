@@ -50,8 +50,10 @@
 import Admin from './pages/Admin';
 import AdminControl from './pages/AdminControl';
 import Archives from './pages/Archives';
+import Candidater from './pages/Candidater';
 import Concours from './pages/Concours';
 import Dashboard from './pages/Dashboard';
+import DevenirJury from './pages/DevenirJury';
 import EventPlanning from './pages/EventPlanning';
 import Features from './pages/Features';
 import FloorPlan from './pages/FloorPlan';
@@ -77,6 +79,7 @@ import StartupUpload from './pages/StartupUpload';
 import TableView from './pages/TableView';
 import TableViewMockup from './pages/TableViewMockup';
 import UserManagement from './pages/UserManagement';
+import Welcome from './pages/Welcome';
 import __Layout from './Layout.jsx';
 
 
@@ -84,8 +87,10 @@ export const PAGES = {
     "Admin": Admin,
     "AdminControl": AdminControl,
     "Archives": Archives,
+    "Candidater": Candidater,
     "Concours": Concours,
     "Dashboard": Dashboard,
+    "DevenirJury": DevenirJury,
     "EventPlanning": EventPlanning,
     "Features": Features,
     "FloorPlan": FloorPlan,
@@ -111,6 +116,7 @@ export const PAGES = {
     "TableView": TableView,
     "TableViewMockup": TableViewMockup,
     "UserManagement": UserManagement,
+    "Welcome": Welcome,
 }
 
 export const pagesConfig = {

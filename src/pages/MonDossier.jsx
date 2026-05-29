@@ -14,8 +14,8 @@
 // EditionClub.forEdition). La startup est créée avec son club_id dès « Commencer ».
 // Pour les monoclub historiques, le club est implicite ('paris' par backfill).
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, MapPin } from 'lucide-react';
 import { PageShell, GOLD, NAVY, INK, MUTED, CREAM2, SERIF } from '@/components/design';
@@ -25,6 +25,8 @@ import {
   CandidatureFunnel,
   CandidatureTracking,
   useActiveEdition,
+  useEdition,
+  useEditionClubRules,
   useMyDossier,
   useCreateDraft,
   useSaveDraft,
@@ -47,7 +49,22 @@ export default function MonDossier() {
   const { isAuthenticated, loading: authLoading, authUser } = usePlatformAuth();
   const { t, lang } = useLang();
 
-  const { data: edition, isLoading: edLoading, isError: edError, refetch: refetchEdition } = useActiveEdition();
+  // Chantier 2 — query params `?edition=…&club=…` posés par OpenCompetitions /
+  // Login. Si fournis : on épingle l'édition (au lieu de l'active globale) et
+  // on pré-remplit le choix de club. Si absents : comportement historique.
+  const [searchParams] = useSearchParams();
+  const editionParam = searchParams.get('edition') || null;
+  const clubParam = searchParams.get('club') || null;
+
+  // Si l'URL épingle une édition, on l'utilise — sinon on retombe sur l'active.
+  const activeQ = useActiveEdition();
+  const pinnedQ = useEdition(editionParam);
+  const usePinned = !!editionParam;
+  const edition = usePinned ? pinnedQ.data : activeQ.data;
+  const edLoading = usePinned ? pinnedQ.isLoading : activeQ.isLoading;
+  const edError = usePinned ? pinnedQ.isError : activeQ.isError;
+  const refetchEdition = usePinned ? pinnedQ.refetch : activeQ.refetch;
+
   const editionId = edition?.id;
   const { data: dossier, isLoading: dosLoading, isError: dosError, refetch: refetchDossier } = useMyDossier(editionId);
 
@@ -60,9 +77,11 @@ export default function MonDossier() {
 
   // V2 multi-club : club choisi par le candidat (état local pour le step picker).
   // Pré-rempli avec dossier.club_id si dossier déjà créé.
-  const [chosenClubId, setChosenClubId] = useState(null);
+  // Chantier 2 : si `?club=…` est fourni dans l'URL ET qu'il n'y a pas encore de
+  // dossier, on adopte immédiatement ce club comme choix initial.
+  const [chosenClubId, setChosenClubId] = useState(clubParam);
   // Sync : dès qu'on a un dossier, on adopte SON club_id (réouverture après reload).
-  React.useEffect(() => {
+  useEffect(() => {
     if (dossier?.club_id && chosenClubId !== dossier.club_id) {
       setChosenClubId(dossier.club_id);
     }
@@ -79,7 +98,14 @@ export default function MonDossier() {
   });
   const editionClubs = editionClubsQ.data || [];
 
-  const rules = useMemo(() => rulesFromEdition(edition), [edition]);
+  // Chantier 2 — règles d'éligibilité effectives.
+  // Si on a un dossier avec un club_id assigné, on merge edition.rules + per-club
+  // override via useEditionClubRules. Sinon (avant choix), on garde les règles
+  // globales d'édition seules (rulesFromEdition) pour le step picker.
+  const dossierClubId = dossier?.club_id || null;
+  const effectiveRulesQ = useEditionClubRules(editionId, dossierClubId);
+  const rulesGlobal = useMemo(() => rulesFromEdition(edition), [edition]);
+  const rules = dossierClubId ? effectiveRulesQ.data : rulesGlobal;
 
   // Clôture des candidatures dépassée ? (lecture seule après la deadline)
   const closed = useMemo(() => {
@@ -90,6 +116,15 @@ export default function MonDossier() {
   }, [edition]);
 
   const closeDate = formatDate(edition?.application_close, lang);
+
+  // Chantier 2 — Résolution du libellé humain du club pour l'eyebrow du Funnel.
+  // Hoisté ici (avant tout early-return) pour respecter les rules-of-hooks :
+  // ce useMemo doit être appelé dans le même ordre à chaque render.
+  const clubLabel = useMemo(() => {
+    if (!dossier?.club_id) return null;
+    const row = editionClubs.find((r) => r.club_id === dossier.club_id);
+    return row?.club?.name || dossier.club_id;
+  }, [dossier?.club_id, editionClubs]);
 
   // ── Mutations exposées au funnel ───────────────────────────────────────────
   const handlePatch = useCallback(
@@ -141,6 +176,24 @@ export default function MonDossier() {
       patch: { name: 'Brouillon', email: authUser?.email ?? null, club_id },
     });
   }, [createDraft, dossier?.id, authUser, resolveClubIdForCreate]);
+
+  // Chantier 2 — auto-création du brouillon quand l'URL fournit ?edition=…&club=…
+  // ET qu'aucun dossier n'existe encore. Skip l'écran intro/picker, le candidat
+  // arrive direct dans le funnel. Garde-fou via ref pour ne mutate qu'UNE fois.
+  const autoCreateRef = useRef(false);
+  useEffect(() => {
+    if (!editionParam || !clubParam) return;
+    if (!edition || !authUser) return;
+    if (dossier) return;
+    if (createDraft.isPending) return;
+    if (closed) return; // pas d'auto-create après deadline
+    if (autoCreateRef.current) return;
+    autoCreateRef.current = true;
+    createDraft.mutate({
+      ownerId: authUser.id,
+      patch: { name: 'Brouillon', email: authUser.email ?? null, club_id: clubParam },
+    });
+  }, [editionParam, clubParam, edition, authUser, dossier, createDraft, closed]);
 
   // ── États de garde ─────────────────────────────────────────────────────────
   if (authLoading) {
@@ -356,19 +409,22 @@ export default function MonDossier() {
   }
 
   // ── Tunnel (brouillon, ou édition d'un dossier soumis) ─────────────────────
+  // Note Chantier 2 : on n'affiche plus ici l'eyebrow `… · edition · club` car
+  // le CandidatureFunnel porte désormais son propre mini-banner contextualisé
+  // (toujours visible quel que soit le step). On garde juste l'eyebrow générique.
   return (
     <PageShell nav>
       <div className="flex items-center gap-2.5 mb-5">
         <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
         <span className="uppercase text-[10px] tracking-[0.18em] font-medium" style={{ color: GOLD }}>
-          {t(UI.eyebrow)} · {edition.name}
-          {dossier?.club_id && (<> · {dossier.club_id}</>)}
+          {t(UI.eyebrow)}
         </span>
       </div>
       <CandidatureFunnel
         startup={dossier}
         edition={edition}
         rules={rules}
+        clubLabel={clubLabel}
         onPatch={handlePatch}
         onFlush={handleFlush}
         onSubmit={handleSubmit}

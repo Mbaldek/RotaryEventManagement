@@ -12,6 +12,11 @@
 //   title, subtitle : node — optional editorial title overrides (resolved copy).
 //   labels       : partial copy override (see DEFAULT_T keys).
 //   onSent       : (email) => void — optional callback once the link is sent.
+//   intent       : 'candidate' | 'jury-onboard' | null — optional, ONLY used to
+//                  customise the eyebrow/subtitle copy ("Apply · RSA 2027 · paris").
+//                  No effect on the magic-link call itself.
+//   editionId    : string — same usage as `intent`, displayed in the eyebrow.
+//   clubId       : string — same usage as `intent`, displayed in the eyebrow.
 //   className.
 
 import React, { useState } from "react";
@@ -63,6 +68,9 @@ export default function MagicLinkLogin({
   subtitle,
   labels = {},
   onSent,
+  intent = null,
+  editionId = null,
+  clubId = null,
   className = "",
 }) {
   const { t } = useLang();
@@ -72,8 +80,37 @@ export default function MagicLinkLogin({
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
   const [error, setError] = useState(null);
 
+  // Eyebrow contextuel : "Inscription · RSA 2027 · paris-etoile" pour un lien
+  // de candidature. On NE remplace QUE l'eyebrow (titre + reste de la copy
+  // restent neutres) — c'est juste un indice visuel pour rassurer le candidat
+  // qu'il est sur le bon onglet.
+  const contextEyebrow = (() => {
+    if (intent !== 'candidate' || !editionId) return null;
+    const suffix = clubId ? ` · ${clubId}` : '';
+    return {
+      fr: `Inscription · RSA ${editionId}${suffix}`,
+      en: `Apply · RSA ${editionId}${suffix}`,
+      de: `Bewerbung · RSA ${editionId}${suffix}`,
+    };
+  })();
+
+  // Subtitle contextuel pour intent=candidate : on rassure que l'email arrive.
+  const contextSubtitle =
+    intent === 'candidate'
+      ? {
+          fr: "Vous recevrez un lien de connexion par email pour finaliser votre inscription.",
+          en: "You'll receive a sign-in link by email to finalise your application.",
+          de: "Sie erhalten einen Anmeldelink per E-Mail, um Ihre Bewerbung abzuschließen.",
+        }
+      : null;
+
   // Resolve copy: per-key label override > built-in trilingual default.
-  const L = (key) => labels[key] ?? t(DEFAULT_T[key]);
+  const L = (key) => {
+    if (labels[key] != null) return labels[key];
+    if (key === 'eyebrow' && contextEyebrow) return t(contextEyebrow);
+    if (key === 'subtitle' && contextSubtitle) return t(contextSubtitle);
+    return t(DEFAULT_T[key]);
+  };
 
   const submit = async (e) => {
     e.preventDefault();

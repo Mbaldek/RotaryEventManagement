@@ -9,6 +9,8 @@ export { default as DocumentDropzone } from './DocumentDropzone';
 export {
   KEYS,
   useActiveEdition,
+  useEdition,
+  useEditionClubRules,
   useMyDossier,
   useCreateDraft,
   useSaveDraft,

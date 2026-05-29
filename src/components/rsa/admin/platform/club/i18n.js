@@ -14,6 +14,7 @@ export const CLUB_TABS = {
   rules:              { fr: "Règles d'éligibilité", en: 'Eligibility rules', de: 'Eignungsregeln' },
   prizes:             { fr: 'Prix',              en: 'Prizes',         de: 'Preise' },
   comms:              { fr: 'Communications',    en: 'Communications', de: 'Kommunikation' },
+  extensions:         { fr: 'Extensions',        en: 'Extensions',     de: 'Erweiterungen' },
 };
 
 export const CLUB_UI = {
@@ -104,4 +105,4 @@ export const CLUB_RULES = {
 // Roles disponibles dans la TeamTab (parallèle à ROLE_OPTIONS du legacy).
 export const CLUB_ROLE_OPTIONS = ['club_admin', 'comite', 'jury'];
 
-export const TAB_IDS = ['setup', 'live', 'results', 'team', 'jury_applications', 'rules', 'prizes', 'comms'];
+export const TAB_IDS = ['setup', 'live', 'results', 'team', 'jury_applications', 'rules', 'prizes', 'comms', 'extensions'];

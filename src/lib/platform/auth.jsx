@@ -18,6 +18,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { setSentryUser, clearSentryUser } from '@/lib/observability/sentry';
 
 const PlatformAuthContext = createContext(null);
 
@@ -89,6 +90,13 @@ export function PlatformAuthProvider({ children }) {
         if (!active) return;
         setAuthUser(session?.user ?? null);
         await loadIdentity(session?.user?.email);
+        // Sentry : on attache l'identité dès qu'on a la session. {id, email}
+        // seulement — pas de PII supplémentaire (cf. observability/sentry.js).
+        if (session?.user) {
+          setSentryUser({ id: session.user.id, email: session.user.email });
+        } else {
+          clearSentryUser();
+        }
         // eslint-disable-next-line no-console
         console.debug('[PlatformAuth] loadIdentity done');
       } catch (err) {
@@ -110,6 +118,11 @@ export function PlatformAuthProvider({ children }) {
       try {
         setAuthUser(session?.user ?? null);
         await loadIdentity(session?.user?.email);
+        if (session?.user) {
+          setSentryUser({ id: session.user.id, email: session.user.email });
+        } else {
+          clearSentryUser();
+        }
       } catch (err) {
         // Même garde défensive que l'IIFE : une exception ici (ex. déconnexion réseau
         // pendant un TOKEN_REFRESHED → la requête /profiles plante) ne doit pas remonter
@@ -144,6 +157,9 @@ export function PlatformAuthProvider({ children }) {
     setProfile(null);
     setRoles([]);
     setClubMemberships([]);
+    // Sentry : on désattache l'identité immédiatement — toute exception
+    // ultérieure restera "anonyme" jusqu'au prochain login.
+    clearSentryUser();
   }, []);
 
   const hasRole = useCallback((r) => roles.includes(r), [roles]);

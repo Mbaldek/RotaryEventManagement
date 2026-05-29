@@ -1,0 +1,117 @@
+# CI — RSA Platform V3.0 hardening.
+#
+# Cible : poser un signal vert build + lint pour chaque PR vers `main`. Le job
+# e2e Playwright est volontairement omis en V3.0 (besoin d'un Supabase preview
+# branch isolé pour pouvoir seeder/cleanup en sécurité) — voir bloc commenté
+# ci-dessous pour l'activer en V3.3 (Vague 3 du plan).
+#
+# Secrets requis dans GitHub Settings → Secrets and variables → Actions :
+#   - VITE_SUPABASE_URL          URL projet Supabase (peut être prod ; le build
+#                                front est un build statique sans accès DB)
+#   - VITE_SUPABASE_ANON_KEY     Anon key (publique, OK même en build prod)
+#   - VITE_APP_URL               https://app.rotary-startup.org en prod
+#   - VITE_SENTRY_DSN            (optionnel) — sans, Sentry no-op silencieux
+#
+# Comment ajouter un secret :
+#   gh secret set VITE_SUPABASE_URL --body "https://xxx.supabase.co"
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Annule les runs en cours sur la même PR pour économiser les minutes Actions.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-lint:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Lint en --if-present : si quelqu'un retire le script du package.json,
+      # le job continue. ESLint est en `--quiet` (warnings ignorés, errors only)
+      # pour ne pas bloquer sur le héritage déjeuners (encore quelques 100s
+      # de warnings legacy à nettoyer en V3.x).
+      - name: Lint
+        run: npm run lint --if-present
+
+      # Build : Vite + Tailwind. Échoue si le code ne compile pas ou si une
+      # variable VITE_* requise manque (le bundle inline les valeurs au build).
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+          # Optionnel — si non set, initSentry() est no-op (cf. lib/observability/sentry.js).
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          # Tag release Sentry = SHA du commit (utilisé pour relier les errors
+          # au déploiement précis ; lu par sentry.js si présent).
+          VITE_GIT_SHA: ${{ github.sha }}
+
+      # (Optionnel V3.x) — Upload du dist/ comme artifact pour debug si besoin.
+      # - name: Upload dist
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: dist-${{ github.sha }}
+      #     path: dist/
+      #     retention-days: 3
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job e2e (Playwright) — DÉSACTIVÉ V3.0
+  # ─────────────────────────────────────────────────────────────────────────────
+  # À activer en V3.3 (Vague 3) une fois qu'on a :
+  #   1. Un Supabase preview branch dédié au CI (ou un projet dev séparé).
+  #   2. Un seed reproductible (Édition 'dev' open + sessions live + users de
+  #      test seedés à chaque run via une migration `supabase/seeds/e2e.sql`).
+  #   3. Les secrets PLAYWRIGHT_SUPABASE_URL + PLAYWRIGHT_SERVICE_ROLE_KEY +
+  #      PLAYWRIGHT_SUPABASE_ANON_KEY configurés dans GitHub Secrets.
+  #
+  # Plus de détails : tests/e2e/README.md
+  #
+  # e2e:
+  #   name: E2E (Playwright)
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 20
+  #   needs: build-and-lint
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
+  #     - run: npm ci
+  #     - run: npx playwright install --with-deps chromium
+  #     - run: npm run test:e2e
+  #       env:
+  #         PLAYWRIGHT_BASE_URL: http://localhost:5173
+  #         PLAYWRIGHT_SUPABASE_URL: ${{ secrets.PLAYWRIGHT_SUPABASE_URL }}
+  #         PLAYWRIGHT_SUPABASE_ANON_KEY: ${{ secrets.PLAYWRIGHT_SUPABASE_ANON_KEY }}
+  #         PLAYWRIGHT_SERVICE_ROLE_KEY: ${{ secrets.PLAYWRIGHT_SERVICE_ROLE_KEY }}
+  #         CI: 'true'
+  #     - name: Upload Playwright report
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: playwright-report
+  #         path: playwright-report/
+  #         retention-days: 7

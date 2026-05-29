@@ -12,11 +12,13 @@ export const TABS = {
   competitions: { fr: 'Compétitions',     en: 'Competitions',    de: 'Wettbewerbe' },
   clubs:        { fr: 'Clubs',             en: 'Clubs',           de: 'Clubs' },
   roles:        { fr: 'Rôles globaux',     en: 'Global roles',    de: 'Globale Rollen' },
+  jury_apps:    { fr: 'Candidatures jury', en: 'Jury applications', de: 'Jury-Bewerbungen' },
   finale:       { fr: 'Finale fédérée',    en: 'Federated finale', de: 'Föderierte Finale' },
   comms:        { fr: 'Communications',    en: 'Communications',  de: 'Kommunikation' },
+  extensions:   { fr: 'Extensions',        en: 'Extensions',      de: 'Erweiterungen' },
 };
 
-export const TAB_IDS = ['competitions', 'clubs', 'roles', 'finale', 'comms'];
+export const TAB_IDS = ['competitions', 'clubs', 'roles', 'jury_apps', 'finale', 'comms', 'extensions'];
 
 // ── Page header ─────────────────────────────────────────────────────────────
 export const UI = {

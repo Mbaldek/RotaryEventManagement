@@ -29,6 +29,10 @@ export default function CandidatureFunnel({
   startup,
   edition,
   rules,
+  // Chantier 2 — libellé humain du club d'examen (résolu par MonDossier).
+  // Affiché dans le mini-banner contextualisé pour que le candidat sache QUI
+  // review son dossier à chaque step.
+  clubLabel,
   onPatch, // (patch) => void — autosave débouncé (le parent fait saveDraft)
   onFlush, // (patch) => Promise — enregistrement immédiat
   onSubmit, // (draft) => Promise — soumission (status soumis + snapshot)
@@ -214,8 +218,43 @@ export default function CandidatureFunnel({
     );
   }
 
+  // Chantier 2 — mini-banner contextualisé toujours visible (au-dessus du Stepper).
+  // Rappelle en permanence à QUELLE compétition (édition × club) le dossier est rattaché
+  // + la date de clôture, pour que le candidat ne perde jamais le repère.
+  const editionTag = edition?.year || edition?.name || null;
+  const contextDeadline = closeDate
+    ? t({ fr: `Clôture le ${closeDate}`, en: `Closes on ${closeDate}`, de: `Schluss am ${closeDate}` })
+    : null;
+
   return (
     <div>
+      {editionTag && (
+        <div
+          className="mb-5 rounded-[4px] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2"
+          style={{ background: '#fdf6e8', border: `1px solid ${CREAM2}` }}
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="h-[1.5px] w-5" style={{ background: GOLD }} aria-hidden />
+            <span
+              className="uppercase text-[10px] tracking-[0.18em] font-medium"
+              style={{ color: GOLD }}
+            >
+              RSA {editionTag}
+              {clubLabel && (
+                <>
+                  <span style={{ color: MUTED }}> · </span>
+                  {clubLabel}
+                </>
+              )}
+            </span>
+          </div>
+          {contextDeadline && (
+            <span className="text-[11.5px]" style={{ color: MUTED }}>
+              {contextDeadline}
+            </span>
+          )}
+        </div>
+      )}
       <Stepper current={step} onStep={goTo} incompleteSteps={incompleteSteps} />
 
       <motion.div

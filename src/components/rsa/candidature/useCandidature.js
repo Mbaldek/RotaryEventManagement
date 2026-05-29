@@ -5,8 +5,10 @@
 // partagé (via QueryClientProvider monté dans App.jsx). L'autosave est débouncé
 // côté CandidatureFunnel ; ici on expose juste les mutations.
 
+import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Edition, Startup } from '@/lib/rsa/entities';
+import { Edition, EditionClub, Startup } from '@/lib/rsa/entities';
+import { rulesFromEdition } from './validation';
 
 export const KEYS = {
   activeEdition: ['rsa', 'edition', 'active'],
@@ -20,6 +22,50 @@ export function useActiveEdition() {
     queryFn: () => Edition.active(),
     staleTime: 5 * 60 * 1000,
   });
+}
+
+// Chantier 2 — Fetch d'une édition par ID (candidature contextualisée par URL).
+// Utilisé quand l'URL `/MonDossier?edition=…` épingle une compétition précise.
+export function useEdition(editionId) {
+  return useQuery({
+    queryKey: ['rsa', 'edition', editionId],
+    queryFn: () => Edition.get(editionId),
+    enabled: !!editionId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// Chantier 2 — Règles d'éligibilité effectives pour un couple (édition, club).
+// Merge des règles globales d'édition (rulesFromEdition) + override per-club
+// (edition_clubs.eligibility_rules). Les clés du per-club écrasent les
+// correspondantes des règles globales. Si pas de club, on retombe sur les règles
+// globales seules.
+export function useEditionClubRules(editionId, clubId) {
+  const editionQ = useEdition(editionId);
+  const clubRulesQ = useQuery({
+    queryKey: ['rsa', 'edition-club-rules', editionId, clubId],
+    queryFn: () => EditionClub.rulesForClub(editionId, clubId),
+    enabled: !!editionId && !!clubId,
+    staleTime: 5 * 60 * 1000,
+  });
+  const data = React.useMemo(() => {
+    const base = rulesFromEdition(editionQ.data) || {};
+    const override = clubRulesQ.data || {};
+    // Important : si base est undefined (pas de règles configurées sur l'édition)
+    // et qu'il n'y a pas d'override, on renvoie undefined pour laisser le
+    // consommateur (evaluateEligibility) appliquer DEFAULT_RULES_2026.
+    if (
+      (!editionQ.data || Object.keys(base).length === 0) &&
+      Object.keys(override).length === 0
+    ) {
+      return undefined;
+    }
+    return { ...base, ...override };
+  }, [editionQ.data, clubRulesQ.data]);
+  return {
+    data,
+    isLoading: editionQ.isLoading || (!!clubId && clubRulesQ.isLoading),
+  };
 }
 
 // Dossier du candidat courant pour l'édition (RLS scope à owner_id). null si aucun.

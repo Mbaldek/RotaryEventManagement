@@ -45,21 +45,43 @@ export default function TopNav({
   homeTo = "/",
 }) {
   const { t } = useLang();
-  const { isAuthenticated, signOut } = usePlatformAuth();
+  const { isAuthenticated, signOut, roles, clubMemberships } = usePlatformAuth();
   const [open, setOpen] = useState(false);
 
   // Default role-aware menu. A role-less signed-in user (startup owner) sees only
   // "Mon dossier"; jury/comité/admin see their hubs.
-  // V2.5+ fix Mi3 : on cache /Concours pour les anon — la page redirige sur
-  // /Login si !isAuthenticated, donc l'afficher dans le NavMenu d'un user
-  // non connecté crée un détour (click → /Login → re-login → /Concours).
+  //
+  // Chantier 1 (mai 2026) : NavMenu filtre via `hasRole(role)` qui ne regarde
+  // QUE le tableau global `roles` (pas `clubMemberships`). Pour gérer master_admin
+  // et club_admin/comité/jury *club-scoped*, on filtre côté TopNav avant de
+  // passer à NavMenu (qui ne re-filtre plus puisque les items n'ont pas de
+  // `roles` array). Cf. computeLandingRoute pour la priorité de routage post-login.
+  const hasGlobalRole = (r) => Array.isArray(roles) && roles.includes(r);
+  const hasClubRoleOf = (r) =>
+    Array.isArray(clubMemberships) && clubMemberships.some((m) => m.role === r);
+  const isMaster = hasGlobalRole("master_admin");
+  const isLegacyAdmin = hasGlobalRole("admin");
+
+  // Visibilité : master_admin voit tout. Sinon, on combine rôles globaux + club-scoped.
   const defaultItems = [
-    { to: "/MonDossier", label: t(NAV_T.myDossier) },
-    ...(isAuthenticated ? [{ to: "/Concours", label: t(NAV_T.concours) }] : []),
-    { to: "/Jury", label: t(NAV_T.jury), roles: ["jury"] },
-    { to: "/Selection", label: t(NAV_T.selection), roles: ["comite"] },
-    { to: "/Admin", label: t(NAV_T.admin), roles: ["admin"] },
-  ];
+    { to: "/MonDossier", label: t(NAV_T.myDossier), show: isAuthenticated },
+    { to: "/Concours", label: t(NAV_T.concours), show: isAuthenticated },
+    {
+      to: "/Jury",
+      label: t(NAV_T.jury),
+      show: isMaster || hasGlobalRole("jury") || hasClubRoleOf("jury"),
+    },
+    {
+      to: "/Selection",
+      label: t(NAV_T.selection),
+      show: isMaster || hasGlobalRole("comite") || hasClubRoleOf("comite"),
+    },
+    {
+      to: "/Admin",
+      label: t(NAV_T.admin),
+      show: isMaster || isLegacyAdmin || hasClubRoleOf("club_admin"),
+    },
+  ].filter((i) => i.show).map(({ show, ...rest }) => rest);
   const menuItems = items || defaultItems;
 
   return (

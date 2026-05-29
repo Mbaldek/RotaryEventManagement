@@ -12,7 +12,7 @@
 - **Why now:** Supabase's built-in email sender is **rate-limited to ~3–4 emails per hour** (officially "for testing only", confirmed in Supabase docs). During candidate registration windows or jury onboarding, we will burst dozens of magic-link emails in minutes — built-in will drop them silently or queue them past the moment they are useful.
 - **Recommended provider:** **Resend** — simplest setup, native SMTP relay, generous free tier (3,000 emails/month, 100/day), excellent React/Node ergonomics if we ever want a transactional API later. One small DNS-verification step, then a 5-field form in Supabase.
 - **Domain:** `rotary-startup.org` (apex), DNS managed at **Elementor Hosting** (per [`deploy-and-lunch-app-isolation.md`](./deploy-and-lunch-app-isolation.md) — Mathieu confirmed DNS lives there).
-- **Sender address:** `noreply@rotary-startup.org`, sender name **Rotary Startup Award**. We do not need an inbox for `noreply@` — Resend only requires the domain to be verified.
+- **Sender address:** `contact@rotary-startup.org`, sender name **Rotary Startup Award**. We do not need an inbox for `noreply@` — Resend only requires the domain to be verified.
 - **Risk:** zero permanent risk — switching back to built-in is a one-click toggle in Supabase Authentication → SMTP Settings → "Enable custom SMTP" off.
 - **Cost:** 0 € for the foreseeable future. Resend's free tier covers ~3k mails/month; we currently send <100/month and the jury bursts stay well under 100/day.
 
@@ -37,7 +37,7 @@ Supabase's built-in email service is explicitly documented as a **development co
 
 ### 1.3 What we get with Resend SMTP
 
-- Sender `noreply@rotary-startup.org` (verified, SPF + DKIM signed).
+- Sender `contact@rotary-startup.org` (verified, SPF + DKIM signed).
 - Throughput: 100/day on the free tier, 50 emails/sec burst — well above any plausible RSA spike.
 - Resend dashboard: per-email delivery status, opens, bounces, complaints — useful for diagnosing "I didn't get the link" tickets.
 - Reversible toggle in Supabase.
@@ -86,7 +86,7 @@ Resend's domain verification uses **SPF** + **DKIM** + optional **return-path (c
 
 ### 3.4 Send a test from Resend (before touching Supabase)
 
-1. Resend dashboard → **Emails** → **Send Test** → from `noreply@rotary-startup.org`, to `mathieubal@gmail.com`.
+1. Resend dashboard → **Emails** → **Send Test** → from `contact@rotary-startup.org`, to `mathieubal@gmail.com`.
 2. Confirm receipt + check Gmail headers ("show original") for `dkim=pass` and `spf=pass`. If either fails, the DNS record value is wrong (most often a copy-paste artefact in the long DKIM key) — fix and re-verify.
 
 ---
@@ -112,7 +112,7 @@ Resend's domain verification uses **SPF** + **DKIM** + optional **return-path (c
 
    | Field | Value |
    | --- | --- |
-   | **Sender email** | `noreply@rotary-startup.org` |
+   | **Sender email** | `contact@rotary-startup.org` |
    | **Sender name** | `Rotary Startup Award` |
    | **Host** | `smtp.resend.com` |
    | **Port** | `465` (SSL/TLS implicit) — alternate `587` (STARTTLS) if 465 blocked |
@@ -136,7 +136,7 @@ Resend's domain verification uses **SPF** + **DKIM** + optional **return-path (c
 1. Supabase dashboard → **Authentication** → **Users** → click an existing user (or invite a fresh address you control) → **Send Magic Link**.
 2. Open the receiving inbox (Gmail web is the best diagnostic — it shows full headers easily).
 3. Verify:
-   - **From:** displays as `Rotary Startup Award <noreply@rotary-startup.org>`.
+   - **From:** displays as `Rotary Startup Award <contact@rotary-startup.org>`.
    - **Subject:** the trilingual subject line from [`docs/design/email-templates/magic-link.md`](../design/email-templates/magic-link.md) (assuming the branded template is pasted in).
    - **Body:** renders with the navy header, the gold rule, the three FR/EN/DE blocks, the NAVY CTA pill.
    - **Headers** (Gmail → ⋮ → "Show original") → `SPF: PASS`, `DKIM: PASS`, `DMARC: PASS`.
@@ -213,7 +213,7 @@ If we ever foresee a single-day burst above 100 (e.g. inviting all 200+ alumni j
 
 1. **Resend organisation owner.** Is the Resend account opened under Mathieu personally (`mathieubal@gmail.com`) or under a Rotary-owned address (e.g. `prixstartuprotary@proton.me` if that proton inbox can receive verification mails)? Recommend Rotary-owned for continuity beyond Mathieu's mandate.
 2. **Region choice.** EU (`eu-west-1`) is recommended for GDPR; confirm acceptable (US region performs identically for our recipients, but EU is the safer institutional default).
-3. **Inbox for `noreply@rotary-startup.org`.** Not strictly needed — Resend sends without requiring an actual mailbox. But if replies are expected, either (a) set up forwarding from `noreply@` to `prixstartuprotary@proton.me`, or (b) use a friendlier sender like `contact@rotary-startup.org` that already has an inbox. Recommend (a) plus an explicit "do not reply, contact prixstartuprotary@proton.me" line — already present in the branded footer.
+3. **Inbox for `contact@rotary-startup.org`.** Not strictly needed — Resend sends without requiring an actual mailbox. But if replies are expected, either (a) set up forwarding from `noreply@` to `prixstartuprotary@proton.me`, or (b) use a friendlier sender like `contact@rotary-startup.org` that already has an inbox. Recommend (a) plus an explicit "do not reply, contact prixstartuprotary@proton.me" line — already present in the branded footer.
 4. **DMARC policy.** Start at `p=none` (monitoring only). Move to `p=quarantine` after 30 days of clean Resend logs, then `p=reject` after another 30. Out of scope for this immediate switch, but worth scheduling.
 5. **Edge Function emails** (e.g. cron `backup-rsa` notifications, jury-ready announcements). If we ever send transactional emails from Edge Functions or `api/cron/*`, they should also use Resend — but via the **Resend HTTP API** (`POST https://api.resend.com/emails` with the `re_…` key as Bearer) rather than SMTP. Same domain, same DNS records, separate API key recommended (`supabase-edge-prod`) for clean rotation.
 
@@ -228,7 +228,7 @@ If we ever foresee a single-day burst above 100 (e.g. inviting all 200+ alumni j
 - [ ] Test email sent from Resend dashboard to `mathieubal@gmail.com` → received, DKIM/SPF pass.
 - [ ] Resend API key created (`supabase-smtp-prod`, sending-access only, restricted to `rotary-startup.org`) → stored in password manager.
 - [ ] Branded Magic Link template pasted in Supabase (subject + HTML body from [`docs/design/email-templates/magic-link.md`](../design/email-templates/magic-link.md)).
-- [ ] Supabase Authentication → SMTP Settings filled (host `smtp.resend.com`, port `465`, user `resend`, password = API key, sender `noreply@rotary-startup.org`, name `Rotary Startup Award`).
+- [ ] Supabase Authentication → SMTP Settings filled (host `smtp.resend.com`, port `465`, user `resend`, password = API key, sender `contact@rotary-startup.org`, name `Rotary Startup Award`).
 - [ ] **Save** in Supabase.
 - [ ] Test magic link sent from Supabase → received in Gmail, Apple Mail, Outlook web, ProtonMail → renders correctly → CTA lands on `app.rotary-startup.org`.
 - [ ] Decision log: note the switch-over date and Resend account owner in the team's shared notes for future operators.

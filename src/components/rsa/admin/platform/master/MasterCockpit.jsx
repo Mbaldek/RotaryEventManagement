@@ -28,8 +28,11 @@ import ClubsTab from './tabs/ClubsTab';
 import GlobalRolesTab from './tabs/GlobalRolesTab';
 import FederatedFinaleTab from './tabs/FederatedFinaleTab';
 import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
+import JuryApplicationsPanel from './JuryApplicationsPanel';
 import CompetitionEditView from './CompetitionEditView';
 import ClubEditView from './ClubEditView';
+// V3.0 — Plugins/Extensions architecture (Vague 1)
+import ExtensionsList from '@/components/rsa/extensions/ExtensionsList';
 
 function Tab({ id, label, active, onClick }) {
   return (
@@ -252,8 +255,10 @@ export default function MasterCockpit() {
             {tab === 'competitions' && <CompetitionsTab />}
             {tab === 'clubs'        && <ClubsTab />}
             {tab === 'roles'        && <GlobalRolesTab />}
+            {tab === 'jury_apps'    && <JuryApplicationsPanel />}
             {tab === 'finale'       && <FederatedFinaleTab />}
             {tab === 'comms'        && <EmailStudio /* clubId undefined = master global */ />}
+            {tab === 'extensions'   && <ExtensionsList scope="master" />}
           </motion.div>
         </AnimatePresence>
       </div>
