@@ -9,7 +9,7 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion, MotionConfig } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { AuthProvider, useAuthOrNull } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { LanguageProvider } from '@/lib/platform/i18n';
 import { PlatformAuthProvider } from '@/lib/platform/auth';
@@ -26,6 +26,29 @@ const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 // Option A du deepsolve docs/deepsolve/deploy-and-lunch-app-isolation.md.
 const isPlatformHost = () =>
   typeof window !== 'undefined' && window.location.hostname.startsWith('app.rotary-startup');
+
+// F3 — Gate d'instanciation de l'AuthProvider hérité (déjeuners).
+// Avant : l'AuthProvider était monté inconditionnellement, ce qui déclenchait
+// `checkAppState` (getSession + loadProfile) systématiquement, MÊME sur le
+// domaine plateforme où on n'utilise pas l'AuthContext déjeuners. Résultat :
+// double getSession() + double onAuthStateChange (un pour PlatformAuthProvider,
+// un pour AuthProvider) — deux appels réseau Supabase inutiles à chaque mount.
+// Après : sur isPlatformHost(), on ne monte PAS l'AuthProvider. Les consommateurs
+// (AuthenticatedApp) utilisent useAuthOrNull() qui retourne null + fallback.
+const AuthProviderGate = ({ children }) => {
+  if (isPlatformHost()) return <>{children}</>;
+  return <AuthProvider>{children}</AuthProvider>;
+};
+
+// Valeurs par défaut quand l'AuthProvider hérité n'est PAS monté (cas plateforme RSA).
+// Calquées sur l'API de AuthContext mais "non-loading + non-auth" — l'AuthenticatedApp
+// rend le shell normalement, et la plateforme RSA gère son propre auth via PlatformAuthProvider.
+const LEGACY_AUTH_FALLBACK = {
+  isLoadingAuth: false,
+  isLoadingPublicSettings: false,
+  authError: null,
+  navigateToLogin: () => { window.location.href = '/Login'; },
+};
 
 // Pages appartenant à l'app déjeuners (legacy). Sur le domaine plateforme, elles
 // redirigent vers /Login. Les pages plateforme (Login, MonDossier, Selection, Jury…)
@@ -93,7 +116,11 @@ const AnimatedRoutes = ({ children }) => {
 };
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  // F3 — useAuthOrNull() au lieu de useAuth() : retourne null quand l'AuthProvider
+  // hérité n'est PAS monté (cas plateforme RSA, gated par AuthProviderGate). On
+  // fallback sur LEGACY_AUTH_FALLBACK pour préserver l'API du composant.
+  const legacy = useAuthOrNull() || LEGACY_AUTH_FALLBACK;
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = legacy;
 
   // Sur le domaine plateforme RSA (app.rotary-startup.org), l'AuthProvider hérité
   // (déjeuners) ne doit PAS gater le rendu : les pages plateforme ont leur propre
@@ -181,7 +208,7 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <AuthProvider>
+    <AuthProviderGate>
       <LanguageProvider>
         <PlatformAuthProvider>
           <QueryClientProvider client={queryClientInstance}>
@@ -216,7 +243,7 @@ function App() {
           </QueryClientProvider>
         </PlatformAuthProvider>
       </LanguageProvider>
-    </AuthProvider>
+    </AuthProviderGate>
   )
 }
 

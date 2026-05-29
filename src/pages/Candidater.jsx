@@ -143,14 +143,16 @@ export default function Candidater() {
         await Startup.claimPending();
         if (!active) return;
         setClaimState('done');
-        // Petit délai UX pour montrer la confirmation, puis redirect.
+        // ÉQUIPE A — F4 : on a réduit le délai UX de 900ms → 200ms.
+        // L'état "done" reste affiché brièvement pour confirmer visuellement
+        // le succès, mais on n'attend plus inutilement avant le redirect.
         setTimeout(() => {
           if (!active) return;
           const target = editionParam
             ? `/MonDossier?edition=${encodeURIComponent(editionParam)}`
             : '/MonDossier';
           navigate(target, { replace: true });
-        }, 900);
+        }, 200);
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('[Candidater] claim failed:', err);
@@ -158,10 +160,11 @@ export default function Candidater() {
         // Échec rare : on route quand même vers /MonDossier — la RLS
         // pending_self_read autorise toujours la lecture du draft.
         setClaimState('error');
+        // F4 : 600ms → 200ms aussi côté erreur pour la cohérence.
         setTimeout(() => {
           if (!active) return;
           navigate('/MonDossier', { replace: true });
-        }, 600);
+        }, 200);
       }
     })();
     return () => { active = false; };

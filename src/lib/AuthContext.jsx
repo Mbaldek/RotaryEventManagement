@@ -23,7 +23,27 @@ export const AuthProvider = ({ children }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // F8 — Coordination cross-provider du signOut.
+    // PlatformAuthProvider (plateforme RSA) dispatch `rsa-signout` quand un user
+    // se déconnecte ; si l'AuthProvider hérité (déjeuners) est monté côté shell
+    // (cas dev local sans isPlatformHost(), ou hôte hérité), on reset son state
+    // tout de suite plutôt que d'attendre que onAuthStateChange fire (qui peut
+    // arriver avec un délai après supabase.auth.signOut() en cas de réseau lent).
+    const onPlatformSignout = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthError(null);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('rsa-signout', onPlatformSignout);
+    }
+
+    return () => {
+      subscription.unsubscribe();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('rsa-signout', onPlatformSignout);
+      }
+    };
   }, []);
 
   const loadProfile = async (email) => {
@@ -89,4 +109,13 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+// useAuthOrNull — variante "safe" pour les arbres où l'AuthProvider hérité (déjeuners)
+// peut être ABSENT (cas du domaine plateforme app.rotary-startup.org où on bypass
+// l'AuthProvider entièrement via AuthProviderGate, cf. App.jsx). Ne throw pas et
+// retourne `null` au lieu, permettant au composant appelant de fallback proprement
+// sur des valeurs par défaut.
+export const useAuthOrNull = () => {
+  return useContext(AuthContext) || null;
 };

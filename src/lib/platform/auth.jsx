@@ -18,12 +18,56 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { setSentryUser, clearSentryUser } from '@/lib/observability/sentry';
+import { setSentryUser, clearSentryUser, captureException, Sentry } from '@/lib/observability/sentry';
 
 const PlatformAuthContext = createContext(null);
 
-// Base URL pour le retour des magic links. En prod : https://app.rotary-startup.org
-const APP_URL = import.meta.env.VITE_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+// F5 — Pin VITE_APP_URL ou warning explicite. En prod (app.rotary-startup.org) la
+// var DOIT être set : sinon les magic-links pointent vers `window.location.origin`,
+// ce qui leak des liens vers une preview Vercel quand un user clique sur "envoyer
+// le lien" depuis https://rotary-event-management-XXXX.vercel.app. Le clic mène
+// alors à une URL preview qui n'a pas la session et qui échouera silencieusement.
+// On émet un console.error + Sentry warning au boot, et on continue avec le fallback.
+const RAW_APP_URL = import.meta.env.VITE_APP_URL;
+const APP_URL = RAW_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+
+if (typeof window !== 'undefined' && !RAW_APP_URL) {
+  const host = window.location.hostname;
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
+  if (!isLocal) {
+    // eslint-disable-next-line no-console
+    console.error(
+      '[PlatformAuth] VITE_APP_URL not set in non-localhost env — magic-links ' +
+      'will use window.location.origin (' + window.location.origin + '), ' +
+      'which may break on preview URLs.',
+    );
+    // Sentry breadcrumb même si Sentry pas encore init — le warning console reste
+    // le diagnostic primaire (Sentry sera no-op en l'absence de DSN).
+    try {
+      Sentry?.captureMessage?.(
+        'VITE_APP_URL not set in non-localhost env — magic-links will use window.location.origin, may break on preview URLs',
+        {
+          level: 'warning',
+          extra: { origin: window.location.origin, host },
+        },
+      );
+    } catch {
+      /* Sentry indispo : on a déjà loggé via console.error */
+    }
+  }
+}
+
+// F7 — Hash léger d'un email pour les breadcrumbs Sentry (PII safety).
+// On NE veut PAS envoyer l'email en clair dans les breadcrumbs : on garde
+// les 3 premiers chars et le domain (suffisant pour reconnaître son propre
+// dossier en debug, opaque pour un attaquant qui lirait les logs).
+function emailFingerprint(email) {
+  if (!email || typeof email !== 'string') return null;
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return null;
+  const head = local.slice(0, 3);
+  return `${head}***@${domain}`;
+}
 
 export function PlatformAuthProvider({ children }) {
   const [authUser, setAuthUser] = useState(null); // session.user (auth.users)
@@ -142,11 +186,64 @@ export function PlatformAuthProvider({ children }) {
   }, [loadIdentity]);
 
   // Envoie un lien de connexion par email. redirectPath = page de retour après clic.
+  // F7 — On capture les erreurs Supabase (rate-limit, SMTP, redirect-URL non whitelistée…)
+  // dans Sentry avec un breadcrumb PII-safe (fingerprint email + redirectPath).
   const signInWithMagicLink = useCallback(
-    (email, redirectPath = '/') =>
-      supabase.auth.signInWithOtp({
-        email: String(email).trim(),
+    async (email, redirectPath = '/') => {
+      const normalized = String(email).trim();
+      const fingerprint = emailFingerprint(normalized.toLowerCase());
+      // Breadcrumb d'intention — visible dans le breadcrumb-trail Sentry si une
+      // erreur survient ensuite. Pas captureException ici (pas une erreur).
+      try {
+        Sentry?.addBreadcrumb?.({
+          category: 'auth.magic-link',
+          level: 'info',
+          message: 'signInWithMagicLink attempt',
+          data: { email_fp: fingerprint, redirectPath, app_url: APP_URL },
+        });
+      } catch {
+        /* Sentry indispo */
+      }
+      const result = await supabase.auth.signInWithOtp({
+        email: normalized,
         options: { emailRedirectTo: `${APP_URL}${redirectPath}` },
+      });
+      if (result?.error) {
+        // Erreur retournée par Supabase — on remonte dans Sentry avec contexte PII-safe.
+        captureException(result.error, {
+          tag: 'auth.magic-link',
+          email_fp: fingerprint,
+          redirectPath,
+          app_url: APP_URL,
+        });
+      }
+      return result;
+    },
+    [],
+  );
+
+  // SSO V3.0 — Google + Microsoft (Azure AD) en parallèle du magic-link.
+  // Cible : jurés CEO de grands groupes dont l'email DLP/throttling bloque souvent
+  // les magic-links Resend. Sans SSO ils peuvent simplement pas se connecter.
+  // Cf. docs/onboarding/sso-setup.md pour la config providers (Supabase Dashboard
+  // → Authentication → Providers → Google + Azure activés).
+  //
+  // ⚠ MERGE NOTE (équipe C) : ces méthodes sont placées en BAS du fichier, juste
+  // avant `signOut`, pour réduire le conflit avec les équipes A (useEffect / boot)
+  // et B (signOut / cleanup). Si conflit néanmoins, garder les 3 signIn* + signOut.
+  const signInWithGoogle = useCallback(
+    (redirectPath = '/') =>
+      supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${APP_URL}${redirectPath}` },
+      }),
+    [],
+  );
+  const signInWithMicrosoft = useCallback(
+    (redirectPath = '/') =>
+      supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: { redirectTo: `${APP_URL}${redirectPath}`, scopes: 'email' },
       }),
     [],
   );
@@ -157,6 +254,17 @@ export function PlatformAuthProvider({ children }) {
     setProfile(null);
     setRoles([]);
     setClubMemberships([]);
+    // F8 — Coordination cross-provider : on signale aux autres AuthProviders
+    // (AuthContext hérité déjeuners, éventuels providers V4 multi-club) que la
+    // session a été détruite, sans attendre que onAuthStateChange fire (qui
+    // peut prendre du temps en cas de réseau lent). Petit, simple, downstream.
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('rsa-signout'));
+      } catch {
+        /* CustomEvent peut throw dans certains environnements de test */
+      }
+    }
     // Sentry : on désattache l'identité immédiatement — toute exception
     // ultérieure restera "anonyme" jusqu'au prochain login.
     clearSentryUser();
@@ -191,6 +299,8 @@ export function PlatformAuthProvider({ children }) {
     hasRole,
     hasClubRole,
     signInWithMagicLink,
+    signInWithGoogle,
+    signInWithMicrosoft,
     signOut,
   };
 

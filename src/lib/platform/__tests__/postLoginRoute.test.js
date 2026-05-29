@@ -57,13 +57,19 @@ test('jury club-scoped (no global) -> /Jury', () => {
 });
 
 // — Candidat —
+// Note : depuis F1 (ÉQUIPE A — drop hasDossier query), computeLandingRoute
+// ne prend plus de param `hasDossier`. La cible reste /MonDossier dans tous les
+// cas (MonDossier gère picker/édition selon le dossier existant ou non).
 
-test('candidat avec dossier -> /MonDossier', () => {
-  assert.equal(computeLandingRoute({ roles: [], hasDossier: true }), '/MonDossier');
+test('candidat sans rôle -> /MonDossier (fallback)', () => {
+  assert.equal(computeLandingRoute({}), '/MonDossier');
 });
 
-test('candidat sans dossier ni rôle -> /MonDossier (fallback)', () => {
-  assert.equal(computeLandingRoute({}), '/MonDossier');
+test('candidat sans rôle ni club_membership -> /MonDossier', () => {
+  assert.equal(
+    computeLandingRoute({ roles: [], clubMemberships: [] }),
+    '/MonDossier',
+  );
 });
 
 // — nextParam whitelist —

@@ -5,7 +5,7 @@
 // déterministe, auditable, et identique en SSR/CSR/test — d'où un module
 // sans dépendances React/Supabase.
 //
-// Priorités (cf. Chantier 1) :
+// Priorités (cf. Chantier 1 + ÉQUIPE A F1) :
 //   1. ?next= whitelisté (deep-link explicite)
 //   2. intent=candidate -> /MonDossier?edition=..&club=..
 //   3. intent=jury-onboard -> /Welcome?role=jury[&edition=..]
@@ -14,8 +14,11 @@
 //   6. admin (legacy global) -> /Admin
 //   7. comite (global ou club) -> /Selection
 //   8. jury (global ou club) -> /Jury
-//   9. dossier déjà ouvert -> /MonDossier
-//  10. fallback -> /MonDossier
+//   9. fallback -> /MonDossier (candidat par défaut, MonDossier gère picker/edit)
+//
+// F1 — `hasDossier` retiré : que l'utilisateur ait ou non un dossier ouvert,
+// la cible finale était déjà la même (/MonDossier). On évite ainsi une query
+// `select id from startups` bloquante sur /Login (200-500ms gagnées).
 
 // Whitelist des `?next=` autorisés. Bloque les redirections vers des hôtes
 // externes (open-redirect) ou des routes inattendues. On accepte uniquement
@@ -41,7 +44,6 @@ function buildQuery(params) {
 export function computeLandingRoute({
   roles = [],
   clubMemberships = [],
-  hasDossier = false,
   nextParam = null,
   intent = null,
   editionId = null,
@@ -87,9 +89,9 @@ export function computeLandingRoute({
   const isJury = safeRoles.includes('jury') || safeCM.some((m) => m && m.role === 'jury');
   if (isJury) return '/Jury';
 
-  // 9 + 10. Aucun rôle : on renvoie sur MonDossier — qu'il y ait un dossier
-  //         existant ou non, c'est l'espace candidat par défaut.
-  if (hasDossier) return '/MonDossier';
+  // 9. Aucun rôle : on renvoie sur MonDossier — c'est l'espace candidat par
+  //    défaut. MonDossier sait gérer les deux cas (picker si pas de dossier,
+  //    édition si dossier existant), donc inutile de pré-vérifier ici.
   return '/MonDossier';
 }
 
