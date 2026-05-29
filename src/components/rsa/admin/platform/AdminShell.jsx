@@ -15,7 +15,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { GOLD, NAVY, INK, MUTED, CREAM2, EASE } from '@/components/design/tokens';
+import { GOLD, NAVY, INK, MUTED, CREAM2, EASE, TINT_ADMIN } from '@/components/design/tokens';
 import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
 import { TABS, UI } from './i18n';
@@ -164,8 +164,14 @@ export default function AdminShell() {
         className="mb-4"
       />
 
-      {/* Panel body */}
-      <div id={`admin-panel-${tab}`} role="tabpanel" aria-labelledby={`admin-tab-${tab}`}>
+      {/* Panel body — surface TINT_ADMIN + hairline pour séparer du header/tabs. */}
+      <div
+        id={`admin-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`admin-tab-${tab}`}
+        className="rounded-[4px] p-4 md:p-6"
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+      >
         {editionsQ.isLoading && (
           <div className="py-12 flex justify-center">
             <Spinner />

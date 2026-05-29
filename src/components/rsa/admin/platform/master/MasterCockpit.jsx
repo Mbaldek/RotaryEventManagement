@@ -14,7 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import {
-  CREAM2, NAVY, INK, MUTED, GOLD, EASE, CockpitTabs,
+  CREAM2, NAVY, INK, MUTED, GOLD, EASE, CockpitTabs, TINT_ADMIN,
 } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { TABS, TAB_IDS, STRIP, UI } from './i18n';
@@ -222,8 +222,14 @@ export default function MasterCockpit() {
         className="mb-6"
       />
 
-      {/* Panel body */}
-      <div id={`master-panel-${tab}`} role="tabpanel" aria-labelledby={`master-tab-${tab}`}>
+      {/* Panel body — surface TINT_ADMIN + hairline pour séparer du header/tabs sur fond CREAM. */}
+      <div
+        id={`master-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`master-tab-${tab}`}
+        className="rounded-[4px] p-4 md:p-6"
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}

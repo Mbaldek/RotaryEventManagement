@@ -168,17 +168,46 @@ function JuryStepper({ current, onStep, incompleteSteps = {} }) {
 
 // ─── Step shell réutilisable (titre Playfair + sous-titre + corps) ────────
 
-function StepHeader({ eyebrow, title, subtitle }) {
+function StepHeader({ eyebrow, title, subtitle, step, total }) {
+  // Si step/total fournis → opener S-Numbered ("01 — Identité").
+  // Sinon → opener S-Gold-Rule (barre + uppercase tracked) en fallback.
+  const hasNumbered = step != null && total != null;
   return (
     <div>
-      {eyebrow && (
+      {hasNumbered ? (
+        <div className="mb-3 flex items-baseline gap-3">
+          <span
+            className="tabular-nums text-[14px]"
+            style={{ fontFamily: SERIF, color: GOLD }}
+          >
+            {String(step).padStart(2, '0')}
+          </span>
+          <span
+            aria-hidden
+            className="h-px w-7"
+            style={{ background: CREAM2 }}
+          />
+          <span
+            className="text-[14px] uppercase tracking-[0.12em]"
+            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+          >
+            {eyebrow}
+          </span>
+          <span
+            className="ml-2 text-[10.5px] tabular-nums"
+            style={{ color: MUTED }}
+          >
+            / {String(total).padStart(2, '0')}
+          </span>
+        </div>
+      ) : eyebrow ? (
         <div className="flex items-center gap-2.5 mb-2">
           <span className="h-[1.5px] w-6" style={{ background: GOLD }} aria-hidden />
           <span className="uppercase text-[10px] tracking-[0.16em] font-medium" style={{ color: GOLD }}>
             {eyebrow}
           </span>
         </div>
-      )}
+      ) : null}
       <h2 className="text-[24px] leading-tight mb-1.5" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
         {title}
       </h2>
@@ -201,6 +230,8 @@ function StepIdentite({ draft, errors, onField }) {
         eyebrow={t(JURY_STEPS[0].label)}
         title={t(JURY_UI.step1Title)}
         subtitle={t(JURY_UI.step1Subtitle)}
+        step={1}
+        total={JURY_STEPS.length}
       />
       <div className="flex flex-col gap-5">
         <Field
@@ -359,6 +390,8 @@ function StepPresentation({ draft, errors, onField }) {
         eyebrow={t(JURY_STEPS[1].label)}
         title={t(JURY_UI.step2Title)}
         subtitle={t(JURY_UI.step2Subtitle)}
+        step={2}
+        total={JURY_STEPS.length}
       />
       <div className="flex flex-col gap-5">
         <Field
@@ -416,6 +449,8 @@ function StepPreferences({ draft, sessions, themeOptions, onField }) {
         eyebrow={t(JURY_STEPS[2].label)}
         title={t(JURY_UI.step3Title)}
         subtitle={t(JURY_UI.step3Subtitle)}
+        step={3}
+        total={JURY_STEPS.length}
       />
       <div className="flex flex-col gap-5">
         <Field
@@ -560,6 +595,8 @@ function StepReview({ draft, sessions, themeOptions, onEditStep, onSubmit, submi
         eyebrow={t(JURY_STEPS[3].label)}
         title={t(JURY_UI.step4Title)}
         subtitle={t(JURY_UI.step4Subtitle)}
+        step={4}
+        total={JURY_STEPS.length}
       />
 
       <ReviewBlock title={t(JURY_UI.reviewSectionIdentity)} onEdit={() => onEditStep('identite')}>

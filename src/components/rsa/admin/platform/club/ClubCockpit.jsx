@@ -20,7 +20,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, MapPin, Mail } from 'lucide-react';
-import { GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE } from '@/components/design/tokens';
+import { GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER, FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
@@ -245,11 +245,13 @@ export default function ClubCockpit({ clubId }) {
         className="mb-4"
       />
 
-      {/* Panel body */}
+      {/* Panel body — surface TINT_ADMIN + hairline pour séparer du header/tabs. */}
       <div
         id={`club-panel-${tab}`}
         role="tabpanel"
         aria-labelledby={`club-tab-${tab}`}
+        className="rounded-[4px] p-4 md:p-6"
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
         {editionsQ.isLoading && (
           <div className="py-12 flex justify-center" role="status" aria-live="polite">

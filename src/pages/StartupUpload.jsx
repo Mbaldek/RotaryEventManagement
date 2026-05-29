@@ -1,13 +1,20 @@
+// StartupUpload — dépôt deck final (token-gated, no auth).
+//
+// TODO (round design suivant) — refonte complète :
+//   - wrap dans <PageShell width="narrow"> + retirer <Header> local et <style>{css}</style>
+//   - hero variant H-Form-Invitation (catalog §16.1) : eyebrow "DOSSIER 2026" +
+//     serif "Téléchargez votre deck" + accent gold + meta session
+//   - remplacer les `style={{...}}` inline par tokens + Tailwind cohérents
+//   - utiliser <Dropzone> Élysée au lieu du custom drag/drop area
+// Pour l'instant : migration tokens locaux → imports SSOT (palette Élysée
+// alignée avec le reste de la plateforme — léger shift CREAM #f7f4ef → #faf7f2).
+
 import { useState, useEffect, useRef } from "react";
+import { NAVY, GOLD, CREAM, CREAM2 } from "@/components/design";
 
 const SB_URL = import.meta.env.VITE_SUPABASE_URL;
 const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const SB_HEADERS = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
-
-const NAVY = "#0f1f3d";
-const GOLD = "#c9a84c";
-const CREAM = "#f7f4ef";
-const CREAM2 = "#ede9e1";
 
 const SESSIONS = {
   s1_foodtech:   {emoji:"🌾", color:"#5a7a1a", light:"#eef5e0", border:"#c0d890",
@@ -142,7 +149,7 @@ const css = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Disp
 @keyframes fadeUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:#f7f4ef;min-height:100vh}
+body{font-family:'Inter',sans-serif;background:${CREAM};min-height:100vh}
 .fade{animation:fadeUp .3s ease both}
 .btn{font-family:'Inter',sans-serif;cursor:pointer;transition:all .17s}
 .btn:hover{filter:brightness(.93)}

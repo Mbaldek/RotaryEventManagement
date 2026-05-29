@@ -68,7 +68,7 @@ function KindFilter({ value, onChange }) {
 }
 
 // ── Card d'une extension ────────────────────────────────────────────────────
-function ExtensionCard({ extension, onActivate, isInstalled, installable, t }) {
+function ExtensionCard({ extension, onActivate, isInstalled, installable, t, className = '' }) {
   return (
     <motion.li
       layout
@@ -76,7 +76,7 @@ function ExtensionCard({ extension, onActivate, isInstalled, installable, t }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.22, ease: EASE }}
-      className="rounded-[4px] p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60"
+      className={`rounded-[4px] p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60 ${className}`}
       style={{ background: 'white', border: `1px solid ${CREAM2}` }}
     >
       <div className="flex items-start gap-2 mb-2 flex-wrap">
@@ -442,22 +442,42 @@ export default function Marketplace() {
         </div>
       )}
 
-      {!masterExtsQ.isLoading && filtered.length > 0 && (
-        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((ext) => (
-              <ExtensionCard
-                key={ext.id}
-                extension={ext}
-                onActivate={handleActivate}
-                isInstalled={installedSet.has(`${ext.kind}::${ext.name}`)}
-                installable={canInstall}
-                t={t}
-              />
-            ))}
-          </AnimatePresence>
-        </ul>
-      )}
+      {/* Layout featured + grid : la plus récente extension en carte 2/3 large,
+          le reste en grid 2/3 colonnes dans le même <ul>. */}
+      {!masterExtsQ.isLoading && filtered.length > 0 && (() => {
+        const sorted = [...filtered].sort((a, b) =>
+          (b.created_at || '').localeCompare(a.created_at || '')
+        );
+        return (
+          <>
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
+              <span className="uppercase text-[10px] tracking-[0.18em] font-medium" style={{ color: GOLD }}>
+                {t({
+                  fr: 'Nouveauté en tête',
+                  en: 'Featured release',
+                  de: 'Empfohlene Neuheit',
+                })}
+              </span>
+            </div>
+            <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <AnimatePresence mode="popLayout">
+                {sorted.map((ext, i) => (
+                  <ExtensionCard
+                    key={ext.id}
+                    extension={ext}
+                    onActivate={handleActivate}
+                    isInstalled={installedSet.has(`${ext.kind}::${ext.name}`)}
+                    installable={canInstall}
+                    t={t}
+                    className={i === 0 ? 'md:col-span-2' : ''}
+                  />
+                ))}
+              </AnimatePresence>
+            </ul>
+          </>
+        );
+      })()}
 
       <InstallModal
         open={!!modalExt}

@@ -9,7 +9,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import {
   PageShell,
@@ -95,6 +95,7 @@ export default function Selection() {
     loading: authLoading,
   } = usePlatformAuth();
   const { t } = useLang();
+  const reduce = useReducedMotion();
 
   // V2 multi-club : périmètre de clubs visibles par défaut.
   // - master_admin OR admin legacy : voit TOUT (toggle "Tous les clubs / Filtrer")
@@ -305,8 +306,24 @@ export default function Selection() {
         }}
       />
 
+      {/* Signature M-Hairline-Reveal — hairline scaleX 0→1 left-origin 400ms
+          juste avant la queue, signature comité/admin. */}
+      <motion.span
+        aria-hidden
+        initial={reduce ? { opacity: 0 } : { scaleX: 0 }}
+        animate={reduce ? { opacity: 1 } : { scaleX: 1 }}
+        transition={{ duration: 0.4, ease: EASE, delay: 0.15 }}
+        className="block h-px mt-4 mb-5"
+        style={{ background: CREAM2, transformOrigin: 'left' }}
+      />
+
       {/* Layout master/detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,520px)] gap-6">
+      <motion.div
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: EASE, delay: 0.35 }}
+        className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,520px)] gap-6"
+      >
         {/* Queue — caché en mobile quand un dossier est ouvert */}
         <div className={selectedId ? 'hidden lg:block' : ''}>
           <QueueList
@@ -368,7 +385,7 @@ export default function Selection() {
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     </PageShell>
   );
 }

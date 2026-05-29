@@ -176,17 +176,74 @@ function JuryWorkspace({ authUserId, isAdmin, selectedSessionId, onSelectSession
 
   return (
     <>
-      <header className="mb-6">
-        <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
-        <h1
-          className="text-[28px] md:text-[32px] leading-tight mt-2 mb-2"
-          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-        >
-          {t(UI.pageTitle)}
-        </h1>
-        <p className="text-[14px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.6 }}>
-          {t(UI.pageSubtitle)}
-        </p>
+      {/* Header H-Cockpit-Split — titre serif + KPI rail droit (sessions, prochaine). */}
+      <header className="mb-6 flex flex-col md:flex-row md:items-end gap-5 md:gap-10">
+        <div className="flex-1 min-w-0">
+          <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
+          <h1
+            className="text-[28px] md:text-[32px] leading-tight mt-2 mb-2"
+            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+          >
+            {t(UI.pageTitle)}
+          </h1>
+          <p className="text-[14px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.6 }}>
+            {t(UI.pageSubtitle)}
+          </p>
+        </div>
+        {(() => {
+          const sessionsCount = sessionsQ.data?.length || 0;
+          // Prochaine session = la plus proche dans le futur (status != published).
+          const nextSession = (() => {
+            if (!sessionsQ.data?.length) return null;
+            const now = Date.now();
+            const upcoming = sessionsQ.data
+              .filter((s) => {
+                const status = s?.config?.status || s?.status || 'draft';
+                if (status === 'published') return false;
+                const d = s?.session_date ? new Date(s.session_date).getTime() : null;
+                return d != null && d >= now;
+              })
+              .sort((a, b) => new Date(a.session_date) - new Date(b.session_date));
+            return upcoming[0] || null;
+          })();
+          const daysToNext = nextSession?.session_date
+            ? Math.ceil((new Date(nextSession.session_date).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+            : null;
+          return (
+            <dl className="flex gap-6 md:gap-8 shrink-0">
+              <div>
+                <dt
+                  className="text-[10px] uppercase tracking-[0.14em] font-medium"
+                  style={{ color: MUTED }}
+                >
+                  {t({ fr: 'Sessions', en: 'Sessions', de: 'Sessions' })}
+                </dt>
+                <dd
+                  className="text-[22px] md:text-[26px] tabular-nums leading-tight mt-1"
+                  style={{ color: NAVY, fontWeight: 500, fontFamily: SERIF }}
+                >
+                  {sessionsCount}
+                </dd>
+              </div>
+              <div>
+                <dt
+                  className="text-[10px] uppercase tracking-[0.14em] font-medium"
+                  style={{ color: MUTED }}
+                >
+                  {t({ fr: 'Prochaine', en: 'Next', de: 'Nächste' })}
+                </dt>
+                <dd
+                  className="text-[22px] md:text-[26px] tabular-nums leading-tight mt-1"
+                  style={{ color: nextSession ? NAVY : MUTED, fontWeight: 500, fontFamily: SERIF }}
+                >
+                  {daysToNext != null
+                    ? `J−${daysToNext}`
+                    : t({ fr: '—', en: '—', de: '—' })}
+                </dd>
+              </div>
+            </dl>
+          );
+        })()}
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,300px)_1fr] gap-6">

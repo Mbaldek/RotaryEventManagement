@@ -165,15 +165,50 @@ export default function Login() {
   // donc pas besoin du garde `!loading &&` autour de la motion entry.
   const redirectPath = buildRedirectPath(query);
 
+  const greeting = t({
+    fr: 'Connectez-vous.',
+    en: 'Sign in.',
+    de: 'Anmelden.',
+  });
+  const tagline = t({
+    fr: 'au programme Rotary Startup Award',
+    en: 'to the Rotary Startup Award programme',
+    de: 'beim Rotary Startup Award',
+  });
+
   return (
     <PageShell>
+      {/* Hero H-Typo-Only — giant serif greeting + italic tagline, MagicLink dessous. */}
       <div className="min-h-[70vh] flex items-center justify-center px-4 md:px-0">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.28, ease: EASE }}
-          className="w-full max-w-[440px]"
+          className="w-full max-w-[520px]"
         >
+          <h1
+            className="font-normal mb-3"
+            style={{
+              fontFamily: SERIF,
+              color: NAVY,
+              fontSize: 'clamp(48px, 8vw, 88px)',
+              lineHeight: 0.95,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {greeting}
+          </h1>
+          <p
+            className="italic mb-10"
+            style={{
+              fontFamily: SERIF,
+              color: '#3a3a52',
+              fontSize: 'clamp(15px, 2vw, 19px)',
+              lineHeight: 1.3,
+            }}
+          >
+            {tagline}
+          </p>
           <MagicLinkLogin
             redirectPath={redirectPath}
             intent={query.intent}

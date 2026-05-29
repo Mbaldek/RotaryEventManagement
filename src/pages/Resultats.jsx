@@ -529,27 +529,75 @@ export default function Resultats() {
         </motion.section>
       )}
 
-      {/* Finalistes (top 3 finale) */}
-      {top3Finale.length > 0 && (
-        <section className="mb-16">
-          <header className="mb-6">
-            <p className="text-[10.5px] uppercase tracking-[0.18em]" style={{ color: GOLD }}>
-              {tT.finalists}
-            </p>
-            <h2
-              className="text-[28px] md:text-[34px] leading-tight mt-1"
-              style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+      {/* Finalistes (top 3 finale) — podium 3 cartes en hauteurs différentes.
+          Ordre visuel : 2e à gauche, 1er au centre (taller + scale-up), 3e à droite. */}
+      {top3Finale.length > 0 && (() => {
+        const byRank = (r) => top3Finale.find((e) => e.final_rank === r) || null;
+        const first = byRank(1);
+        const second = byRank(2);
+        const third = byRank(3);
+        const PodiumCard = ({ entry, position }) => {
+          if (!entry) return <div aria-hidden />;
+          const t2 = (d) => d[lang] || d.fr;
+          const rankLabel = RANK_LABEL[entry.final_rank] ? t2(RANK_LABEL[entry.final_rank]) : `#${entry.final_rank}`;
+          // Le 1er au centre est plus haut (min-height + padding plus généreux).
+          const isFirst = position === 'center';
+          return (
+            <motion.article
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: EASE, delay: 0.4 + (isFirst ? 0 : 0.1) }}
+              className="rounded-[4px] flex flex-col items-center text-center"
+              style={{
+                background: 'white',
+                border: `1px solid ${isFirst ? GOLD : CREAM2}`,
+                padding: isFirst ? '28px 18px 24px' : '20px 14px 18px',
+                minHeight: isFirst ? 220 : 180,
+                transform: isFirst ? 'translateY(-12px)' : 'none',
+              }}
             >
-              {tT.finalistsLead}
-            </h2>
-          </header>
-          <ul role="list" className="bg-white rounded-[4px] p-4 md:p-6" style={{ border: `1px solid ${CREAM2}` }}>
-            {top3Finale.map((entry) => (
-              <PodiumRow key={`final_${entry.final_rank}`} entry={entry} lang={lang} />
-            ))}
-          </ul>
-        </section>
-      )}
+              <PodiumDot rank={entry.final_rank} />
+              <p
+                className="mt-3 text-[11px] uppercase tracking-[0.14em] font-medium"
+                style={{ color: isFirst ? GOLD : MUTED }}
+              >
+                {rankLabel}
+              </p>
+              <h3
+                className={`mt-2 leading-tight ${isFirst ? 'text-[20px] md:text-[24px]' : 'text-[15px] md:text-[17px]'}`}
+                style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+              >
+                {entry.name || '—'}
+              </h3>
+              {entry.avg != null && (
+                <p className="mt-2 text-[11.5px] tabular-nums" style={{ color: MUTED }}>
+                  {Number(entry.avg).toFixed(2)} / 5
+                </p>
+              )}
+            </motion.article>
+          );
+        };
+        return (
+          <section className="mb-16">
+            <header className="mb-6">
+              <p className="text-[10.5px] uppercase tracking-[0.18em]" style={{ color: GOLD }}>
+                {tT.finalists}
+              </p>
+              <h2
+                className="text-[28px] md:text-[34px] leading-tight mt-1"
+                style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+              >
+                {tT.finalistsLead}
+              </h2>
+            </header>
+            <div className="grid grid-cols-3 gap-3 md:gap-5 items-end">
+              <PodiumCard entry={second} position="left" />
+              <PodiumCard entry={first} position="center" />
+              <PodiumCard entry={third} position="right" />
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Sessions qualificatives */}
       {palmares.qualifyingSessions.length > 0 && (

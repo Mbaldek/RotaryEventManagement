@@ -239,7 +239,7 @@ export default function Candidater() {
   return (
     <PageShell nav width="wide" footer={<Footer width="wide" left={t(T.footerLeft)} />}>
       {/* Hero H-Step-Pictogram — step counter + serif title. */}
-      <header className="mb-12 md:mb-16 max-w-[680px]">
+      <header className="mb-10 md:mb-12 max-w-[680px]">
         <div className="flex items-center gap-3 mb-3">
           <span
             className="uppercase text-[11px] tracking-[0.18em] font-medium"
@@ -269,6 +269,60 @@ export default function Candidater() {
           {t(T.subtitle)}
         </p>
       </header>
+
+      {/* Rail de progression candidat — cohérent avec MonDossier. Étape 1 = Dossier. */}
+      <nav
+        aria-label={t({ fr: 'Parcours candidat', en: 'Applicant journey', de: 'Bewerbungspfad' })}
+        className="mb-10 md:mb-14 max-w-[680px]"
+      >
+        <ol className="grid grid-cols-4 gap-2 md:gap-3" role="list">
+          {[
+            { n: 1, label: { fr: 'Dossier',  en: 'Dossier',    de: 'Akte' } },
+            { n: 2, label: { fr: 'Soumis',   en: 'Submitted',  de: 'Eingereicht' } },
+            { n: 3, label: { fr: 'Sélec.',   en: 'Selection',  de: 'Auswahl' } },
+            { n: 4, label: { fr: 'Finale',   en: 'Finale',     de: 'Finale' } },
+          ].map((stage, i, arr) => {
+            const isCurrent = stage.n === 1;
+            const last = i === arr.length - 1;
+            return (
+              <li key={stage.n} className="flex flex-col">
+                <div className="flex items-center w-full">
+                  <span
+                    aria-hidden
+                    className="shrink-0 inline-flex items-center justify-center rounded-full"
+                    style={{
+                      width: 12,
+                      height: 12,
+                      background: isCurrent ? GOLD : 'transparent',
+                      border: `1.5px solid ${isCurrent ? GOLD : CREAM2}`,
+                    }}
+                  />
+                  {!last && (
+                    <span
+                      aria-hidden
+                      className="ml-1 flex-1 h-px"
+                      style={{ background: CREAM2 }}
+                    />
+                  )}
+                </div>
+                <span
+                  className="mt-2 uppercase text-[10px] tracking-[0.14em] font-medium tabular-nums"
+                  style={{ color: isCurrent ? NAVY : MUTED }}
+                >
+                  {String(stage.n).padStart(2, '0')}·{t(stage.label)}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        <p className="mt-3 text-[12.5px] italic" style={{ fontFamily: SERIF, color: INK }}>
+          {t({
+            fr: 'Démarrez ici · 4 étapes jusqu\'à la finale.',
+            en: 'Start here · 4 stages until the finale.',
+            de: 'Hier starten · 4 Etappen bis zum Finale.',
+          })}
+        </p>
+      </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,420px)] gap-10 lg:gap-12">
         {/* Liste des compétitions ouvertes — section opener S-Numbered. */}
