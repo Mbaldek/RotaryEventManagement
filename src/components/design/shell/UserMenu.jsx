@@ -23,8 +23,8 @@
 import React, { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, User, Trophy, BookOpen, LogOut } from 'lucide-react';
-import { GOLD, NAVY, CREAM, INK, EASE } from '@/components/design/tokens';
+import { ChevronDown, User, Trophy, BookOpen, LogOut, Wrench } from 'lucide-react';
+import { GOLD, NAVY, CREAM, INK, MUTED, EASE } from '@/components/design/tokens';
 import { FOCUS_RING_CLASS, HAIRLINE } from '@/components/design/tokens.app';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
@@ -37,6 +37,24 @@ const T = {
   signOut: { fr: 'Se déconnecter', en: 'Sign out', de: 'Abmelden' },
   menuLabel: { fr: 'Menu utilisateur', en: 'User menu', de: 'Benutzermenü' },
   accountAria: { fr: 'Compte', en: 'Account', de: 'Konto' },
+  // 2026-05-29 — équipe A : item "Paramètres avancés" (master_admin only).
+  // Remplace le tab 'advanced' du MasterCockpit. Mène vers /AdminAdvanced
+  // qui regroupe Extensions + Marketplace (placeholders dev V3.1+).
+  advancedSettings: {
+    fr: 'Paramètres avancés',
+    en: 'Advanced settings',
+    de: 'Erweiterte Einstellungen',
+  },
+  advancedSettingsSub: {
+    fr: '(développeur)',
+    en: '(developer)',
+    de: '(Entwickler)',
+  },
+  advancedSettingsAria: {
+    fr: 'Paramètres avancés (développeur) — réservé au master_admin',
+    en: 'Advanced settings (developer) — master_admin only',
+    de: 'Erweiterte Einstellungen (Entwickler) — nur für master_admin',
+  },
 };
 
 // Tronque la partie locale d'un email pour rester lisible dans la TopNav sans
@@ -49,7 +67,7 @@ function shortenEmail(email) {
 }
 
 export default function UserMenu() {
-  const { authUser, signOut } = usePlatformAuth();
+  const { authUser, signOut, isMasterAdmin } = usePlatformAuth();
   const { t } = useLang();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -218,6 +236,35 @@ export default function UserMenu() {
               <BookOpen className="w-3.5 h-3.5" style={{ color: GOLD }} aria-hidden />
               {t(T.documentation)}
             </a>
+
+            {/* 2026-05-29 — équipe A : entrée "Paramètres avancés (développeur)"
+                visible uniquement pour master_admin. Mène à /AdminAdvanced qui
+                regroupe Extensions + Marketplace (placeholders dev V3.1+).
+                Le sub-label "(développeur)" reste discret en MUTED pour signaler
+                la nature infra/rare sans encombrer l'item. */}
+            {isMasterAdmin && (
+              <div style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  aria-label={t(T.advancedSettingsAria)}
+                  onClick={() => go('/AdminAdvanced')}
+                  className={itemBase}
+                  style={{ color: INK }}
+                >
+                  <Wrench className="w-3.5 h-3.5" style={{ color: GOLD }} aria-hidden />
+                  <span className="inline-flex items-baseline gap-1.5 min-w-0">
+                    <span className="truncate">{t(T.advancedSettings)}</span>
+                    <span
+                      className="text-[10.5px] font-normal shrink-0"
+                      style={{ color: MUTED }}
+                    >
+                      {t(T.advancedSettingsSub)}
+                    </span>
+                  </span>
+                </button>
+              </div>
+            )}
 
             <div style={{ borderTop: `1px solid ${HAIRLINE}` }}>
               <button

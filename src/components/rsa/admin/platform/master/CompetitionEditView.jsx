@@ -33,6 +33,8 @@ import ClubsTab from './competition-tabs/ClubsTab';
 import RulesTab from './competition-tabs/RulesTab';
 import PrizesTab from './competition-tabs/PrizesTab';
 import CommunicationTab from './competition-tabs/CommunicationTab';
+import CommunicationTabRefonte from './competition-tabs/CommunicationTabRefonte';
+import RolesTab from './competition-tabs/RolesTab';
 import FinaleSection from './competition-tabs/FinaleSection';
 import { FinaleManagement } from './tabs/FinaleTab';
 import DeleteCompetitionModal from './DeleteCompetitionModal';
@@ -166,7 +168,29 @@ export default function CompetitionEditView({ editionId, onClose }) {
     {
       id: 'comm',
       label: t(COMP.tabCommunication),
-      render: () => <CommunicationTab values={values} onPatch={patch} />,
+      render: () => (
+        <>
+          {/* Refonte UX par étape du funnel (B-comm-refonte) — au-dessus du
+              CommunicationTab legacy qui pilote uniquement le palmarès public.
+              On garde le legacy tant que public_results_enabled n'a pas migré
+              dans un module dédié. */}
+          <CommunicationTabRefonte
+            editionId={editionId}
+            competition={pilotageCompetition}
+          />
+          <div
+            className="mt-6 pt-5"
+            style={{ borderTop: `1px solid ${CREAM2}` }}
+          >
+            <CommunicationTab values={values} onPatch={patch} />
+          </div>
+        </>
+      ),
+    },
+    {
+      id: 'roles',
+      label: t(COMP.tabRoles),
+      render: () => <RolesTab editionId={editionId} editionName={values.name} />,
     },
   ]), [t, values, patch, competitionRef, pilotageCompetition, editionId, competition?.has_finale]);
 

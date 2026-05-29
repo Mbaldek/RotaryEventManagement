@@ -1,13 +1,23 @@
-// AdvancedSection — Master Cockpit, tab 'advanced'.
-//
-// Regroupe les outils platform-level qui ne méritent plus un tab dédié dans
-// la barre principale (Extensions, Marketplace, EmailStudio global). Layout :
-// trois lignes empilées hairline-only (PAS de card grid — variante explicite
-// anti L-Card-Grid), avec opener S-Quiet (eyebrow + Playfair sans gold rule
-// imposante, pour rompre la séquence canonique du blueprint §16).
-//
-// Cette tab est l'attente master_admin : "j'ai besoin d'un truc d'infra rare,
-// je sais où le trouver". Pas un dashboard.
+/**
+ * @deprecated 2026-05-29 — Équipe A "drop Outils avancés".
+ *
+ * Ce composant n'est plus monté dans MasterCockpit (le tab 'advanced' a été
+ * retiré). Il est conservé temporairement pour faciliter une éventuelle
+ * extraction d'EmailStudio par l'équipe B et garder un fallback de transition.
+ *
+ * Remplacements :
+ *   * Extensions + Marketplace → /AdminAdvanced (pages.config) accessible via
+ *     UserMenu > "Paramètres avancés (développeur)" pour master_admin.
+ *   * Email Studio (opérationnel)   → flow dédié géré par l'équipe B.
+ *
+ * Layout d'origine : trois lignes empilées hairline-only (PAS de card grid),
+ * avec opener S-Quiet (eyebrow + Playfair sans gold rule).
+ *
+ * À supprimer dès que :
+ *   1. EmailStudio a été ré-extrait par l'équipe B (ou jugé inutile ici).
+ *   2. /AdminAdvanced est validé en prod.
+ */
+// AdvancedSection — Master Cockpit, tab 'advanced' (deprecated 2026-05-29).
 
 import React from 'react';
 import { Link } from 'react-router-dom';

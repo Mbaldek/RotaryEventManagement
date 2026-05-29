@@ -38,10 +38,13 @@ import CompetitionAdminsTab from './tabs/CompetitionAdminsTab';
 // Composant gardé temporairement, à supprimer une fois confirmé inutile.
 import CompetitionEditView from './CompetitionEditView';
 import ClubEditView from './ClubEditView';
-// Équipe A — Overview landing + Advanced consolidation. Les tabs comms /
-// extensions / analytics / marketplace sont absorbés ici (voir TAB_IDS).
+// Équipe A — Overview landing.
+// AdvancedSection a été retirée du master cockpit le 2026-05-29 :
+//   * Email Studio (opérationnel) part dans son propre flow (équipe B).
+//   * Extensions + Marketplace (placeholders dev) relocalisés dans
+//     /AdminAdvanced, accessible via UserMenu (visible master_admin only).
+// Le tab 'advanced' n'a donc plus sa place dans le flow opérationnel.
 import OverviewPanel from './OverviewPanel';
-import AdvancedSection from './AdvancedSection';
 
 function Dot({ color }) {
   return (
@@ -167,8 +170,9 @@ export default function MasterCockpit() {
   const { t } = useLang();
   const [params, setParams] = useSearchParams();
 
-  // URL state : ?tab=overview|competitions|clubs|roles|jury_apps|finale|advanced
+  // URL state : ?tab=overview|competitions|clubs|roles|competition_admins
   // Default = 'overview' (équipe A — landing dashboard).
+  // Note 2026-05-29 : 'advanced' a été retiré, voir UserMenu > "Paramètres avancés".
   const tab = (params.get('tab') && TAB_IDS.includes(params.get('tab')))
     ? params.get('tab')
     : 'overview';
@@ -255,7 +259,6 @@ export default function MasterCockpit() {
             {tab === 'clubs'              && <ClubsTab />}
             {tab === 'roles'              && <GlobalRolesTab />}
             {tab === 'competition_admins' && <CompetitionAdminsTab />}
-            {tab === 'advanced'           && <AdvancedSection />}
           </motion.div>
         </AnimatePresence>
       </div>

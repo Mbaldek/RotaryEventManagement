@@ -30,6 +30,7 @@ import __Layout from './Layout.jsx';
 // React Router (v6) déclenche le fetch dès qu'une route match ; <Suspense>
 // dans App.jsx affiche un loader doré le temps du download.
 const Admin = lazy(() => import('./pages/Admin'));
+const AdminAdvanced = lazy(() => import('./pages/AdminAdvanced'));
 const AdminControl = lazy(() => import('./pages/AdminControl'));
 const Archives = lazy(() => import('./pages/Archives'));
 const Candidater = lazy(() => import('./pages/Candidater'));
@@ -68,6 +69,7 @@ const Welcome = lazy(() => import('./pages/Welcome'));
 
 export const PAGES = {
     "Admin": Admin,
+    "AdminAdvanced": AdminAdvanced,
     "AdminControl": AdminControl,
     "Archives": Archives,
     "Candidater": Candidater,

@@ -303,7 +303,10 @@ export const FORBIDDEN = {
 };
 
 // Sentinel : the list of valid roles for assignment UIs.
-export const ROLE_OPTIONS = ['startup', 'jury', 'comite', 'admin'];
+// V3 — `master_admin` est aussi un rôle global stocké dans app_user_roles ; on
+// l'expose dans les checkboxes pour cohérence avec InviteUserModal scope=global
+// et pour éviter qu'une ligne existante (créée via invite-user) crash au resave.
+export const ROLE_OPTIONS = ['startup', 'jury', 'comite', 'admin', 'master_admin'];
 
 // Sentinel : valid edition status values mirrored from the M4a SQL CHECK constraint.
 export const EDITION_STATUSES = ['draft', 'open', 'selection', 'sessions', 'finale', 'closed'];
