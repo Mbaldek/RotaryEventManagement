@@ -22,7 +22,6 @@ import {
   CREAM2,
   SERIF,
   EASE,
-  FOCUS_RING_CLASS,
 } from '@/components/design';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
@@ -40,6 +39,11 @@ import {
   useFinalizeReview,
   useAdminOverride,
 } from '@/components/rsa/selection';
+// Refonte hiérarchie : pour le master_admin / admin legacy, la queue est rendue
+// groupée Compétition ▸ Club au lieu d'une liste plate. Le club_admin / comité
+// scoped conserve la <QueueList> plate (un seul club implicite côté UX).
+import GroupedQueue from '@/components/rsa/selection/GroupedQueue';
+import { groupSelectionPages } from '@/components/rsa/selection/useSelectionQueueGrouped';
 import { UI } from '@/components/rsa/selection/i18n';
 import { Club, Edition } from '@/lib/rsa/entities';
 import { useQuery } from '@tanstack/react-query';
@@ -99,8 +103,10 @@ export default function Selection() {
   const reduce = useReducedMotion();
 
   // V2 multi-club : périmètre de clubs visibles par défaut.
-  // - master_admin OR admin legacy : voit TOUT (toggle "Tous les clubs / Filtrer")
-  // - club_admin / comite scoped : limité à ses clubs (auto-filter sans toggle)
+  // - master_admin OR admin legacy : voit TOUT (rendu en GroupedQueue : sections
+  //   par compétition, sous-sections par club — refonte hiérarchie).
+  // - club_admin / comite scoped : limité à ses clubs (auto-filter sans toggle,
+  //   rendu en QueueList plate puisqu'un seul club est implicite).
   const myComiteClubIds = useMemo(
     () => (clubMemberships || [])
       .filter((m) => m.role === 'comite' || m.role === 'club_admin')
@@ -110,11 +116,7 @@ export default function Selection() {
   const canSeeAllClubs = isMasterAdmin || isAdmin;
   const isClubScoped = !canSeeAllClubs && myComiteClubIds.length > 0;
 
-  // Toggle pour master/admin : 'all' (défaut) ou un club_id particulier.
-  // Pour les club-scoped, le filtre est forcé sur leurs clubs (pas de toggle).
-  const [clubFilter, setClubFilter] = useState('all');
-
-  // Liste des clubs (pour le dropdown master/admin).
+  // Liste des clubs (pour résoudre les noms dans la GroupedQueue master/admin).
   const { data: allClubs = [] } = useQuery({
     queryKey: ['rsa', 'selection', 'clubs'],
     queryFn: () => Club.listAll(),
@@ -168,15 +170,14 @@ export default function Selection() {
   // ── Client-side filtres (à valider + club_id) ──────────────────────────
   // 1. quickTab=='toValidate' : on garde uniquement les rows ayant des reviews
   //    non-finales.
-  // 2. V2 multi-club : on restreint aux clubs visibles selon le rôle :
-  //    - master/admin avec toggle 'all' : pas de filtre club ;
-  //    - master/admin avec un club choisi : filtre sur ce club ;
-  //    - club-scoped (comite/club_admin) : filtre auto sur ses clubs.
+  // 2. Refonte hiérarchie : pour le club_scoped (comite/club_admin), on
+  //    restreint aux clubs visibles. Pour le master_admin / admin legacy, on
+  //    ne filtre plus côté client — la GroupedQueue rend visuellement par
+  //    section club, plus besoin de masquer.
   const clubAllowList = useMemo(() => {
     if (isClubScoped) return new Set(myComiteClubIds);
-    if (canSeeAllClubs && clubFilter !== 'all') return new Set([clubFilter]);
-    return null; // null = pas de filtre club (master_admin 'all' OR legacy admin)
-  }, [isClubScoped, myComiteClubIds, canSeeAllClubs, clubFilter]);
+    return null;
+  }, [isClubScoped, myComiteClubIds]);
 
   const filteredPages = useMemo(() => {
     if (!queue.data) return [];
@@ -184,11 +185,9 @@ export default function Selection() {
     const pages = queue.data.pages || [];
     return pages.map((page) =>
       (page || []).filter((row) => {
-        // Club filter (V2)
+        // Club filter (club_scoped uniquement)
         if (allow && row.club_id && !allow.has(row.club_id)) return false;
         if (allow && !row.club_id && allow.size > 0) {
-          // un dossier sans club_id (legacy 2026 backfillé en 'paris') ne devrait
-          // jamais arriver post-migration ; on le masque par sûreté.
           return false;
         }
         // Validation filter
@@ -199,6 +198,22 @@ export default function Selection() {
       }),
     );
   }, [queue.data, quickTab, clubAllowList]);
+
+  // Lookups + groupement pour la vue GroupedQueue (master_admin / admin).
+  const editionsLookup = useMemo(() => {
+    const m = new Map();
+    for (const e of editions) m.set(e.id, e);
+    return m;
+  }, [editions]);
+  const clubsLookup = useMemo(() => {
+    const m = new Map();
+    for (const c of allClubs) m.set(c.id, c);
+    return m;
+  }, [allClubs]);
+  const groupedFiltered = useMemo(
+    () => (canSeeAllClubs ? groupSelectionPages(filteredPages) : []),
+    [canSeeAllClubs, filteredPages],
+  );
 
   // ── Auth / role gates ──────────────────────────────────────────────────
   if (authLoading) {
@@ -262,32 +277,9 @@ export default function Selection() {
         </p>
       </header>
 
-      {/* V2 : toggle club (visible UNIQUEMENT pour master_admin / admin legacy) */}
-      {canSeeAllClubs && (
-        <div className="mb-4 flex items-center gap-3 flex-wrap">
-          <label
-            htmlFor="selection-club-filter"
-            className="uppercase tracking-[0.14em] text-[10.5px] font-medium"
-            style={{ color: MUTED }}
-          >
-            {t({ fr: 'Club', en: 'Club', de: 'Club' })}
-          </label>
-          <select
-            id="selection-club-filter"
-            value={clubFilter}
-            onChange={(e) => setClubFilter(e.target.value)}
-            className={`text-[12.5px] rounded-[4px] px-2.5 py-1.5 ${FOCUS_RING_CLASS}`}
-            style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
-          >
-            <option value="all">
-              {t({ fr: 'Tous les clubs', en: 'All clubs', de: 'Alle Clubs' })}
-            </option>
-            {allClubs.map((c) => (
-              <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Refonte hiérarchie : retrait du toggle club pour master_admin / admin
+          legacy — devenu redondant puisque la GroupedQueue rend désormais une
+          section par compétition puis sous-section par club. */}
 
       <FiltersBar
         editions={editions}
@@ -325,19 +317,39 @@ export default function Selection() {
         transition={{ duration: 0.35, ease: EASE, delay: 0.35 }}
         className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,520px)] gap-6"
       >
-        {/* Queue — caché en mobile quand un dossier est ouvert */}
+        {/* Queue — caché en mobile quand un dossier est ouvert.
+            master_admin / admin legacy : <GroupedQueue> (sections compétition
+              ▸ club, cf. refonte hiérarchie).
+            club_scoped (comité / club_admin) : <QueueList> plate (un seul
+              club implicite, comportement V2 préservé). */}
         <div className={selectedId ? 'hidden lg:block' : ''}>
-          <QueueList
-            pages={filteredPages}
-            isLoading={queue.isLoading}
-            isError={queue.isError}
-            hasNextPage={!!queue.hasNextPage}
-            isFetchingNextPage={queue.isFetchingNextPage}
-            onLoadMore={() => queue.fetchNextPage()}
-            onOpen={(id) => setSelectedId(id)}
-            selectedId={selectedId}
-            onRetry={() => queue.refetch()}
-          />
+          {canSeeAllClubs ? (
+            <GroupedQueue
+              groups={groupedFiltered}
+              editionsLookup={editionsLookup}
+              clubsLookup={clubsLookup}
+              isLoading={queue.isLoading}
+              isError={queue.isError}
+              hasNextPage={!!queue.hasNextPage}
+              isFetchingNextPage={queue.isFetchingNextPage}
+              onLoadMore={() => queue.fetchNextPage()}
+              onOpen={(id) => setSelectedId(id)}
+              selectedId={selectedId}
+              onRetry={() => queue.refetch()}
+            />
+          ) : (
+            <QueueList
+              pages={filteredPages}
+              isLoading={queue.isLoading}
+              isError={queue.isError}
+              hasNextPage={!!queue.hasNextPage}
+              isFetchingNextPage={queue.isFetchingNextPage}
+              onLoadMore={() => queue.fetchNextPage()}
+              onOpen={(id) => setSelectedId(id)}
+              selectedId={selectedId}
+              onRetry={() => queue.refetch()}
+            />
+          )}
         </div>
 
         {/* Drawer / Detail — sticky sur desktop */}
