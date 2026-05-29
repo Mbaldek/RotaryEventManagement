@@ -120,44 +120,43 @@ export const T = {
     jurors: 'jurors',
   },
   de: {
-    // TODO refine DE copy
-    htmlTitle: 'Ergebnisse — Rotary Startup Award',
-    eyebrow: (year) => `Ergebnisse ${year}`,
+    htmlTitle: 'Palmarès — Rotary Startup Award',
+    eyebrow: (year) => `Palmarès ${year}`,
     titleLead: 'Rotary Startup Award',
     titleItalic: (year) => `Ausgabe ${year}`,
-    subtitleFinale: (date) => `Großes Finale · ${date}`,
+    subtitleFinale: (date) => `Grand Finale · ${date}`,
     subtitleLead:
-      'Preisträger der Qualifikationssitzungen und des Großen Finales.',
+      'Die Preisträgerinnen und Preisträger der Qualifikationssessions und des Grand Finale.',
     languageGroup: 'Sprache',
-    loadingTitle: 'Ergebnisse werden geladen…',
-    notPublicTitle: 'Ergebnisse noch nicht öffentlich',
+    loadingTitle: 'Palmarès wird geladen…',
+    notPublicTitle: 'Palmarès noch nicht öffentlich',
     notPublicBody: (date) =>
       date
-        ? `Die Ergebnisse dieser Ausgabe werden nach dem ${date} veröffentlicht.`
-        : 'Die Ergebnisse dieser Ausgabe sind noch nicht öffentlich. Schauen Sie bald wieder vorbei.',
-    noEditionTitle: 'Ergebnisse in Kürze',
+        ? `Die Ergebnisse dieser Ausgabe werden ab dem ${date} veröffentlicht.`
+        : 'Die Ergebnisse dieser Ausgabe sind noch nicht öffentlich. Bitte schauen Sie in Kürze erneut vorbei.',
+    noEditionTitle: 'Palmarès in Vorbereitung',
     noEditionBody: (year) =>
       `Die ersten öffentlichen Ergebnisse werden ${
-        year ? `in der Ausgabe ${year}` : 'in der nächsten Ausgabe'
+        year ? `mit der Ausgabe ${year}` : 'mit der nächsten Ausgabe'
       } verfügbar sein.`,
     errorTitle: 'Ein Fehler ist aufgetreten',
-    errorBody: 'Die Ergebnisse konnten momentan nicht geladen werden.',
+    errorBody: 'Das Palmarès konnte derzeit nicht geladen werden.',
     retry: 'Erneut versuchen',
-    grandLaureat: 'Hauptpreisträger',
+    grandLaureat: 'Hauptpreisträger·in',
     grandPrize: 'Hauptpreis',
     specialPrize: 'Sonderpreis',
-    finalists: 'Finalisten',
-    finalistsLead: 'Die Finalisten des Großen Finales',
-    sessions: 'Qualifikationssitzungen',
+    finalists: 'Finalistinnen und Finalisten',
+    finalistsLead: 'Die Finalistinnen und Finalisten des Grand Finale',
+    sessions: 'Qualifikations-Sessions',
     sessionsLead: 'Der Weg ins Finale',
-    sessionLabel: (n) => `Sitzung ${n}`,
-    sessionWinner: 'Sieger — für das Finale qualifiziert',
+    sessionLabel: (n) => `Session ${n}`,
+    sessionWinner: 'Sieger·in — für das Finale qualifiziert',
     sessionPodium: 'Podium',
     sessionFinalScore: 'Punktzahl',
-    sectorFrom: (session) => `Sieger von ${session}`,
-    partnersTitle: 'Mit der Unterstützung',
+    sectorFrom: (session) => `Sieger·in von ${session}`,
+    partnersTitle: 'Mit Unterstützung von',
     partnersBody:
-      'Mit Unterstützung des Rotary Clubs von Paris, der Rotary Startup Award Kommission und ihrer institutionellen Partner.',
+      'Mit Unterstützung des Rotary Club Paris, der Kommission Rotary Startup Award und ihrer institutionellen Partner.',
     landingLink: 'rotary-startup.org',
     applyCta: 'Für die nächste Ausgabe bewerben',
     footerLine: (year) => `Rotary Startup Award · Ausgabe ${year}`,

@@ -37,6 +37,8 @@ import CompetitionEditView from './CompetitionEditView';
 import ClubEditView from './ClubEditView';
 // V3.0 — Plugins/Extensions architecture (Vague 1)
 import ExtensionsList from '@/components/rsa/extensions/ExtensionsList';
+// V3.0 Vague 3 — Analytics real-time (Feature F)
+import AnalyticsPanel from '@/components/rsa/analytics/AnalyticsPanel';
 
 function Tab({ id, label, active, onClick }) {
   return (
@@ -278,6 +280,13 @@ export default function MasterCockpit() {
                 <CommunicatePanel editionId={activeCompetition?.id || null} clubId={null} />
                 <EmailStudio /* clubId undefined = master global */ />
               </>
+            )}
+            {tab === 'analytics'    && (
+              <AnalyticsPanel
+                scope="master"
+                editionId={activeCompetition?.id || null}
+                clubId={null}
+              />
             )}
             {tab === 'extensions'   && <ExtensionsList scope="master" />}
           </motion.div>

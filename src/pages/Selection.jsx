@@ -9,15 +9,19 @@
 
 import React, { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import {
   PageShell,
+  Eyebrow,
   GOLD,
   NAVY,
   INK,
   MUTED,
   CREAM2,
   SERIF,
+  EASE,
+  FOCUS_RING_CLASS,
 } from '@/components/design';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
@@ -47,12 +51,13 @@ function Centered({ children, minHeight = '40vh' }) {
   );
 }
 
-function Spinner({ size = 6 }) {
+function Spinner({ size = 6, label }) {
   return (
     <Loader2
       className={`w-${size} h-${size} animate-spin`}
       style={{ color: GOLD }}
-      aria-hidden
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
     />
   );
 }
@@ -198,7 +203,9 @@ export default function Selection() {
     return (
       <PageShell nav width="wide">
         <Centered>
-          <Spinner />
+          <div role="status" aria-live="polite">
+            <Spinner label={t(UI.authLoading)} />
+          </div>
         </Centered>
       </PageShell>
     );
@@ -209,7 +216,7 @@ export default function Selection() {
     return (
       <PageShell nav width="wide">
         <Centered minHeight="50vh">
-          <div className="text-center max-w-md">
+          <div className="text-center max-w-md" role="status">
             <div className="flex items-center justify-center gap-2.5 mb-3">
               <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
               <span
@@ -236,39 +243,38 @@ export default function Selection() {
 
   return (
     <PageShell nav width="wide">
-      {/* En-tête editorial */}
-      <div className="flex items-center gap-2.5 mb-3">
-        <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-        <span
-          className="uppercase text-[10px] tracking-[0.18em] font-medium"
-          style={{ color: GOLD }}
-        >
+      {/* En-tête éditorial */}
+      <header className="mb-4 md:mb-6">
+        <Eyebrow>
           {t(UI.eyebrow)}
-          {isClubScoped && (
-            <span> · {myComiteClubIds.join(' / ')}</span>
-          )}
-        </span>
-      </div>
-      <h1
-        className="text-[32px] leading-tight mb-2"
-        style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-      >
-        {t(UI.pageTitle)}
-      </h1>
-      <p className="text-[14px] mb-4" style={{ color: INK }}>
-        {t(UI.pageSubtitle)}
-      </p>
+          {isClubScoped && <span> · {myComiteClubIds.join(' / ')}</span>}
+        </Eyebrow>
+        <h1
+          className="text-[28px] md:text-[32px] leading-tight mt-2 mb-2"
+          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+        >
+          {t(UI.pageTitle)}
+        </h1>
+        <p className="text-[14px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.6 }}>
+          {t(UI.pageSubtitle)}
+        </p>
+      </header>
 
       {/* V2 : toggle club (visible UNIQUEMENT pour master_admin / admin legacy) */}
       {canSeeAllClubs && (
         <div className="mb-4 flex items-center gap-3 flex-wrap">
-          <span className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: MUTED }}>
-            Club
-          </span>
+          <label
+            htmlFor="selection-club-filter"
+            className="uppercase tracking-[0.14em] text-[10.5px] font-medium"
+            style={{ color: MUTED }}
+          >
+            {t({ fr: 'Club', en: 'Club', de: 'Club' })}
+          </label>
           <select
+            id="selection-club-filter"
             value={clubFilter}
             onChange={(e) => setClubFilter(e.target.value)}
-            className="text-[12.5px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+            className={`text-[12.5px] rounded-[4px] px-2.5 py-1.5 ${FOCUS_RING_CLASS}`}
             style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
           >
             <option value="all">
@@ -318,34 +324,49 @@ export default function Selection() {
 
         {/* Drawer / Detail — sticky sur desktop */}
         <div className={`${selectedId ? '' : 'hidden lg:block'} lg:sticky lg:top-20 lg:self-start`}>
-          {selectedId ? (
-            <DossierDrawer
-              startupId={selectedId}
-              startup={detail.data}
-              reviews={reviews}
-              sessions={sessions}
-              isLoading={detail.isLoading}
-              isError={detail.isError}
-              onBack={() => setSelectedId(null)}
-              onClose={() => setSelectedId(null)}
-              onRetry={() => detail.refetch()}
-              onSubmitReview={handleSubmitReview}
-              onAdminValidate={handleAdminValidate}
-              onAdminOverride={handleAdminOverride}
-              isSubmittingReview={upsert.isPending}
-              isAdminValidating={finalize.isPending}
-              isAdminOverriding={override.isPending}
-            />
-          ) : (
-            <div
-              className="rounded-[4px] p-6 text-center"
-              style={{ background: 'white', border: `1px solid #e8e3d9` }}
-            >
-              <p className="text-[14px]" style={{ color: MUTED }}>
-                {t(UI.emptyDetailHint)}
-              </p>
-            </div>
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            {selectedId ? (
+              <motion.div
+                key={`detail-${selectedId}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.22, ease: EASE }}
+              >
+                <DossierDrawer
+                  startupId={selectedId}
+                  startup={detail.data}
+                  reviews={reviews}
+                  sessions={sessions}
+                  isLoading={detail.isLoading}
+                  isError={detail.isError}
+                  onBack={() => setSelectedId(null)}
+                  onClose={() => setSelectedId(null)}
+                  onRetry={() => detail.refetch()}
+                  onSubmitReview={handleSubmitReview}
+                  onAdminValidate={handleAdminValidate}
+                  onAdminOverride={handleAdminOverride}
+                  isSubmittingReview={upsert.isPending}
+                  isAdminValidating={finalize.isPending}
+                  isAdminOverriding={override.isPending}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="detail-empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: EASE }}
+                className="rounded-[4px] p-6 text-center"
+                style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+              >
+                <p className="text-[14px]" style={{ color: MUTED }}>
+                  {t(UI.emptyDetailHint)}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </PageShell>

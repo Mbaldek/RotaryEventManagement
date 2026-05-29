@@ -25,12 +25,12 @@ export const INVITE = {
   introGlobal: {
     fr: 'L\'invité recevra un email brandé avec un lien magique de connexion. Son rôle est appliqué immédiatement.',
     en: 'The recipient will receive a branded email with a magic sign-in link. Their role is applied immediately.',
-    de: 'Die eingeladene Person erhält eine gebrandete E-Mail mit einem Magic-Link. Ihre Rolle wird sofort angewendet.',
+    de: 'Die eingeladene Person erhält eine im Design der Plattform gestaltete E-Mail mit einem Magic-Link zur Anmeldung. Ihre Rolle wird sofort wirksam.',
   },
   introClub: {
     fr: 'Invite un membre dans ce club. L\'invité recevra un email brandé avec un lien magique de connexion.',
     en: 'Invite a member into this club. The recipient will receive a branded email with a magic sign-in link.',
-    de: 'Laden Sie ein Mitglied in diesen Club ein. Die Person erhält eine gebrandete E-Mail mit einem Magic-Link.',
+    de: 'Laden Sie ein Mitglied in diesen Club ein. Die eingeladene Person erhält eine im Design der Plattform gestaltete E-Mail mit einem Magic-Link zur Anmeldung.',
   },
 
   // ── champs ────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ export const INVITE = {
   rolePlaceholder: {
     fr: 'Choisir un rôle',
     en: 'Choose a role',
-    de: 'Rolle wählen',
+    de: 'Rolle auswählen',
   },
   customMessageLabel: {
     fr: 'Message personnel (facultatif)',
@@ -54,19 +54,19 @@ export const INVITE = {
   customMessagePlaceholder: {
     fr: 'Quelques mots de bienvenue qui apparaîtront dans l\'email.',
     en: 'A few words of welcome that will appear in the email.',
-    de: 'Ein paar Begrüßungsworte, die in der E-Mail erscheinen.',
+    de: 'Einige persönliche Begrüßungsworte, die in der E-Mail erscheinen werden.',
   },
   customMessageHelper: {
     fr: '300 caractères maximum.',
     en: '300 characters maximum.',
-    de: 'Höchstens 300 Zeichen.',
+    de: 'Maximal 300 Zeichen.',
   },
 
   // ── rôles ─────────────────────────────────────────────────────────────────
-  roleMasterAdmin: { fr: 'Administrateur principal', en: 'Master administrator', de: 'Hauptadministrator/in' },
-  roleAdmin: { fr: 'Administrateur', en: 'Administrator', de: 'Administrator/in' },
-  roleClubAdmin: { fr: 'Administrateur de club', en: 'Club administrator', de: 'Club-Administrator/in' },
-  roleComite: { fr: 'Membre du comité', en: 'Selection committee member', de: 'Auswahlausschuss-Mitglied' },
+  roleMasterAdmin: { fr: 'Administrateur principal', en: 'Master administrator', de: 'Master-Administrator·in' },
+  roleAdmin: { fr: 'Administrateur', en: 'Administrator', de: 'Administrator·in' },
+  roleClubAdmin: { fr: 'Administrateur de club', en: 'Club administrator', de: 'Club-Administrator·in' },
+  roleComite: { fr: 'Membre du comité', en: 'Selection committee member', de: 'Mitglied des Auswahlkomitees' },
   roleJury: { fr: 'Juré', en: 'Jury member', de: 'Jurymitglied' },
 
   // ── actions ───────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ export const INVITE = {
   successExisting: {
     fr: 'Cet utilisateur existe déjà — son rôle a été mis à jour et un email de bienvenue lui a été envoyé.',
     en: 'This user already exists — their role has been updated and a welcome email has been sent.',
-    de: 'Dieser Benutzer existiert bereits — die Rolle wurde aktualisiert und eine Willkommens-E-Mail versendet.',
+    de: 'Dieser Nutzer existiert bereits — die Rolle wurde aktualisiert und eine Willkommens-E-Mail versendet.',
   },
   errorGeneric: {
     fr: 'L\'invitation n\'a pas pu être envoyée.',
@@ -103,7 +103,7 @@ export const INVITE = {
   errorClubRequired: {
     fr: 'Veuillez sélectionner un club pour ce rôle.',
     en: 'Please select a club for this role.',
-    de: 'Bitte wählen Sie einen Club für diese Rolle.',
+    de: 'Bitte wählen Sie einen Club für diese Rolle aus.',
   },
   errorInvalidEmail: {
     fr: 'Email invalide.',
@@ -152,9 +152,9 @@ export const DELETE_USER = {
       'Audit references (granted_by, sent_by, reviewed_by…) are anonymised.',
     ],
     de: [
-      'Alle globalen Rollen (Administrator, Ausschuss, Jury).',
-      'Alle Clubmitgliedschaften (club_admin, Ausschuss, Jury).',
-      'Das zugehörige Jury-Profil (falls vorhanden).',
+      'Sämtliche globalen Rollen (Administrator, Komitee, Jury).',
+      'Sämtliche Clubmitgliedschaften (club_admin, Komitee, Jury).',
+      'Das zugehörige Jury-Profil (sofern vorhanden).',
       'Das Authentifizierungskonto (auth.users).',
       'Audit-Verweise (granted_by, sent_by, reviewed_by…) werden anonymisiert.',
     ],
@@ -228,12 +228,12 @@ export const DELETE_USER = {
   errorForbidden: {
     fr: 'Seul un administrateur principal peut supprimer un compte.',
     en: 'Only a master administrator can delete an account.',
-    de: 'Nur ein Hauptadministrator kann ein Konto löschen.',
+    de: 'Nur ein Master-Administrator kann ein Konto löschen.',
   },
   errorSelfDelete: {
     fr: 'Vous ne pouvez pas supprimer votre propre compte via cette interface.',
     en: 'You cannot delete your own account through this interface.',
-    de: 'Sie können Ihr eigenes Konto nicht über diese Oberfläche löschen.',
+    de: 'Sie können Ihr eigenes Konto über diese Oberfläche nicht löschen.',
   },
   errorNotFound: {
     fr: 'Aucun compte ne correspond à cet email.',

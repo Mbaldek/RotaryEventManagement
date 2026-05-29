@@ -102,7 +102,7 @@ export default function IdentityTab({ values = {}, onPatch, mode = 'edit', error
             {t({
               fr: 'Le modèle est défini à la création — non modifiable ensuite.',
               en: 'The model is set at creation time — not editable afterwards.',
-              de: 'Das Modell wird bei der Erstellung festgelegt — danach nicht änderbar.',
+              de: 'Das Modell wird bei der Erstellung festgelegt und kann anschließend nicht mehr geändert werden.',
             })}
           </p>
         )}

@@ -22,15 +22,15 @@ export const COMMS_UI = {
   subtitle: {
     fr: 'Composez, prévisualisez et envoyez un email brandé Élysée à une audience ciblée en quelques secondes.',
     en: 'Compose, preview and send an Élysée-branded email to a targeted audience in seconds.',
-    de: 'Verfassen, vorschauen und senden Sie eine Élysée-Branded-E-Mail an eine gezielte Zielgruppe in Sekunden.',
+    de: 'Verfassen, prüfen und versenden Sie in Sekundenschnelle eine E-Mail im Élysée-Design an eine ausgewählte Zielgruppe.',
   },
-  loading:    { fr: 'Chargement…',     en: 'Loading…',       de: 'Lädt…' },
+  loading:    { fr: 'Chargement…',     en: 'Loading…',       de: 'Wird geladen…' },
   loadError:  {
     fr: 'Impossible de charger les données. Réessayez plus tard.',
     en: 'Could not load the data. Please try again later.',
-    de: 'Daten konnten nicht geladen werden. Bitte später erneut versuchen.',
+    de: 'Die Daten konnten nicht geladen werden. Bitte versuchen Sie es später erneut.',
   },
-  empty:      { fr: 'Aucun élément.',  en: 'Nothing here yet.', de: 'Noch nichts vorhanden.' },
+  empty:      { fr: 'Aucun élément.',  en: 'Nothing here yet.', de: 'Noch keine Einträge.' },
   cancel:     { fr: 'Annuler',         en: 'Cancel',         de: 'Abbrechen' },
   close:      { fr: 'Fermer',          en: 'Close',          de: 'Schließen' },
   save:       { fr: 'Enregistrer',     en: 'Save',           de: 'Speichern' },
@@ -38,7 +38,7 @@ export const COMMS_UI = {
   saved:      { fr: 'Enregistré',      en: 'Saved',          de: 'Gespeichert' },
   delete:     { fr: 'Supprimer',       en: 'Delete',         de: 'Löschen' },
   edit:       { fr: 'Éditer',          en: 'Edit',           de: 'Bearbeiten' },
-  insert:     { fr: 'Insérer dans le composer', en: 'Insert into composer', de: 'Im Editor einfügen' },
+  insert:     { fr: 'Insérer dans le composer', en: 'Insert into composer', de: 'In den Editor einfügen' },
   newTemplate: { fr: 'Nouveau modèle', en: 'New template',   de: 'Neue Vorlage' },
 };
 
@@ -48,18 +48,18 @@ export const COMMS_COMPOSER = {
   subjectPlaceholder: {
     fr: 'Rappel J-7 — session jury Foodtech',
     en: 'D-7 reminder — Foodtech jury session',
-    de: 'Erinnerung T-7 — Foodtech-Jury-Sitzung',
+    de: 'Erinnerung 7 Tage zuvor — Foodtech-Jurysitzung',
   },
   bodyLabel:    { fr: 'Corps du message', en: 'Message body', de: 'Nachrichtentext' },
   bodyHelper: {
     fr: 'Mise en forme légère : **gras**, *italique*, [lien](https://exemple.org), - listes. Tout est rendu dans le shell Élysée à droite.',
     en: 'Light formatting: **bold**, *italic*, [link](https://example.org), - lists. Rendered live in the Élysée shell on the right.',
-    de: 'Leichte Formatierung: **fett**, *kursiv*, [Link](https://beispiel.org), - Listen. Live im Élysée-Rahmen rechts dargestellt.',
+    de: 'Leichte Formatierung: **fett**, *kursiv*, [Link](https://beispiel.org), - Listen. Die Live-Vorschau erscheint rechts im Élysée-Rahmen.',
   },
   bodyPlaceholder: {
     fr: 'Bonjour,\n\nNous vous rappelons que la session jury **Foodtech** aura lieu *jeudi 5 novembre à 18h*.\n\nDocuments disponibles dans votre espace : [Mon espace juré](https://app.rotary-startup.org/Jury).\n\nÀ très vite.',
     en: 'Dear member,\n\nThis is a reminder that the **Foodtech** jury session will take place *Thursday 5 November at 6pm*.\n\nDocuments available in your space: [My jury space](https://app.rotary-startup.org/Jury).\n\nWith kindest regards.',
-    de: 'Sehr geehrte/r,\n\nzur Erinnerung: Die **Foodtech**-Jurysitzung findet *am Donnerstag, 5. November um 18 Uhr* statt.\n\nDokumente in Ihrem Bereich: [Mein Jury-Bereich](https://app.rotary-startup.org/Jury).\n\nMit freundlichen Grüßen.',
+    de: 'Sehr geehrte Damen und Herren,\n\nzur Erinnerung: Die **Foodtech**-Jurysitzung findet am *Donnerstag, 5. November, um 18:00 Uhr* statt.\n\nDie Unterlagen finden Sie in Ihrem Bereich: [Mein Jury-Bereich](https://app.rotary-startup.org/Jury).\n\nMit freundlichen Grüßen.',
   },
   audienceLabel:{ fr: 'Audience',     en: 'Audience',      de: 'Zielgruppe' },
   langLabel:    { fr: 'Langue de l’email', en: 'Email language', de: 'E-Mail-Sprache' },
@@ -72,7 +72,7 @@ export const COMMS_COMPOSER = {
   recipientsPreviewBody: {
     fr: 'Cet envoi atteindra les destinataires suivants. Confirmation requise au-delà de 50 personnes.',
     en: 'This send will reach the following recipients. Typed confirmation required above 50.',
-    de: 'Dieser Versand erreicht die folgenden Empfänger. Bestätigung erforderlich ab 50 Empfängern.',
+    de: 'Dieser Versand erreicht die folgenden Empfänger. Ab mehr als 50 Empfängern ist eine getippte Bestätigung erforderlich.',
   },
   recipientsSample: { fr: 'Exemples', en: 'Sample',        de: 'Beispiele' },
   noRecipients: {
@@ -88,7 +88,7 @@ export const COMMS_COMPOSER = {
   confirmTypedBody: {
     fr: 'Tapez ENVOYER pour confirmer l’envoi groupé.',
     en: 'Type SEND to confirm the bulk send.',
-    de: 'Geben Sie SEND zur Bestätigung des Massenversands ein.',
+    de: 'Tippen Sie SEND ein, um den Massenversand zu bestätigen.',
   },
   confirmTypedTokenFr: 'ENVOYER',
   confirmTypedTokenEn: 'SEND',
@@ -153,7 +153,7 @@ export const COMMS_TEMPLATES = {
   noTemplates: {
     fr: 'Aucun modèle pour l’instant. Créez votre premier modèle pour gagner du temps sur vos envois récurrents.',
     en: 'No template yet. Create your first one to save time on recurring sends.',
-    de: 'Noch keine Vorlage. Erstellen Sie Ihre erste, um Zeit bei wiederkehrenden Versendungen zu sparen.',
+    de: 'Noch keine Vorlagen vorhanden. Legen Sie Ihre erste an, um bei wiederkehrenden Versendungen Zeit zu sparen.',
   },
   scopeGlobal: { fr: 'Global (master)', en: 'Global (master)', de: 'Global (Master)' },
   scopeClub:   { fr: 'Club',           en: 'Club',           de: 'Club' },
@@ -175,7 +175,7 @@ export const COMMS_HISTORY = {
   noSends: {
     fr: 'Aucun envoi pour l’instant.',
     en: 'No send yet.',
-    de: 'Noch kein Versand.',
+    de: 'Noch keine Versendungen.',
   },
   date:        { fr: 'Date',            en: 'Date',           de: 'Datum' },
   subject:     { fr: 'Sujet',           en: 'Subject',        de: 'Betreff' },

@@ -15,13 +15,14 @@
 // côté JuryApplicationsTab (RLS limite la lecture à master_admin/club_admin/
 // comité/candidat).
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 import {
   PageShell,
+  Eyebrow,
   Field,
   TextInput,
   Textarea,
@@ -30,12 +31,12 @@ import {
   Dropzone,
   NAVY,
   GOLD,
-  CREAM,
   CREAM2,
   INK,
   MUTED,
   SERIF,
   EASE,
+  FOCUS_RING_CLASS,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -128,7 +129,7 @@ function JuryStepper({ current, onStep, incompleteSteps = {} }) {
                 type="button"
                 onClick={() => onStep?.(step.id)}
                 aria-current={isCurrent ? 'step' : undefined}
-                className="group flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] rounded-[4px] px-1 py-1"
+                className={`group flex items-center gap-2 rounded-[4px] px-1 py-1 ${FOCUS_RING_CLASS}`}
               >
                 <span
                   className="relative inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-semibold shrink-0 transition-colors"
@@ -462,7 +463,7 @@ function StepPreferences({ draft, sessions, themeOptions, onField }) {
                 return (
                   <label
                     key={s.id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-[4px] cursor-pointer transition-colors"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-[4px] cursor-pointer transition-colors ${FOCUS_RING_CLASS}`}
                     style={{
                       background: checked ? '#fdf6e8' : 'white',
                       border: `1px solid ${checked ? GOLD : CREAM2}`,
@@ -513,7 +514,7 @@ function ReviewBlock({ title, children, onEdit }) {
           <button
             type="button"
             onClick={onEdit}
-            className="text-[12px] font-medium underline decoration-1 underline-offset-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] rounded-[2px]"
+            className={`text-[12px] font-medium underline decoration-1 underline-offset-2 rounded-[2px] ${FOCUS_RING_CLASS}`}
             style={{ color: NAVY }}
           >
             {t(JURY_UI.edit)}
@@ -585,19 +586,19 @@ function StepReview({ draft, sessions, themeOptions, onEditStep, onSubmit, submi
       </ReviewBlock>
 
       {missing && (
-        <p className="text-[13px] mb-3" style={{ color: DANGER }}>
+        <p className="text-[13px] mb-3" role="alert" style={{ color: DANGER }}>
           {t(JURY_UI.errMissing)}
         </p>
       )}
       {submitError && (
-        <p className="text-[13px] mb-3" style={{ color: DANGER }}>{submitError}</p>
+        <p className="text-[13px] mb-3" role="alert" style={{ color: DANGER }}>{submitError}</p>
       )}
 
       <button
         type="button"
         onClick={onSubmit}
         disabled={submitting}
-        className="inline-flex items-center gap-2 text-[15px] font-medium px-6 py-3 rounded-[4px] text-white outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] disabled:opacity-60"
+        className={`inline-flex items-center gap-2 text-[15px] font-medium px-6 py-3 rounded-[4px] text-white disabled:opacity-60 ${FOCUS_RING_CLASS}`}
         style={{ background: NAVY }}
       >
         {submitting && <Loader2 className="w-4 h-4 animate-spin" aria-hidden />}
@@ -612,6 +613,7 @@ function StepReview({ draft, sessions, themeOptions, onEditStep, onSubmit, submi
 export default function JuryCandidate() {
   const { t, lang } = useLang();
   const [params, setParams] = useSearchParams();
+  const prefersReducedMotion = useReducedMotion();
 
   const clubIdParam = params.get('club') || '';
   const editionIdParam = params.get('edition') || null;
@@ -766,8 +768,16 @@ export default function JuryCandidate() {
   if (clubsQ.isLoading) {
     return (
       <PageShell>
-        <div className="min-h-[40vh] flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin" style={{ color: GOLD }} aria-hidden />
+        <div
+          className="min-h-[40vh] flex items-center justify-center"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2
+            className="w-6 h-6 animate-spin"
+            style={{ color: GOLD }}
+            aria-label={t(JURY_UI.loading)}
+          />
         </div>
       </PageShell>
     );
@@ -776,12 +786,15 @@ export default function JuryCandidate() {
   if (clubsQ.isError) {
     return (
       <PageShell>
-        <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-center">
+        <div
+          className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-center"
+          role="alert"
+        >
           <p className="text-[14px]" style={{ color: INK }}>{t(JURY_UI.loadError)}</p>
           <button
             type="button"
             onClick={() => clubsQ.refetch()}
-            className="text-[13px] font-medium px-4 py-2 rounded-[4px] text-white"
+            className={`text-[13px] font-medium px-4 py-2 rounded-[4px] text-white ${FOCUS_RING_CLASS}`}
             style={{ background: NAVY }}
           >
             {t(JURY_UI.retry)}
@@ -796,17 +809,21 @@ export default function JuryCandidate() {
     const body = (t(JURY_UI.thanksBody) || '').replace('{club}', selectedClub.name || selectedClub.id);
     return (
       <PageShell>
-        <div className="flex items-center gap-2.5 mb-4">
-          <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-          <span className="uppercase text-[10px] tracking-[0.18em] font-medium" style={{ color: GOLD }}>
-            {t(JURY_UI.eyebrow)}
-          </span>
-        </div>
-        <h1 className="text-[34px] leading-tight mb-3" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
-          {t(JURY_UI.thanksTitle)}
-        </h1>
-        <p className="text-[15px] leading-relaxed mb-4" style={{ color: INK }}>{body}</p>
-        <p className="text-[13.5px] leading-relaxed" style={{ color: MUTED }}>{t(JURY_UI.thanksNext)}</p>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: EASE }}
+        >
+          <Eyebrow>{t(JURY_UI.eyebrow)}</Eyebrow>
+          <h1
+            className="text-[28px] md:text-[34px] leading-tight mt-2 mb-3"
+            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+          >
+            {t(JURY_UI.thanksTitle)}
+          </h1>
+          <p className="text-[15px] leading-relaxed mb-4" style={{ color: INK }}>{body}</p>
+          <p className="text-[13.5px] leading-relaxed" style={{ color: MUTED }}>{t(JURY_UI.thanksNext)}</p>
+        </motion.div>
       </PageShell>
     );
   }
@@ -815,13 +832,11 @@ export default function JuryCandidate() {
   if (!clubIdParam) {
     return (
       <PageShell>
-        <div className="flex items-center gap-2.5 mb-4">
-          <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-          <span className="uppercase text-[10px] tracking-[0.18em] font-medium" style={{ color: GOLD }}>
-            {t(JURY_UI.eyebrow)}
-          </span>
-        </div>
-        <h1 className="text-[34px] leading-tight mb-3" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+        <Eyebrow>{t(JURY_UI.eyebrow)}</Eyebrow>
+        <h1
+          className="text-[28px] md:text-[34px] leading-tight mt-2 mb-3"
+          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+        >
           {t(JURY_UI.title)}
         </h1>
         <p className="text-[15px] leading-relaxed mb-7" style={{ color: INK }}>{t(JURY_UI.subtitle)}</p>
@@ -854,7 +869,10 @@ export default function JuryCandidate() {
   if (clubIdParam && !selectedClub) {
     return (
       <PageShell>
-        <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-center">
+        <div
+          className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-center"
+          role="alert"
+        >
           <p className="text-[14px]" style={{ color: DANGER }}>{t(JURY_UI.clubMissing)}</p>
           <button
             type="button"
@@ -863,7 +881,7 @@ export default function JuryCandidate() {
               p.delete('club');
               setParams(p, { replace: true });
             }}
-            className="text-[13px] font-medium px-4 py-2 rounded-[4px] text-white"
+            className={`text-[13px] font-medium px-4 py-2 rounded-[4px] text-white ${FOCUS_RING_CLASS}`}
             style={{ background: NAVY }}
           >
             {t(JURY_UI.clubPickerPlaceholder)}
@@ -899,28 +917,31 @@ export default function JuryCandidate() {
   return (
     <PageShell>
       <header className="mb-6">
-        <div className="flex items-center gap-2.5 mb-2">
-          <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-          <span className="uppercase text-[10px] tracking-[0.18em] font-medium" style={{ color: GOLD }}>
-            {t(JURY_UI.eyebrow)} · {selectedClub.name || selectedClub.id}
-          </span>
-        </div>
-        <h1 className="text-[28px] md:text-[32px] leading-tight mb-2" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+        <Eyebrow>{t(JURY_UI.eyebrow)} · {selectedClub.name || selectedClub.id}</Eyebrow>
+        <h1
+          className="text-[28px] md:text-[32px] leading-tight mt-2 mb-2"
+          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+        >
           {t(JURY_UI.title)}
         </h1>
-        <p className="text-[14px]" style={{ color: INK }}>{t(JURY_UI.subtitle)}</p>
+        <p className="text-[14px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.6 }}>{t(JURY_UI.subtitle)}</p>
       </header>
 
       <JuryStepper current={step} onStep={goTo} incompleteSteps={incompleteSteps} />
 
-      <motion.div
-        key={step}
-        initial={{ opacity: 0, y: 9 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: EASE }}
-      >
-        {stepNode}
-      </motion.div>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={step}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: EASE }}
+          role="tabpanel"
+          id={`jury-step-panel-${step}`}
+        >
+          {stepNode}
+        </motion.div>
+      </AnimatePresence>
 
       {!isLast && (
         <div className="flex items-center justify-between gap-3 mt-8 pt-5" style={{ borderTop: `1px solid ${CREAM2}` }}>
@@ -928,7 +949,7 @@ export default function JuryCandidate() {
             type="button"
             onClick={() => !isFirst && goTo(JURY_STEP_IDS[currentIndex - 1])}
             disabled={isFirst}
-            className="inline-flex items-center gap-1.5 text-[14px] font-medium px-3 py-2 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] disabled:opacity-40 disabled:cursor-not-allowed"
+            className={`inline-flex items-center gap-1.5 text-[14px] font-medium px-3 py-2 rounded-[4px] disabled:opacity-40 disabled:cursor-not-allowed ${FOCUS_RING_CLASS}`}
             style={{ color: INK }}
           >
             <ArrowLeft className="w-4 h-4" aria-hidden />
@@ -937,7 +958,7 @@ export default function JuryCandidate() {
           <button
             type="button"
             onClick={() => goTo(JURY_STEP_IDS[currentIndex + 1])}
-            className="inline-flex items-center gap-1.5 text-[14px] font-medium px-4 py-2 rounded-[4px] text-white outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+            className={`inline-flex items-center gap-1.5 text-[14px] font-medium px-4 py-2 rounded-[4px] text-white ${FOCUS_RING_CLASS}`}
             style={{ background: NAVY }}
           >
             {t(JURY_UI.next)}
@@ -951,7 +972,7 @@ export default function JuryCandidate() {
           <button
             type="button"
             onClick={() => goTo(JURY_STEP_IDS[currentIndex - 1])}
-            className="inline-flex items-center gap-1.5 text-[14px] font-medium px-3 py-2 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+            className={`inline-flex items-center gap-1.5 text-[14px] font-medium px-3 py-2 rounded-[4px] ${FOCUS_RING_CLASS}`}
             style={{ color: INK }}
           >
             <ArrowLeft className="w-4 h-4" aria-hidden />

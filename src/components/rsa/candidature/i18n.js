@@ -85,7 +85,7 @@ export const FIELDS = {
     label: { fr: 'Institution partenaire (incubateur…)', en: 'Partner institution (incubator…)', de: 'Partnerinstitution (Inkubator…)' },
   },
   rotary_club: {
-    label: { fr: 'Club Rotary parrain', en: 'Sponsoring Rotary club', de: 'Patenschafts-Rotary-Club' },
+    label: { fr: 'Club Rotary parrain', en: 'Sponsoring Rotary club', de: 'Patenschaftsclub (Rotary)' },
   },
 
   // Step 3 — Projet (Art. 4)
@@ -107,11 +107,11 @@ export const FIELDS = {
     },
   },
   traction: {
-    label: { fr: 'Traction', en: 'Traction', de: 'Traktion' },
+    label: { fr: 'Traction', en: 'Traction', de: 'Traction' },
     help: {
       fr: 'Laissez vide et expliquez si vous êtes pré-revenu.',
       en: 'Leave empty and explain if you are pre-revenue.',
-      de: 'Leer lassen und erklären, wenn vorumsatz.',
+      de: 'Bitte leer lassen und erläutern, wenn Sie noch keinen Umsatz erzielen.',
     },
   },
   esg_impact: {
@@ -132,7 +132,7 @@ export const FIELDS = {
     help: {
       fr: 'Laisser vide si pré-revenu. Au-delà de 500 000 € : signalé.',
       en: 'Leave empty if pre-revenue. Above €500,000: flagged.',
-      de: 'Leer lassen wenn vorumsatz. Über 500.000 €: markiert.',
+      de: 'Bei noch keinem Umsatz bitte leer lassen. Über 500.000 €: zur Prüfung markiert.',
     },
   },
   amount_raised: {
@@ -140,7 +140,7 @@ export const FIELDS = {
     help: {
       fr: 'Au-delà de 800 000 € : signalé.',
       en: 'Above €800,000: flagged.',
-      de: 'Über 800.000 €: markiert.',
+      de: 'Über 800.000 €: zur Prüfung markiert.',
     },
   },
 
@@ -180,7 +180,7 @@ export const FIELDS = {
 export const UI = {
   // Boutons / navigation
   saveDraft: { fr: 'Enregistrer le brouillon', en: 'Save draft', de: 'Entwurf speichern' },
-  saving: { fr: 'Enregistrement…', en: 'Saving…', de: 'Speichern…' },
+  saving: { fr: 'Enregistrement…', en: 'Saving…', de: 'Wird gespeichert…' },
   saved: { fr: 'Brouillon enregistré', en: 'Draft saved', de: 'Entwurf gespeichert' },
   submit: { fr: 'Soumettre ma candidature', en: 'Submit application', de: 'Bewerbung absenden' },
   submitting: { fr: 'Soumission…', en: 'Submitting…', de: 'Wird gesendet…' },
@@ -196,7 +196,7 @@ export const UI = {
   docsFlagNotice: {
     fr: 'Votre dossier sera marqué pour examen attentif par le comité si vous ne fournissez pas les pièces recommandées.',
     en: 'Your application will be flagged for close committee review if you do not provide the recommended files.',
-    de: 'Ihre Bewerbung wird zur näheren Prüfung durch das Komitee markiert, wenn Sie die empfohlenen Dokumente nicht beifügen.',
+    de: 'Ihre Bewerbung wird zur eingehenden Prüfung durch das Komitee markiert, sofern Sie die empfohlenen Unterlagen nicht beifügen.',
   },
   docsNoneRequested: {
     fr: 'Aucun document n’est demandé pour cette édition.',
@@ -208,7 +208,7 @@ export const UI = {
   preferEn: {
     fr: 'En anglais de préférence (jury international).',
     en: 'Preferably in English (international jury).',
-    de: 'Vorzugsweise auf Englisch (internationale Jury).',
+    de: 'Bitte vorzugsweise auf Englisch (internationale Jury).',
   },
   charCount: { fr: 'caractères', en: 'characters', de: 'Zeichen' },
 
@@ -218,7 +218,7 @@ export const UI = {
   introBody: {
     fr: 'Déposez votre dossier de candidature au Rotary Startup Award en quelques étapes. Vous pouvez enregistrer un brouillon à tout moment et le reprendre plus tard.',
     en: 'Submit your Rotary Startup Award application in a few steps. You can save a draft at any time and resume later.',
-    de: 'Reichen Sie Ihre Bewerbung für den Rotary Startup Award in wenigen Schritten ein. Sie können jederzeit einen Entwurf speichern und später fortsetzen.',
+    de: 'Reichen Sie Ihre Bewerbung für den Rotary Startup Award in wenigen Schritten ein. Sie können jederzeit einen Entwurf speichern und zu einem späteren Zeitpunkt fortsetzen.',
   },
   introStart: { fr: 'Commencer mon dossier', en: 'Start my application', de: 'Bewerbung beginnen' },
   introResume: { fr: 'Reprendre mon dossier', en: 'Resume my application', de: 'Bewerbung fortsetzen' },
@@ -255,23 +255,23 @@ export const UI = {
   reviewIntro: {
     fr: 'Vérifiez votre dossier avant de le soumettre. Vous pourrez encore le modifier après soumission, jusqu’à la date de clôture.',
     en: 'Review your application before submitting. You can still edit it after submission, until the closing date.',
-    de: 'Prüfen Sie Ihre Bewerbung vor dem Absenden. Sie können sie nach dem Absenden bis zum Stichtag weiter bearbeiten.',
+    de: 'Bitte prüfen Sie Ihre Bewerbung vor dem Absenden. Sie können sie auch nach dem Absenden bis zum Stichtag weiterhin bearbeiten.',
   },
   missingRequired: {
     fr: 'Des champs requis sont manquants. Complétez-les pour soumettre.',
     en: 'Some required fields are missing. Complete them to submit.',
-    de: 'Einige Pflichtfelder fehlen. Bitte ergänzen, um abzusenden.',
+    de: 'Es fehlen Pflichtangaben. Bitte vervollständigen Sie diese, um die Bewerbung abzusenden.',
   },
   confirmTitle: { fr: 'Soumettre votre candidature ?', en: 'Submit your application?', de: 'Bewerbung absenden?' },
   confirmBody: {
     fr: 'Votre dossier sera transmis au comité de sélection. Vous pourrez encore le modifier jusqu’au {date}.',
     en: 'Your application will be sent to the selection committee. You can still edit it until {date}.',
-    de: 'Ihre Bewerbung wird an das Auswahlkomitee gesendet. Sie können sie bis zum {date} bearbeiten.',
+    de: 'Ihre Bewerbung wird dem Auswahlkomitee übermittelt. Sie können sie bis zum {date} noch bearbeiten.',
   },
   confirmExcluded: {
     fr: 'Selon le règlement, un critère est normalement exclusif. Vous pouvez tout de même soumettre ; le comité reste souverain.',
     en: 'Per the rules, one criterion is normally exclusionary. You may still submit; the committee remains sovereign.',
-    de: 'Laut Reglement ist ein Kriterium normalerweise ausschließend. Sie können dennoch absenden; das Komitee entscheidet.',
+    de: 'Laut Reglement ist ein Kriterium grundsätzlich ausschließend. Sie können dennoch absenden — die Entscheidung obliegt dem Komitee.',
   },
   confirmCta: { fr: 'Confirmer et soumettre', en: 'Confirm and submit', de: 'Bestätigen und absenden' },
   cancel: { fr: 'Annuler', en: 'Cancel', de: 'Abbrechen' },
@@ -335,28 +335,28 @@ export const VERDICT_COPY = {
     body: {
       fr: 'Votre dossier remplit les critères indicatifs du règlement.',
       en: 'Your application meets the indicative eligibility criteria.',
-      de: 'Ihre Bewerbung erfüllt die indikativen Kriterien.',
+      de: 'Ihre Bewerbung erfüllt die im Reglement festgelegten indikativen Kriterien.',
     },
   },
   flagged: {
-    title: { fr: 'Quelques points à examiner', en: 'A few points to review', de: 'Einige zu prüfende Punkte' },
+    title: { fr: 'Quelques points à examiner', en: 'A few points to review', de: 'Einige Punkte zur Prüfung' },
     body: {
       fr: 'Quelques points seront examinés par le comité — cela ne vous empêche pas de candidater.',
       en: 'A few points will be reviewed by the committee — this does not prevent you from applying.',
-      de: 'Einige Punkte werden vom Komitee geprüft — das hindert Sie nicht an der Bewerbung.',
+      de: 'Einige Punkte werden vom Komitee geprüft — Ihre Bewerbung ist davon nicht ausgeschlossen.',
     },
   },
   excluded: {
-    title: { fr: 'Critère normalement exclusif', en: 'Normally exclusionary criterion', de: 'Normalerweise ausschließendes Kriterium' },
+    title: { fr: 'Critère normalement exclusif', en: 'Normally exclusionary criterion', de: 'Grundsätzlich ausschließendes Kriterium' },
     body: {
       fr: 'Selon le règlement, ce critère est normalement exclusif. Vous pouvez tout de même soumettre ; le comité reste souverain.',
       en: 'Per the rules, this criterion is normally exclusionary. You may still submit; the committee remains sovereign.',
-      de: 'Laut Reglement ist dieses Kriterium normalerweise ausschließend. Sie können dennoch absenden; das Komitee entscheidet.',
+      de: 'Laut Reglement ist dieses Kriterium grundsätzlich ausschließend. Sie können dennoch absenden — die Entscheidung obliegt dem Komitee.',
     },
   },
 };
 
-export const ELIGIBILITY_TITLE = { fr: 'Éligibilité (indicative)', en: 'Eligibility (indicative)', de: 'Eignung (indikativ)' };
+export const ELIGIBILITY_TITLE = { fr: 'Éligibilité (indicative)', en: 'Eligibility (indicative)', de: 'Teilnahmevoraussetzungen (indikativ)' };
 export const FLAG_CHIP = { fr: 'À examiner', en: 'To review', de: 'Zu prüfen' };
 export const EXCLU_CHIP = { fr: 'Exclusif', en: 'Exclusionary', de: 'Ausschließend' };
 
@@ -374,7 +374,7 @@ export const STATUS_LABELS = {
   note: { fr: 'Évalué', en: 'Scored', de: 'Bewertet' },
   finaliste: { fr: 'Finaliste', en: 'Finalist', de: 'Finalist' },
   laureat: { fr: 'Lauréat', en: 'Winner', de: 'Preisträger' },
-  rejete: { fr: 'Non retenu', en: 'Not selected', de: 'Nicht ausgewählt' },
+  rejete: { fr: 'Non retenu', en: 'Not selected', de: 'Nicht berücksichtigt' },
 };
 
 // Mappe un statut métier vers le `kind`/`status` de StatusPill (lifecycle 'dossier').
@@ -441,7 +441,7 @@ export const TRACKING = {
   rejectedNotice: {
     fr: 'Votre dossier n’a pas été retenu pour cette édition. Merci pour votre participation.',
     en: 'Your application was not selected for this edition. Thank you for participating.',
-    de: 'Ihre Bewerbung wurde für diese Ausgabe nicht ausgewählt. Danke für Ihre Teilnahme.',
+    de: 'Ihre Bewerbung konnte für diese Ausgabe nicht berücksichtigt werden. Wir danken Ihnen für Ihre Teilnahme.',
   },
   noDocs: { fr: 'Aucun document déposé.', en: 'No documents submitted.', de: 'Keine Dokumente eingereicht.' },
   deckLabel: { fr: 'Pitch deck', en: 'Pitch deck', de: 'Pitch-Deck' },

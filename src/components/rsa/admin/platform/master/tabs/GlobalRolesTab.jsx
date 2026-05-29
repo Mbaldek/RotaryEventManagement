@@ -34,7 +34,7 @@ export default function GlobalRolesTab() {
           style={{ background: NAVY, color: 'white' }}
         >
           <Plus className="w-4 h-4" />
-          {t({ fr: 'Inviter un administrateur', en: 'Invite an administrator', de: 'Administrator/in einladen' })}
+          {t({ fr: 'Inviter un administrateur', en: 'Invite an administrator', de: 'Administrator·in einladen' })}
         </button>
       </header>
 

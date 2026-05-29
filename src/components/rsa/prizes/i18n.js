@@ -21,7 +21,7 @@ export const PRIZES_UI = {
   sectionHintCompetition: {
     fr: 'Les prix au niveau compétition (grand prix, finale fédérée). Gérés par le master admin.',
     en: 'Competition-level prizes (grand prize, federated finale). Managed by the master admin.',
-    de: 'Preise auf Wettbewerbsebene (Hauptpreis, föderiertes Finale). Vom Master-Admin verwaltet.',
+    de: 'Preise auf Wettbewerbsebene (Hauptpreis, föderiertes Finale). Werden vom Master-Administrator verwaltet.',
   },
   sectionHintClub: {
     fr: 'Définissez les prix spéciaux offerts par votre club, vos partenaires ou votre comité.',
@@ -34,15 +34,15 @@ export const PRIZES_UI = {
   award:       { fr: 'Décerner',             en: 'Award',              de: 'Verleihen' },
   cancel:      { fr: 'Annuler',              en: 'Cancel',             de: 'Abbrechen' },
   save:        { fr: 'Enregistrer',          en: 'Save',               de: 'Speichern' },
-  saving:      { fr: 'Enregistrement…',      en: 'Saving…',            de: 'Speichern…' },
+  saving:      { fr: 'Enregistrement…',      en: 'Saving…',            de: 'Wird gespeichert…' },
   create:      { fr: 'Créer',                en: 'Create',             de: 'Erstellen' },
-  creating:    { fr: 'Création…',            en: 'Creating…',          de: 'Erstellen…' },
+  creating:    { fr: 'Création…',            en: 'Creating…',          de: 'Wird erstellt…' },
   close:       { fr: 'Fermer',               en: 'Close',              de: 'Schließen' },
-  loading:     { fr: 'Chargement…',          en: 'Loading…',           de: 'Lädt…' },
+  loading:     { fr: 'Chargement…',          en: 'Loading…',           de: 'Wird geladen…' },
   empty: {
     fr: 'Aucun prix défini pour l’instant. Créez le premier pour démarrer le palmarès.',
     en: 'No prize defined yet. Create the first one to start the awards roll.',
-    de: 'Noch kein Preis definiert. Erstellen Sie den ersten, um die Preisverleihung zu starten.',
+    de: 'Noch kein Preis angelegt. Erstellen Sie den ersten, um das Palmarès zu eröffnen.',
   },
   awardedTo:   { fr: 'Décerné à',            en: 'Awarded to',         de: 'Verliehen an' },
   toAward:     { fr: 'À décerner',           en: 'To be awarded',      de: 'Zu verleihen' },
@@ -75,12 +75,12 @@ export const PRIZE_FORM = {
   kindHintCompetition: {
     fr: 'Grand prix = remis lors de la grande finale. Prix spécial = remis lors d’une session ou hors finale.',
     en: 'Grand prize = awarded at the federated finale. Special prize = awarded at a session or outside the finale.',
-    de: 'Hauptpreis = wird beim föderierten Finale verliehen. Sonderpreis = bei einer Session oder außerhalb des Finales.',
+    de: 'Hauptpreis = wird beim föderierten Grand Finale verliehen. Sonderpreis = bei einer Session oder außerhalb des Finales.',
   },
   kindHintClub: {
     fr: 'Un club ne peut définir que des prix spéciaux. Le grand prix reste du ressort de la compétition.',
     en: 'A club can only define special prizes. The grand prize remains a competition-level matter.',
-    de: 'Ein Club kann nur Sonderpreise definieren. Der Hauptpreis bleibt eine Sache des Wettbewerbs.',
+    de: 'Ein Club kann ausschließlich Sonderpreise definieren. Der Hauptpreis bleibt auf Wettbewerbsebene vorbehalten.',
   },
   juryTypeLabel: { fr: 'Type de jury',       en: 'Jury type',          de: 'Jury-Art' },
   juryRegular:   { fr: 'Jury régulier',      en: 'Regular jury',       de: 'Reguläre Jury' },
@@ -88,7 +88,7 @@ export const PRIZE_FORM = {
   juryHint: {
     fr: 'Régulier = le jury constitué de la session. Spécial = jury distinct (partenaires, fondateurs…).',
     en: 'Regular = the session’s standing jury. Special = a distinct jury (partners, founders…).',
-    de: 'Regulär = die reguläre Jury der Session. Sonder = eine separate Jury (Partner, Gründer…).',
+    de: 'Regulär = die reguläre Jury der Session. Sonderjury = eine separate Jury (Partner, Gründer…).',
   },
   sessionLabel:  { fr: 'Session associée',   en: 'Associated session', de: 'Verknüpfte Session' },
   sessionPlaceholder: {
@@ -99,13 +99,13 @@ export const PRIZE_FORM = {
   sessionHint: {
     fr: 'Facultatif : un prix peut être rattaché à une session thématique précise ou rester au niveau de l’édition.',
     en: 'Optional: a prize can be tied to a specific thematic session or stay at the edition level.',
-    de: 'Optional: Ein Preis kann an eine bestimmte Themen-Session gebunden sein oder auf Editionsebene bleiben.',
+    de: 'Optional: Ein Preis kann einer bestimmten Themen-Session zugeordnet werden oder auf Editionsebene verbleiben.',
   },
   descriptionLabel: { fr: 'Description',     en: 'Description',        de: 'Beschreibung' },
   descriptionPlaceholder: {
     fr: 'Prix offert par les partenaires de Paris, doté par…',
     en: 'Prize sponsored by the Paris partners, endowed by…',
-    de: 'Preis gestiftet von den Pariser Partnern, ausgeschrieben von…',
+    de: 'Preis gestiftet von den Pariser Partnern, dotiert von…',
   },
 
   // Erreurs
@@ -135,7 +135,7 @@ export const AWARD_MODAL = {
   lede: {
     fr: 'Sélectionnez la startup lauréate. La remise sera enregistrée avec date et auteur ; le palmarès public sera mis à jour.',
     en: 'Pick the laureate startup. The award is logged with date and author; the public roll will be updated.',
-    de: 'Wählen Sie das ausgezeichnete Startup. Die Verleihung wird mit Datum und Autor protokolliert; die öffentliche Liste wird aktualisiert.',
+    de: 'Wählen Sie das ausgezeichnete Startup. Die Verleihung wird mit Datum und Verantwortlichem protokolliert; das öffentliche Palmarès wird aktualisiert.',
   },
   startupLabel: {
     fr: 'Startup lauréate',
@@ -148,12 +148,12 @@ export const AWARD_MODAL = {
     de: 'Startup auswählen',
   },
   confirm:    { fr: 'Décerner',              en: 'Award',              de: 'Verleihen' },
-  awarding:   { fr: 'Remise en cours…',      en: 'Awarding…',          de: 'Verleihen…' },
+  awarding:   { fr: 'Remise en cours…',      en: 'Awarding…',          de: 'Wird verliehen…' },
   awarded:    { fr: 'Prix décerné.',         en: 'Prize awarded.',     de: 'Preis verliehen.' },
   noStartups: {
     fr: 'Aucune candidature soumise pour cette compétition.',
     en: 'No application submitted for this competition yet.',
-    de: 'Noch keine Bewerbung für diesen Wettbewerb.',
+    de: 'Für diesen Wettbewerb liegt noch keine Bewerbung vor.',
   },
 };
 
@@ -167,12 +167,12 @@ export const PRIZE_DELETE = {
   body: {
     fr: 'Cette action est définitive. Tapez SUPPRIMER pour confirmer.',
     en: 'This action is permanent. Type DELETE to confirm.',
-    de: 'Diese Aktion ist endgültig. Geben Sie LÖSCHEN zur Bestätigung ein.',
+    de: 'Diese Aktion ist endgültig. Tippen Sie LÖSCHEN zur Bestätigung.',
   },
   typedPrompt: {
     fr: 'Tapez SUPPRIMER pour confirmer',
     en: 'Type DELETE to confirm',
-    de: 'Geben Sie LÖSCHEN zur Bestätigung ein',
+    de: 'Tippen Sie LÖSCHEN zur Bestätigung',
   },
   typedExpected: {
     fr: 'SUPPRIMER',
@@ -182,7 +182,7 @@ export const PRIZE_DELETE = {
   awardedBlocked: {
     fr: 'Impossible : ce prix a déjà été décerné. Annulez la remise avant de supprimer.',
     en: 'Cannot proceed: this prize has already been awarded. Undo the award first.',
-    de: 'Nicht möglich: Dieser Preis wurde bereits verliehen. Heben Sie die Verleihung zuerst auf.',
+    de: 'Nicht möglich: Dieser Preis wurde bereits verliehen. Heben Sie die Verleihung zunächst auf.',
   },
   confirm: { fr: 'Supprimer définitivement', en: 'Delete permanently', de: 'Endgültig löschen' },
 };

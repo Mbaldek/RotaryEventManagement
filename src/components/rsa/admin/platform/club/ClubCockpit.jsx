@@ -21,6 +21,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, MapPin, Mail } from 'lucide-react';
 import { GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE } from '@/components/design/tokens';
+import { DANGER, FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { CLUB_TABS, CLUB_UI, TAB_IDS } from './i18n';
 import ClubStatusStrip from './ClubStatusStrip';
@@ -40,10 +41,19 @@ import CommunicatePanel from '@/components/rsa/communicate/CommunicatePanel';
 import PrizesList from '@/components/rsa/prizes/PrizesList';
 // V3.0 — Plugins/Extensions architecture (Vague 1)
 import ExtensionsList from '@/components/rsa/extensions/ExtensionsList';
+// V3.0 Vague 3 — Analytics real-time (Feature F)
+import AnalyticsPanel from '@/components/rsa/analytics/AnalyticsPanel';
 import { useClub, useClubEditions, useClubSessions } from './useClub';
 
-function Spinner() {
-  return <Loader2 className="w-5 h-5 animate-spin" style={{ color: GOLD }} aria-hidden />;
+function Spinner({ label }) {
+  return (
+    <Loader2
+      className="w-5 h-5 animate-spin"
+      style={{ color: GOLD }}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+    />
+  );
 }
 
 function Tab({ id, label, active, onClick }) {
@@ -51,14 +61,17 @@ function Tab({ id, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="px-4 py-2 rounded-full text-[12.5px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] transition-colors"
+      role="tab"
+      aria-selected={active}
+      aria-pressed={active}
+      aria-controls={`club-panel-${id}`}
+      id={`club-tab-${id}`}
+      className={`px-4 py-2 rounded-full text-[12.5px] font-medium transition-colors ${FOCUS_RING_CLASS}`}
       style={{
         background: active ? NAVY : 'white',
         color: active ? 'white' : INK,
         border: `1px solid ${active ? NAVY : CREAM2}`,
       }}
-      aria-pressed={active}
-      aria-controls={`club-panel-${id}`}
     >
       {label}
     </button>
@@ -164,7 +177,7 @@ export default function ClubCockpit({ clubId }) {
           <p className="text-[12px] mt-2" style={{ color: MUTED }}>{t(CLUB_UI.loadingClub)}</p>
         )}
         {!clubQ.isLoading && !club && (
-          <p className="text-[12.5px] mt-2" style={{ color: '#a23b2d' }}>{t(CLUB_UI.clubNotFound)}</p>
+          <p className="text-[12.5px] mt-2" role="alert" style={{ color: DANGER }}>{t(CLUB_UI.clubNotFound)}</p>
         )}
         {club && (club.region || club.contact_email || club.contact_name) && (
           <div className="mt-3 flex items-center gap-4 flex-wrap text-[12px]" style={{ color: MUTED }}>
@@ -181,7 +194,7 @@ export default function ClubCockpit({ clubId }) {
                 {club.contact_email && (
                   <a
                     href={`mailto:${club.contact_email}`}
-                    className="underline decoration-1 underline-offset-2"
+                    className={`underline decoration-1 underline-offset-2 rounded-[2px] ${FOCUS_RING_CLASS}`}
                     style={{ color: NAVY }}
                   >
                     {club.contact_email}
@@ -198,13 +211,13 @@ export default function ClubCockpit({ clubId }) {
       {/* Edition + tabs pill row */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <label className="inline-flex items-center gap-2 text-[12.5px]" style={{ color: INK }}>
-          <span className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: MUTED }}>
+          <span className="uppercase tracking-[0.14em] text-[10.5px] font-medium" style={{ color: MUTED }}>
             {t(CLUB_UI.edition)}
           </span>
           <select
             value={editionId || ''}
             onChange={(e) => setEdition(e.target.value)}
-            className="rounded-[4px] px-2.5 py-1.5 text-[12.5px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+            className={`rounded-[4px] px-2.5 py-1.5 text-[12.5px] ${FOCUS_RING_CLASS}`}
             style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
           >
             {editions.length === 0 && <option value="">—</option>}
@@ -219,14 +232,14 @@ export default function ClubCockpit({ clubId }) {
         {/* Session picker (LIVE / RESULTS) */}
         {(tab === 'live' || tab === 'results') && (
           <label className="inline-flex items-center gap-2 text-[12.5px]" style={{ color: INK }}>
-            <span className="uppercase tracking-[0.14em] text-[10.5px]" style={{ color: MUTED }}>
+            <span className="uppercase tracking-[0.14em] text-[10.5px] font-medium" style={{ color: MUTED }}>
               {t(CLUB_UI.session)}
             </span>
             <select
               value={sessionId || ''}
               onChange={(e) => setSession(e.target.value)}
               disabled={sessions.length === 0}
-              className="rounded-[4px] px-2.5 py-1.5 text-[12.5px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+              className={`rounded-[4px] px-2.5 py-1.5 text-[12.5px] ${FOCUS_RING_CLASS}`}
               style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
             >
               {sessions.length === 0 && <option value="">—</option>}
@@ -239,7 +252,12 @@ export default function ClubCockpit({ clubId }) {
           </label>
         )}
 
-        <div className="flex flex-wrap gap-1.5 ml-auto" role="tablist">
+        {/* Pill tabs — overflow-scroll on small screens pour éviter la rupture mobile */}
+        <div
+          className="flex flex-nowrap lg:flex-wrap gap-1.5 ml-auto overflow-x-auto lg:overflow-visible -mx-1 px-1"
+          role="tablist"
+          aria-label={t(CLUB_UI.eyebrow)}
+        >
           {TAB_IDS.map((id) => (
             <Tab
               key={id}
@@ -253,10 +271,16 @@ export default function ClubCockpit({ clubId }) {
       </div>
 
       {/* Panel body */}
-      <div id={`club-panel-${tab}`} role="tabpanel">
+      <div
+        id={`club-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`club-tab-${tab}`}
+      >
         {editionsQ.isLoading && (
-          <div className="py-12 flex justify-center">
-            <Spinner />
+          <div className="py-12 flex justify-center" role="status" aria-live="polite">
+            <Spinner
+              label={t({ fr: 'Chargement…', en: 'Loading…', de: 'Wird geladen…' })}
+            />
           </div>
         )}
         {!editionsQ.isLoading && (
@@ -306,6 +330,9 @@ export default function ClubCockpit({ clubId }) {
                   <CommunicatePanel editionId={editionId} clubId={clubId} />
                   <EmailStudio clubId={clubId} edition={edition} />
                 </>
+              )}
+              {tab === 'analytics' && (
+                <AnalyticsPanel scope="club" editionId={editionId} clubId={clubId} />
               )}
               {tab === 'extensions' && (
                 <ExtensionsList scope="club" clubId={clubId} />

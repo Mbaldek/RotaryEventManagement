@@ -29,34 +29,34 @@ import Field from "@/components/design/form/Field";
 import TextInput from "@/components/design/form/TextInput";
 
 const DEFAULT_T = {
-  eyebrow: { fr: "Espace candidats & jury", en: "Applicants & jury area", de: "Bewerber- & Jurybereich" },
+  eyebrow: { fr: "Espace candidats & jury", en: "Applicants & jury area", de: "Bewerber- und Jury-Bereich" },
   title: { fr: "Connexion", en: "Sign in", de: "Anmeldung" },
   subtitle: {
     fr: "Recevez un lien de connexion par email. Pas de mot de passe.",
     en: "Get a sign-in link by email. No password.",
-    de: "Erhalten Sie einen Anmeldelink per E-Mail. Kein Passwort.",
+    de: "Erhalten Sie einen Anmeldelink per E-Mail — ganz ohne Passwort.",
   },
   emailLabel: { fr: "Adresse email", en: "Email address", de: "E-Mail-Adresse" },
-  emailPlaceholder: { fr: "vous@exemple.com", en: "you@example.com", de: "sie@beispiel.com" },
-  submit: { fr: "Recevoir mon lien de connexion", en: "Send me a sign-in link", de: "Anmeldelink senden" },
-  sending: { fr: "Envoi…", en: "Sending…", de: "Senden…" },
-  sentTitle: { fr: "Vérifiez votre email", en: "Check your email", de: "Prüfen Sie Ihre E-Mails" },
+  emailPlaceholder: { fr: "vous@exemple.com", en: "you@example.com", de: "ihre.adresse@beispiel.com" },
+  submit: { fr: "Recevoir mon lien de connexion", en: "Send me a sign-in link", de: "Anmeldelink anfordern" },
+  sending: { fr: "Envoi…", en: "Sending…", de: "Wird gesendet…" },
+  sentTitle: { fr: "Vérifiez votre email", en: "Check your email", de: "Bitte prüfen Sie Ihr E-Mail-Postfach" },
   sentBody: {
     fr: "Nous avons envoyé un lien de connexion à",
     en: "We've sent a sign-in link to",
-    de: "Wir haben einen Anmeldelink gesendet an",
+    de: "Wir haben einen Anmeldelink versendet an",
   },
   sentHint: {
     fr: "Cliquez sur le lien dans l'email pour vous connecter. Pensez à vérifier vos spams.",
     en: "Click the link in the email to sign in. Don't forget to check your spam.",
-    de: "Klicken Sie auf den Link in der E-Mail, um sich anzumelden. Prüfen Sie ggf. den Spam-Ordner.",
+    de: "Klicken Sie auf den Link in der E-Mail, um sich anzumelden. Falls Sie ihn nicht finden, prüfen Sie bitte den Spam-Ordner.",
   },
-  resend: { fr: "Renvoyer / changer d'email", en: "Resend / change email", de: "Erneut senden / E-Mail ändern" },
+  resend: { fr: "Renvoyer / changer d'email", en: "Resend / change email", de: "Erneut senden / E-Mail-Adresse ändern" },
   errInvalid: { fr: "Adresse email invalide.", en: "Invalid email address.", de: "Ungültige E-Mail-Adresse." },
   errGeneric: {
     fr: "Une erreur est survenue. Veuillez réessayer.",
     en: "Something went wrong. Please try again.",
-    de: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    de: "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
   },
 };
 
@@ -100,7 +100,7 @@ export default function MagicLinkLogin({
       ? {
           fr: "Vous recevrez un lien de connexion par email pour finaliser votre inscription.",
           en: "You'll receive a sign-in link by email to finalise your application.",
-          de: "Sie erhalten einen Anmeldelink per E-Mail, um Ihre Bewerbung abzuschließen.",
+          de: "Sie erhalten per E-Mail einen Anmeldelink, mit dem Sie Ihre Bewerbung abschließen können.",
         }
       : null;
 

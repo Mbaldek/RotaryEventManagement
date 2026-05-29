@@ -28,7 +28,7 @@ import NavMenu from "@/components/design/shell/NavMenu";
 import LanguageSwitcher from "@/components/design/shell/LanguageSwitcher";
 
 const NAV_T = {
-  myDossier: { fr: "Mon dossier", en: "My application", de: "Mein Dossier" },
+  myDossier: { fr: "Mon dossier", en: "My application", de: "Meine Bewerbung" },
   jury: { fr: "Jury", en: "Jury", de: "Jury" },
   selection: { fr: "Sélection", en: "Selection", de: "Auswahl" },
   admin: { fr: "Admin", en: "Admin", de: "Admin" },

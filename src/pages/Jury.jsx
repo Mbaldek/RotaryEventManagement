@@ -12,15 +12,19 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import {
   PageShell,
+  Eyebrow,
   GOLD,
   NAVY,
   INK,
   MUTED,
   CREAM2,
   SERIF,
+  EASE,
+  FOCUS_RING_CLASS,
 } from '@/components/design';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
@@ -43,12 +47,13 @@ function Centered({ children, minHeight = '40vh' }) {
   );
 }
 
-function Spinner({ size = 6 }) {
+function Spinner({ size = 6, label }) {
   return (
     <Loader2
       className={`w-${size} h-${size} animate-spin`}
       style={{ color: GOLD }}
-      aria-hidden
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
     />
   );
 }
@@ -64,7 +69,11 @@ export default function Jury() {
     return (
       <PageShell nav width="wide">
         <Centered>
-          <Spinner />
+          <div role="status" aria-live="polite">
+            <Spinner
+              label={t({ fr: 'Chargement…', en: 'Loading…', de: 'Wird geladen…' })}
+            />
+          </div>
         </Centered>
       </PageShell>
     );
@@ -75,7 +84,7 @@ export default function Jury() {
     return (
       <PageShell nav width="wide">
         <Centered minHeight="50vh">
-          <div className="text-center max-w-md">
+          <div className="text-center max-w-md" role="status">
             <div className="flex items-center justify-center gap-2.5 mb-3">
               <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
               <span
@@ -138,7 +147,11 @@ function JuryWorkspace({ authUserId, isAdmin, selectedSessionId, onSelectSession
   if (sessionsQ.isLoading) {
     return (
       <Centered>
-        <Spinner />
+        <div role="status" aria-live="polite">
+          <Spinner
+            label={t({ fr: 'Chargement des sessions…', en: 'Loading sessions…', de: 'Sessions werden geladen…' })}
+          />
+        </div>
       </Centered>
     );
   }
@@ -146,12 +159,12 @@ function JuryWorkspace({ authUserId, isAdmin, selectedSessionId, onSelectSession
   if (sessionsQ.isError) {
     return (
       <Centered>
-        <div className="text-center">
+        <div className="text-center" role="alert">
           <p className="text-[14px] mb-3" style={{ color: INK }}>{t(UI.loadError)}</p>
           <button
             type="button"
             onClick={() => sessionsQ.refetch()}
-            className="text-[13px] font-medium px-4 py-2 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+            className={`text-[13px] font-medium px-4 py-2 rounded-[4px] ${FOCUS_RING_CLASS}`}
             style={{ color: NAVY, border: `1.5px solid ${GOLD}` }}
           >
             {t(UI.retry)}
@@ -163,24 +176,18 @@ function JuryWorkspace({ authUserId, isAdmin, selectedSessionId, onSelectSession
 
   return (
     <>
-      <div className="flex items-center gap-2.5 mb-3">
-        <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-        <span
-          className="uppercase text-[10px] tracking-[0.18em] font-medium"
-          style={{ color: GOLD }}
+      <header className="mb-6">
+        <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
+        <h1
+          className="text-[28px] md:text-[32px] leading-tight mt-2 mb-2"
+          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
         >
-          {t(UI.eyebrow)}
-        </span>
-      </div>
-      <h1
-        className="text-[32px] leading-tight mb-2"
-        style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-      >
-        {t(UI.pageTitle)}
-      </h1>
-      <p className="text-[14px] mb-6" style={{ color: INK }}>
-        {t(UI.pageSubtitle)}
-      </p>
+          {t(UI.pageTitle)}
+        </h1>
+        <p className="text-[14px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.6 }}>
+          {t(UI.pageSubtitle)}
+        </p>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,300px)_1fr] gap-6">
         {/* Master : SessionList */}
@@ -200,23 +207,38 @@ function JuryWorkspace({ authUserId, isAdmin, selectedSessionId, onSelectSession
 
         {/* Detail : SessionDetail (ou hint en l'absence de session sélectionnée) */}
         <div className={selectedSessionId ? '' : 'hidden lg:block'}>
-          {selectedSession ? (
-            <SessionDetail
-              session={selectedSession}
-              authUserId={authUserId}
-              isAdmin={isAdmin}
-              onBack={() => onSelectSession(null)}
-            />
-          ) : (
-            <div
-              className="rounded-[4px] p-6 text-center"
-              style={{ background: 'white', border: `1px solid ${CREAM2}` }}
-            >
-              <p className="text-[14px]" style={{ color: MUTED }}>
-                {t({ fr: 'Sélectionnez une session.', en: 'Select a session.', de: 'Wählen Sie eine Session.' })}
-              </p>
-            </div>
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            {selectedSession ? (
+              <motion.div
+                key={`session-${selectedSession.id}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.22, ease: EASE }}
+              >
+                <SessionDetail
+                  session={selectedSession}
+                  authUserId={authUserId}
+                  isAdmin={isAdmin}
+                  onBack={() => onSelectSession(null)}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="session-empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: EASE }}
+                className="rounded-[4px] p-6 text-center"
+                style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+              >
+                <p className="text-[14px]" style={{ color: MUTED }}>
+                  {t({ fr: 'Sélectionnez une session.', en: 'Select a session.', de: 'Wählen Sie eine Session.' })}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

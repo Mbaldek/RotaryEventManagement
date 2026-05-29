@@ -38,7 +38,7 @@ export const UI = {
   heroIntro: {
     fr: 'Cette page est consultable par tous les jurés, comités et candidats. Elle reflète en temps réel l’avancement du concours — sessions à venir, sessions live, résultats publiés, finalistes désignés.',
     en: 'This page is open to every juror, comité member and applicant. It reflects the live state of the awards — upcoming sessions, sessions in progress, published results, designated finalists.',
-    de: 'Diese Seite ist für jedes Jurymitglied, jedes Komitee-Mitglied und jeden Bewerber einsehbar. Sie zeigt in Echtzeit den Stand des Awards — anstehende Sessions, laufende Sessions, veröffentlichte Ergebnisse, benannte Finalisten.',
+    de: 'Diese Seite steht allen Jurymitgliedern, Komitee-Mitgliedern und Bewerbern offen. Sie zeigt in Echtzeit den Stand des Wettbewerbs — anstehende Sessions, laufende Sessions, veröffentlichte Ergebnisse, benannte Finalisten.',
   },
 
   // ── Edition selector ──────────────────────────────────────────────────────
@@ -182,17 +182,17 @@ export const UI = {
   finaleEyebrow: {
     fr: 'Grande Finale fédérée',
     en: 'Federated Grand Final',
-    de: 'Föderiertes Großes Finale',
+    de: 'Föderiertes Grand Finale',
   },
   finaleTitle: {
     fr: 'La Grande Finale',
     en: 'The Grand Final',
-    de: 'Das Große Finale',
+    de: 'Das Grand Finale',
   },
   finaleNoData: {
     fr: 'La Grande Finale n’est pas encore programmée — date à confirmer.',
     en: 'The Grand Final has not been scheduled yet — date to be confirmed.',
-    de: 'Das Große Finale ist noch nicht geplant — Datum wird bestätigt.',
+    de: 'Das Grand Finale ist noch nicht terminiert — der genaue Termin wird noch bekanntgegeben.',
   },
   finaleFinalistsLabel: {
     fr: (n, total) => `Finalistes confirmés · ${n}${total ? ` / ${total}` : ''}`,
@@ -202,7 +202,7 @@ export const UI = {
   finaleNoFinalists: {
     fr: 'Finalistes désignés au fil des sessions qualificatives.',
     en: 'Finalists are designated as qualifying sessions go.',
-    de: 'Finalisten werden im Laufe der Qualifikationssessions benannt.',
+    de: 'Die Finalisten werden im Laufe der Qualifikations-Sessions benannt.',
   },
   finaleFromSession: {
     fr: 'Issue de',
@@ -219,7 +219,7 @@ export const UI = {
   footerLine: {
     fr: 'Page consultable par tous les jurés, comités et candidats authentifiés. Mise à jour en temps réel.',
     en: 'Page open to every authenticated juror, comité member and applicant. Updated in real time.',
-    de: 'Diese Seite ist für jedes authentifizierte Jurymitglied, Komitee-Mitglied und jeden Bewerber zugänglich. Echtzeit-Aktualisierung.',
+    de: 'Diese Seite steht allen authentifizierten Jurymitgliedern, Komitee-Mitgliedern und Bewerbern offen. Aktualisierung in Echtzeit.',
   },
   footerContact: {
     fr: 'Contact :',
@@ -228,11 +228,11 @@ export const UI = {
   },
 
   // ── Misc ──────────────────────────────────────────────────────────────────
-  loading: { fr: 'Chargement…', en: 'Loading…', de: 'Lädt…' },
+  loading: { fr: 'Chargement…', en: 'Loading…', de: 'Wird geladen…' },
   loadError: {
     fr: 'Impossible de charger le dashboard. Réessayez plus tard.',
     en: 'Could not load the dashboard. Please try again later.',
-    de: 'Das Dashboard konnte nicht geladen werden. Bitte später erneut versuchen.',
+    de: 'Das Dashboard konnte nicht geladen werden. Bitte versuchen Sie es später erneut.',
   },
   retry: { fr: 'Réessayer', en: 'Retry', de: 'Erneut versuchen' },
 };

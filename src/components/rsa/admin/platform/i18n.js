@@ -41,7 +41,7 @@ export const UI = {
   delete:       { fr: 'Supprimer',            en: 'Delete',                 de: 'Löschen' },
   reset:        { fr: 'Réinitialiser',        en: 'Reset',                  de: 'Zurücksetzen' },
   loading:      { fr: 'Chargement…',          en: 'Loading…',               de: 'Lädt…' },
-  empty:        { fr: 'Aucun élément.',       en: 'Nothing here yet.',      de: 'Noch nichts vorhanden.' },
+  empty:        { fr: 'Aucun élément.',       en: 'Nothing here yet.',      de: 'Noch keine Einträge.' },
   email:        { fr: 'Email',                en: 'Email',                  de: 'E-Mail' },
   roles:        { fr: 'Rôles',                en: 'Roles',                  de: 'Rollen' },
   edition:      { fr: 'Édition',              en: 'Edition',                de: 'Ausgabe' },
@@ -90,7 +90,7 @@ export const SETUP = {
 
   editEdition:      { fr: 'Modifier cette édition', en: 'Edit this edition', de: 'Diese Ausgabe bearbeiten' },
   editionName:      { fr: 'Nom',                    en: 'Name',              de: 'Name' },
-  editionYear:      { fr: 'Année',                  en: 'Year',              de: 'Year' },
+  editionYear:      { fr: 'Année',                  en: 'Year',              de: 'Jahr' },
   editionStatus:    { fr: 'Statut',                 en: 'Status',            de: 'Status' },
   appOpen:          { fr: 'Ouverture candidatures', en: 'Applications open', de: 'Bewerbungsstart' },
   appClose:         { fr: 'Clôture candidatures',   en: 'Applications close', de: 'Bewerbungsende' },
@@ -103,19 +103,19 @@ export const SETUP = {
   publicResultsEnabled: {
     fr: 'Palmarès public activé',
     en: 'Public palmares enabled',
-    de: 'Öffentliche Ergebnisliste aktiviert',
+    de: 'Öffentliches Palmarès aktiviert',
   },
   publicResultsHint: {
     fr: 'Quand activé, /Resultats affiche les classements publiés de cette édition.',
     en: 'When on, /Resultats shows this edition’s published rankings.',
-    de: 'Wenn aktiviert, zeigt /Resultats die veröffentlichten Rankings dieser Ausgabe.',
+    de: 'Sobald aktiviert, zeigt /Resultats die veröffentlichten Ranglisten dieser Ausgabe.',
   },
   descriptionMd:    { fr: 'Description (markdown)', en: 'Description (markdown)', de: 'Beschreibung (Markdown)' },
-  eligibilityRules: { fr: 'Règles d’éligibilité (JSON)', en: 'Eligibility rules (JSON)', de: 'Eignungsregeln (JSON)' },
+  eligibilityRules: { fr: 'Règles d’éligibilité (JSON)', en: 'Eligibility rules (JSON)', de: 'Teilnahmeregeln (JSON)' },
   eligibilityHint:  {
     fr: 'JSON éditable — clés autorisées : country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required (V2.5+ : un objet par doc avec son behavior individuel).',
     en: 'Editable JSON — allowed keys: country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required (V2.5+: one object per doc with its own behavior).',
-    de: 'Bearbeitbares JSON — erlaubte Schlüssel: country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required (V2.5+: ein Objekt pro Dokument mit eigenem Verhalten).',
+    de: 'Bearbeitbares JSON — zulässige Schlüssel: country, created_after, revenue_max, raised_max, founders_majority, registration, docs_required (ab V2.5: je Dokument ein Objekt mit eigenem Verhalten).',
   },
   invalidJson:      { fr: 'JSON invalide.', en: 'Invalid JSON.', de: 'Ungültiges JSON.' },
 
@@ -148,31 +148,31 @@ export const SETUP = {
   resetSessionBody: {
     fr: 'Supprime cette session (et sa configuration). Requiert : statut « draft », aucun juré assigné, aucune startup affectée. Tapez "RESET" pour confirmer.',
     en: 'Deletes this session (and its config). Requires: status “draft”, no juror assigned, no startup attached. Type "RESET" to confirm.',
-    de: 'Löscht diese Session (und ihre Konfiguration). Voraussetzung: Status „draft“, kein Juror zugewiesen, keine Startup zugeordnet. Geben Sie "RESET" zur Bestätigung ein.',
+    de: 'Löscht diese Session (und ihre Konfiguration). Voraussetzungen: Status „draft“, keine Juroren zugewiesen, keine Startups zugeordnet. Tippen Sie "RESET" zur Bestätigung.',
   },
   resetTypePrompt: {
     fr: 'Tapez RESET pour confirmer',
     en: 'Type RESET to confirm',
-    de: 'Geben Sie RESET zur Bestätigung ein',
+    de: 'Tippen Sie RESET zur Bestätigung',
   },
   noSessions:       { fr: 'Aucune session dans cette édition.', en: 'No sessions in this edition.', de: 'Keine Sessions in dieser Ausgabe.' },
 
   // Roles panel
-  assignRole:       { fr: 'Provisionner un rôle', en: 'Provision a role', de: 'Rolle bereitstellen' },
+  assignRole:       { fr: 'Provisionner un rôle', en: 'Provision a role', de: 'Rolle zuweisen' },
   emailPlaceholder: { fr: 'utilisateur@exemple.org', en: 'user@example.org', de: 'benutzer@beispiel.org' },
   rolesPlaceholder: { fr: 'Sélectionnez les rôles…', en: 'Select roles…', de: 'Rollen auswählen…' },
   rolesHint: {
     fr: 'Un utilisateur peut cumuler plusieurs rôles. Une liste vide révoque tous les accès.',
     en: 'A user can hold multiple roles. An empty list revokes all access.',
-    de: 'Ein Benutzer kann mehrere Rollen haben. Eine leere Liste entzieht jeden Zugriff.',
+    de: 'Ein Nutzer kann mehrere Rollen kumulieren. Eine leere Liste entzieht sämtliche Zugriffe.',
   },
-  noRoles:          { fr: 'Aucun rôle provisionné.', en: 'No roles provisioned yet.', de: 'Noch keine Rollen vergeben.' },
+  noRoles:          { fr: 'Aucun rôle provisionné.', en: 'No roles provisioned yet.', de: 'Noch keine Rollen zugewiesen.' },
   lastAdmin: {
     fr: 'Impossible : vous êtes le dernier administrateur. Provisionnez un autre admin avant de retirer le rôle.',
     en: 'Cannot proceed: you are the last administrator. Provision another admin before removing the role.',
-    de: 'Nicht möglich: Sie sind der letzte Administrator. Bestellen Sie einen weiteren Admin, bevor Sie die Rolle entziehen.',
+    de: 'Nicht möglich: Sie sind der/die letzte Administrator·in. Weisen Sie zunächst einer weiteren Person die Admin-Rolle zu, bevor Sie Ihre eigene entziehen.',
   },
-  grantedBy:        { fr: 'Provisionné par', en: 'Granted by', de: 'Bereitgestellt von' },
+  grantedBy:        { fr: 'Provisionné par', en: 'Granted by', de: 'Zugewiesen von' },
   grantedAt:        { fr: 'Le',              en: 'On',         de: 'Am' },
 };
 
@@ -181,13 +181,13 @@ export const LIVE = {
   startupCol:       { fr: 'Startup',    en: 'Startup',    de: 'Startup' },
   avgCol:           { fr: 'Moy.',       en: 'Avg',        de: 'Ø' },
   countCol:         { fr: 'n',          en: 'n',          de: 'n' },
-  openScoring:      { fr: 'Ouvrir le scoring', en: 'Open scoring', de: 'Scoring eröffnen' },
-  reopenDraft:      { fr: 'Repasser en brouillon', en: 'Revert to draft', de: 'Auf Entwurf zurücksetzen' },
+  openScoring:      { fr: 'Ouvrir le scoring', en: 'Open scoring', de: 'Bewertung öffnen' },
+  reopenDraft:      { fr: 'Repasser en brouillon', en: 'Revert to draft', de: 'In den Entwurfsstatus zurücksetzen' },
   lockSession:      { fr: 'Verrouiller la session', en: 'Lock session', de: 'Session sperren' },
   publishResults:   { fr: 'Publier les résultats', en: 'Publish results', de: 'Ergebnisse veröffentlichen' },
   pickSession:      { fr: 'Sélectionnez une session', en: 'Pick a session', de: 'Wählen Sie eine Session' },
-  noStartups:       { fr: 'Aucune startup affectée à cette session.', en: 'No startups attached to this session.', de: 'Keine Startup mit dieser Session verknüpft.' },
-  noJurors:         { fr: 'Aucun juré assigné. Provisionnez d’abord depuis l’espace Jury.', en: 'No juror assigned. Provision from the Jury area first.', de: 'Kein Juror zugewiesen. Zuerst über den Jury-Bereich bereitstellen.' },
+  noStartups:       { fr: 'Aucune startup affectée à cette session.', en: 'No startups attached to this session.', de: 'Dieser Session ist noch kein Startup zugeordnet.' },
+  noJurors:         { fr: 'Aucun juré assigné. Provisionnez d’abord depuis l’espace Jury.', en: 'No juror assigned. Provision from the Jury area first.', de: 'Noch kein Juror zugewiesen. Weisen Sie zunächst über den Jury-Bereich Juroren zu.' },
   partialsHint:     { fr: '— : pas de brouillon · n/6 : brouillon partiel · N.NN : note finale', en: '— : no draft · n/6 : partial draft · N.NN : final score', de: '— : kein Entwurf · n/6 : Teil-Entwurf · N.NN : Endnote' },
   stats:            { fr: 'Synthèse', en: 'Summary', de: 'Zusammenfassung' },
   statStartups:     { fr: 'Startups', en: 'Startups', de: 'Startups' },
@@ -196,45 +196,45 @@ export const LIVE = {
   startedSuffix:    { fr: 'commencées', en: 'started', de: 'begonnen' },
   scoringSuffix:    { fr: 'qui notent', en: 'scoring',  de: 'bewerten' },
   // Confirms
-  confirmLiveTitle: { fr: 'Ouvrir le scoring',  en: 'Open scoring',   de: 'Scoring eröffnen' },
+  confirmLiveTitle: { fr: 'Ouvrir le scoring',  en: 'Open scoring',   de: 'Bewertung öffnen' },
   confirmLiveBody: {
     fr: 'Les jurés vont pouvoir saisir leurs notes. Assurez-vous que le lien a été envoyé.',
     en: 'Jurors will be able to enter their scores. Make sure the link has been sent.',
-    de: 'Die Juroren können ihre Bewertungen eintragen. Stellen Sie sicher, dass der Link versendet wurde.',
+    de: 'Die Juroren können nun ihre Bewertungen eingeben. Stellen Sie sicher, dass der Link bereits versendet wurde.',
   },
-  confirmDraftTitle: { fr: 'Repasser en brouillon', en: 'Revert to draft', de: 'Auf Entwurf zurücksetzen' },
+  confirmDraftTitle: { fr: 'Repasser en brouillon', en: 'Revert to draft', de: 'In den Entwurfsstatus zurücksetzen' },
   confirmDraftBody: {
     fr: 'La session redevient inactive pour les jurés. Cette action n’est possible que si aucun score final n’a été soumis.',
     en: 'The session becomes inactive for jurors. Only possible while no final score has been submitted.',
-    de: 'Die Session wird für die Juroren inaktiv. Nur möglich, solange keine Endnote eingereicht wurde.',
+    de: 'Die Session wird für die Juroren wieder inaktiv. Nur möglich, solange noch keine finale Bewertung eingereicht wurde.',
   },
   confirmLockTitle: { fr: 'Verrouiller la session', en: 'Lock session', de: 'Session sperren' },
   confirmLockBody: {
     fr: 'Les jurés ne pourront plus modifier leurs notes. Les dossiers en cours passent au statut « évalué ».',
     en: 'Jurors will no longer be able to edit their scores. Pending dossiers move to status “scored”.',
-    de: 'Die Juroren können ihre Noten nicht mehr ändern. Offene Bewerbungen wechseln in den Status „bewertet“.',
+    de: 'Die Juroren können ihre Bewertungen nicht mehr ändern. Laufende Bewerbungen wechseln in den Status „bewertet“.',
   },
 
   // ── V3 Vague 2 (A.1) — "Conclure la session" : un seul acte = publish + promote
   concludeAction: {
     fr: 'Conclure la session et officialiser les résultats et promouvoir le vainqueur en finale',
     en: 'Conclude the session, officialize results and promote the winner to the finale',
-    de: 'Session abschließen, Ergebnisse offiziell machen und den Gewinner ins Finale befördern',
+    de: 'Sitzung abschließen, Ergebnisse offiziell machen und den/die Gewinner·in ins Finale weiterleiten',
   },
   concludeActionShort: {
     fr: 'Conclure la session',
     en: 'Conclude the session',
-    de: 'Session abschließen',
+    de: 'Sitzung abschließen',
   },
   concludeConfirmTitle: {
     fr: 'Conclure la session et promouvoir en finale',
     en: 'Conclude the session and promote to the finale',
-    de: 'Session abschließen und ins Finale befördern',
+    de: 'Sitzung abschließen und ins Finale weiterleiten',
   },
   concludeConfirmBody: {
     fr: 'Cette action est définitive : les notes seront figées, le classement officialisé, et le top-N projeté à la fois en statut « finaliste » sur les dossiers ET dans le pool de la Grande Finale fédérée. Tapez CONCLURE pour confirmer.',
     en: 'This action is final: scores will be frozen, the ranking officialized, and the top-N projected both as “finalist” on dossiers AND into the federated grand finale pool. Type CONCLUDE to confirm.',
-    de: 'Diese Aktion ist endgültig: Die Bewertungen werden eingefroren, das Ranking offiziell gemacht und die Top-N sowohl als „Finalist“ auf den Dossiers ALS AUCH in den Pool des föderierten Grand Finale projiziert. Geben Sie CONCLURE zur Bestätigung ein.',
+    de: 'Diese Aktion ist endgültig: Die Bewertungen werden eingefroren, die Rangliste wird offiziell, und die Top-N erhalten den Status „Finalist“ auf den Dossiers UND werden in den Pool des föderierten Grand Finale aufgenommen. Geben Sie CONCLURE zur Bestätigung ein.',
   },
   concludeTypedWord: {
     fr: 'CONCLURE',
@@ -244,14 +244,14 @@ export const LIVE = {
   concludeRecap: {
     fr: 'Effet immédiat : statut session → publié · top-N → finaliste · pool finale enrichi · audit log.',
     en: 'Immediate effect: session status → published · top-N → finalist · finale pool enriched · audit log.',
-    de: 'Sofortige Wirkung: Session-Status → veröffentlicht · Top-N → Finalist · Finale-Pool erweitert · Audit-Log.',
+    de: 'Sofortige Wirkung: Sitzungsstatus → veröffentlicht · Top-N → Finalist · Finale-Pool erweitert · Audit-Log.',
   },
 };
 
 // ── RESULTS ───────────────────────────────────────────────────────────────────
 export const RESULTS = {
-  sectionPerSession: { fr: 'Palmarès par session', en: 'Per-session palmares', de: 'Ergebnisliste pro Session' },
-  sectionCross:      { fr: 'Vue d’ensemble',       en: 'Cross-session view',   de: 'Übergreifende Ansicht' },
+  sectionPerSession: { fr: 'Palmarès par session', en: 'Per-session palmares', de: 'Palmarès je Session' },
+  sectionCross:      { fr: 'Vue d’ensemble',       en: 'Cross-session view',   de: 'Sessionsübergreifende Sicht' },
   needLock: {
     fr: 'Les résultats ne sont disponibles qu’après le verrouillage de la session.',
     en: 'Results are only available after the session is locked.',
@@ -260,23 +260,23 @@ export const RESULTS = {
   needPublishToCsv: {
     fr: 'L’export CSV reprend le classement courant (cliquez après le verrouillage).',
     en: 'CSV export uses the current ranking (click after locking).',
-    de: 'Der CSV-Export verwendet das aktuelle Ranking (nach dem Sperren klicken).',
+    de: 'Der CSV-Export übernimmt die aktuelle Rangliste (nach dem Sperren auslösen).',
   },
   rankCol:           { fr: 'Rang',     en: 'Rank',     de: 'Rang' },
   startupCol:        { fr: 'Startup',  en: 'Startup',  de: 'Startup' },
   avgCol:            { fr: 'Moy. pondérée', en: 'Weighted avg', de: 'Gewichteter Ø' },
   jurorsCol:         { fr: 'Jurés',    en: 'Jurors',   de: 'Juroren' },
   publishConfirmTitle: { fr: 'Publier les résultats', en: 'Publish results', de: 'Ergebnisse veröffentlichen' },
-  publishTypePrompt:   { fr: 'Tapez PUBLIER pour confirmer', en: 'Type PUBLISH to confirm', de: 'Geben Sie VEROEFFENTLICHEN zur Bestätigung ein' },
+  publishTypePrompt:   { fr: 'Tapez PUBLIER pour confirmer', en: 'Type PUBLISH to confirm', de: 'Tippen Sie VEROEFFENTLICHEN zur Bestätigung' },
   publishConfirmBody: {
     fr: 'Les notes seront figées et les finalistes (top-N) projetés sur les dossiers. Action définitive.',
     en: 'Scores will be frozen and the top-N finalists projected onto the dossiers. Final action.',
-    de: 'Die Bewertungen werden eingefroren und die Top-N-Finalisten auf die Bewerbungen projiziert. Endgültige Aktion.',
+    de: 'Die Bewertungen werden eingefroren und die Finalisten (Top-N) auf die Dossiers übertragen. Endgültige Aktion.',
   },
   publish:           { fr: 'Publier',           en: 'Publish',           de: 'Veröffentlichen' },
   csv:               { fr: 'Télécharger CSV',   en: 'Download CSV',      de: 'CSV herunterladen' },
   publishedAt:       { fr: 'Publié le',         en: 'Published on',      de: 'Veröffentlicht am' },
-  noRanking:         { fr: 'Aucun classement disponible.', en: 'No ranking available.', de: 'Kein Ranking verfügbar.' },
+  noRanking:         { fr: 'Aucun classement disponible.', en: 'No ranking available.', de: 'Keine Rangliste verfügbar.' },
   noPublishedYet:    { fr: 'Aucune session publiée pour cette édition.', en: 'No published sessions for this edition.', de: 'Keine veröffentlichten Sessions in dieser Ausgabe.' },
 };
 

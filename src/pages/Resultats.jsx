@@ -34,7 +34,9 @@ import {
   MUTED,
   SERIF,
   EASE,
+  FOCUS_RING_CLASS,
 } from '@/components/design';
+import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import {
   useResults,
@@ -202,7 +204,7 @@ function SessionCard({ session, lang, t }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.5, ease: EASE }}
-      className="rounded-[6px] p-5 md:p-6"
+      className="rounded-[4px] p-5 md:p-6"
       style={{ background: '#fff', border: `1px solid ${CREAM2}` }}
     >
       <header className="mb-3">
@@ -300,8 +302,12 @@ export default function Resultats() {
   if (isLoading) {
     return (
       <PageShell width="wide" nav={<TopNav wordmark={tT.titleLead} subtitle={tT.eyebrow(year || '')} />}>
-        <div className="flex items-center gap-3 mb-8">
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: GOLD }} aria-hidden />
+        <div className="flex items-center gap-3 mb-8" role="status" aria-live="polite">
+          <Loader2
+            className="w-5 h-5 animate-spin"
+            style={{ color: GOLD }}
+            aria-label={tT.loadingTitle}
+          />
           <p className="text-[14px]" style={{ color: INK }}>{tT.loadingTitle}</p>
         </div>
         <div className="space-y-4">
@@ -318,7 +324,7 @@ export default function Resultats() {
     return (
       <PageShell width="wide" nav={<TopNav wordmark={tT.titleLead} />}>
         <div className="flex items-start gap-3" role="alert">
-          <AlertTriangle className="w-5 h-5 mt-0.5" style={{ color: '#a23b2d' }} />
+          <AlertTriangle className="w-5 h-5 mt-0.5" style={{ color: DANGER }} aria-hidden />
           <div>
             <h1 className="text-[22px] mb-1" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
               {tT.errorTitle}
@@ -327,7 +333,7 @@ export default function Resultats() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="text-[13.5px] font-medium px-4 py-2 rounded-[4px] text-white outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+              className={`text-[13.5px] font-medium px-4 py-2 rounded-[4px] text-white ${FOCUS_RING_CLASS}`}
               style={{ background: NAVY }}
             >
               {tT.retry}
@@ -402,7 +408,7 @@ export default function Resultats() {
               id="edition-select"
               value={ed.id}
               onChange={onYearChange}
-              className="text-[14px] rounded-[4px] px-3 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+              className={`text-[14px] rounded-[4px] px-3 py-1.5 ${FOCUS_RING_CLASS}`}
               style={{ background: '#fff', border: `1px solid ${CREAM2}`, color: NAVY }}
             >
               {availableEditions.map((e) => (
@@ -421,7 +427,7 @@ export default function Resultats() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: EASE, delay: 0.1 }}
-          className="rounded-[8px] p-6 md:p-10 mb-14"
+          className="rounded-[10px] p-6 md:p-10 mb-14"
           style={{
             background: 'linear-gradient(135deg,#fdf6e8,#faf2dc)',
             border: `1px solid ${CREAM2}`,
@@ -465,7 +471,7 @@ export default function Resultats() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
           transition={{ duration: 0.5, ease: EASE }}
-          className="rounded-[6px] p-5 md:p-6 mb-14"
+          className="rounded-[4px] p-5 md:p-6 mb-14"
           style={{ background: '#fff', border: `1px solid ${CREAM2}` }}
         >
           <p className="text-[10.5px] uppercase tracking-[0.18em] mb-1" style={{ color: GOLD }}>
@@ -499,7 +505,7 @@ export default function Resultats() {
               {tT.finalistsLead}
             </h2>
           </header>
-          <ul role="list" className="bg-white rounded-[6px] p-4 md:p-6" style={{ border: `1px solid ${CREAM2}` }}>
+          <ul role="list" className="bg-white rounded-[4px] p-4 md:p-6" style={{ border: `1px solid ${CREAM2}` }}>
             {top3Finale.map((entry) => (
               <PodiumRow key={`final_${entry.final_rank}`} entry={entry} lang={lang} />
             ))}
@@ -535,7 +541,7 @@ export default function Resultats() {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        className="rounded-[6px] p-6 md:p-8 mb-14"
+        className="rounded-[4px] p-6 md:p-8 mb-14"
         style={{ background: '#fff', border: `1px solid ${CREAM2}` }}
       >
         <p className="text-[10.5px] uppercase tracking-[0.18em]" style={{ color: GOLD }}>
@@ -557,18 +563,18 @@ export default function Resultats() {
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: NAVY }}
-              className="hover:underline"
+              className={`hover:underline rounded-[2px] ${FOCUS_RING_CLASS}`}
             >
               {tT.landingLink}
             </a>
             {openEditionQ.data?.id && (
               <Link
                 to={`/MonDossier?edition=${encodeURIComponent(openEditionQ.data.id)}`}
-                className="inline-flex items-center gap-1.5"
+                className={`inline-flex items-center gap-1.5 rounded-[2px] ${FOCUS_RING_CLASS}`}
                 style={{ color: NAVY }}
               >
                 {tT.applyCta}
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden />
               </Link>
             )}
           </>

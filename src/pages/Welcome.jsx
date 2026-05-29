@@ -37,51 +37,51 @@ const T = {
   // Messages par rôle
   rolesT: {
     jury: {
-      title: { fr: 'Vous êtes désormais membre du jury.', en: 'You are now a jury member.', de: 'Sie sind nun Jurymitglied.' },
+      title: { fr: 'Vous êtes désormais membre du jury.', en: 'You are now a jury member.', de: 'Sie sind nun Mitglied der Jury.' },
       body: {
         fr: 'Votre espace jury rassemble les sessions auxquelles vous êtes assigné, les dossiers à pré-lire et la grille de notation. Vous recevrez un email à chaque nouvelle assignation.',
         en: 'Your jury area gathers your assigned sessions, dossiers to pre-read, and the scoring grid. You will receive an email for each new assignment.',
-        de: 'Ihr Jurybereich umfasst die Ihnen zugewiesenen Sessions, die zu lesenden Bewerbungen und das Bewertungsraster. Sie erhalten eine E-Mail bei jeder neuen Zuweisung.',
+        de: 'Ihr Jury-Bereich vereint die Ihnen zugewiesenen Sessions, die vorab zu lesenden Dossiers und das Bewertungsraster. Sie erhalten bei jeder neuen Zuweisung eine E-Mail.',
       },
-      cta: { fr: 'Accéder à mon espace jury', en: 'Open my jury area', de: 'Zu meinem Jurybereich' },
+      cta: { fr: 'Accéder à mon espace jury', en: 'Open my jury area', de: 'Zu meinem Jury-Bereich' },
       to: '/Jury',
     },
     comite: {
-      title: { fr: 'Vous êtes désormais membre du comité.', en: 'You are now a committee member.', de: 'Sie sind nun Komiteemitglied.' },
+      title: { fr: 'Vous êtes désormais membre du comité.', en: 'You are now a committee member.', de: 'Sie sind nun Mitglied des Komitees.' },
       body: {
         fr: "Votre espace Sélection vous permet de pré-classer les candidatures de votre club et de les transmettre au jury.",
         en: 'Your Selection area lets you pre-rank applications for your club and forward them to the jury.',
-        de: 'Im Auswahlbereich ordnen Sie die Bewerbungen Ihres Clubs vor und leiten sie an die Jury weiter.',
+        de: 'Im Bereich „Auswahl" können Sie die Bewerbungen Ihres Clubs vorab klassieren und an die Jury weiterleiten.',
       },
-      cta: { fr: 'Accéder à la Sélection', en: 'Open Selection', de: 'Zur Auswahl' },
+      cta: { fr: 'Accéder à la Sélection', en: 'Open Selection', de: 'Zum Auswahlbereich' },
       to: '/Selection',
     },
     club_admin: {
-      title: { fr: 'Vous êtes désormais administrateur de votre club.', en: 'You now administer your club.', de: 'Sie verwalten nun Ihren Club.' },
+      title: { fr: 'Vous êtes désormais administrateur de votre club.', en: 'You now administer your club.', de: 'Sie sind nun Administrator·in Ihres Clubs.' },
       body: {
         fr: 'Votre cockpit club centralise la configuration de votre édition, vos membres (comité, jury), vos candidatures et vos sessions.',
         en: 'Your club cockpit centralises edition setup, members (committee, jury), applications and sessions.',
-        de: 'Ihr Club-Cockpit bündelt Edition-Einstellungen, Mitglieder (Komitee, Jury), Bewerbungen und Sessions.',
+        de: 'Ihr Club-Cockpit bündelt die Konfiguration Ihrer Ausgabe, Ihrer Mitglieder (Komitee, Jury), Ihrer Bewerbungen und Ihrer Sessions.',
       },
       cta: { fr: 'Accéder au cockpit', en: 'Open cockpit', de: 'Cockpit öffnen' },
       to: '/Admin',
     },
     admin: {
-      title: { fr: 'Vous êtes désormais administrateur de la plateforme.', en: 'You now administer the platform.', de: 'Sie verwalten nun die Plattform.' },
+      title: { fr: 'Vous êtes désormais administrateur de la plateforme.', en: 'You now administer the platform.', de: 'Sie sind nun Administrator·in der Plattform.' },
       body: {
         fr: "Le cockpit Admin vous donne accès à la configuration de l'édition, des sessions, des décisions de sélection et des résultats.",
         en: 'The Admin cockpit grants access to edition setup, sessions, selection decisions and results.',
-        de: 'Das Admin-Cockpit gibt Zugriff auf Edition-Setup, Sessions, Auswahlentscheidungen und Ergebnisse.',
+        de: 'Das Admin-Cockpit gibt Ihnen Zugriff auf die Konfiguration der Ausgabe, der Sessions, der Auswahlentscheidungen sowie der Ergebnisse.',
       },
-      cta: { fr: 'Accéder à l’Admin', en: 'Open Admin', de: 'Admin öffnen' },
+      cta: { fr: 'Accéder à l’Admin', en: 'Open Admin', de: 'Zur Administration' },
       to: '/Admin',
     },
     master_admin: {
-      title: { fr: 'Vous êtes désormais master admin.', en: 'You are now master admin.', de: 'Sie sind nun Master-Admin.' },
+      title: { fr: 'Vous êtes désormais master admin.', en: 'You are now master admin.', de: 'Sie sind nun Master-Administrator·in.' },
       body: {
         fr: 'Le cockpit Master pilote toute la plateforme : compétitions, clubs, rôles globaux et finale fédérée.',
         en: 'The Master cockpit drives the whole platform: competitions, clubs, global roles and federated finale.',
-        de: 'Das Master-Cockpit steuert die gesamte Plattform: Wettbewerbe, Clubs, globale Rollen und föderierte Finale.',
+        de: 'Das Master-Cockpit steuert die gesamte Plattform: Wettbewerbe, Clubs, globale Rollen und föderiertes Finale.',
       },
       cta: { fr: 'Accéder au cockpit Master', en: 'Open Master cockpit', de: 'Master-Cockpit öffnen' },
       to: '/Admin',
@@ -92,9 +92,9 @@ const T = {
     body: {
       fr: "Votre rôle n'est pas encore configuré. Contactez un administrateur si vous pensez qu'il s'agit d'une erreur.",
       en: 'Your role is not configured yet. Contact an administrator if you think this is a mistake.',
-      de: 'Ihre Rolle ist noch nicht konfiguriert. Wenden Sie sich an einen Administrator, falls dies ein Fehler ist.',
+      de: 'Ihre Rolle ist noch nicht eingerichtet. Bitte wenden Sie sich an die Administration, falls Sie hier einen Fehler vermuten.',
     },
-    cta: { fr: 'Mon dossier', en: 'My application', de: 'Mein Dossier' },
+    cta: { fr: 'Mon dossier', en: 'My application', de: 'Meine Bewerbung' },
     to: '/MonDossier',
   },
 };

@@ -39,7 +39,7 @@ export default function CommunicationTab({ values = {}, onPatch, disabled = fals
           {t({
             fr: 'Réservé — non encore connecté en base.',
             en: 'Reserved — not yet wired in the database.',
-            de: 'Reserviert — noch nicht in der Datenbank verbunden.',
+            de: 'Reserviert — noch nicht mit der Datenbank verknüpft.',
           })}
         </p>
       </div>

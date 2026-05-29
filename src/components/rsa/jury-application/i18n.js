@@ -25,7 +25,7 @@ export const UI = {
   pagePitchLine1: {
     fr: 'Vous êtes entrepreneur, investisseur ou expert sectoriel ?',
     en: 'Are you an entrepreneur, investor or sector expert?',
-    de: 'Sind Sie Unternehmer/in, Investor/in oder Branchenexpertin?',
+    de: 'Sind Sie Unternehmer·in, Investor·in oder Branchenexpert·in?',
   },
   pagePitchLine2: {
     fr: 'Évaluez les startups finalistes aux côtés des Rotariens et des partenaires.',
@@ -35,7 +35,7 @@ export const UI = {
   backToCandidater: {
     fr: 'Vous êtes une startup ? Candidater',
     en: 'Are you a startup? Apply here',
-    de: 'Sind Sie ein Startup? Hier bewerben',
+    de: 'Sie sind ein Startup? Hier bewerben',
   },
 
   // ── Champs du formulaire ──────────────────────────────────────────────────
@@ -48,7 +48,7 @@ export const UI = {
   fieldAvailability: { fr: 'Disponibilité',    en: 'Availability',    de: 'Verfügbarkeit' },
 
   // Placeholders & helpers
-  emailPlaceholder:    { fr: 'vous@exemple.com', en: 'you@example.com', de: 'sie@beispiel.com' },
+  emailPlaceholder:    { fr: 'vous@exemple.com', en: 'you@example.com', de: 'ihre.adresse@beispiel.com' },
   fullNamePlaceholder: { fr: 'Prénom NOM',       en: 'First LAST',      de: 'Vorname NACHNAME' },
   editionPlaceholder:  { fr: 'Choisir une compétition…', en: 'Choose a competition…', de: 'Wettbewerb auswählen…' },
   clubPlaceholder:     { fr: 'Optionnel — choisir un club', en: 'Optional — choose a club', de: 'Optional — Club wählen' },
@@ -122,17 +122,17 @@ export const UI = {
   successBody: {
     fr: 'Votre candidature a bien été enregistrée. Nous reviendrons vers vous sous 7 jours.',
     en: 'Your application has been received. We will get back to you within 7 days.',
-    de: 'Ihre Bewerbung ist eingegangen. Wir melden uns innerhalb von 7 Tagen bei Ihnen.',
+    de: 'Ihre Bewerbung ist eingegangen. Wir werden uns innerhalb von 7 Tagen bei Ihnen melden.',
   },
   errorTitle: {
     fr: 'Un souci est survenu',
     en: 'Something went wrong',
-    de: 'Ein Fehler ist aufgetreten',
+    de: 'Ein Problem ist aufgetreten',
   },
   errorBody: {
     fr: 'Votre candidature n’a pas pu être enregistrée. Réessayez dans un instant.',
     en: 'We could not save your application. Please try again in a moment.',
-    de: 'Ihre Bewerbung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.',
+    de: 'Ihre Bewerbung konnte nicht gespeichert werden. Bitte versuchen Sie es gleich erneut.',
   },
   charsCounter: {
     fr: 'caractères',
@@ -146,15 +146,15 @@ export const UI = {
   panelSubtitle: {
     fr: 'Les candidatures spontanées arrivent ici. Approuvez ou refusez avec une note.',
     en: 'Spontaneous applications land here. Approve or reject with a note.',
-    de: 'Spontane Bewerbungen erscheinen hier. Annehmen oder ablehnen mit Begründung.',
+    de: 'Spontane Bewerbungen landen hier. Sie können diese mit einer Begründung annehmen oder ablehnen.',
   },
   tabPending:   { fr: 'En attente',   en: 'Pending',   de: 'Ausstehend' },
-  tabApproved:  { fr: 'Approuvées',   en: 'Approved',  de: 'Angenommen' },
+  tabApproved:  { fr: 'Approuvées',   en: 'Approved',  de: 'Genehmigt' },
   tabRejected:  { fr: 'Refusées',     en: 'Rejected',  de: 'Abgelehnt' },
   tabAll:       { fr: 'Toutes',       en: 'All',       de: 'Alle' },
 
   statusPending:  { fr: 'En attente',  en: 'Pending',  de: 'Ausstehend' },
-  statusApproved: { fr: 'Approuvée',   en: 'Approved', de: 'Angenommen' },
+  statusApproved: { fr: 'Approuvée',   en: 'Approved', de: 'Genehmigt' },
   statusRejected: { fr: 'Refusée',     en: 'Rejected', de: 'Abgelehnt' },
 
   emptyQueue: {
@@ -165,7 +165,7 @@ export const UI = {
   emptyDetail: {
     fr: 'Sélectionnez une candidature à gauche pour voir le détail.',
     en: 'Pick an application on the left to see the detail.',
-    de: 'Wählen Sie links eine Bewerbung aus, um Details anzuzeigen.',
+    de: 'Wählen Sie links eine Bewerbung aus, um die Details anzuzeigen.',
   },
 
   detailEmailLabel:        { fr: 'Email',           en: 'Email',           de: 'E-Mail' },
@@ -179,7 +179,7 @@ export const UI = {
   detailRejectionLabel:    { fr: 'Raison du refus', en: 'Rejection reason', de: 'Ablehnungsgrund' },
   detailNone:              { fr: '—',           en: '—',           de: '—' },
 
-  actionApprove: { fr: 'Approuver',         en: 'Approve',        de: 'Annehmen' },
+  actionApprove: { fr: 'Approuver',         en: 'Approve',        de: 'Genehmigen' },
   actionReject:  { fr: 'Refuser',           en: 'Reject',         de: 'Ablehnen' },
   actionCancel:  { fr: 'Annuler',           en: 'Cancel',         de: 'Abbrechen' },
   actionConfirmReject: { fr: 'Confirmer le refus', en: 'Confirm rejection', de: 'Ablehnung bestätigen' },
@@ -187,22 +187,22 @@ export const UI = {
   rejectReasonLabel: {
     fr: 'Raison (visible par le candidat dans l’email)',
     en: 'Reason (shown to the candidate in the email)',
-    de: 'Begründung (sichtbar für den Kandidaten in der E-Mail)',
+    de: 'Begründung (wird dem Bewerber in der E-Mail mitgeteilt)',
   },
   rejectReasonPlaceholder: {
     fr: 'Ex. « Profil intéressant mais hors thématique 2027 ».',
     en: 'E.g. "Strong profile, off-topic for 2027."',
-    de: 'Z. B. „Spannendes Profil, nicht zum Thema 2027 passend."',
+    de: 'Z. B. „Überzeugendes Profil, jedoch nicht zur Thematik 2027 passend."',
   },
 
-  mutationApprovedToast: { fr: 'Candidature approuvée', en: 'Application approved', de: 'Bewerbung angenommen' },
+  mutationApprovedToast: { fr: 'Candidature approuvée', en: 'Application approved', de: 'Bewerbung genehmigt' },
   mutationRejectedToast: { fr: 'Candidature refusée',   en: 'Application rejected', de: 'Bewerbung abgelehnt' },
   mutationErrorToast:    { fr: 'Action impossible — réessayez.', en: 'Action failed — please retry.', de: 'Aktion fehlgeschlagen — bitte erneut versuchen.' },
 
   forbidden: {
     fr: 'Accès refusé. Ce panneau est réservé aux master_admins.',
     en: 'Forbidden. This panel is reserved for master_admins.',
-    de: 'Zugriff verweigert. Dieses Panel ist nur für master_admins.',
+    de: 'Zugriff verweigert. Dieser Bereich ist Master-Administratoren vorbehalten.',
   },
 };
 

@@ -72,12 +72,12 @@ const T = {
   claimedTitle: {
     fr: 'Bienvenue — votre dossier est ouvert',
     en: 'Welcome — your application is open',
-    de: 'Willkommen — Ihr Dossier ist geöffnet',
+    de: 'Willkommen — Ihre Bewerbung ist geöffnet',
   },
   claimedSubtitle: {
     fr: 'Nous vous redirigeons vers votre espace candidat.',
     en: 'Redirecting you to your applicant space.',
-    de: 'Sie werden in Ihren Bewerberbereich weitergeleitet.',
+    de: 'Sie werden in Ihren persönlichen Bewerberbereich weitergeleitet.',
   },
 };
 

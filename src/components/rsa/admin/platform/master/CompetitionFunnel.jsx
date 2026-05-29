@@ -186,7 +186,7 @@ export default function CompetitionFunnel({ open, onClose, onCreated }) {
                   {t({
                     fr: 'Renseignez identifiant, nom, année et modèle pour continuer.',
                     en: 'Fill in identifier, name, year and model to continue.',
-                    de: 'Geben Sie Kennung, Name, Jahr und Modell ein, um fortzufahren.',
+                    de: 'Erfassen Sie Kennung, Name, Jahr und Modell, um fortzufahren.',
                   })}
                 </span>
               )}

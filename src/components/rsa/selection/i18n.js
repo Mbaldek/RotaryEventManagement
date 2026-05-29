@@ -45,7 +45,7 @@ export const UI = {
   pageTitle:      { fr: 'File des candidatures',     en: 'Candidate queue',      de: 'Bewerbungsliste' },
   pageSubtitle:   { fr: 'Décidez de l’éligibilité, attribuez un cluster, validez en équipe.',
                     en: 'Decide eligibility, assign a cluster, validate as a team.',
-                    de: 'Förderfähigkeit entscheiden, Cluster zuweisen, im Team validieren.' },
+                    de: 'Entscheiden Sie über die Förderfähigkeit, weisen Sie ein Cluster zu und validieren Sie gemeinsam im Team.' },
 
   // Onglets / filtres
   filtersAll:     { fr: 'Tous',                      en: 'All',                  de: 'Alle' },
@@ -64,12 +64,12 @@ export const UI = {
   // Liste
   emptyQueue:     { fr: 'Aucun dossier à examiner pour le moment.',
                     en: 'No applications to review at the moment.',
-                    de: 'Derzeit keine Bewerbungen zu prüfen.' },
+                    de: 'Derzeit liegen keine Bewerbungen zur Prüfung vor.' },
   loadMore:       { fr: 'Charger plus',              en: 'Load more',            de: 'Mehr laden' },
   loading:        { fr: 'Chargement…',               en: 'Loading…',             de: 'Wird geladen…' },
   loadError:      { fr: 'Impossible de charger la file. Réessayez plus tard.',
                     en: 'Could not load the queue. Please try again later.',
-                    de: 'Liste konnte nicht geladen werden. Bitte später erneut versuchen.' },
+                    de: 'Die Liste konnte nicht geladen werden. Bitte versuchen Sie es später erneut.' },
   retry:          { fr: 'Réessayer',                 en: 'Retry',                de: 'Erneut versuchen' },
 
   // Drawer
@@ -95,7 +95,7 @@ export const UI = {
   openExternal:    { fr: 'Ouvrir',                    en: 'Open',                 de: 'Öffnen' },
   rulesNote:       { fr: 'Les critères d’éligibilité sont indicatifs (Règlement Art. 2). Le comité reste souverain.',
                      en: 'Eligibility criteria are indicative (Rules Art. 2). The committee remains sovereign.',
-                     de: 'Förderkriterien sind orientierend (Reglement Art. 2). Das Komitee entscheidet souverän.' },
+                     de: 'Die Förderkriterien sind indikativ (Reglement Art. 2). Die endgültige Entscheidung obliegt dem Komitee.' },
   snapshotComputedOn: { fr: 'Calculée le {date}',     en: 'Computed on {date}',   de: 'Berechnet am {date}' },
 
   // Decision panel
@@ -106,23 +106,23 @@ export const UI = {
   clusterNone:     { fr: 'Aucun cluster',             en: 'No cluster',           de: 'Kein Cluster' },
   clusterSuggested: { fr: 'Suggéré d’après les secteurs déclarés.',
                       en: 'Suggested from declared sectors.',
-                      de: 'Vorschlag aus den genannten Sektoren.' },
+                      de: 'Vorschlag auf Basis der angegebenen Sektoren.' },
   rationaleField:  { fr: 'Motif',                     en: 'Rationale',            de: 'Begründung' },
   rationaleRequired: { fr: 'Requis pour un rejet ou une mise en liste d’attente.',
                        en: 'Required when rejecting or waitlisting.',
                        de: 'Pflicht bei Ablehnung oder Warteliste.' },
   rationalePlaceholder: { fr: 'Notes pour le comité (optionnel pour éligible).',
                           en: 'Notes for the committee (optional for eligible).',
-                          de: 'Notizen für das Komitee (optional bei Förderfähig).' },
+                          de: 'Notizen für das Komitee (bei „förderfähig" optional).' },
   saveDecision:    { fr: 'Enregistrer la décision',   en: 'Save decision',        de: 'Entscheidung speichern' },
   updateDecision:  { fr: 'Modifier ma décision',      en: 'Update my decision',   de: 'Meine Entscheidung ändern' },
   saving:          { fr: 'Enregistrement…',           en: 'Saving…',              de: 'Wird gespeichert…' },
   errEligibleNeedsCluster: { fr: 'Choisissez un cluster pour une décision « éligible ».',
                              en: 'Pick a cluster for an "eligible" decision.',
-                             de: 'Wählen Sie ein Cluster für "Förderfähig".' },
+                             de: 'Bitte wählen Sie ein Cluster, um die Entscheidung „förderfähig" festzulegen.' },
   errRationale: { fr: 'Le motif est requis pour ce verdict.',
                   en: 'A rationale is required for this verdict.',
-                  de: 'Eine Begründung ist für dieses Urteil erforderlich.' },
+                  de: 'Für dieses Urteil ist eine Begründung erforderlich.' },
   pendingHint:    { fr: 'Décision en attente de {who} ({when}).',
                     en: 'Pending decision by {who} ({when}).',
                     de: 'Entscheidung steht aus von {who} ({when}).' },
@@ -142,11 +142,11 @@ export const UI = {
   needsValidation: { fr: 'À valider',                 en: 'Needs validation',     de: 'Validierung erforderlich' },
   finalLocked:    { fr: 'Décision verrouillée par l’admin.',
                     en: 'Decision locked by admin.',
-                    de: 'Vom Admin gesperrte Entscheidung.' },
+                    de: 'Entscheidung wurde von der Administration gesperrt.' },
   finalCaption:   { fr: 'Final',                      en: 'Final',                de: 'Endgültig' },
   comiteOnlyEdit: { fr: 'Demandez à l’administrateur pour rouvrir.',
                     en: 'Ask the admin to reopen.',
-                    de: 'Bitten Sie den Admin, sie wieder zu öffnen.' },
+                    de: 'Bitte wenden Sie sich an die Administration, um die Entscheidung wiederzuöffnen.' },
   overrideOf:    { fr: 'Remplace #{id}',              en: 'Overrides #{id}',      de: 'Ersetzt #{id}' },
 
   // Timeline
@@ -160,7 +160,7 @@ export const UI = {
   assignedTo:    { fr: 'Affecté à',                    en: 'Assigned to',         de: 'Zugewiesen an' },
 
   // Accès
-  authLoading:    { fr: 'Vérification de votre session…', en: 'Checking your session…', de: 'Sitzung wird geprüft…' },
+  authLoading:    { fr: 'Vérification de votre session…', en: 'Checking your session…', de: 'Ihre Sitzung wird geprüft…' },
   noAccess:       { fr: 'Cette section est réservée au comité et à l’administration.',
                     en: 'This area is restricted to the committee and administrators.',
                     de: 'Dieser Bereich ist dem Komitee und der Administration vorbehalten.' },
@@ -170,5 +170,5 @@ export const UI = {
   noEffectiveDecision: { fr: 'Aucune décision encore.', en: 'No decision yet.',    de: 'Noch keine Entscheidung.' },
   emptyDetailHint: { fr: 'Sélectionnez un dossier dans la liste pour afficher son contenu.',
                      en: 'Pick an application from the list to view its content.',
-                     de: 'Wählen Sie eine Bewerbung aus, um die Details zu sehen.' },
+                     de: 'Wählen Sie eine Bewerbung in der Liste aus, um die Details anzuzeigen.' },
 };

@@ -18,9 +18,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Navigate, useLocation } from 'react-router-dom';
 import { PageShell, MagicLinkLogin } from '@/components/design';
-import { GOLD, NAVY, SERIF } from '@/components/design/tokens';
+import { GOLD, NAVY, SERIF, EASE } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { supabase } from '@/lib/supabase';
@@ -127,8 +128,16 @@ export default function Login() {
     });
     return (
       <PageShell>
-        <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4">
-          <Loader2 className="w-6 h-6 animate-spin" aria-hidden style={{ color: GOLD }} />
+        <div
+          className="min-h-[70vh] flex flex-col items-center justify-center gap-4"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2
+            className="w-6 h-6 animate-spin"
+            aria-label={loadingCopy}
+            style={{ color: GOLD }}
+          />
           <p className="text-[14px]" style={{ color: NAVY, fontFamily: SERIF }}>
             {loadingCopy}
           </p>
@@ -144,14 +153,21 @@ export default function Login() {
 
   return (
     <PageShell>
-      <div className="min-h-[70vh] flex items-center justify-center">
+      <div className="min-h-[70vh] flex items-center justify-center px-4 md:px-0">
         {!loading && (
-          <MagicLinkLogin
-            redirectPath={redirectPath}
-            intent={query.intent}
-            editionId={query.edition}
-            clubId={query.club}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: EASE }}
+            className="w-full max-w-[440px]"
+          >
+            <MagicLinkLogin
+              redirectPath={redirectPath}
+              intent={query.intent}
+              editionId={query.edition}
+              clubId={query.club}
+            />
+          </motion.div>
         )}
       </div>
     </PageShell>

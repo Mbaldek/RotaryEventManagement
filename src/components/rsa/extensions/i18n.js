@@ -26,12 +26,12 @@ export const EXT_UI = {
   sectionHintMaster: {
     fr: 'Étendez la plateforme avec vos propres steps de funnel, onglets cockpit, templates email ou webhooks. Géré par le master admin.',
     en: 'Extend the platform with your own funnel steps, cockpit tabs, email templates or webhooks. Managed by the master admin.',
-    de: 'Erweitern Sie die Plattform mit eigenen Funnel-Schritten, Cockpit-Tabs, E-Mail-Vorlagen oder Webhooks. Vom Master-Admin verwaltet.',
+    de: 'Erweitern Sie die Plattform um eigene Funnel-Schritte, Cockpit-Tabs, E-Mail-Vorlagen oder Webhooks. Wird vom Master-Administrator verwaltet.',
   },
   sectionHintClub: {
     fr: 'Personnalisez l’expérience de votre club avec des extensions sur mesure.',
     en: 'Customize your club’s experience with bespoke extensions.',
-    de: 'Passen Sie das Erlebnis Ihres Clubs mit maßgeschneiderten Erweiterungen an.',
+    de: 'Gestalten Sie das Erlebnis Ihres Clubs mit maßgeschneiderten Erweiterungen.',
   },
 
   // Actions
@@ -40,17 +40,17 @@ export const EXT_UI = {
   remove:          { fr: 'Supprimer',            en: 'Delete',         de: 'Löschen' },
   cancel:          { fr: 'Annuler',              en: 'Cancel',         de: 'Abbrechen' },
   save:            { fr: 'Enregistrer',          en: 'Save',           de: 'Speichern' },
-  saving:          { fr: 'Enregistrement…',      en: 'Saving…',        de: 'Speichern…' },
+  saving:          { fr: 'Enregistrement…',      en: 'Saving…',        de: 'Wird gespeichert…' },
   create:          { fr: 'Créer',                en: 'Create',         de: 'Erstellen' },
-  creating:        { fr: 'Création…',            en: 'Creating…',      de: 'Erstellen…' },
+  creating:        { fr: 'Création…',            en: 'Creating…',      de: 'Wird erstellt…' },
   close:           { fr: 'Fermer',               en: 'Close',          de: 'Schließen' },
-  loading:         { fr: 'Chargement…',          en: 'Loading…',       de: 'Lädt…' },
+  loading:         { fr: 'Chargement…',          en: 'Loading…',       de: 'Wird geladen…' },
 
   // States
   empty: {
     fr: 'Aucune extension définie pour l’instant. Créez la première pour étendre la plateforme.',
     en: 'No extension defined yet. Create the first one to extend the platform.',
-    de: 'Noch keine Erweiterung definiert. Erstellen Sie die erste, um die Plattform zu erweitern.',
+    de: 'Noch keine Erweiterung angelegt. Erstellen Sie die erste, um die Plattform zu erweitern.',
   },
   active:          { fr: 'Active',               en: 'Active',         de: 'Aktiv' },
   inactive:        { fr: 'Inactive',             en: 'Inactive',       de: 'Inaktiv' },
@@ -70,7 +70,7 @@ export const EXT_UI = {
   removeConfirmBody: {
     fr: 'Cette action est définitive. L’extension sera retirée de la plateforme. Confirmer ?',
     en: 'This action is permanent. The extension will be removed from the platform. Confirm?',
-    de: 'Diese Aktion ist endgültig. Die Erweiterung wird von der Plattform entfernt. Bestätigen?',
+    de: 'Diese Aktion ist endgültig. Die Erweiterung wird aus der Plattform entfernt. Möchten Sie fortfahren?',
   },
 
   // Placeholder slot rendering (V1 — vrai render JSON-schema en V4)
@@ -82,7 +82,7 @@ export const EXT_UI = {
   slotPlaceholderHint: {
     fr: 'Rendu réel disponible en V4 (marketplace).',
     en: 'Real rendering available in V4 (marketplace).',
-    de: 'Echtes Rendering ab V4 (Marktplatz) verfügbar.',
+    de: 'Tatsächliches Rendering ab V4 (Marktplatz) verfügbar.',
   },
 };
 
@@ -163,13 +163,13 @@ export const EXT_FORM = {
   kindHint: {
     fr: 'Détermine où l’extension sera rendue (funnel, cockpit, email, webhook).',
     en: 'Determines where the extension will be rendered (funnel, cockpit, email, webhook).',
-    de: 'Legt fest, wo die Erweiterung gerendert wird (Funnel, Cockpit, E-Mail, Webhook).',
+    de: 'Bestimmt, an welcher Stelle die Erweiterung angezeigt wird (Funnel, Cockpit, E-Mail, Webhook).',
   },
   activeLabel:  { fr: 'Active', en: 'Active', de: 'Aktiv' },
   activeHint: {
     fr: 'Quand inactive, l’extension n’est pas rendue dans la plateforme.',
     en: 'When inactive, the extension is not rendered in the platform.',
-    de: 'Wenn inaktiv, wird die Erweiterung nicht in der Plattform gerendert.',
+    de: 'Im inaktiven Zustand wird die Erweiterung auf der Plattform nicht angezeigt.',
   },
 
   // Config (JSON)
@@ -177,7 +177,7 @@ export const EXT_FORM = {
   configHint: {
     fr: 'JSON libre. Le schéma exact dépend du type d’extension — documenté en V4.',
     en: 'Free-form JSON. The exact schema depends on the extension kind — documented in V4.',
-    de: 'Freies JSON. Das genaue Schema hängt von der Art der Erweiterung ab — in V4 dokumentiert.',
+    de: 'Freies JSON. Das genaue Schema richtet sich nach dem Erweiterungstyp und wird in V4 dokumentiert.',
   },
   configInvalid: { fr: 'JSON invalide.', en: 'Invalid JSON.', de: 'Ungültiges JSON.' },
   configPlaceholder: {
@@ -191,13 +191,13 @@ export const EXT_FORM = {
   positionHint: {
     fr: 'Ordre d’affichage (plus petit = plus haut). Par défaut : 0.',
     en: 'Display order (lower = higher). Defaults to 0.',
-    de: 'Anzeigereihenfolge (niedriger = höher). Standard: 0.',
+    de: 'Reihenfolge der Anzeige (kleinerer Wert = weiter oben). Standardwert: 0.',
   },
-  scopeLabel: { fr: 'Scope', en: 'Scope', de: 'Bereich' },
+  scopeLabel: { fr: 'Scope', en: 'Scope', de: 'Geltungsbereich' },
   scopeHint: {
     fr: 'Le scope (plateforme / club / compétition) est immuable après création.',
     en: 'The scope (platform / club / competition) is immutable after creation.',
-    de: 'Der Scope (Plattform / Club / Wettbewerb) ist nach der Erstellung unveränderlich.',
+    de: 'Der Geltungsbereich (Plattform / Club / Wettbewerb) kann nach der Erstellung nicht mehr geändert werden.',
   },
 
   // Errors

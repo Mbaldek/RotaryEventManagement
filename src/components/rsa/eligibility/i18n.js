@@ -15,15 +15,15 @@ export const UI = {
   title: {
     fr: 'Règles d’éligibilité',
     en: 'Eligibility rules',
-    de: 'Eignungsregeln',
+    de: 'Teilnahmeregeln',
   },
   intro: {
     fr: 'Activez les critères que la plateforme doit appliquer aux candidatures, puis paramétrez-les. « Exclu » écarte automatiquement le dossier ; « Flag » le marque pour le comité.',
     en: 'Toggle the criteria the platform should apply to applications, then configure each one. “Exclude” auto-rejects the file; “Flag” marks it for the committee.',
-    de: 'Aktivieren Sie die Kriterien, die die Plattform auf Bewerbungen anwenden soll, und konfigurieren Sie sie. „Ausschluss“ lehnt das Dossier automatisch ab; „Flag“ markiert es für das Komitee.',
+    de: 'Aktivieren Sie die Kriterien, die die Plattform auf Bewerbungen anwenden soll, und konfigurieren Sie diese anschließend. „Ausschluss" weist das Dossier automatisch ab; „Flag" markiert es zur Prüfung durch das Komitee.',
   },
   active: { fr: 'Actif', en: 'Active', de: 'Aktiv' },
-  inactive: { fr: 'Désactivé', en: 'Off', de: 'Aus' },
+  inactive: { fr: 'Désactivé', en: 'Off', de: 'Deaktiviert' },
   enable: { fr: 'Activer', en: 'Enable', de: 'Aktivieren' },
   disable: { fr: 'Désactiver', en: 'Disable', de: 'Deaktivieren' },
   behaviorLabel: { fr: 'Comportement', en: 'Behavior', de: 'Verhalten' },
@@ -33,10 +33,10 @@ export const UI = {
   advancedHint: {
     fr: 'Aperçu JSON brut en lecture seule — utile pour vérification ou export.',
     en: 'Raw JSON preview, read-only — useful for verification or export.',
-    de: 'Roher JSON-Vorschau, nur lesbar — nützlich zur Prüfung oder zum Export.',
+    de: 'Schreibgeschützte JSON-Rohvorschau — nützlich zur Prüfung oder zum Export.',
   },
   paramsTitle: { fr: 'Paramètres', en: 'Parameters', de: 'Parameter' },
-  noParams: { fr: 'Aucun paramètre — uniquement actif/inactif.', en: 'No parameters — on/off only.', de: 'Keine Parameter — nur an/aus.' },
+  noParams: { fr: 'Aucun paramètre — uniquement actif/inactif.', en: 'No parameters — on/off only.', de: 'Keine Parameter — nur aktiv/deaktiviert.' },
 };
 
 // ── Catalogue : labels + descriptions courtes par critère ────────────────────
@@ -46,7 +46,7 @@ export const CRITERIA = {
     desc: {
       fr: 'Liste des pays admissibles. Une startup hors liste sera écartée ou signalée.',
       en: 'List of admissible countries. A startup outside this list is excluded or flagged.',
-      de: 'Liste der zulässigen Länder. Startups außerhalb dieser Liste werden ausgeschlossen oder markiert.',
+      de: 'Liste der zulässigen Länder. Startups außerhalb der Liste werden ausgeschlossen oder zur Prüfung markiert.',
     },
     paramLabel: { fr: 'Pays admis', en: 'Admitted countries', de: 'Zugelassene Länder' },
     paramHelp: {
@@ -54,20 +54,20 @@ export const CRITERIA = {
       en: 'Add each authorised country.',
       de: 'Fügen Sie jedes zugelassene Land hinzu.',
     },
-    placeholder: { fr: 'Choisir un pays…', en: 'Pick a country…', de: 'Land wählen…' },
+    placeholder: { fr: 'Choisir un pays…', en: 'Pick a country…', de: 'Land auswählen…' },
   },
   created_after: {
     label: { fr: 'Date de création minimum', en: 'Minimum founding date', de: 'Mindestgründungsdatum' },
     desc: {
       fr: 'Les startups créées avant cette date sont écartées ou signalées.',
       en: 'Startups founded before this date are excluded or flagged.',
-      de: 'Vor diesem Datum gegründete Startups werden ausgeschlossen oder markiert.',
+      de: 'Startups, die vor diesem Datum gegründet wurden, werden ausgeschlossen oder zur Prüfung markiert.',
     },
-    paramLabel: { fr: 'Seuil de date', en: 'Date threshold', de: 'Datumsschwelle' },
+    paramLabel: { fr: 'Seuil de date', en: 'Date threshold', de: 'Stichtag' },
     paramHelp: {
       fr: 'Le règlement RSA actuel exige une création postérieure au 1er janvier 2020.',
       en: 'The current RSA rules require a founding date after 1 January 2020.',
-      de: 'Das aktuelle RSA-Reglement verlangt ein Gründungsdatum nach dem 1. Januar 2020.',
+      de: 'Das aktuelle RSA-Reglement setzt eine Gründung nach dem 1. Januar 2020 voraus.',
     },
   },
   revenue_max: {
@@ -75,13 +75,13 @@ export const CRITERIA = {
     desc: {
       fr: 'Plafond annuel de CA (en €). Au-delà, la candidature est signalée ou écartée.',
       en: 'Annual revenue cap (in €). Above this, the application is flagged or excluded.',
-      de: 'Jährliche Umsatzobergrenze (in €). Darüber wird die Bewerbung markiert oder ausgeschlossen.',
+      de: 'Jährliche Umsatzobergrenze (in €). Darüber wird die Bewerbung zur Prüfung markiert oder ausgeschlossen.',
     },
     paramLabel: { fr: 'Seuil de CA (€)', en: 'Revenue threshold (€)', de: 'Umsatzschwelle (€)' },
     paramHelp: {
       fr: 'Seuil actuel du règlement : 500 000 €.',
       en: 'Current rulebook threshold: €500,000.',
-      de: 'Aktuelle Schwelle im Reglement: 500.000 €.',
+      de: 'Aktuell im Reglement festgelegte Schwelle: 500.000 €.',
     },
   },
   raised_max: {
@@ -89,13 +89,13 @@ export const CRITERIA = {
     desc: {
       fr: 'Plafond du capital levé (en €). Au-delà, la candidature est signalée ou écartée.',
       en: 'Cap on funds raised (in €). Above this, the application is flagged or excluded.',
-      de: 'Obergrenze für eingeworbenes Kapital (in €). Darüber wird die Bewerbung markiert oder ausgeschlossen.',
+      de: 'Obergrenze für eingeworbenes Kapital (in €). Darüber wird die Bewerbung zur Prüfung markiert oder ausgeschlossen.',
     },
     paramLabel: { fr: 'Seuil de levée (€)', en: 'Funds raised threshold (€)', de: 'Kapitalschwelle (€)' },
     paramHelp: {
       fr: 'Seuil actuel du règlement : 800 000 €.',
       en: 'Current rulebook threshold: €800,000.',
-      de: 'Aktuelle Schwelle im Reglement: 800.000 €.',
+      de: 'Aktuell im Reglement festgelegte Schwelle: 800.000 €.',
     },
   },
   registration: {
@@ -119,7 +119,7 @@ export const CRITERIA = {
     desc: {
       fr: 'Activez chaque pièce attendue et choisissez son comportement : « exclu » bloque le dossier en cas d’absence, « flag » l’envoie pour examen au comité.',
       en: 'Toggle each expected file and pick its behavior: "exclude" blocks the file if missing, "flag" sends it for committee review.',
-      de: 'Aktivieren Sie jedes erwartete Dokument und wählen Sie das Verhalten: „Ausschluss“ blockiert das Dossier bei Fehlen, „Flag“ sendet es zur Prüfung an das Komitee.',
+      de: 'Aktivieren Sie jedes erwartete Dokument und wählen Sie das Verhalten: „Ausschluss" sperrt das Dossier bei Fehlen, „Flag" leitet es zur Prüfung an das Komitee weiter.',
     },
     paramLabel: { fr: 'Documents demandés', en: 'Requested documents', de: 'Angeforderte Dokumente' },
     notRequested: { fr: 'Non demandé', en: 'Not requested', de: 'Nicht angefordert' },
@@ -127,7 +127,7 @@ export const CRITERIA = {
     emptyHint: {
       fr: 'Aucun document n’est demandé tant qu’aucune ligne n’est activée.',
       en: 'No document is requested until at least one row is enabled.',
-      de: 'Es wird kein Dokument angefordert, solange keine Zeile aktiviert ist.',
+      de: 'Solange keine Zeile aktiviert ist, wird kein Dokument angefordert.',
     },
   },
 };
