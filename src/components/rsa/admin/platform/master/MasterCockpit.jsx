@@ -212,23 +212,27 @@ export default function MasterCockpit() {
     <>
       <MasterStatusStrip />
 
-      {/* Tabs — underline editorial style (cockpit nav, pas filter chip) */}
-      <CockpitTabs
-        idPrefix="master"
-        items={TAB_IDS.map((id) => ({ id, label: t(TABS[id]) }))}
-        active={tab}
-        onChange={setTab}
-        ariaLabel="Master cockpit navigation"
-        className="mb-6"
-      />
+      {/* Tabs box — fond TINT_ADMIN clair, pour séparer du fond CREAM page. */}
+      <div
+        className="rounded-[4px] px-3 md:px-4 pt-2 mb-4"
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+      >
+        <CockpitTabs
+          idPrefix="master"
+          items={TAB_IDS.map((id) => ({ id, label: t(TABS[id]) }))}
+          active={tab}
+          onChange={setTab}
+          ariaLabel="Master cockpit navigation"
+        />
+      </div>
 
-      {/* Panel body — surface TINT_ADMIN + hairline pour séparer du header/tabs sur fond CREAM. */}
+      {/* Panel body — surface blanche + hairline pour se détacher du fond CREAM. */}
       <div
         id={`master-panel-${tab}`}
         role="tabpanel"
         aria-labelledby={`master-tab-${tab}`}
         className="rounded-[4px] p-4 md:p-6"
-        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
       >
         <AnimatePresence mode="wait">
           <motion.div

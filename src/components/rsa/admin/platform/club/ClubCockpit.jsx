@@ -235,23 +235,27 @@ export default function ClubCockpit({ clubId }) {
         )}
       </div>
 
-      {/* Tabs — underline editorial style (cockpit nav, pas filter chip) */}
-      <CockpitTabs
-        idPrefix="club"
-        items={TAB_IDS.map((id) => ({ id, label: t(CLUB_TABS[id]) }))}
-        active={tab}
-        onChange={setTab}
-        ariaLabel={t(CLUB_UI.eyebrow)}
-        className="mb-4"
-      />
+      {/* Tabs box — fond TINT_ADMIN clair, pour séparer du fond CREAM page. */}
+      <div
+        className="rounded-[4px] px-3 md:px-4 pt-2 mb-4"
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+      >
+        <CockpitTabs
+          idPrefix="club"
+          items={TAB_IDS.map((id) => ({ id, label: t(CLUB_TABS[id]) }))}
+          active={tab}
+          onChange={setTab}
+          ariaLabel={t(CLUB_UI.eyebrow)}
+        />
+      </div>
 
-      {/* Panel body — surface TINT_ADMIN + hairline pour séparer du header/tabs. */}
+      {/* Panel body — surface blanche + hairline pour se détacher du fond CREAM. */}
       <div
         id={`club-panel-${tab}`}
         role="tabpanel"
         aria-labelledby={`club-tab-${tab}`}
         className="rounded-[4px] p-4 md:p-6"
-        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
       >
         {editionsQ.isLoading && (
           <div className="py-12 flex justify-center" role="status" aria-live="polite">
