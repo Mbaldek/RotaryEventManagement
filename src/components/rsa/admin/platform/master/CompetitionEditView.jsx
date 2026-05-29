@@ -239,28 +239,32 @@ export default function CompetitionEditView({ editionId, onClose }) {
         </div>
       </div>
 
-      {/* Tabs — underline editorial style */}
-      <CockpitTabs
-        idPrefix="competition-edit"
-        items={tabs.map((tab) => ({
-          id: tab.id,
-          label: tab.label,
-          disabled: tab.disabled,
-        }))}
-        active={activeTab}
-        onChange={setActiveTab}
-        ariaLabel="Competition edit navigation"
-        className="mb-5"
-      />
+      {/* Tabs box — fond TINT_ADMIN clair (mirror MasterCockpit). */}
+      <div
+        className="rounded-[4px] px-3 md:px-4 pt-2 mb-4"
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+      >
+        <CockpitTabs
+          idPrefix="competition-edit"
+          items={tabs.map((tab) => ({
+            id: tab.id,
+            label: tab.label,
+            disabled: tab.disabled,
+          }))}
+          active={activeTab}
+          onChange={setActiveTab}
+          ariaLabel="Competition edit navigation"
+        />
+      </div>
 
-      {/* Body — AnimatePresence pour transition douce entre tabs.
-          Le panel reste TINT_ADMIN (3-tint policy). Le contenu fade+slide. */}
+      {/* Body — surface blanche (3-tint policy : CREAM page → TINT_ADMIN tabs box → white body).
+          AnimatePresence pour transition douce entre tabs. */}
       <div
         id={`competition-edit-panel-${activeTab}`}
         role="tabpanel"
         aria-labelledby={`competition-edit-tab-${activeTab}`}
         className="rounded-[4px] p-5 mb-4"
-        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
       >
         <AnimatePresence mode="wait">
           <motion.div

@@ -12,19 +12,34 @@
 // chaque change. C'est le hook autosave qui décide de la persistance.
 
 import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useLang } from '@/lib/platform/i18n';
-import { CREAM2, NAVY, MUTED, INK } from '@/components/design/tokens';
+import { CREAM2, EASE, NAVY, MUTED, INK } from '@/components/design/tokens';
 import { EDITION_STATUSES } from '../../i18n';
 import { COMP, COMPETITION_MODELS } from '../i18n';
 import { FieldLabel, TextRow, TextareaRow, SelectRow } from './fields';
 
+// Stagger modéré sur le mount des champs (premium, pas saturé).
+// Chaque enfant apparait avec opacity+y delta, décalé de 40ms.
+const STAGGER_PARENT = {
+  initial: {},
+  animate: { transition: { staggerChildren: 0.04, delayChildren: 0.05 } },
+};
+const STAGGER_CHILD = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.28, ease: EASE } },
+};
+
 export default function IdentityTab({ values = {}, onPatch, mode = 'edit', errors = {} }) {
   const { t } = useLang();
   const isCreate = mode === 'create';
+  const reduce = useReducedMotion();
+  const parent = reduce ? {} : STAGGER_PARENT;
+  const child = reduce ? {} : STAGGER_CHILD;
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <motion.div className="space-y-5" variants={parent} initial="initial" animate="animate">
+      <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-3" variants={child}>
         <TextRow
           id="comp-id"
           label={t(COMP.idLabel)}
@@ -70,11 +85,11 @@ export default function IdentityTab({ values = {}, onPatch, mode = 'edit', error
           onChange={(v) => onPatch({ status: v })}
           options={EDITION_STATUSES.map((s) => ({ value: s, label: s }))}
         />
-      </div>
+      </motion.div>
 
       {/* Trio hero éditorial 3·33·333 — titre court, phrase d'accroche, description longue.
           Servent à composer le hero de la page publique de la compétition. */}
-      <div className="pt-3" style={{ borderTop: `1px dashed ${CREAM2}` }}>
+      <motion.div className="pt-3" style={{ borderTop: `1px dashed ${CREAM2}` }} variants={child}>
         <FieldLabel>
           {t({
             fr: 'Hero éditorial',
@@ -142,9 +157,9 @@ export default function IdentityTab({ values = {}, onPatch, mode = 'edit', error
             })}
           />
         </div>
-      </div>
+      </motion.div>
 
-      <div>
+      <motion.div variants={child}>
         <FieldLabel>{t(COMP.modelLabel)}</FieldLabel>
         <div className="flex flex-col gap-1.5">
           {COMPETITION_MODELS.map((m) => (
@@ -178,7 +193,7 @@ export default function IdentityTab({ values = {}, onPatch, mode = 'edit', error
             })}
           </p>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
