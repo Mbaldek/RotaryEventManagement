@@ -153,16 +153,27 @@ export function PlatformAuthProvider({ children }) {
     //
     // L'utilisateur peut alors re-login proprement, sans avoir à clear le
     // site data manuellement dans DevTools.
+    // 2026-05-29 — bumped 4000 → 10000ms pour rester cohérent avec le
+    // getSession timeout (8s). Si le watchdog fire à 4s, /Admin voit
+    // loading=false + authUser=null et redirige /Login AVANT que getSession
+    // n'ait fini → même symptôme « éjecté au refresh » qu'on essaie de fixer.
+    // 10s = 8s getSession + 2s marge loadIdentity.
     const initWatchdog = setTimeout(() => {
       if (active) {
         // eslint-disable-next-line no-console
-        console.warn('[PlatformAuth] init watchdog fired (4s) — forcing loading=false + clean.');
+        console.warn('[PlatformAuth] init watchdog fired (10s) — forcing loading=false.');
         setLoading(false);
       }
-    }, 4000);
+    }, 10000);
 
+    // 2026-05-29 — bumped 3000 → 8000ms. Le 3s killait des sessions Google SSO
+    // VALIDES : au refresh, getSession() déclenche en interne un refreshSession()
+    // réseau (+ lock navigator.locks) qui peut dépasser 3s sur cold start ou
+    // réseau froid, surtout pour les tokens OAuth dont l'access_token est proche
+    // d'expiration. 8s laisse passer ces cas légitimes sans laisser un VRAI
+    // zombie (hang indéfini) bloquer l'utilisateur.
     const getSessionWithTimeout = () => {
-      const timeoutMs = 3000;
+      const timeoutMs = 8000;
       return Promise.race([
         supabase.auth.getSession(),
         new Promise((_, reject) =>
@@ -209,10 +220,16 @@ export function PlatformAuthProvider({ children }) {
           // eslint-disable-next-line no-console
           console.warn('[PlatformAuth] getSession resolved, session?', !!session);
         } catch (timeoutErr) {
+          // 2026-05-29 — on NE wipe PLUS le localStorage ici. Le timeout (même 8s)
+          // peut être un faux positif (réseau froid, refreshSession lent sur SSO
+          // Google) plutôt qu'un vrai zombie. Wiper détruisait des sessions
+          // valides → user éjecté vers /Login au refresh. On dégrade en mémoire
+          // (session=null pour ce mount) MAIS on préserve les tokens : le
+          // prochain refresh retente getSession avec le state intact. Le vrai
+          // nettoyage destructif reste accessible via signOut() explicite.
           // eslint-disable-next-line no-console
-          console.error('[PlatformAuth] getSession HUNG —', timeoutErr.message,
-            '→ clearing corrupted session');
-          await cleanCorruptedSession();
+          console.error('[PlatformAuth] getSession slow/hung —', timeoutErr.message,
+            '→ degrading to anonymous (tokens preserved in storage)');
           session = null;
         }
         if (!active) return;
@@ -228,12 +245,14 @@ export function PlatformAuthProvider({ children }) {
         // eslint-disable-next-line no-console
         console.warn('[PlatformAuth] loadIdentity done');
       } catch (err) {
-        // Fix défensif : si loadIdentity throw (ex. RPC rsa_my_roles hang), on
-        // libère quand même le verrou de loading + on nettoie la session pour
-        // que le user ne reste pas en zombie auth state.
+        // 2026-05-29 — on NE wipe PLUS le localStorage ici non plus. Une exception
+        // pendant loadIdentity (RPC transitoire, setSentryUser qui throw, etc.) ne
+        // doit pas détruire la session : elle est probablement valide. On dégrade
+        // juste en mémoire (authUser=null pour ce mount). Le wipe destructif était
+        // observé en prod via les logs Supabase comme cause probable des kick-outs
+        // récurrents (full SSO Google toutes les ~30min sans refresh_token entre).
         // eslint-disable-next-line no-console
-        console.error('[PlatformAuth] init failed:', err);
-        await cleanCorruptedSession();
+        console.error('[PlatformAuth] init failed (tokens preserved):', err);
         if (active) setAuthUser(null);
       } finally {
         if (active) {
@@ -244,6 +263,13 @@ export function PlatformAuthProvider({ children }) {
     })();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // DIAGNOSTIC 2026-05-29 — on logge le type d'événement Supabase pour
+      // identifier quel événement kick l'utilisateur en prod. Événements possibles :
+      // INITIAL_SESSION, SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, USER_UPDATED,
+      // PASSWORD_RECOVERY. Un SIGNED_OUT inattendu = signOut() côté client OU
+      // refresh failure côté SDK. Pas de PII : juste event + bool session.
+      // eslint-disable-next-line no-console
+      console.warn('[PlatformAuth] onAuthStateChange', { event: _event, hasSession: !!session?.user });
       try {
         setAuthUser(session?.user ?? null);
         await loadIdentity(session?.user?.email);
