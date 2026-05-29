@@ -14,19 +14,18 @@ export const TABS = {
   clubs:              { fr: 'Clubs',              en: 'Clubs',                   de: 'Clubs' },
   roles:              { fr: 'Rôles globaux',      en: 'Global roles',            de: 'Globale Rollen' },
   competition_admins: { fr: 'Admins compétition', en: 'Competition admins',      de: 'Wettbewerbs-Administratoren' },
-  jury_apps:          { fr: 'Candidatures jury',  en: 'Jury applications',       de: 'Jury-Bewerbungen' },
   finale:             { fr: 'Finale',             en: 'Finale',                  de: 'Finale' },
   advanced:           { fr: 'Outils avancés',     en: 'Advanced tools',          de: 'Erweiterte Tools' },
 };
 
-// Ordre : roles → competition_admins → jury_apps. Le bloc "rôles" reste groupé.
+// Ordre : roles → competition_admins. jury_apps RETIRÉ (2026-05-29) — les candidatures
+// jury sont scopées (edition_id, club_id), reviewed par club_admin dans son cockpit.
 export const TAB_IDS = [
   'overview',
   'competitions',
   'clubs',
   'roles',
   'competition_admins',
-  'jury_apps',
   'finale',
   'advanced',
 ];

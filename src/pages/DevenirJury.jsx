@@ -10,7 +10,7 @@
 // La whitelist ALLOWED_NEXT de postLoginRoute.js autorise déjà `/DevenirJury`.
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   PageShell,
@@ -29,6 +29,13 @@ import { UI } from '@/components/rsa/jury-application/i18n';
 export default function DevenirJury() {
   const { t } = useLang();
   const reduce = useReducedMotion();
+  // Pré-remplissage URL params : un lien partagé /DevenirJury?edition=X&club=Y
+  // (généré par DiffusionSection du master cockpit) fixe la mini-compétition
+  // → le form masque les 2 selecteurs et la candidature arrive directement
+  // chez le club_admin du club concerné.
+  const [searchParams] = useSearchParams();
+  const initialEdition = searchParams.get('edition') || null;
+  const initialClub = searchParams.get('club') || null;
 
   return (
     <PageShell nav width="narrow" footer={<PlatformFooter width="narrow" />}>
@@ -91,7 +98,10 @@ export default function DevenirJury() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE, delay: 0.45 }}
       >
-        <JuryApplicationForm />
+        <JuryApplicationForm
+          initialEdition={initialEdition}
+          initialClub={initialClub}
+        />
       </motion.section>
     </PageShell>
   );

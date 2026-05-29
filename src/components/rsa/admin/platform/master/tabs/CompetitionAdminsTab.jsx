@@ -58,10 +58,10 @@ function useCompetitionAdmins(editionId) {
 function useRevokeCompetitionAdmin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ editionId, email }) => {
+    mutationFn: async ({ editionId, userId }) => {
       const { error } = await supabase.rpc('rsa_revoke_competition_admin', {
+        p_user_id: userId,
         p_edition_id: editionId,
-        p_email: String(email).trim().toLowerCase(),
       });
       if (error) throw error;
     },
@@ -245,7 +245,7 @@ function InviteCompetitionAdminModal({ editionId, editionName, onClose, onSucces
 }
 
 // ── Revoke confirm modal (typed-confirm) ──────────────────────────────────────
-function RevokeConfirmModal({ editionId, email, onClose, onDone }) {
+function RevokeConfirmModal({ editionId, userId, email, onClose, onDone }) {
   const { t, lang } = useLang();
   const revoke = useRevokeCompetitionAdmin();
   // Phrase attendue : "REVOQUER {email}" en FR, "REVOKE {email}" sinon.
@@ -267,7 +267,7 @@ function RevokeConfirmModal({ editionId, email, onClose, onDone }) {
       return;
     }
     try {
-      await revoke.mutateAsync({ editionId, email });
+      await revoke.mutateAsync({ editionId, userId });
       onDone?.();
     } catch (err) {
       setError(t(COMP_ADMINS.revokeError) + ' ' + (err?.message || ''));
@@ -538,7 +538,7 @@ export default function CompetitionAdminsTab() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setRevokeFor(row.email)}
+                    onClick={() => setRevokeFor({ user_id: row.user_id, email: row.email })}
                     className={`text-[12.5px] px-2.5 py-1.5 rounded-[4px] ${FOCUS_RING_CLASS}`}
                     style={{
                       color: DANGER,
@@ -571,7 +571,8 @@ export default function CompetitionAdminsTab() {
       {revokeFor && selectedEditionId && (
         <RevokeConfirmModal
           editionId={selectedEditionId}
-          email={revokeFor}
+          userId={revokeFor.user_id}
+          email={revokeFor.email}
           onClose={() => setRevokeFor(null)}
           onDone={() => {
             setRevokeFor(null);

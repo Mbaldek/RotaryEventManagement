@@ -77,9 +77,17 @@ function validate(draft, t) {
   return errs;
 }
 
-export default function JuryApplicationForm() {
+export default function JuryApplicationForm({ initialEdition = null, initialClub = null }) {
   const { lang, t } = useLang();
-  const [draft, setDraft] = useState(EMPTY);
+  // Pré-remplissage URL params : si ?edition=X&club=Y dans /DevenirJury,
+  // on pré-charge les 2 champs et on les masque (mini-compétition).
+  const [draft, setDraft] = useState({
+    ...EMPTY,
+    editionId: initialEdition || '',
+    clubId: initialClub || '',
+  });
+  const editionLocked = !!initialEdition;
+  const clubLocked = !!initialClub;
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'success' | 'error'
   const [submitError, setSubmitError] = useState(null);
@@ -278,51 +286,59 @@ export default function JuryApplicationForm() {
         )}
       </Field>
 
-      {/* Édition cible */}
-      <Field
-        label={t(UI.fieldEdition)}
-        id="devenir-jury-editionId"
-        helper={t(UI.editionHelper)}
-        error={errors.editionId}
-      >
-        {({ id, describedBy, invalid }) => (
-          <Select
-            id={id}
-            value={draft.editionId}
-            onChange={(e) => patch({ editionId: e.target.value, clubId: '' })}
-            disabled={loadingEditions || editionOptions.length === 0}
-            placeholder={t(UI.editionPlaceholder)}
-            options={editionOptions}
-            invalid={invalid}
-            aria-describedby={describedBy}
-          />
-        )}
-      </Field>
+      {/* Édition cible — masquée si pré-remplie via URL ?edition= */}
+      {editionLocked ? (
+        <input type="hidden" name="editionId" value={draft.editionId} />
+      ) : (
+        <Field
+          label={t(UI.fieldEdition)}
+          id="devenir-jury-editionId"
+          helper={t(UI.editionHelper)}
+          error={errors.editionId}
+        >
+          {({ id, describedBy, invalid }) => (
+            <Select
+              id={id}
+              value={draft.editionId}
+              onChange={(e) => patch({ editionId: e.target.value, clubId: '' })}
+              disabled={loadingEditions || editionOptions.length === 0}
+              placeholder={t(UI.editionPlaceholder)}
+              options={editionOptions}
+              invalid={invalid}
+              aria-describedby={describedBy}
+            />
+          )}
+        </Field>
+      )}
 
-      {/* Club préféré (optionnel) */}
-      <Field
-        label={t(UI.fieldClub)}
-        id="devenir-jury-clubId"
-        helper={t(UI.clubHelper)}
-      >
-        {({ id, describedBy }) => (
-          <Select
-            id={id}
-            value={draft.clubId}
-            onChange={(e) => patch({ clubId: e.target.value })}
-            disabled={!draft.editionId || loadingClubs || clubOptions.length === 0}
-            placeholder={
-              !draft.editionId
-                ? t(UI.clubPlaceholder)
-                : clubOptions.length === 0
-                  ? t(UI.clubNoneSelected)
-                  : t(UI.clubPlaceholder)
-            }
-            options={clubOptions}
-            aria-describedby={describedBy}
-          />
-        )}
-      </Field>
+      {/* Club préféré (optionnel) — masqué si pré-rempli via URL ?club= */}
+      {clubLocked ? (
+        <input type="hidden" name="clubId" value={draft.clubId} />
+      ) : (
+        <Field
+          label={t(UI.fieldClub)}
+          id="devenir-jury-clubId"
+          helper={t(UI.clubHelper)}
+        >
+          {({ id, describedBy }) => (
+            <Select
+              id={id}
+              value={draft.clubId}
+              onChange={(e) => patch({ clubId: e.target.value })}
+              disabled={!draft.editionId || loadingClubs || clubOptions.length === 0}
+              placeholder={
+                !draft.editionId
+                  ? t(UI.clubPlaceholder)
+                  : clubOptions.length === 0
+                    ? t(UI.clubNoneSelected)
+                    : t(UI.clubPlaceholder)
+              }
+              options={clubOptions}
+              aria-describedby={describedBy}
+            />
+          )}
+        </Field>
+      )}
 
       {/* Expertise (multi-chips) */}
       <Field

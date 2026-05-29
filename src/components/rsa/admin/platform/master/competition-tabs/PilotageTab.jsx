@@ -251,6 +251,69 @@ function CopyLinkCard({ label, path, t }) {
   );
 }
 
+// MulticlubLinksSection — groupe les liens apply+jury par club (multi-club).
+// Chaque club a sa propre row hairline gold + 2 CopyLinkCard côte à côte.
+// Le lien public reste isolé en bas.
+function MulticlubLinksSection({ links, t }) {
+  // Group by clubId (le lien public a clubId=null → bucket "public")
+  const byClub = new Map();
+  let publicLink = null;
+  for (const l of links) {
+    if (l.kind === 'public' || l.key === 'public') {
+      publicLink = l;
+      continue;
+    }
+    if (!byClub.has(l.clubId)) byClub.set(l.clubId, { name: l.clubName, items: {} });
+    byClub.get(l.clubId).items[l.kind] = l;
+  }
+  return (
+    <div className="mt-3 flex flex-col gap-4">
+      {[...byClub.entries()].map(([clubId, { name, items }]) => (
+        <div key={clubId}>
+          <div className="flex items-center gap-2 mb-2">
+            <span
+              className="h-[1.5px]"
+              style={{ background: GOLD, width: 32 }}
+              aria-hidden
+            />
+            <span
+              className="uppercase text-[10.5px] tracking-[0.16em] font-medium"
+              style={{ color: GOLD_TEXT }}
+            >
+              {name || clubId}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {items.apply && (
+              <CopyLinkCard
+                label={t(PILOTAGE.step6LinkApply)}
+                path={items.apply.path}
+                t={t}
+              />
+            )}
+            {items.jury && (
+              <CopyLinkCard
+                label={t(PILOTAGE.step6LinkJury)}
+                path={items.jury.path}
+                t={t}
+              />
+            )}
+          </div>
+        </div>
+      ))}
+      {publicLink && (
+        <div className="pt-2" style={{ borderTop: `1px solid ${CREAM2}` }}>
+          <CopyLinkCard
+            label={t(PILOTAGE.step6LinkPublic)}
+            path={publicLink.path}
+            t={t}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── PilotageTab principal ──────────────────────────────────────────────────
 
 export default function PilotageTab({ competition, setActiveTab }) {
@@ -544,20 +607,24 @@ export default function PilotageTab({ competition, setActiveTab }) {
           statusLabel={s6.done ? lblDone : lblPending}
         >
           <p>{t(PILOTAGE.step6Intro)}</p>
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-            {s6.links.map((l) => (
-              <CopyLinkCard
-                key={l.key}
-                label={
-                  l.key === 'apply'  ? t(PILOTAGE.step6LinkApply)  :
-                  l.key === 'jury'   ? t(PILOTAGE.step6LinkJury)   :
-                                       t(PILOTAGE.step6LinkPublic)
-                }
-                path={l.path}
-                t={t}
-              />
-            ))}
-          </div>
+          {s6.isMulticlub ? (
+            <MulticlubLinksSection links={s6.links} t={t} />
+          ) : (
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+              {s6.links.map((l) => (
+                <CopyLinkCard
+                  key={l.key}
+                  label={
+                    l.key === 'apply'  ? t(PILOTAGE.step6LinkApply)  :
+                    l.key === 'jury'   ? t(PILOTAGE.step6LinkJury)   :
+                                         t(PILOTAGE.step6LinkPublic)
+                  }
+                  path={l.path}
+                  t={t}
+                />
+              ))}
+            </div>
+          )}
         </StepCard>
       </ol>
     </section>

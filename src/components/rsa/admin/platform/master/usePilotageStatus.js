@@ -203,15 +203,50 @@ export default function usePilotageStatus({ competition }) {
     // Step 6 — URLs publiques (toujours "open" — pas de "done" automatique,
     // on considère done quand step 1-5 sont done & step 2-4 ne sont pas vides)
     const step6Done = step1.done && step2.done && step3.done && step4.done && (step5.done || step5.optional);
+
+    // Mode mono-club OR 0-1 club attaché → 2 liens génériques (apply + jury)
+    // + 1 lien public. Le candidat/juré peut arriver sans préciser le club, le
+    // form le déduira (mono : auto-sélectionné ; multi : il sélectionne).
+    //
+    // Mode multi-club avec ≥2 clubs attachés → 1 lien apply ET 1 lien jury PAR
+    // CLUB (= N mini-compétitions). Pré-remplir &club= permet de masquer le
+    // sélecteur de club dans le funnel candidat/juré et lui parle directement
+    // de SA mini-compétition. Plus 1 lien public commun.
+    let links = [];
+    if (editionId) {
+      const useGenericLinks = isMonoclub || attached.length <= 1;
+      if (useGenericLinks) {
+        links = [
+          { key: 'apply',  path: `/Candidater?edition=${editionId}`, clubName: null },
+          { key: 'jury',   path: `/DevenirJury?edition=${editionId}`, clubName: null },
+          { key: 'public', path: '/Concours', clubName: null },
+        ];
+      } else {
+        for (const row of attachedListEnriched) {
+          links.push({
+            key: `apply:${row.id}`,
+            kind: 'apply',
+            path: `/Candidater?edition=${editionId}&club=${encodeURIComponent(row.id)}`,
+            clubId: row.id,
+            clubName: row.name,
+          });
+          links.push({
+            key: `jury:${row.id}`,
+            kind: 'jury',
+            path: `/DevenirJury?edition=${editionId}&club=${encodeURIComponent(row.id)}`,
+            clubId: row.id,
+            clubName: row.name,
+          });
+        }
+        links.push({ key: 'public', kind: 'public', path: '/Concours', clubName: null });
+      }
+    }
+
     const step6 = {
       id: 'links',
       done: step6Done,
-      // mêmes liens partagés par tous les édition — l'edition_id est embed.
-      links: editionId ? [
-        { key: 'apply',  path: `/Candidater?edition=${editionId}` },
-        { key: 'jury',   path: `/DevenirJury?edition=${editionId}` },
-        { key: 'public', path: '/Concours' },
-      ] : [],
+      isMulticlub: !isMonoclub && attached.length > 1,
+      links,
     };
 
     // Completion percent — moyenne pondérée des steps requis (5 ou 6 selon
