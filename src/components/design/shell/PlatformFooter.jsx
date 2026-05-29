@@ -1,7 +1,7 @@
 // PlatformFooter — footer standard de la plateforme RSA (app.rotary-startup.org).
 //
 // Wrapper léger autour de <Footer> avec le contenu canonique trilingue :
-//   - left  : © YYYY Rotary Startup Award · Plateforme Rotary Club de Paris
+//   - left  : © YYYY @DBEK for Rotary Startup Award & Platform for Rotary Club of Paris
 //   - right : Contact (mailto) · rotary-startup.org (lien externe)
 //
 // Trilingue via useLang (FR/EN/DE), sans hard-code de copy. Width par défaut
@@ -18,15 +18,10 @@ import { FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 
 const COPY = {
-  brand: {
-    fr: 'Rotary Startup Award',
-    en: 'Rotary Startup Award',
-    de: 'Rotary Startup Award',
-  },
-  platform: {
-    fr: 'Plateforme Rotary Club de Paris',
-    en: 'Platform · Rotary Club de Paris',
-    de: 'Plattform · Rotary Club de Paris',
+  credit: {
+    fr: '@DBEK pour Rotary Startup Award & Plateforme du Rotary Club de Paris',
+    en: '@DBEK for Rotary Startup Award & Platform for Rotary Club of Paris',
+    de: '@DBEK für Rotary Startup Award & Plattform des Rotary Club de Paris',
   },
   contact: {
     fr: 'Contact',
@@ -53,7 +48,7 @@ export default function PlatformFooter({ width = 'narrow', className = '' }) {
       className={className}
       left={
         <span>
-          © {year} {t(COPY.brand)} · {t(COPY.platform)}
+          © {year} {t(COPY.credit)}
         </span>
       }
       right={
