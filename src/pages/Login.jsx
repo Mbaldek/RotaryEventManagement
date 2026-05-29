@@ -186,15 +186,17 @@ export default function Login() {
           transition={{ duration: 0.28, ease: EASE }}
           className="w-full max-w-[520px]"
         >
-          <img
-            src="/favicon.svg"
+          <motion.img
+            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/698886adec2381a5bebb878f/8eca9f2bf_rotaryinterrouecrop.png"
             alt={logoAlt}
-            className="mb-6"
+            className="mb-6 drop-shadow-[0_8px_20px_rgba(15,31,61,0.18)]"
             style={{
               width: 'clamp(96px, 14vw, 140px)',
               height: 'auto',
               display: 'block',
             }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           />
           <p
             className="italic mb-10"
