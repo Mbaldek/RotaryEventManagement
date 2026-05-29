@@ -16,7 +16,7 @@ import { useLang } from '@/lib/platform/i18n';
 import { CREAM2, NAVY, MUTED, INK } from '@/components/design/tokens';
 import { EDITION_STATUSES } from '../../i18n';
 import { COMP, COMPETITION_MODELS } from '../i18n';
-import { FieldLabel, TextRow, SelectRow } from './fields';
+import { FieldLabel, TextRow, TextareaRow, SelectRow } from './fields';
 
 export default function IdentityTab({ values = {}, onPatch, mode = 'edit', errors = {} }) {
   const { t } = useLang();
@@ -70,6 +70,78 @@ export default function IdentityTab({ values = {}, onPatch, mode = 'edit', error
           onChange={(v) => onPatch({ status: v })}
           options={EDITION_STATUSES.map((s) => ({ value: s, label: s }))}
         />
+      </div>
+
+      {/* Trio hero éditorial 3·33·333 — titre court, phrase d'accroche, description longue.
+          Servent à composer le hero de la page publique de la compétition. */}
+      <div className="pt-3" style={{ borderTop: `1px dashed ${CREAM2}` }}>
+        <FieldLabel>
+          {t({
+            fr: 'Hero éditorial',
+            en: 'Editorial hero',
+            de: 'Editorial-Hero',
+          })}
+        </FieldLabel>
+        <p className="text-[11.5px] mb-3" style={{ color: MUTED }}>
+          {t({
+            fr: 'Trio 3·33·333 — un titre court, une phrase d\'accroche, puis une description plus longue.',
+            en: 'Trio 3·33·333 — short title, tagline phrase, then a longer description.',
+            de: 'Trio 3·33·333 — kurzer Titel, Slogan, dann eine längere Beschreibung.',
+          })}
+        </p>
+        <div className="flex flex-col gap-3">
+          <TextRow
+            id="comp-hero-title"
+            label={t({
+              fr: 'Titre · 3',
+              en: 'Title · 3',
+              de: 'Titel · 3',
+            })}
+            value={values.hero_title}
+            onChange={(v) => onPatch({ hero_title: v })}
+            placeholder={t({
+              fr: 'Rotary Startup Award',
+              en: 'Rotary Startup Award',
+              de: 'Rotary Startup Award',
+            })}
+          />
+          <TextRow
+            id="comp-hero-tagline"
+            label={t({
+              fr: 'Phrase d\'accroche · 33',
+              en: 'Tagline · 33',
+              de: 'Slogan · 33',
+            })}
+            value={values.hero_tagline}
+            onChange={(v) => onPatch({ hero_tagline: v })}
+            placeholder={t({
+              fr: 'Le prix qui révèle les startups d\'impact en Europe.',
+              en: 'The award that uncovers Europe\'s impact startups.',
+              de: 'Der Preis, der Europas Impact-Startups sichtbar macht.',
+            })}
+          />
+          <TextareaRow
+            id="comp-hero-description"
+            label={t({
+              fr: 'Description · 333',
+              en: 'Description · 333',
+              de: 'Beschreibung · 333',
+            })}
+            hint={t({
+              fr: 'Texte long visible sur la page publique de la compétition.',
+              en: 'Long copy shown on the competition public page.',
+              de: 'Langer Text auf der öffentlichen Wettbewerbsseite.',
+            })}
+            value={values.hero_description}
+            onChange={(v) => onPatch({ hero_description: v })}
+            rows={5}
+            placeholder={t({
+              fr: 'Décrivez le programme, son ambition, le profil des candidates, le déroulement des sessions et de la finale.',
+              en: 'Describe the programme, its ambition, candidate profile, qualifying sessions and grand finale.',
+              de: 'Beschreiben Sie das Programm, seine Ambition, das Profil der Kandidatinnen, den Ablauf der Sessions und des Finales.',
+            })}
+          />
+        </div>
       </div>
 
       <div>

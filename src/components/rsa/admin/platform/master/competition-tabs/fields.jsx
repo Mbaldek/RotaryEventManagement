@@ -7,7 +7,7 @@
 // connue par les autres composants admin/platform pour rester DRY visuel).
 
 import React from 'react';
-import { CREAM2, NAVY, MUTED, INK, TINT_ADMIN } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, INK } from '@/components/design/tokens';
 
 export function FieldLabel({ children, htmlFor, hint }) {
   return (
@@ -41,7 +41,27 @@ export function TextRow({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className={`w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] disabled:opacity-60 disabled:cursor-not-allowed ${monospace ? 'font-mono' : ''}`}
-        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
+        style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+      />
+    </div>
+  );
+}
+
+export function TextareaRow({
+  id, label, hint, value, onChange, placeholder, rows = 4, disabled,
+}) {
+  return (
+    <div>
+      <FieldLabel htmlFor={id} hint={hint}>{label}</FieldLabel>
+      <textarea
+        id={id}
+        rows={rows}
+        value={value ?? ''}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] disabled:opacity-60 disabled:cursor-not-allowed leading-relaxed resize-y"
+        style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
       />
     </div>
   );
@@ -57,7 +77,7 @@ export function SelectRow({ id, label, value, onChange, options, disabled }) {
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className="w-full text-[13px] rounded-[4px] px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] disabled:opacity-60"
-        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}`, color: NAVY }}
+        style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>

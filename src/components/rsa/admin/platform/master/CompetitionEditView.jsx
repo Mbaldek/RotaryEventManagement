@@ -14,9 +14,10 @@
 // Les tabs sont partagées avec CompetitionFunnel (mêmes composants).
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import {
-  CREAM2, GOLD, MUTED, NAVY, SERIF, TINT_ADMIN,
+  CREAM2, EASE, GOLD, MUTED, NAVY, SERIF, TINT_ADMIN,
 } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import CockpitTabs from '@/components/design/shell/CockpitTabs';
@@ -35,6 +36,7 @@ import DeleteCompetitionModal from './DeleteCompetitionModal';
 
 export default function CompetitionEditView({ editionId, onClose }) {
   const { t } = useLang();
+  const reduce = useReducedMotion();
   const competitions = useAllCompetitions();
   const competition = useMemo(
     () => (competitions.data || []).find((c) => c.id === editionId) || null,
@@ -212,7 +214,8 @@ export default function CompetitionEditView({ editionId, onClose }) {
         className="mb-5"
       />
 
-      {/* Body */}
+      {/* Body — AnimatePresence pour transition douce entre tabs.
+          Le panel reste TINT_ADMIN (3-tint policy). Le contenu fade+slide. */}
       <div
         id={`competition-edit-panel-${activeTab}`}
         role="tabpanel"
@@ -220,7 +223,17 @@ export default function CompetitionEditView({ editionId, onClose }) {
         className="rounded-[4px] p-5 mb-4"
         style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
       >
-        {tabs.find((tab) => tab.id === activeTab)?.render?.()}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -4 }}
+            transition={{ duration: 0.22, ease: EASE }}
+          >
+            {tabs.find((tab) => tab.id === activeTab)?.render?.()}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Footer destructif */}
