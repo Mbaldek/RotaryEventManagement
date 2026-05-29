@@ -27,6 +27,12 @@ import {
   Eyebrow, EditorialTitle,
   GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE,
 } from '@/components/design';
+
+// Hero variant : H-Step-Pictogram (catalog §16.1) — step counter `01 / 03` +
+// serif title + intro. Casse l'adjacence avec DevenirJury (H-Vertical-Rule).
+// Section opener : S-Numbered (catalog §16.2). Signature micro : M-Gold-Sweep.
+// Cf. design-upgrade-blueprint §3.3 + §4.12.
+const FUNNEL_STEP = { current: 1, total: 3 };
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import OpenCompetitions from '@/components/rsa/candidature/OpenCompetitions';
@@ -35,6 +41,7 @@ import { Startup } from '@/lib/rsa/entities';
 
 const T = {
   eyebrow: { fr: 'Candidatures ouvertes', en: 'Open applications', de: 'Offene Bewerbungen' },
+  stepLabel: { fr: 'Étape', en: 'Step', de: 'Schritt' },
   titleLead: {
     fr: 'Postulez au Rotary Startup Award',
     en: 'Apply to the Rotary Startup Award',
@@ -231,9 +238,29 @@ export default function Candidater() {
   // ── Discovery + Step1 (default) ────────────────────────────────────────────
   return (
     <PageShell nav width="wide" footer={<Footer width="wide" left={t(T.footerLeft)} />}>
-      {/* Hero éditorial */}
+      {/* Hero H-Step-Pictogram — step counter + serif title. */}
       <header className="mb-12 md:mb-16 max-w-[680px]">
-        <Eyebrow>{t(T.eyebrow)}</Eyebrow>
+        <div className="flex items-center gap-3 mb-3">
+          <span
+            className="uppercase text-[11px] tracking-[0.18em] font-medium"
+            style={{ color: GOLD }}
+          >
+            {t(T.stepLabel)}
+          </span>
+          <span
+            className="text-[16px] tabular-nums"
+            style={{ color: NAVY, fontFamily: SERIF }}
+          >
+            {String(FUNNEL_STEP.current).padStart(2, '0')} / {String(FUNNEL_STEP.total).padStart(2, '0')}
+          </span>
+          <span aria-hidden className="h-px w-8" style={{ background: CREAM2 }} />
+          <span
+            className="uppercase text-[10.5px] tracking-[0.18em] font-medium"
+            style={{ color: MUTED }}
+          >
+            {t(T.eyebrow)}
+          </span>
+        </div>
         <EditorialTitle lead={t(T.titleLead)} size="md" />
         <p
           className="mt-4 text-[15.5px] max-w-[60ch]"
@@ -244,14 +271,20 @@ export default function Candidater() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,420px)] gap-10 lg:gap-12">
-        {/* Liste des compétitions ouvertes */}
+        {/* Liste des compétitions ouvertes — section opener S-Numbered. */}
         <section aria-labelledby="open-competitions-title">
-          <div className="flex items-center gap-2.5 mb-5">
-            <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
+          <div className="mb-5 flex items-baseline gap-3">
+            <span
+              className="tabular-nums text-[14px]"
+              style={{ fontFamily: SERIF, color: GOLD }}
+            >
+              01
+            </span>
+            <span aria-hidden className="h-px flex-1 max-w-[40px]" style={{ background: CREAM2 }} />
             <h2
               id="open-competitions-title"
-              className="uppercase text-[10.5px] tracking-[0.18em] font-medium m-0"
-              style={{ color: MUTED }}
+              className="text-[14px] m-0"
+              style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
             >
               {t(T.sectionEyebrow)}
             </h2>

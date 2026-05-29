@@ -1,5 +1,9 @@
 // /Marketplace — V3.0 Vague 4.
 //
+// Hero variant : H-Index-Numeral (banque §16.1) — giant tabular numeral du
+// count d'extensions + label EXTENSIONS + intro. Opener S-Verb-Led "ÉTENDEZ".
+// Cf. design-upgrade-blueprint §3.1 + §4.7.
+//
 // Catalogue public-ish des extensions scope='master' active=true. Les
 // club_admin / master_admin peuvent les "installer" pour un de leurs clubs
 // (clone vers extensions scope='club' via rsa_install_extension_to_club).
@@ -328,9 +332,9 @@ export default function Marketplace() {
           left={
             <span>
               {t({
-                fr: 'Plateforme RSA · Marketplace',
-                en: 'RSA Platform · Marketplace',
-                de: 'RSA-Plattform · Marktplatz',
+                fr: 'Plateforme · Marketplace',
+                en: 'Platform · Marketplace',
+                de: 'Plattform · Marktplatz',
               })}
             </span>
           }
@@ -346,28 +350,61 @@ export default function Marketplace() {
         />
       }
     >
-      <section className="mb-6">
-        <div className="flex items-center gap-2.5 mb-2">
-          <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
+      {/* Hero H-Index-Numeral — giant tabular numeral du count + label + intro. */}
+      <section className="mb-10 md:mb-14 flex items-start gap-6 md:gap-10">
+        <span
+          className="tabular-nums shrink-0"
+          style={{
+            fontFamily: SERIF,
+            color: NAVY,
+            fontSize: 'clamp(80px, 12vw, 140px)',
+            lineHeight: 0.9,
+            fontWeight: 400,
+            letterSpacing: '-0.02em',
+          }}
+          aria-hidden
+        >
+          {extensions.length}
+        </span>
+        <div className="pt-2 md:pt-5 min-w-0 flex-1">
           <span
-            className="uppercase text-[10px] tracking-[0.18em] font-medium"
+            className="uppercase text-[10.5px] tracking-[0.18em] font-medium block"
             style={{ color: GOLD }}
           >
             {t(MARKETPLACE_UI.eyebrow)}
           </span>
+          <h1
+            className="mt-2 text-[28px] md:text-[34px] leading-tight"
+            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+          >
+            {t(MARKETPLACE_UI.pageTitle)}
+          </h1>
+          <p className="mt-3 text-[14px] max-w-[58ch]" style={{ color: INK, lineHeight: 1.65 }}>
+            {t(MARKETPLACE_UI.pageSubtitle)}
+          </p>
         </div>
-        <h1
-          className="text-[28px] leading-tight mb-2"
-          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-        >
-          {t(MARKETPLACE_UI.pageTitle)}
-        </h1>
-        <p className="text-[14px] max-w-3xl" style={{ color: INK }}>
-          {t(MARKETPLACE_UI.pageSubtitle)}
-        </p>
       </section>
 
+      {/* Opener S-Verb-Led — verbe à l'impératif. */}
       <section className="mb-4">
+        <div className="mb-3">
+          <span
+            className="block uppercase tracking-[0.22em] text-[11px] font-medium"
+            style={{ color: NAVY }}
+          >
+            {t({ fr: 'Étendez', en: 'Extend', de: 'Erweitern' })}
+          </span>
+          <span
+            className="block italic text-[13px] mt-1"
+            style={{ color: MUTED, fontFamily: SERIF }}
+          >
+            {t({
+              fr: 'Filtrez par usage pour trouver le bon module.',
+              en: 'Filter by purpose to find the right module.',
+              de: 'Nach Zweck filtern, um das passende Modul zu finden.',
+            })}
+          </span>
+        </div>
         <KindFilter value={kindFilter} onChange={setKindFilter} />
       </section>
 

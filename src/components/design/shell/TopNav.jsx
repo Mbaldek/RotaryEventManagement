@@ -10,7 +10,10 @@
 // Labels are trilingual via useLang. Pass `items` to override the menu entirely.
 //
 // Props:
-//   wordmark   : node — brand title (default "Rotary Startup Award 2026").
+//   wordmark   : node — brand title. When omitted, falls back to a neutral
+//                trilingual default ("Plateforme" / "Platform" / "Plattform").
+//                Pages with branding needs (Resultats public, Index marketing,
+//                email templates) pass their own wordmark explicitly.
 //   subtitle   : node — small uppercase line under the wordmark (optional).
 //   items      : NavMenu items override (else the role-aware default below).
 //   right      : node — extra slot before the language switcher (optional).
@@ -35,16 +38,20 @@ const NAV_T = {
   signOut: { fr: "Se déconnecter", en: "Sign out", de: "Abmelden" },
   menu: { fr: "Menu", en: "Menu", de: "Menü" },
   concours: { fr: "Concours", en: "Awards", de: "Wettbewerb" }, // V2.5
+  // Neutral default wordmark — pages avec branding spécifique passent leur propre prop.
+  defaultWordmark: { fr: "Plateforme", en: "Platform", de: "Plattform" },
 };
 
 export default function TopNav({
-  wordmark = "Rotary Startup Award 2026",
+  wordmark,
   subtitle,
   items,
   right,
   homeTo = "/",
 }) {
   const { t } = useLang();
+  // Default neutre + trilingue quand aucun wordmark n'est passé en prop.
+  const resolvedWordmark = wordmark ?? t(NAV_T.defaultWordmark);
   const { isAuthenticated, signOut, roles, clubMemberships } = usePlatformAuth();
   const [open, setOpen] = useState(false);
 
@@ -109,7 +116,7 @@ export default function TopNav({
               className="block text-[13px] font-semibold text-white truncate"
               style={{ fontFamily: SERIF }}
             >
-              {wordmark}
+              {resolvedWordmark}
             </span>
             {subtitle && (
               <span className="block text-[9.5px] uppercase tracking-[0.1em]" style={{ color: "rgba(255,255,255,0.45)" }}>

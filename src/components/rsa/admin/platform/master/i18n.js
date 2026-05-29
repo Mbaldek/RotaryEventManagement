@@ -22,7 +22,7 @@ export const TAB_IDS = ['overview', 'competitions', 'clubs', 'roles', 'jury_apps
 
 // ── Page header ─────────────────────────────────────────────────────────────
 export const UI = {
-  eyebrow:    { fr: 'Master Cockpit',     en: 'Master Cockpit',  de: 'Master-Cockpit' },
+  eyebrow:    { fr: 'Administration Master', en: 'Master Admin',    de: 'Master-Admin' },
   pageTitle:  { fr: 'Pilotage plateforme', en: 'Platform pilot',  de: 'Plattform-Steuerung' },
   pageSubtitle: {
     fr: 'Compétitions, clubs participants, rôles globaux et Grande Finale — vue plateforme.',
@@ -818,9 +818,26 @@ export const FINALE = {
 
 // ── Overview tab (master cockpit landing) ───────────────────────────────────
 export const OVERVIEW = {
-  eyebrow:       { fr: 'Plateforme master', en: 'Master platform',  de: 'Master-Plattform' },
-  titleLead:     { fr: 'Cockpit',           en: 'Cockpit',          de: 'Cockpit' },
-  titleItalic:   { fr: 'master',            en: 'master',           de: 'master' },
+  eyebrow:       { fr: 'Administration', en: 'Administration', de: 'Verwaltung' },
+  titleLead:     { fr: "Vue d'ensemble",  en: 'Overview',        de: 'Übersicht' },
+  titleItalic:   { fr: '',                en: '',                de: '' },
+  // Hairline opener placed above the Live dashboard (top block after the hero).
+  liveDashboardEyebrow: {
+    fr: 'En direct',
+    en: 'Live',
+    de: 'Live',
+  },
+  liveDashboardTitle: {
+    fr: 'Tableau de bord',
+    en: 'Live dashboard',
+    de: 'Live-Dashboard',
+  },
+  // Empty-state shown when the activity feed has no row (data === [] after fetch).
+  feedEmptyShort: {
+    fr: 'Aucune activité encore.',
+    en: 'No activity yet.',
+    de: 'Noch keine Aktivität.',
+  },
   pulseNoActive: {
     fr: 'Aucune compétition active. Le pouls de la plateforme reprendra dès qu’une édition sera ouverte.',
     en: 'No active competition yet. The platform pulse will resume as soon as an edition opens.',
@@ -834,7 +851,7 @@ export const OVERVIEW = {
   },
 
   // Activity feed
-  feedEyebrow:   { fr: 'Plateforme master', en: 'Master platform',  de: 'Master-Plattform' },
+  feedEyebrow:   { fr: 'Administration',    en: 'Administration',   de: 'Verwaltung' },
   feedTitle:     { fr: 'Fil d’activité',    en: 'Activity feed',    de: 'Aktivitäts-Feed' },
   feedHint: {
     fr: 'Dix dernières actions auditées sur la plateforme — suppression de compétitions, promotion de finalistes, déclenchements de sessions.',

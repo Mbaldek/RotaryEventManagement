@@ -153,7 +153,7 @@ export default function Step1Picker({ initialEdition = null, initialClub = null,
   const options = useMemo(() => {
     return openList.map((entry) => {
       const value = `${entry.edition.id}__${entry.club?.id || ''}`;
-      const editionLabel = entry.edition.name || `RSA ${entry.edition.year}`;
+      const editionLabel = entry.edition.name || `${entry.edition.year}`;
       const clubLabel = entry.club?.name ? ` · ${entry.club.name}` : '';
       return { value, label: `${editionLabel}${clubLabel}` };
     });
@@ -365,9 +365,9 @@ export default function Step1Picker({ initialEdition = null, initialClub = null,
 
       <p className="mt-6 pt-5 text-center text-[11px]" style={{ color: MUTED, borderTop: `1px solid ${CREAM2}` }}>
         {/* signature légale */}
-        {lang === 'fr' && 'Rotary Startup Award · Service candidatures'}
-        {lang === 'en' && 'Rotary Startup Award · Applications service'}
-        {lang === 'de' && 'Rotary Startup Award · Bewerbungsservice'}
+        {lang === 'fr' && 'Service candidatures'}
+        {lang === 'en' && 'Applications service'}
+        {lang === 'de' && 'Bewerbungsservice'}
       </p>
     </motion.div>
   );

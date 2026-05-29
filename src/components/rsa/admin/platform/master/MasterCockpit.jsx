@@ -14,7 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import {
-  CREAM2, NAVY, INK, MUTED, GOLD, EASE,
+  CREAM2, NAVY, INK, MUTED, GOLD, EASE, CockpitTabs,
 } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { TABS, TAB_IDS, STRIP, UI } from './i18n';
@@ -34,25 +34,6 @@ import ClubEditView from './ClubEditView';
 // extensions / analytics / marketplace sont absorbés ici (voir TAB_IDS).
 import OverviewPanel from './OverviewPanel';
 import AdvancedSection from './AdvancedSection';
-
-function Tab({ id, label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="px-4 py-2 rounded-full text-[12.5px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] transition-colors"
-      style={{
-        background: active ? NAVY : 'white',
-        color: active ? 'white' : INK,
-        border: `1px solid ${active ? NAVY : CREAM2}`,
-      }}
-      aria-pressed={active}
-      aria-controls={`master-panel-${id}`}
-    >
-      {label}
-    </button>
-  );
-}
 
 function Dot({ color }) {
   return (
@@ -231,18 +212,15 @@ export default function MasterCockpit() {
     <>
       <MasterStatusStrip />
 
-      {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-6" role="tablist">
-        {TAB_IDS.map((id) => (
-          <Tab
-            key={id}
-            id={id}
-            active={tab === id}
-            label={t(TABS[id])}
-            onClick={() => setTab(id)}
-          />
-        ))}
-      </div>
+      {/* Tabs — underline editorial style (cockpit nav, pas filter chip) */}
+      <CockpitTabs
+        idPrefix="master"
+        items={TAB_IDS.map((id) => ({ id, label: t(TABS[id]) }))}
+        active={tab}
+        onChange={setTab}
+        ariaLabel="Master cockpit navigation"
+        className="mb-6"
+      />
 
       {/* Panel body */}
       <div id={`master-panel-${tab}`} role="tabpanel" aria-labelledby={`master-tab-${tab}`}>

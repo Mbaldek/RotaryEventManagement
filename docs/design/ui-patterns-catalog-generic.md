@@ -55,6 +55,7 @@
 13. [Extension UI patterns](#13-extension-ui-patterns-v30) — plugin slots, JSON-Schema → form, webhooks
 14. [Anti-patterns](#14-anti-patterns) — the binding "never do this" list
 15. [Anchors / file map](#15-anchors--file-map) — every reference file in one place
+16. [Block variant grammar (anti-template)](#16-block-variant-grammar-anti-template) — hero/opener/list/empty/CTA/micro variants + adjacency rule
 
 ---
 
@@ -1738,6 +1739,794 @@ The binding list of "never do this". When in doubt, default to NOT doing.
 - [`docs/design/elysee-audit.md`](./elysee-audit.md) — palette gap audit that produced `tokens.app.js`.
 - [`docs/design/elysee-blueprint.md`](./elysee-blueprint.md) — component build order.
 - [`docs/deepsolve/email-smtp-resend-setup.md`](../deepsolve/email-smtp-resend-setup.md) — bulletproof email template recipe.
+
+---
+
+## 16. Block variant grammar (inspiration bank)
+
+> **Purpose.** This catalog defines the brand identity. That identity reads as a
+> *template* the moment every page reuses the same block recipes. §16 is a
+> **bank of inspirations** for each block — alternative ways to phrase a hero,
+> an opener, a list — so each page can speak its own editorial voice while
+> staying in the family.
+>
+> **Companion docs.**
+> - Current state of each page: [`design-upgrade-audit.md`](./design-upgrade-audit.md).
+> - Suggested attribution per page: [`design-upgrade-blueprint.md`](./design-upgrade-blueprint.md) §3.
+>
+> **How to use this section.** Pick what fits the page's editorial intent;
+> combine; adapt; or invent. The goal is variation that serves the content —
+> not conformity to a fixed grid. When two adjacent pages naturally land on the
+> same hero recipe, that's fine *if it's intentional and serves both*. When
+> they land on the same recipe by reflex, swap one out.
+>
+> **Scope.** 9 hero recipes, 5 openers, 7 lists, 4 empty states, 4 CTA clusters,
+> 4 micro-interactions — collected from `app.rotary-startup.org` patterns. Add
+> a recipe whenever you need one; the list grows.
+
+### 16.1 Hero variants
+
+#### `H-Editorial` — centered editorial
+
+The Index pattern. Eyebrow gold + serif title + italic accent + INK intro
+`max-w-[60ch]`. Spacious vertical rhythm.
+
+**Use when.** Landing, marketing, public face. **Don't** reuse on more than 2
+non-adjacent pages.
+
+```jsx
+<header className="mb-12 md:mb-16">
+  <Eyebrow>{t(T.eyebrow)}</Eyebrow>
+  <EditorialTitle lead={t(T.lead)} italic={t(T.italic)} size="lg" />
+  <p className="mt-5 text-[15px] md:text-[17px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.65 }}>
+    {t(T.intro)}
+  </p>
+</header>
+```
+
+#### `H-Typo-Only` — giant typographic lockup
+
+Plain `<h1>` 80–110 px serif, **no image, no decoration**. One italic line
+below as accent. Heavy whitespace above and below.
+
+**Use when.** Auth screens, welcome screens, deliberate quiet introductions.
+
+```jsx
+<header className="py-16 md:py-24">
+  <h1
+    className="font-normal leading-[0.95]"
+    style={{ fontFamily: SERIF, color: NAVY, fontSize: "clamp(64px, 10vw, 112px)" }}
+  >
+    {t(T.greeting)}
+  </h1>
+  <p
+    className="mt-4 italic text-[18px] md:text-[22px]"
+    style={{ fontFamily: SERIF, color: INK }}
+  >
+    {t(T.subline)}
+  </p>
+</header>
+```
+
+> **DO** Use this for emotional moments (welcome, sign-in success).
+> **DO NOT** Pair with a hero image or any KPI strip.
+
+#### `H-Index-Numeral` — giant tabular numeral
+
+A single integer (1–999) in serif `tabular-nums` 110–160 px next to the label.
+Works for "N capabilities", "N extensions", "Σ N dossiers".
+
+```jsx
+<header className="mb-12 md:mb-16 flex items-start gap-6 md:gap-10">
+  <span
+    className="tabular-nums shrink-0"
+    style={{ fontFamily: SERIF, color: NAVY, fontSize: "clamp(96px, 14vw, 160px)", lineHeight: 0.9 }}
+  >
+    {n}
+  </span>
+  <div className="pt-3 md:pt-6">
+    <Eyebrow>{t(T.label)}</Eyebrow>
+    <p className="mt-3 text-[15px] md:text-[17px] max-w-[52ch]" style={{ color: INK, lineHeight: 1.65 }}>
+      {t(T.intro)}
+    </p>
+  </div>
+</header>
+```
+
+> **DO** Keep the numeral aligned-left, hairline-aligned with the label baseline.
+> **DO NOT** Animate the numeral as a counter — it's a typographic block, not a KPI.
+
+#### `H-Ambient` — animated logo + halo + pitch
+
+The Index ambient pattern: rotating logo (48 s), breathing halo (3.2 s), short
+serif pitch. Respect `prefers-reduced-motion`.
+
+**Use when.** Landing of a sub-brand (Concours), event reveal, "the program
+itself" page. Maximum **one** use per top-level surface.
+
+```jsx
+<header className="relative py-14 md:py-20 text-center">
+  <motion.div
+    className="absolute inset-0 -z-10 mx-auto w-[480px] h-[480px] rounded-full pointer-events-none"
+    style={{ background: `radial-gradient(circle, ${GOLD}22 0%, transparent 70%)` }}
+    animate={prefersReducedMotion ? {} : { opacity: [0.3, 0.9, 0.3] }}
+    transition={{ duration: 3.2, repeat: Infinity, ease: EASE }}
+  />
+  <Logo className="mx-auto w-20 h-20" spin={!prefersReducedMotion} />
+  <EditorialTitle lead={t(T.pitch)} italic={t(T.italic)} size="md" className="mt-8" />
+</header>
+```
+
+#### `H-Vertical-Rule` — left gold bar + stacked text
+
+A 2 px GOLD bar pinned to the left edge of the page container; to its right,
+eyebrow + serif title + meta MUTED stacked tightly.
+
+**Use when.** Pages that are "an angle on" a larger thing (DevenirJury for
+the program, UserManagement for the platform).
+
+```jsx
+<header className="mb-12 md:mb-14 pl-6 md:pl-8 relative">
+  <span
+    aria-hidden
+    className="absolute left-0 top-1 bottom-1 w-[2px]"
+    style={{ background: GOLD }}
+  />
+  <Eyebrow>{t(T.eyebrow)}</Eyebrow>
+  <h1 className="mt-2 text-[36px] md:text-[44px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 400, lineHeight: 1.05 }}>
+    {t(T.title)}{" "}
+    <span className="italic" style={{ color: INK }}>{t(T.italic)}</span>
+  </h1>
+  <p className="mt-3 text-[12.5px] uppercase tracking-[0.12em]" style={{ color: MUTED }}>
+    {t(T.meta)}
+  </p>
+</header>
+```
+
+#### `H-Cockpit-Split` — title + KPI rail
+
+Two columns: a compact serif title left (max-w-[40ch]) + KPI rail right (3-4
+metrics in `tabular-nums`, hairline-separated). Sticky on scroll on desktop.
+
+**Use when.** Admin cockpits, scoring screens, queue dashboards.
+
+```jsx
+<header className="mb-10 md:mb-14 flex flex-col md:flex-row md:items-end gap-6 md:gap-10">
+  <div className="flex-1 min-w-0">
+    <Eyebrow>{t(T.eyebrow)}</Eyebrow>
+    <EditorialTitle lead={t(T.lead)} italic={t(T.italic)} size="md" />
+  </div>
+  <dl className="md:sticky md:top-20 flex gap-6 md:gap-8 shrink-0">
+    {kpis.map((k) => (
+      <div key={k.label}>
+        <dt className="text-[10.5px] uppercase tracking-[0.14em] font-medium" style={{ color: MUTED }}>
+          {k.label}
+        </dt>
+        <dd className="text-[22px] md:text-[26px] tabular-nums" style={{ color: NAVY, fontWeight: 500 }}>
+          {k.value}
+        </dd>
+      </div>
+    ))}
+  </dl>
+</header>
+```
+
+#### `H-Form-Invitation` — invitation letter lockup
+
+Carton-d'invitation feel. Eyebrow + serif title + 28×1.5 GOLD rule centered +
+date in italic serif. Below: the form opens directly (no extra section header).
+
+**Use when.** Public RSVP, reservation request, sign-up — surfaces that should
+read like a paper invitation.
+
+```jsx
+<header className="mb-10 md:mb-12 text-center">
+  <Eyebrow>{t(T.eyebrow)}</Eyebrow>
+  <h1 className="mt-4 text-[36px] md:text-[44px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 400, lineHeight: 1.05 }}>
+    {t(T.title)}
+  </h1>
+  <span aria-hidden className="block mx-auto mt-5 h-[1.5px] w-7" style={{ background: GOLD }} />
+  <p className="mt-4 italic text-[16px] md:text-[18px]" style={{ fontFamily: SERIF, color: INK }}>
+    {t(T.dateline)}
+  </p>
+  <p className="mt-3 text-[13.5px] max-w-[44ch] mx-auto" style={{ color: INK, lineHeight: 1.6 }}>
+    {t(T.intro)}
+  </p>
+</header>
+```
+
+#### `H-Reveal-Curtain` — mount-only veil reveal
+
+A CREAM curtain at `opacity 0.6` covering the hero — lifts in 600 ms revealing
+the title. Mount-only (not on re-render). Skipped under `prefers-reduced-motion`.
+
+**Use when.** Result reveal, podium, finale celebrations. Maximum **one per
+event** — overuse trivializes the effect.
+
+```jsx
+<header className="relative mb-14 md:mb-20 text-center">
+  {!prefersReducedMotion && (
+    <motion.div
+      aria-hidden
+      initial={{ opacity: 0.6 }}
+      animate={{ opacity: 0 }}
+      transition={{ duration: 0.6, ease: EASE }}
+      className="absolute inset-0 pointer-events-none z-10"
+      style={{ background: CREAM }}
+    />
+  )}
+  <Eyebrow>{t(T.eyebrow)}</Eyebrow>
+  <div className="mt-6 flex items-baseline justify-center gap-6 md:gap-10">
+    {ranks.map((r) => (
+      <span
+        key={r.label}
+        className="tabular-nums"
+        style={{ fontFamily: SERIF, color: NAVY, fontSize: "clamp(48px, 8vw, 88px)", lineHeight: 1 }}
+      >
+        {r.label}
+      </span>
+    ))}
+  </div>
+</header>
+```
+
+#### `H-Step-Pictogram` — step counter + title
+
+Step number (`01 / 03`) in tabular-nums + serif title + intro. Used in funnels
+to signal progression at the page level (in addition to any progress rail).
+
+```jsx
+<header className="mb-12 md:mb-14">
+  <div className="flex items-center gap-3 mb-3">
+    <span className="text-[11px] uppercase tracking-[0.18em] font-medium" style={{ color: GOLD }}>
+      {t(T.step)}
+    </span>
+    <span className="text-[16px] tabular-nums" style={{ color: NAVY, fontFamily: SERIF }}>
+      {String(step).padStart(2, "0")} / {String(total).padStart(2, "0")}
+    </span>
+  </div>
+  <EditorialTitle lead={t(T.lead)} italic={t(T.italic)} size="md" />
+  <p className="mt-4 text-[14.5px] max-w-[58ch]" style={{ color: INK, lineHeight: 1.65 }}>
+    {t(T.intro)}
+  </p>
+</header>
+```
+
+#### Hero variants — anti-pattern checklist
+
+| ❌ | Reason |
+| -- | ------ |
+| Re-using `H-Editorial` on the page **next to** another `H-Editorial` in the same TopNav group | Two identical silhouettes side by side read as a template — vary one. |
+| Two giant numerals in two consecutive landing pages | The numeral becomes ornament; it has to mean something. |
+| `H-Reveal-Curtain` on every results screen | Devalues the reveal. One per event maximum. |
+| `H-Ambient` on a form page | Distracts from the action; reserve for "the program" voice. |
+| Combining `H-Cockpit-Split` with a TopNav language switcher chip in the rail | Two competing rails — pick one. |
+
+### 16.2 Section opener variants
+
+#### `S-Gold-Rule` — eyebrow + 28×1.5 gold bar
+
+The default opener. Use when the section is functional but deserves a hairline
+of ornament. Animate `scaleX 0→1` on mount (400 ms ease).
+
+```jsx
+<div className="flex items-center gap-2 mb-3">
+  <motion.span
+    aria-hidden
+    initial={{ scaleX: 0 }}
+    animate={{ scaleX: 1 }}
+    transition={{ duration: 0.4, ease: EASE }}
+    style={{ background: GOLD, transformOrigin: "left" }}
+    className="h-[1.5px] w-7"
+  />
+  <span className="uppercase tracking-[0.18em] text-[10.5px] font-medium" style={{ color: GOLD }}>
+    {t(T.label)}
+  </span>
+</div>
+```
+
+#### `S-Numbered` — tabular numbered section
+
+Section number (`01 — `) + serif label in NAVY. Used when the page reads as a
+sequence (Features, Candidater, AdminControl tabs).
+
+```jsx
+<div className="mb-4 flex items-baseline gap-3">
+  <span
+    className="tabular-nums text-[14px]"
+    style={{ fontFamily: SERIF, color: GOLD }}
+  >
+    {String(n).padStart(2, "0")}
+  </span>
+  <span aria-hidden className="h-px flex-1 max-w-[40px]" style={{ background: CREAM2 }} />
+  <span className="text-[14px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+    {t(T.label)}
+  </span>
+</div>
+```
+
+#### `S-Verb-Led` — imperative verb opener
+
+A single uppercase verb (`AGISSEZ`, `RÉFLÉCHISSEZ`, `ÉTENDEZ`) as the eyebrow.
+Used when the section is a call to engagement.
+
+```jsx
+<div className="mb-4">
+  <span
+    className="block uppercase tracking-[0.22em] text-[11px] font-medium"
+    style={{ color: NAVY }}
+  >
+    {t(T.verb)}
+  </span>
+  <span className="block italic text-[14px] mt-1" style={{ color: MUTED, fontFamily: SERIF }}>
+    {t(T.subline)}
+  </span>
+</div>
+```
+
+#### `S-Date-Stamp` — J-x or absolute date stamp
+
+A `J-12 · 17 mai 2026` line in tabular serif. Used as funnel jalon or
+event-stamped section.
+
+```jsx
+<div className="mb-4 inline-flex items-baseline gap-2 text-[13px]" style={{ fontFamily: SERIF, color: INK }}>
+  <span className="tabular-nums font-medium" style={{ color: NAVY }}>J-{daysLeft}</span>
+  <span aria-hidden style={{ color: MUTED }}>·</span>
+  <span className="italic">{absoluteDate}</span>
+</div>
+```
+
+#### `S-Quiet` — no eyebrow, just a `sm` serif title
+
+Pure restraint. A serif title at `sm` size, no ornament. Used when the page
+needs **silence between sections** — back-to-back ornament fatigues the eye.
+
+```jsx
+<h2
+  className="mb-4 text-[20px] md:text-[24px]"
+  style={{ fontFamily: SERIF, color: NAVY, fontWeight: 400, lineHeight: 1.1 }}
+>
+  {t(T.title)}
+</h2>
+```
+
+#### Section opener anti-pattern checklist
+
+| ❌ | Reason |
+| -- | ------ |
+| `S-Gold-Rule` on every section of every page | The rule loses its signal. Mix in `S-Quiet` between two `S-Gold-Rule`s on the same page. |
+| `S-Numbered` without a real sequence | `01 — Hospitalité`, `02 — Sélection`, `03 — Jury` works. Random `01`/`02` for unrelated sections doesn't. |
+| `S-Verb-Led` on info-only sections | The verb implies action — don't promise it if the section doesn't deliver. |
+
+### 16.3 List / grid variants
+
+#### `L-Numbered-Hairline` — numbered editorial list
+
+Pattern from `UpcomingList`. Rows numbered `01/N`, hairline `CREAM2` between,
+title serif + meta MUTED. Gold eyebrow appears on hover.
+
+**Use when.** Editorial sequences (sessions, articles, applicants, openings).
+**Default choice** for any list ≤ 10 items.
+
+(Reuse [`UpcomingList`](../../src/components/design/UpcomingList.jsx) with the
+`typeLabels` + `locale` overrides per call site.)
+
+#### `L-Card-Grid` — uniform card grid
+
+`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`. **Restricted use.** Reserve for
+datasets that are truly homogeneous (KPI cards, brand-equal extensions).
+
+> **DO NOT** Default to this when in doubt. It's the AI-generated reflex. Try
+> `L-Numbered-Hairline`, `L-Mosaic`, or `L-Editorial-Pair` first.
+
+#### `L-Editorial-Pair` — alternating split
+
+Sections alternate: text-2/3 + accent-1/3 (left/right/left/right…). Each
+section gets its own gold rule. **Breaks the grid feeling entirely.**
+
+**Use when.** Vitrine features (Features.jsx), value propositions, narrative
+catalogs. Up to ~8 sections per page (longer becomes a scroll exercise).
+
+```jsx
+<section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 mb-12 md:mb-16">
+  <div className={`md:col-span-2 ${reverse ? "md:order-2" : ""}`}>
+    <Eyebrow>{t(T.eyebrow)}</Eyebrow>
+    <h3 className="mt-3 text-[24px] md:text-[28px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 400, lineHeight: 1.1 }}>
+      {t(T.title)}
+    </h3>
+    <p className="mt-3 text-[14.5px]" style={{ color: INK, lineHeight: 1.65 }}>{t(T.body)}</p>
+  </div>
+  <aside className={`md:col-span-1 ${reverse ? "md:order-1" : ""} flex md:items-end`}>
+    {/* a single hairline-bordered accent: an icon, a number, a quote */}
+    <div className="w-full p-5 rounded-[4px]" style={{ background: TINT_SAGE, border: `1px solid ${CREAM2}` }}>
+      <Icon className="w-5 h-5" style={{ color: GOLD }} />
+      <p className="mt-3 italic text-[13px]" style={{ fontFamily: SERIF, color: INK }}>{t(T.accent)}</p>
+    </div>
+  </aside>
+</section>
+```
+
+#### `L-Mosaic` — asymmetric featured + grid
+
+One "featured" card spanning 2/3 of the row + 2–4 secondary cards 1/3. Creates
+visual hierarchy at the list level (the catalog itself signals what matters).
+
+**Use when.** Marketplace (featured extension), Concours (current session
+highlighted), Dashboard hero card + supporting cards.
+
+```jsx
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+  <article className="md:col-span-2 …featured card…">…</article>
+  <aside className="md:col-span-1 grid grid-cols-1 gap-4 md:gap-6">
+    <article className="…secondary card…">…</article>
+    <article className="…secondary card…">…</article>
+  </aside>
+</div>
+```
+
+#### `L-Timeline` — vertical timeline
+
+Vertical hairline `CREAM2` on the left, jalon GOLD `w-2 h-2 rounded-full`
+attached to each entry, title serif + meta MUTED to the right.
+
+**Use when.** Archives, history, J-x phases, dossier lifecycle.
+
+```jsx
+<ol className="relative pl-6">
+  <span aria-hidden className="absolute left-2 top-2 bottom-2 w-px" style={{ background: CREAM2 }} />
+  {entries.map((e) => (
+    <li key={e.id} className="relative mb-8">
+      <span aria-hidden className="absolute -left-[18px] top-1.5 w-2 h-2 rounded-full" style={{ background: GOLD }} />
+      <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: MUTED }}>{e.date}</p>
+      <h3 className="mt-1 text-[18px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500, lineHeight: 1.15 }}>
+        {e.title}
+      </h3>
+      <p className="mt-1 text-[13.5px]" style={{ color: INK }}>{e.body}</p>
+    </li>
+  ))}
+</ol>
+```
+
+#### `L-Compact-Table` — Élysée DataTable (compact density)
+
+The Élysée `DataTable` from §5.1, density `compact`. Hairline rows, no shadow,
+sortable headers, mobile = stacked `ListRow` cards.
+
+**Use when.** Admin queues, scoring, results, comité review — anything with
+> 8 rows or true tabular data.
+
+#### `L-Podium-Mosaic` — podium reveal
+
+Three large podium cards (2nd left, 1st center 2× taller, 3rd right) + a
+collapsed `L-Compact-Table` below for ranks 4–N.
+
+**Use when.** Finale results reveal, year-end leaderboards. **Maximum one per
+event** (see `H-Reveal-Curtain` rule).
+
+```jsx
+<section className="mb-12 md:mb-16">
+  <div className="grid grid-cols-3 gap-3 md:gap-5 items-end">
+    <PodiumCard rank={2} startup={second} className="md:translate-y-4" />
+    <PodiumCard rank={1} startup={first} className="md:-translate-y-2 md:scale-105 origin-bottom" hero />
+    <PodiumCard rank={3} startup={third} className="md:translate-y-6" />
+  </div>
+  <details className="mt-10">
+    <summary className="text-[12.5px] cursor-pointer" style={{ color: MUTED }}>{t(T.showFullRanking)}</summary>
+    <div className="mt-4"><DataTable density="compact" columns={cols} rows={rest} /></div>
+  </details>
+</section>
+```
+
+#### List/grid anti-pattern checklist
+
+| ❌ | Reason |
+| -- | ------ |
+| `L-Card-Grid` as default | The default of the AI starter template. Try numbered/mosaic/pair first. |
+| Two adjacent pages both using `L-Card-Grid` | Same shape twice in a row reads as a template. |
+| Coloring `L-Tile-Mosaic` by category (red/blue/green tiles) | Saturated colors forbidden — distinguish by shape + liseré. |
+| `L-Timeline` without dates | If there's no temporal ordering, use `L-Numbered-Hairline`. |
+| `L-Mosaic` where every card is the same priority | The featured card has to *mean something* — pinned, newest, paid-feature, today's session. |
+
+### 16.4 Empty / loading / error state variants
+
+#### `E-Quiet-Line` — one italic serif line, no border
+
+Most discreet. A single italic line at MUTED color, centered, no icon, no card.
+
+**Use when.** Empty list inside an already-bordered surface (e.g. an empty
+filter result inside a DataTable wrapper).
+
+```jsx
+<p className="text-center italic text-[13.5px] py-8" style={{ fontFamily: SERIF, color: MUTED }}>
+  {t(T.empty)}
+</p>
+```
+
+#### `E-Hairline-Card` — dashed card + icon + title + CTA
+
+The canonical Vercel/Linear empty state. Dashed CREAM2 border, lucide icon
+MUTED `w-6 h-6`, serif title, INK body, primary CTA.
+
+(Defined in §5.6 — reused unchanged here as a variant choice.)
+
+#### `E-Editorial-Letter` — short editorial letter
+
+A short letter-style paragraph in italic serif. **No icon, no button.** Used
+when the absence itself is the message ("Aucun dossier encore. Le programme
+ouvre lundi.").
+
+```jsx
+<div className="py-10 max-w-[44ch] mx-auto text-center">
+  <p className="italic text-[18px] md:text-[20px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 400, lineHeight: 1.3 }}>
+    {t(T.headline)}
+  </p>
+  <p className="mt-4 text-[13.5px]" style={{ color: INK, lineHeight: 1.65 }}>
+    {t(T.body)}
+  </p>
+</div>
+```
+
+#### `E-Diagnostic` — error with retry + collapsible technical detail
+
+The error variant. `Alert tone="danger"` + retry button + `<details>`
+collapsible for technical detail. Defined in §5.8.
+
+#### Empty state anti-pattern checklist
+
+| ❌ | Reason |
+| -- | ------ |
+| Oversized illustration | Forbidden globally. Use a single lucide icon at `w-6 h-6` in MUTED. |
+| Friendly emoji on `E-Editorial-Letter` | Editorial voice forbids emoji in chrome. |
+| `E-Diagnostic` for empty results (not error) | Diagnostic is for failures, not zero-results. Pick `E-Quiet-Line` or `E-Hairline-Card`. |
+
+### 16.5 CTA cluster variants
+
+#### `C-Single-Primary` — one NAVY button
+
+A single primary action. Most editorial choice.
+
+```jsx
+<div className="mt-8">
+  <button
+    type="button"
+    className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-[4px] text-[13.5px] font-medium ${FOCUS_RING_CLASS}`}
+    style={{ background: NAVY, color: "white" }}
+  >
+    {t(T.cta)} <ArrowRight className="w-3.5 h-3.5" />
+  </button>
+</div>
+```
+
+#### `C-Pair-Primary-Ghost` — NAVY + ghost text
+
+Primary + secondary "Plus tard" / "Annuler" / "Voir le programme" as a ghost
+text-button right of the primary, separated by ~24 px.
+
+```jsx
+<div className="mt-8 flex items-center gap-6">
+  <button className="…NAVY primary…">{t(T.primary)}</button>
+  <button className={`text-[13px] ${FOCUS_RING_CLASS}`} style={{ color: INK }}>
+    {t(T.ghost)}
+  </button>
+</div>
+```
+
+#### `C-Triplet-Layered` — NAVY + outline + ghost
+
+Three layered engagement levels: primary, secondary outline, tertiary ghost.
+Used when there are genuinely 3 paths forward (Submit / Save draft / Cancel).
+
+```jsx
+<div className="mt-8 flex items-center gap-3">
+  <button className="…NAVY primary…">{t(T.primary)}</button>
+  <button className="…outline secondary…">{t(T.secondary)}</button>
+  <button className={`text-[13px] ${FOCUS_RING_CLASS}`} style={{ color: MUTED }}>
+    {t(T.tertiary)}
+  </button>
+</div>
+```
+
+#### `C-Inline-Editorial` — inline gold link
+
+CTA dissolved into the prose. Gold underline-wipe on hover. Used when the
+section is editorial and a button feels intrusive.
+
+```jsx
+<p className="mt-4 text-[14.5px]" style={{ color: INK, lineHeight: 1.65 }}>
+  {t(T.intro)}{" "}
+  <a
+    href={href}
+    className={`inline-flex items-center gap-1 relative group ${FOCUS_RING_CLASS} rounded-[2px] px-0.5`}
+    style={{ color: GOLD, fontWeight: 500 }}
+  >
+    {t(T.linkLabel)}
+    <ArrowRight className="w-3 h-3" />
+    <span
+      aria-hidden
+      className="absolute left-0 right-0 -bottom-0.5 h-px origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"
+      style={{ background: GOLD }}
+    />
+  </a>
+</p>
+```
+
+#### CTA cluster anti-pattern checklist
+
+| ❌ | Reason |
+| -- | ------ |
+| Two NAVY primaries side-by-side | One primary per cluster. |
+| `C-Triplet-Layered` with two destructive options | Destructive belongs in modal/typed-confirm, not CTA cluster. |
+| `C-Inline-Editorial` in a form | Form needs an explicit primary; never bury Submit in prose. |
+
+### 16.6 Signature micro-interactions
+
+One per page, attributed by archétype. Choosing one **binds the page** to a
+family (cf. blueprint §3).
+
+#### `M-Editorial-Veil` — mount veil + stagger
+
+CREAM curtain `opacity 0.6 → 0` over 600 ms on mount + sections fade in with
+`stagger 80 ms`, `y 8 → 0`, `opacity 0 → 1`, `duration 400 ms`, easing `EASE`.
+
+```jsx
+const veil = !prefersReducedMotion && (
+  <motion.div
+    aria-hidden
+    initial={{ opacity: 0.6 }}
+    animate={{ opacity: 0 }}
+    transition={{ duration: 0.6, ease: EASE }}
+    className="fixed inset-0 z-[60] pointer-events-none"
+    style={{ background: CREAM }}
+  />
+);
+
+const sectionVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: (i) => ({ opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE, delay: 0.2 + i * 0.08 } }),
+};
+```
+
+**Archetype.** Landing / vitrine publique / events celebration.
+
+#### `M-Gold-Sweep` — gold scaleX + lift on funnel transition
+
+On step transition (Candidater → Step 2, Step 2 → Step 3): a gold bar `scaleX
+0 → 1` (origin-left, 500 ms) + form fields lift `y 4 → 0` with `stagger
+60 ms`.
+
+```jsx
+<motion.span
+  key={step}
+  initial={{ scaleX: 0 }}
+  animate={{ scaleX: 1 }}
+  transition={{ duration: 0.5, ease: EASE }}
+  style={{ background: GOLD, transformOrigin: "left" }}
+  className="block h-[2px] mb-6"
+/>
+```
+
+**Archetype.** Funnel candidat (Candidater / StartupUpload / MonDossier).
+
+#### `M-Slide-Cards` — KPI/card slide-up cockpit signature
+
+Cards `y 12 → 0`, `opacity 0 → 1`, `stagger 60 ms`, `duration 320 ms`,
+rigorous easing.
+
+```jsx
+{cards.map((c, i) => (
+  <motion.div
+    key={c.id}
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.32, ease: EASE, delay: i * 0.06 }}
+  >
+    …
+  </motion.div>
+))}
+```
+
+**Archetype.** Cockpit jury / scoring / dashboard analytics.
+
+#### `M-Hairline-Reveal` — hairline scaleX left-origin
+
+A hairline `CREAM2` reveals `scaleX 0 → 1` (origin-left, 400 ms) above the
+table or queue + items fade in on its passage (`stagger 40 ms` after the line
+reaches them).
+
+```jsx
+<motion.span
+  initial={{ scaleX: 0 }}
+  animate={{ scaleX: 1 }}
+  transition={{ duration: 0.4, ease: EASE }}
+  style={{ background: CREAM2, transformOrigin: "left" }}
+  className="block h-px mb-3"
+/>
+```
+
+**Archetype.** Admin queue / user management / DataTable.
+
+#### Micro-interaction anti-pattern checklist
+
+| ❌ | Reason |
+| -- | ------ |
+| Two signatures on the same page | One per page, no exceptions. |
+| `M-Editorial-Veil` on a cockpit | The veil is celebratory; cockpits are tools. |
+| `M-Hairline-Reveal` on a landing page | Reserved for admin/table feel. |
+| Any signature without `prefers-reduced-motion` guard | Binding requirement of catalog §8.6. |
+
+### 16.7 Working with the bank
+
+Each page can pick — or skip — a variant per block + a signature micro-interaction:
+
+```
+page = {
+  hero:    H-* | custom,
+  opener:  S-* | custom,
+  list:    L-* | custom | none,
+  empty:   E-*,
+  cta:     C-*,
+  micro:   M-*,
+}
+```
+
+**Soft principles** (instincts, not rules):
+
+1. **Cousin pages should look like cousins, not twins.** When two adjacent
+   pages naturally land on the same combo, that's a signal to vary one
+   element — not a violation. Use the bank's range to find a different angle.
+
+2. **Funnels can speak with one voice.** Pages of the same funnel often share
+   the same micro-interaction so the user feels the continuity.
+
+3. **Scarce moves stay scarce.** `H-Reveal-Curtain`, `H-Ambient` and
+   `L-Podium-Mosaic` lose their charge if used everywhere. Save them for
+   moments that earn the ornament.
+
+4. **Off-catalog is welcome.** Invent a hero or a list when the content
+   deserves something this bank doesn't have. Drop the recipe back here later
+   so the next page can borrow it.
+
+The starting suggestions per page live in
+[`design-upgrade-blueprint.md §3`](./design-upgrade-blueprint.md#3-matrice-dattribution--page--variante).
+Treat them as a default to depart from, not a contract.
+
+### 16.8 How to design a new page with the bank
+
+A loose order — feel free to start anywhere:
+
+1. **Read the page out loud.** What is this page asking the user to *do* or
+   to *feel*? The answer points you to the right hero and micro-interaction.
+
+2. **Skim the bank.** Pick a hero whose voice matches. If nothing fits,
+   borrow two and stitch, or invent. Don't force-fit.
+
+3. **Check your neighbours.** Glance at the pages users will hit just before
+   and just after this one. If the silhouette feels identical, swap one
+   element.
+
+4. **Pick (or skip) the list and the openers.** A page can have no list. A
+   page can use `S-Quiet` for every opener if the page wants silence between
+   sections. Defaults are starting points.
+
+5. **Choose the empty + CTA at the cardinality of the real decision.** One
+   path → primary. Two paths → primary + ghost. Three → triplet. Don't add
+   buttons to fill the column.
+
+6. **Document the choice.** Drop a one-line comment in the page header — what
+   hero / what micro / why. Future-you and the next designer will thank you.
+
+### 16.9 Growing the bank
+
+The bank is meant to grow. Add a recipe whenever:
+
+- A new archetype appears that no existing pattern serves.
+- A real page invented something good that other pages will want.
+- You found a recipe in the wild (a refit of an existing variant) that
+  reads better than what's here.
+
+How to add: paste the recipe under the right block, write a 2-line "use when"
+note, link the page where it lives. No PR ceremony — just edit and ship.
 
 ---
 

@@ -1,5 +1,10 @@
 // Espace Startup — orchestrateur du tunnel de candidature RSA (Module 1).
 //
+// Hero variant (intro state) : H-Vertical-Rule (banque §16.1) — barre gold
+// gauche 2px + texte stacké, voix dossier personnel. Signature micro :
+// M-Gold-Sweep (funnel candidat, partagée avec Candidater + StartupUpload).
+// Cf. design-upgrade-blueprint §3.3 + §4.11.
+//
 // Flux : auth-gate (-> /Login) -> résout l'édition active -> charge le dossier du
 // candidat (Startup.mine) :
 //   - aucun dossier  -> écran d'intro + « Commencer mon dossier » (crée le brouillon)
@@ -192,6 +197,16 @@ export default function MonDossier() {
     return Date.now() > close.getTime();
   }, [edition]);
 
+  // Jours restants avant clôture des candidatures (null si pas de deadline ou déjà clôturé).
+  // Affiché en sous-ligne du rail de progression : "J-12 jusqu'à clôture".
+  const daysToClose = useMemo(() => {
+    if (!edition?.application_close) return null;
+    const close = new Date(edition.application_close);
+    close.setHours(23, 59, 59, 999);
+    const days = Math.ceil((close.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+    return days >= 0 ? days : null;
+  }, [edition]);
+
   const closeDate = formatDate(edition?.application_close, lang);
 
   // Chantier 2 — Résolution du libellé humain du club pour l'eyebrow du Funnel.
@@ -366,16 +381,104 @@ export default function MonDossier() {
     const canStart = !closed && !createDraft.isPending && (!isMulticlub || !!chosenClubId);
     return (
       <PageShell nav>
-        <header className="mb-7">
-          <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
-          <EditorialTitle lead={t(UI.introTitle)} size="md" />
-          <p className="mt-4 text-[15px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.65 }}>
+        {/* Hero H-Vertical-Rule — barre gold gauche + texte stacké, voix dossier personnel. */}
+        <header className="mb-10 md:mb-12 pl-6 md:pl-8 relative">
+          <span
+            aria-hidden
+            className="absolute left-0 top-1 bottom-2 w-[2px]"
+            style={{ background: GOLD }}
+          />
+          <span
+            className="uppercase text-[10.5px] tracking-[0.18em] font-medium block"
+            style={{ color: GOLD }}
+          >
+            {t(UI.eyebrow)}
+          </span>
+          <h1
+            className="mt-3 text-[32px] md:text-[40px]"
+            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 400, lineHeight: 1.05 }}
+          >
+            {t(UI.introTitle)}
+          </h1>
+          <p className="mt-5 text-[15px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.65 }}>
             {t(UI.introBody)}
           </p>
-          <p className="mt-2 text-[13px]" style={{ color: MUTED, lineHeight: 1.6 }}>
-            {t(UI.signedInAs)} <strong style={{ color: INK }}>{authUser?.email}</strong> · {edition.name}
+          <p
+            className="mt-4 text-[11.5px] uppercase tracking-[0.14em]"
+            style={{ color: MUTED }}
+          >
+            {t(UI.signedInAs)}{' '}
+            <span className="normal-case tracking-normal" style={{ color: INK }}>
+              {authUser?.email}
+            </span>
+            {' · '}
+            <span className="normal-case tracking-normal">{edition.name}</span>
           </p>
         </header>
+
+        {/* Rail de progression candidat — 4 jalons (dossier / soumis / sélec / finale).
+            Étape courante (état "aucun dossier") = #1 Dossier, jalon gold rempli. */}
+        <nav
+          aria-label={t({ fr: 'Parcours candidat', en: 'Applicant journey', de: 'Bewerbungspfad' })}
+          className="mb-10 md:mb-12"
+        >
+          <ol className="grid grid-cols-4 gap-2 md:gap-3" role="list">
+            {[
+              { n: 1, label: { fr: 'Dossier',  en: 'Dossier',    de: 'Akte' } },
+              { n: 2, label: { fr: 'Soumis',   en: 'Submitted',  de: 'Eingereicht' } },
+              { n: 3, label: { fr: 'Sélec.',   en: 'Selection',  de: 'Auswahl' } },
+              { n: 4, label: { fr: 'Finale',   en: 'Finale',     de: 'Finale' } },
+            ].map((stage, i, arr) => {
+              const isCurrent = stage.n === 1;
+              const last = i === arr.length - 1;
+              return (
+                <li key={stage.n} className="flex flex-col">
+                  <div className="flex items-center w-full">
+                    <span
+                      aria-hidden
+                      className="shrink-0 inline-flex items-center justify-center rounded-full"
+                      style={{
+                        width: 12,
+                        height: 12,
+                        background: isCurrent ? GOLD : 'transparent',
+                        border: `1.5px solid ${isCurrent ? GOLD : CREAM2}`,
+                      }}
+                    />
+                    {!last && (
+                      <span
+                        aria-hidden
+                        className="ml-1 flex-1 h-px"
+                        style={{ background: CREAM2 }}
+                      />
+                    )}
+                  </div>
+                  <span
+                    className="mt-2 uppercase text-[10px] tracking-[0.14em] font-medium tabular-nums"
+                    style={{ color: isCurrent ? NAVY : MUTED }}
+                  >
+                    {String(stage.n).padStart(2, '0')}·{t(stage.label)}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="mt-3 text-[12.5px] italic" style={{ fontFamily: SERIF, color: INK }}>
+            {t({ fr: 'Vous êtes ici.', en: 'You are here.', de: 'Sie sind hier.' })}
+            {daysToClose != null && !closed && (
+              <span
+                className="ml-2 not-italic text-[11px] uppercase tracking-[0.12em]"
+                style={{ color: MUTED }}
+              >
+                {' · J-'}{daysToClose}{' '}
+                {t({
+                  fr: "jusqu'à clôture",
+                  en: 'until close',
+                  de: 'bis Schluss',
+                })}
+              </span>
+            )}
+          </p>
+        </nav>
 
         {/* V2 step — picker de club (compétitions multiclub uniquement) */}
         {isMulticlub && !closed && (

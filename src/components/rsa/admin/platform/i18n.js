@@ -13,7 +13,7 @@ export const TABS = {
 
 export const UI = {
   eyebrow:    { fr: 'Cockpit',                en: 'Cockpit',                de: 'Cockpit' },
-  pageTitle:  { fr: 'Administration RSA',     en: 'RSA Administration',     de: 'RSA-Verwaltung' },
+  pageTitle:  { fr: 'Administration',         en: 'Administration',         de: 'Verwaltung' },
   pageSubtitle: {
     fr: 'Configuration des éditions, suivi en direct des sessions et publication des palmarès.',
     en: 'Edition setup, real-time session monitoring and results publication.',

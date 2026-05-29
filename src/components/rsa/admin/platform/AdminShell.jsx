@@ -16,6 +16,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { GOLD, NAVY, INK, MUTED, CREAM2, EASE } from '@/components/design/tokens';
+import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
 import { TABS, UI } from './i18n';
 import ModuleStatusStrip from './ModuleStatusStrip';
@@ -28,25 +29,6 @@ const TAB_IDS = ['setup', 'live', 'results'];
 
 function Spinner() {
   return <Loader2 className="w-5 h-5 animate-spin" style={{ color: GOLD }} aria-hidden />;
-}
-
-function Tab({ id, label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="px-4 py-2 rounded-full text-[12.5px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] transition-colors"
-      style={{
-        background: active ? NAVY : 'white',
-        color: active ? 'white' : INK,
-        border: `1px solid ${active ? NAVY : CREAM2}`,
-      }}
-      aria-pressed={active}
-      aria-controls={`admin-panel-${id}`}
-    >
-      {label}
-    </button>
-  );
 }
 
 export default function AdminShell() {
@@ -170,19 +152,17 @@ export default function AdminShell() {
           </label>
         )}
 
-        {/* Pill tab row */}
-        <div className="flex flex-wrap gap-1.5 ml-auto" role="tablist">
-          {TAB_IDS.map((id) => (
-            <Tab
-              key={id}
-              id={id}
-              active={tab === id}
-              label={t(TABS[id])}
-              onClick={() => setTab(id)}
-            />
-          ))}
-        </div>
       </div>
+
+      {/* Tabs — underline editorial style (cockpit nav, pas filter chip) */}
+      <CockpitTabs
+        idPrefix="admin"
+        items={TAB_IDS.map((id) => ({ id, label: t(TABS[id]) }))}
+        active={tab}
+        onChange={setTab}
+        ariaLabel="Admin cockpit navigation"
+        className="mb-4"
+      />
 
       {/* Panel body */}
       <div id={`admin-panel-${tab}`} role="tabpanel" aria-labelledby={`admin-tab-${tab}`}>

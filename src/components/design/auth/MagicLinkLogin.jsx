@@ -146,17 +146,18 @@ export default function MagicLinkLogin({
   // le redirect Supabase, qui prend 200-500ms pour partir).
   const [ssoPending, setSsoPending] = useState(null); // null | 'google' | 'microsoft'
 
-  // Eyebrow contextuel : "Inscription · RSA 2027 · paris-etoile" pour un lien
+  // Eyebrow contextuel : "Inscription · 2027 · paris-etoile" pour un lien
   // de candidature. On NE remplace QUE l'eyebrow (titre + reste de la copy
   // restent neutres) — c'est juste un indice visuel pour rassurer le candidat
-  // qu'il est sur le bon onglet.
+  // qu'il est sur le bon onglet. Le préfixe "RSA" a été retiré du texte
+  // utilisateur (le code RPC et les URLs restent inchangés).
   const contextEyebrow = (() => {
     if (intent !== 'candidate' || !editionId) return null;
     const suffix = clubId ? ` · ${clubId}` : '';
     return {
-      fr: `Inscription · RSA ${editionId}${suffix}`,
-      en: `Apply · RSA ${editionId}${suffix}`,
-      de: `Bewerbung · RSA ${editionId}${suffix}`,
+      fr: `Inscription · ${editionId}${suffix}`,
+      en: `Apply · ${editionId}${suffix}`,
+      de: `Bewerbung · ${editionId}${suffix}`,
     };
   })();
 
@@ -399,7 +400,7 @@ export default function MagicLinkLogin({
       <div className="mt-6 pt-5 text-center" style={{ borderTop: `1px solid ${CREAM2}` }}>
         <p className="text-[11px]" style={{ color: MUTED }}>
           {/* intentionally language-neutral legal sliver; pass via labels if needed */}
-          Rotary Startup Award 2026
+          2026
         </p>
         {/* F10 — Sortie de secours pour les sessions zombies (JWT expiré + cookie
             stale + onAuthStateChange muet). Subtil, sous le footer, ton non

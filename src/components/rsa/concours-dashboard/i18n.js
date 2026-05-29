@@ -9,9 +9,9 @@
 export const UI = {
   // ── TopNav ────────────────────────────────────────────────────────────────
   navTitle: {
-    fr: 'Rotary Startup Award',
-    en: 'Rotary Startup Award',
-    de: 'Rotary Startup Award',
+    fr: 'Compétitions',
+    en: 'Competitions',
+    de: 'Wettbewerbe',
   },
   navSubtitle: {
     fr: 'Le concours en transparence',
@@ -21,9 +21,9 @@ export const UI = {
 
   // ── Hero ──────────────────────────────────────────────────────────────────
   heroEyebrow: {
-    fr: 'Rotary Startup Award',
-    en: 'Rotary Startup Award',
-    de: 'Rotary Startup Award',
+    fr: 'Compétitions',
+    en: 'Competitions',
+    de: 'Wettbewerbe',
   },
   heroTitleLead: {
     fr: 'Le concours en un coup d’œil',

@@ -106,7 +106,7 @@ function Card({ entry }) {
             className="uppercase text-[10px] tracking-[0.18em] font-medium"
             style={{ color: GOLD }}
           >
-            RSA {edition.year || edition.name}
+            {edition.year || edition.name}
           </span>
         </div>
         <h3

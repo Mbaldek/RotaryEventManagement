@@ -30,8 +30,9 @@ import {
   CREAM, CREAM2, NAVY, GOLD, INK, MUTED, SERIF, EASE, TINT_SAGE, GREEN_TODAY,
 } from '@/components/design/tokens';
 import { DANGER, GOLD_TEXT } from '@/components/design/tokens.app';
+import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
-import { COMP, UI } from '../master/i18n';
+import { COMP } from '../master/i18n';
 
 const WIDTH_MAP = {
   standard: 'max-w-[920px]',
@@ -91,26 +92,6 @@ function StatusIndicator({ status, statusMessage }) {
   );
 }
 
-function TabPill({ id, label, active, disabled, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      role="tab"
-      aria-selected={active}
-      aria-controls={`funnel-panel-${id}`}
-      className="px-3.5 py-1.5 rounded-full text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-      style={{
-        background: active ? NAVY : 'white',
-        color: active ? 'white' : INK,
-        border: `1px solid ${active ? NAVY : CREAM2}`,
-      }}
-    >
-      {label}
-    </button>
-  );
-}
 
 export default function FunnelEditorModal({
   open,
@@ -292,23 +273,20 @@ export default function FunnelEditorModal({
               </button>
             </header>
 
-            {/* Tabs pill row */}
+            {/* Tabs — underline editorial style */}
             {tabs.length > 0 && (
-              <div
-                className="px-6 py-3 flex flex-wrap items-center gap-1.5"
-                style={{ borderBottom: `1px solid ${CREAM2}`, background: CREAM }}
-                role="tablist"
-              >
-                {tabs.map((tab) => (
-                  <TabPill
-                    key={tab.id}
-                    id={tab.id}
-                    label={tab.label}
-                    active={activeTab === tab.id}
-                    disabled={tab.disabled}
-                    onClick={() => onTabChange?.(tab.id)}
-                  />
-                ))}
+              <div className="px-6" style={{ background: CREAM }}>
+                <CockpitTabs
+                  idPrefix="funnel"
+                  items={tabs.map((tab) => ({
+                    id: tab.id,
+                    label: tab.label,
+                    disabled: tab.disabled,
+                  }))}
+                  active={activeTab}
+                  onChange={(id) => onTabChange?.(id)}
+                  ariaLabel="Funnel editor navigation"
+                />
               </div>
             )}
 
@@ -316,6 +294,7 @@ export default function FunnelEditorModal({
             <div
               id={`funnel-panel-${activeTab}`}
               role="tabpanel"
+              aria-labelledby={`funnel-tab-${activeTab}`}
               className="flex-1 overflow-y-auto px-6 py-5"
               style={{ background: 'white' }}
             >

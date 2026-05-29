@@ -19,7 +19,7 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Loader2, Trophy, Calendar, AlertTriangle, ArrowRight } from 'lucide-react';
 import {
   PageShell,
@@ -29,6 +29,7 @@ import {
   Skeleton,
   NAVY,
   GOLD,
+  CREAM,
   CREAM2,
   INK,
   MUTED,
@@ -37,6 +38,11 @@ import {
   FOCUS_RING_CLASS,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
+
+// Hero variant : H-Reveal-Curtain (catalog §16.1) — voile CREAM se lève en
+// 600ms révélant le year giant tabular + Eyebrow + serif title.
+// Signature micro : M-Editorial-Veil. Cf. design-upgrade-blueprint §4.14.
+// Le voile n'apparaît QUE sur l'état "palmarès publié" (pas loading/error/no-results).
 import { useLang } from '@/lib/platform/i18n';
 import {
   useResults,
@@ -247,6 +253,7 @@ export default function Resultats() {
   const { lang, t } = useLang();
   const [searchParams, setSearchParams] = useSearchParams();
   const editionParam = searchParams.get('edition') || null;
+  const reduce = useReducedMotion();
 
   const { palmares, isLoading, isError, refetch, availableEditions } = useResults(editionParam);
   const nextHintQ = useNextEditionHint();
@@ -370,27 +377,58 @@ export default function Resultats() {
 
   return (
     <PageShell width="wide" nav={<TopNav wordmark={tT.titleLead} subtitle={tT.eyebrow(ed.year)} />}>
-      {/* Header éditorial */}
+      {/* Signature M-Editorial-Veil — voile CREAM se lève en 600ms au mount. */}
+      {!reduce && (
+        <motion.div
+          aria-hidden
+          initial={{ opacity: 0.6 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="fixed inset-0 z-[60] pointer-events-none"
+          style={{ background: CREAM }}
+        />
+      )}
+
+      {/* Header H-Reveal-Curtain — eyebrow + giant year tabular + serif title. */}
       <motion.section
-        initial={{ opacity: 0, y: 12 }}
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: EASE }}
+        transition={{ duration: 0.6, ease: EASE, delay: 0.3 }}
         className="mb-12 md:mb-16"
       >
-        <Eyebrow>{tT.eyebrow(ed.year)}</Eyebrow>
-        <h1
-          className="text-[40px] md:text-[56px] leading-[1.05] mt-2"
-          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-        >
-          {tT.titleLead} <em style={{ color: GOLD, fontStyle: 'italic' }}>{tT.titleItalic(ed.year)}</em>
-        </h1>
+        <div className="flex items-baseline gap-5 md:gap-7 flex-wrap">
+          <span
+            className="tabular-nums shrink-0"
+            style={{
+              fontFamily: SERIF,
+              color: NAVY,
+              fontSize: 'clamp(72px, 11vw, 128px)',
+              lineHeight: 0.9,
+              fontWeight: 400,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {ed.year}
+          </span>
+          <div className="min-w-0 flex-1">
+            <Eyebrow>{tT.eyebrow(ed.year)}</Eyebrow>
+            <h1
+              className="text-[28px] md:text-[36px] leading-[1.05] mt-2"
+              style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+            >
+              {tT.titleLead}{' '}
+              <em style={{ color: GOLD, fontStyle: 'italic' }}>{tT.titleItalic(ed.year)}</em>
+            </h1>
+          </div>
+        </div>
+
         {finaleDate && (
-          <p className="mt-3 text-[14px] uppercase tracking-[0.15em]" style={{ color: MUTED }}>
+          <p className="mt-5 text-[14px] uppercase tracking-[0.15em]" style={{ color: MUTED }}>
             <Calendar className="inline w-4 h-4 mr-2 -mt-0.5" />
             {tT.subtitleFinale(finaleDate)}
           </p>
         )}
-        <p className="mt-4 text-[16px] max-w-[640px]" style={{ color: INK }}>
+        <p className="mt-4 text-[16px] max-w-[640px]" style={{ color: INK, lineHeight: 1.65 }}>
           {tT.subtitleLead}
         </p>
 

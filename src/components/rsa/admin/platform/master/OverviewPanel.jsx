@@ -1,30 +1,43 @@
-// OverviewPanel — landing du Master Cockpit (équipe A · cockpit overview).
+// OverviewPanel — landing du Master Cockpit (équipe A · overview rework v2).
 //
-// Layout asymétrique (split 60/40 puis bandes hairline) — anti-template :
-//   1) Hero éditorial GAUCHE + KPI rail VERTICAL DROIT sticky (variante
-//      H-Cockpit-Split du blueprint §16). PAS de grid 4 cards horizontales.
-//   2) Bande activity feed sous le hero, numéroté en hairline gauche (variante
-//      L-Numbered-Hairline) — pas de card grid.
-//   3) Bande raccourcis "Lancer un cycle" — 3 lignes hairline avec CTA ghost
-//      à droite (variante C-Single-Primary appliquée en liste, pas en cards).
-//   4) Bande Tableaux : Funnel + ClubsBreakdown + JuryActivity, chaque chart
-//      sous un section header S-Gold-Rule (alternance volontaire pour rompre
-//      la séquence canonique).
+// HISTORIQUE — pourquoi cette refonte
+//   Le retour utilisateur sur la v1 :
+//     « cockpit master ne sert à rien, on s'en fou des metrics. kick off
+//       a cycle n'est pas une activité sur une main dashboard, c'est un
+//       bouton dans un menu. live dashboard doit être placé au top.
+//       master platform activity ensuite OK même si vide. »
+//   → 3 changements structurels :
+//     (a) Drop l'eyebrow « Plateforme master » + lead « Cockpit master » —
+//         remplacé par « Administration / Vue d'ensemble » (sobre, pas
+//         de mise en scène pretentieuse du rôle).
+//     (b) Drop le bloc « Quick actions / Lancer un cycle » — pas sa place
+//         sur un main dashboard (les 3 funnels sont accessibles depuis
+//         les tabs Competitions/Clubs/Roles). Composant sauvé dans
+//         MasterQuickActions.jsx pour réutilisation future.
+//     (c) Reorder : le Live dashboard (KPI + 3 charts) passe AU TOP juste
+//         après le hero — c'est le block le plus actionnable. L'activity
+//         feed Master Platform descend en dessous (peut être vide, OK).
+//
+// LAYOUT FINAL — 3 sections, ordre du plus actionnable au plus contextuel
+//   1) Hero éditorial GAUCHE + KPI rail vertical DROIT sticky.
+//      « Administration / Vue d'ensemble » + pulse phrase + KPI rail.
+//   2) Live dashboard (S-Gold-Rule + 3 charts compacts grid 2-col).
+//      Funnel + Clubs breakdown (lg:grid-cols-2) puis JuryActivity
+//      full-width en dessous. Empty-state si pas de compétition active.
+//   3) Master Platform Activity (L-Numbered-Hairline ou empty-state texte).
+//      Plus de spinner perpétuel : si data === [], on affiche un message
+//      court (« Aucune activité encore »).
 //
 // Source de vérité : useAllCompetitions + useAllClubs + useCountsForEdition
 // (compétition active) + useActivityFeed (admin_audit_log via RPC) + hooks
 // analytics existants (réutilisation sans dupliquer FunnelChart etc.).
 
-import React, { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Loader2, Plus, ArrowUpRight, UserPlus,
-  Trophy, Trash2, Megaphone, ShieldCheck, Users, Sparkles, Activity,
-} from 'lucide-react';
+import { Trash2, Trophy, Megaphone, ShieldCheck, UserPlus, Users, Sparkles, Activity } from 'lucide-react';
 import {
   Eyebrow, EditorialTitle, CREAM2, NAVY, INK, MUTED, GOLD, GOLD_TEXT,
-  GREEN_TODAY, FOCUS_RING_CLASS, SERIF, EASE,
+  GREEN_TODAY, SERIF, EASE,
 } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { OVERVIEW, ROLES } from './i18n';
@@ -44,10 +57,6 @@ import {
 import FunnelChart from '@/components/rsa/analytics/FunnelChart';
 import ClubsBreakdownChart from '@/components/rsa/analytics/ClubsBreakdownChart';
 import JuryActivityTable from '@/components/rsa/analytics/JuryActivityTable';
-import CompetitionFunnel from './CompetitionFunnel';
-import ClubFunnel from './ClubFunnel';
-import { InviteUserModal } from '@/components/rsa/invite';
-import { toast } from 'sonner';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -96,7 +105,7 @@ function labelForAction(action, t) {
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 // Section opener variante S-Gold-Rule — barre gold horizontale + eyebrow
-// uppercase + Playfair lead. Utilisée pour les tableaux (Tableau de bord).
+// uppercase + Playfair lead. Utilisée pour Live dashboard et activité.
 function GoldRuleSection({ eyebrow, title, hint, titleId }) {
   return (
     <header className="mb-4">
@@ -133,9 +142,9 @@ function GoldRuleSection({ eyebrow, title, hint, titleId }) {
   );
 }
 
-// KPI rail VERTICAL (anti L-Card-Grid). Stack de 5 valeurs séparées par
-// hairlines, libellés petits/uppercase tracked en haut, valeur en
-// Playfair NAVY en bas. Sticky pour rester visible en scroll.
+// KPI rail VERTICAL (anti L-Card-Grid). Stack de 4 valeurs séparées par
+// hairlines, libellés petits/uppercase tracked à gauche, valeur en
+// Playfair NAVY à droite. Sticky pour rester visible en scroll.
 function KpiRail({
   totalCompetitions, totalClubs, applied, sessions, sessionsLive,
 }) {
@@ -208,17 +217,17 @@ function KpiRail({
 // Activity feed — variante L-Numbered-Hairline. Chaque évènement = ligne
 // avec index gauche (J-X style), icône action, libellé, target, timestamp
 // relatif. Hairline séparateurs sans card per item.
+//
+// User feedback v2 : « master platform activity ensuite OK même si vide. »
+// → Pas de spinner perpétuel : si data === null OU data === [], on affiche
+//   directement l'empty-state texte. Le spinner n'apparaît que sur l'état
+//   isLoading INITIAL (cache vide), pas sur les refetch en arrière-plan.
 function ActivityFeedSection({ feedQ }) {
   const { t } = useLang();
   const items = feedQ.data || [];
-  if (feedQ.isLoading) {
-    return (
-      <div className="py-6 flex justify-center">
-        <Loader2 className="w-4 h-4 animate-spin" style={{ color: MUTED }} />
-      </div>
-    );
-  }
-  if (items.length === 0) {
+  // Empty-state immédiat dès que data est résolue (même si vide) — évite
+  // tout spinner si la query revient avec un tableau vide.
+  if (!feedQ.isLoading && items.length === 0) {
     return (
       <div
         className="rounded-[4px] p-6 text-center"
@@ -230,9 +239,28 @@ function ActivityFeedSection({ feedQ }) {
           aria-hidden
         />
         <p className="text-[12.5px]" style={{ color: INK }}>
-          {t(OVERVIEW.feedEmpty)}
+          {t(OVERVIEW.feedEmptyShort)}
         </p>
       </div>
+    );
+  }
+  if (feedQ.isLoading && items.length === 0) {
+    // 3 skeletons hairline plutôt qu'un spinner — plus calme visuellement.
+    return (
+      <ol aria-busy="true" aria-live="polite">
+        {[0, 1, 2].map((i) => (
+          <li
+            key={i}
+            className="grid grid-cols-[28px_20px_1fr_auto] items-start gap-3 py-2.5"
+            style={{ borderTop: i === 0 ? 'none' : `1px solid ${CREAM2}` }}
+          >
+            <span className="block h-3 rounded-[2px]" style={{ background: CREAM2 }} />
+            <span className="block h-3 rounded-[2px]" style={{ background: CREAM2 }} />
+            <span className="block h-3 rounded-[2px] w-2/3" style={{ background: CREAM2 }} />
+            <span className="block h-3 rounded-[2px] w-12" style={{ background: CREAM2 }} />
+          </li>
+        ))}
+      </ol>
     );
   }
   return (
@@ -292,47 +320,10 @@ function ActivityFeedSection({ feedQ }) {
   );
 }
 
-// Quick action rows — chaque action est une LIGNE hairline (pas une card)
-// avec icône, lead serif + hint, et CTA ghost à droite. Anti-grid.
-function QuickActionRow({ Icon, title, hint, onClick }) {
-  return (
-    <li
-      className="grid grid-cols-[40px_1fr_auto] items-center gap-4 py-3.5 group"
-      style={{ borderTop: `1px solid ${CREAM2}` }}
-    >
-      <span
-        className="w-10 h-10 rounded-full inline-flex items-center justify-center"
-        style={{ background: '#fdf6e8', border: `1px solid ${CREAM2}` }}
-        aria-hidden
-      >
-        <Icon className="w-4 h-4" style={{ color: GOLD }} />
-      </span>
-      <div className="min-w-0">
-        <p
-          className="text-[15px]"
-          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-        >
-          {title}
-        </p>
-        <p className="text-[12px] mt-0.5" style={{ color: INK }}>{hint}</p>
-      </div>
-      <button
-        type="button"
-        onClick={onClick}
-        className={`inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] font-medium ${FOCUS_RING_CLASS} transition-transform group-hover:translate-x-0.5`}
-        style={{ background: NAVY, color: 'white' }}
-      >
-        <Plus className="w-3.5 h-3.5" /> <ArrowUpRight className="w-3.5 h-3.5" />
-      </button>
-    </li>
-  );
-}
-
 // ── OverviewPanel principal ────────────────────────────────────────────────
 
 export default function OverviewPanel() {
   const { t } = useLang();
-  const [, setParams] = useSearchParams();
 
   // Compétition active (1re en open/sessions/finale, sinon la + récente).
   const competitionsQ = useAllCompetitions();
@@ -361,37 +352,6 @@ export default function OverviewPanel() {
   // Activity feed (admin_audit_log).
   const feedQ = useActivityFeed({ limit: 10 });
 
-  // ── Modals state (raccourcis création) ────────────────────────────────────
-  const [competitionFunnelOpen, setCompetitionFunnelOpen] = useState(false);
-  const [clubFunnelOpen, setClubFunnelOpen] = useState(false);
-  const [inviteOpen, setInviteOpen] = useState(false);
-
-  // Helpers — naviguer vers la sous-vue d'édition créée.
-  function goToCompetition(id) {
-    setParams(
-      (p) => {
-        const next = new URLSearchParams(p);
-        next.set('tab', 'competitions');
-        next.set('subview', 'edit-competition');
-        next.set('id', id);
-        return next;
-      },
-      { replace: false },
-    );
-  }
-  function goToClub(id) {
-    setParams(
-      (p) => {
-        const next = new URLSearchParams(p);
-        next.set('tab', 'clubs');
-        next.set('subview', 'edit-club');
-        next.set('id', id);
-        return next;
-      },
-      { replace: false },
-    );
-  }
-
   // Pulse phrase (résolue avec compteurs ou fallback noActive).
   const pulse = useMemo(() => {
     if (!active) return t(OVERVIEW.pulseNoActive);
@@ -402,16 +362,20 @@ export default function OverviewPanel() {
       .replace('{clubs}', String(counts.clubsCount ?? 0));
   }, [active, counts.startupsCount, counts.sessionsCount, counts.clubsCount, t]);
 
+  const italic = t(OVERVIEW.titleItalic);
+
   return (
     <section className="mb-6">
-      {/* ── 1. Hero split éditorial + KPI rail vertical (H-Cockpit-Split) ── */}
+      {/* ── 1. Hero split éditorial + KPI rail vertical (H-Cockpit-Split) ──
+          Eyebrow sobre « Administration », titre « Vue d'ensemble ».
+          Plus de « Cockpit master » — voir doc d'historique en tête de fichier. */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6 mb-10">
         <div>
           <Eyebrow>{t(OVERVIEW.eyebrow)}</Eyebrow>
           <div className="mb-3">
             <EditorialTitle
               lead={t(OVERVIEW.titleLead)}
-              italic={t(OVERVIEW.titleItalic)}
+              italic={italic || undefined}
               size="md"
             />
           </div>
@@ -431,73 +395,18 @@ export default function OverviewPanel() {
         />
       </div>
 
-      {/* ── 2. Quick actions (lancer un cycle) — anti-grid, lignes hairline ── */}
-      <section
-        className="mb-10"
-        role="region"
-        aria-labelledby="overview-quick-actions-heading"
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <span className="h-[1.5px] w-6" style={{ background: GOLD }} aria-hidden />
-          <span
-            id="overview-quick-actions-heading"
-            className="uppercase text-[10px] tracking-[0.18em] font-medium"
-            style={{ color: GOLD_TEXT }}
-          >
-            {t(OVERVIEW.quickActionsEyebrow)}
-          </span>
-        </div>
-        <ul style={{ borderBottom: `1px solid ${CREAM2}` }}>
-          <QuickActionRow
-            Icon={Sparkles}
-            title={t(OVERVIEW.quickCreateCompetition)}
-            hint={t(OVERVIEW.quickCreateCompetitionHint)}
-            onClick={() => setCompetitionFunnelOpen(true)}
-          />
-          <QuickActionRow
-            Icon={Users}
-            title={t(OVERVIEW.quickCreateClub)}
-            hint={t(OVERVIEW.quickCreateClubHint)}
-            onClick={() => setClubFunnelOpen(true)}
-          />
-          <QuickActionRow
-            Icon={ShieldCheck}
-            title={t(OVERVIEW.quickInviteMember)}
-            hint={t(OVERVIEW.quickInviteMemberHint)}
-            onClick={() => setInviteOpen(true)}
-          />
-        </ul>
-      </section>
-
-      {/* ── 3. Activity feed (numbered hairline) ── */}
+      {/* ── 2. Live dashboard (TOP — bloc le plus actionnable) ──
+          User feedback : « live dashboard doit être placé au top. »
+          Funnel + Clubs breakdown en grid 2 colonnes (lg+), JuryActivity
+          full-width en dessous. Empty-state texte si pas d'édition active. */}
       <section
         className="mb-12"
         role="region"
-        aria-labelledby="overview-feed-heading"
+        aria-labelledby="overview-charts-heading"
       >
-        <div className="flex items-baseline justify-between flex-wrap gap-2 mb-3">
-          <div>
-            <Eyebrow>{t(OVERVIEW.feedEyebrow)}</Eyebrow>
-            <h3
-              id="overview-feed-heading"
-              className="text-[20px]"
-              style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-            >
-              {t(OVERVIEW.feedTitle)}
-            </h3>
-            <p className="text-[12.5px] mt-1 max-w-2xl" style={{ color: INK }}>
-              {t(OVERVIEW.feedHint)}
-            </p>
-          </div>
-        </div>
-        <ActivityFeedSection feedQ={feedQ} />
-      </section>
-
-      {/* ── 4. Tableau de bord — charts compacts (S-Gold-Rule par section) ── */}
-      <section role="region" aria-labelledby="overview-charts-heading">
         <GoldRuleSection
-          eyebrow={t(OVERVIEW.chartsEyebrow)}
-          title={t({ fr: 'Tableau de bord', en: 'Live dashboard', de: 'Live-Dashboard' })}
+          eyebrow={t(OVERVIEW.liveDashboardEyebrow)}
+          title={t(OVERVIEW.liveDashboardTitle)}
           hint={t(OVERVIEW.chartsHint)}
           titleId="overview-charts-heading"
         />
@@ -578,50 +487,31 @@ export default function OverviewPanel() {
         )}
       </section>
 
-      {/* ── Modals déclenchées par Quick actions ── */}
-      <CompetitionFunnel
-        open={competitionFunnelOpen}
-        onClose={() => setCompetitionFunnelOpen(false)}
-        onCreated={(newId) => {
-          // Toast déjà émis côté CompetitionFunnel.
-          setCompetitionFunnelOpen(false);
-          goToCompetition(newId);
-        }}
-      />
-      <ClubFunnel
-        open={clubFunnelOpen}
-        onClose={() => setClubFunnelOpen(false)}
-        onCreated={(row) => {
-          // ClubFunnel callbacks avec la row complète ; on garde le funnel
-          // ouvert pour permettre l'édition des tabs suivants (membres, etc.)
-          // — symétrique à ClubsTab.handleCreated.
-          if (row?.id) {
-            // Toast déjà émis côté ClubFunnel ; on ne re-toast pas.
-            goToClub(row.id);
-            setClubFunnelOpen(false);
-          }
-        }}
-      />
-      {inviteOpen && (
-        <InviteUserModal
-          scope="global"
-          onClose={() => setInviteOpen(false)}
-          onSuccess={(res) => {
-            toast.success(t({
-              fr: res?.was_already_existing
-                ? 'Rôle mis à jour, email envoyé.'
-                : 'Invitation envoyée.',
-              en: res?.was_already_existing
-                ? 'Role updated, email sent.'
-                : 'Invitation sent.',
-              de: res?.was_already_existing
-                ? 'Rolle aktualisiert, E-Mail versendet.'
-                : 'Einladung versendet.',
-            }));
-            setInviteOpen(false);
-          }}
-        />
-      )}
+      {/* ── 3. Activity feed Master Platform (contexte — OK si vide) ──
+          User feedback : « master platform activity ensuite OK même si vide. »
+          → Pas de spinner perpétuel : empty-state immédiat si data === []. */}
+      <section
+        role="region"
+        aria-labelledby="overview-feed-heading"
+      >
+        <div className="flex items-baseline justify-between flex-wrap gap-2 mb-3">
+          <div>
+            <Eyebrow>{t(OVERVIEW.feedEyebrow)}</Eyebrow>
+            <h3
+              id="overview-feed-heading"
+              className="text-[20px]"
+              style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+            >
+              {t(OVERVIEW.feedTitle)}
+            </h3>
+            <p className="text-[12.5px] mt-1 max-w-2xl" style={{ color: INK }}>
+              {t(OVERVIEW.feedHint)}
+            </p>
+          </div>
+        </div>
+        <ActivityFeedSection feedQ={feedQ} />
+      </section>
+
       {/* ROLES non utilisé directement mais tag i18n future-proof — silence eslint. */}
       <span className="sr-only">{t(ROLES.sectionTitle)}</span>
     </section>

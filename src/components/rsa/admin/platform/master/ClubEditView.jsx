@@ -18,9 +18,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import {
-  CREAM, CREAM2, NAVY, GOLD, INK, MUTED, SERIF,
+  CREAM2, NAVY, GOLD, INK, MUTED, SERIF,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
+import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
 import { UI, CLUBS } from './i18n';
 import { useAllClubs } from './useMaster';
@@ -170,46 +171,32 @@ export default function ClubEditView({ clubId, onClose }) {
         </div>
       </header>
 
-      {/* Tab row pills */}
-      <div
-        className="rounded-[4px] px-3 py-2 mb-5 flex flex-wrap items-center gap-1.5"
-        style={{ background: CREAM, border: `1px solid ${CREAM2}` }}
-        role="tablist"
-      >
-        {TAB_IDS.map((id) => {
-          const labels = {
-            info:      t(CLUBS.tabInfo),
-            contact:   t(CLUBS.tabContact),
-            president: t(CLUBS.tabPresident),
-            address:   t(CLUBS.tabAddress),
-            members:   t(CLUBS.tabMembers),
-          };
-          const active = activeTab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveTab(id)}
-              role="tab"
-              aria-selected={active}
-              className="px-3.5 py-1.5 rounded-full text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
-              style={{
-                background: active ? NAVY : 'white',
-                color: active ? 'white' : INK,
-                border: `1px solid ${active ? NAVY : CREAM2}`,
-              }}
-            >
-              {labels[id]}
-            </button>
-          );
-        })}
-      </div>
+      {/* Tabs — underline editorial style */}
+      <CockpitTabs
+        idPrefix="club-edit"
+        items={TAB_IDS.map((id) => ({
+          id,
+          label: t({
+            info:      CLUBS.tabInfo,
+            contact:   CLUBS.tabContact,
+            president: CLUBS.tabPresident,
+            address:   CLUBS.tabAddress,
+            members:   CLUBS.tabMembers,
+          }[id]),
+        }))}
+        active={activeTab}
+        onChange={setActiveTab}
+        ariaLabel="Club edit navigation"
+        className="mb-5"
+      />
 
       {/* Body */}
       <div
+        id={`club-edit-panel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`club-edit-tab-${activeTab}`}
         className="rounded-[4px] p-5"
         style={{ background: 'white', border: `1px solid ${CREAM2}` }}
-        role="tabpanel"
       >
         {activeTab === 'info' && (
           <InfoTab

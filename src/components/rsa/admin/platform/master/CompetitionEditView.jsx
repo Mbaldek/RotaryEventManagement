@@ -16,9 +16,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import {
-  CREAM, CREAM2, GOLD, INK, MUTED, NAVY, SERIF,
+  CREAM2, GOLD, MUTED, NAVY, SERIF,
 } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
+import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
 import { StatusIndicator } from '../funnel/FunnelEditorModal';
 import useAutosaveCompetition from '../funnel/useAutosaveCompetition';
@@ -31,26 +32,6 @@ import RulesTab from './competition-tabs/RulesTab';
 import PrizesTab from './competition-tabs/PrizesTab';
 import CommunicationTab from './competition-tabs/CommunicationTab';
 import DeleteCompetitionModal from './DeleteCompetitionModal';
-
-function TabPill({ id, label, active, disabled, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      role="tab"
-      aria-selected={active}
-      className="px-3.5 py-1.5 rounded-full text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-      style={{
-        background: active ? NAVY : 'white',
-        color: active ? 'white' : INK,
-        border: `1px solid ${active ? NAVY : CREAM2}`,
-      }}
-    >
-      {label}
-    </button>
-  );
-}
 
 export default function CompetitionEditView({ editionId, onClose }) {
   const { t } = useLang();
@@ -217,26 +198,25 @@ export default function CompetitionEditView({ editionId, onClose }) {
         </div>
       </div>
 
-      {/* Tabs pill row */}
-      <div
-        className="px-4 py-3 mb-5 flex flex-wrap items-center gap-1.5 rounded-[4px]"
-        style={{ background: CREAM, border: `1px solid ${CREAM2}` }}
-        role="tablist"
-      >
-        {tabs.map((tab) => (
-          <TabPill
-            key={tab.id}
-            id={tab.id}
-            label={tab.label}
-            active={activeTab === tab.id}
-            disabled={tab.disabled}
-            onClick={() => setActiveTab(tab.id)}
-          />
-        ))}
-      </div>
+      {/* Tabs — underline editorial style */}
+      <CockpitTabs
+        idPrefix="competition-edit"
+        items={tabs.map((tab) => ({
+          id: tab.id,
+          label: tab.label,
+          disabled: tab.disabled,
+        }))}
+        active={activeTab}
+        onChange={setActiveTab}
+        ariaLabel="Competition edit navigation"
+        className="mb-5"
+      />
 
       {/* Body */}
       <div
+        id={`competition-edit-panel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`competition-edit-tab-${activeTab}`}
         className="rounded-[4px] p-5 mb-4"
         style={{ background: 'white', border: `1px solid ${CREAM2}` }}
       >

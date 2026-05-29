@@ -65,9 +65,9 @@ export const CRITERIA = {
     },
     paramLabel: { fr: 'Seuil de date', en: 'Date threshold', de: 'Stichtag' },
     paramHelp: {
-      fr: 'Le règlement RSA actuel exige une création postérieure au 1er janvier 2020.',
-      en: 'The current RSA rules require a founding date after 1 January 2020.',
-      de: 'Das aktuelle RSA-Reglement setzt eine Gründung nach dem 1. Januar 2020 voraus.',
+      fr: 'Le règlement actuel exige une création postérieure au 1er janvier 2020.',
+      en: 'The current rules require a founding date after 1 January 2020.',
+      de: 'Das aktuelle Reglement setzt eine Gründung nach dem 1. Januar 2020 voraus.',
     },
   },
   revenue_max: {

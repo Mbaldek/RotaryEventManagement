@@ -22,6 +22,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, MapPin, Mail } from 'lucide-react';
 import { GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE } from '@/components/design/tokens';
 import { DANGER, FOCUS_RING_CLASS } from '@/components/design/tokens.app';
+import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
 import { CLUB_TABS, CLUB_UI, TAB_IDS } from './i18n';
 import ClubStatusStrip from './ClubStatusStrip';
@@ -56,28 +57,6 @@ function Spinner({ label }) {
       aria-label={label}
       aria-hidden={label ? undefined : true}
     />
-  );
-}
-
-function Tab({ id, label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      role="tab"
-      aria-selected={active}
-      aria-pressed={active}
-      aria-controls={`club-panel-${id}`}
-      id={`club-tab-${id}`}
-      className={`px-4 py-2 rounded-full text-[12.5px] font-medium transition-colors ${FOCUS_RING_CLASS}`}
-      style={{
-        background: active ? NAVY : 'white',
-        color: active ? 'white' : INK,
-        border: `1px solid ${active ? NAVY : CREAM2}`,
-      }}
-    >
-      {label}
-    </button>
   );
 }
 
@@ -211,8 +190,8 @@ export default function ClubCockpit({ clubId }) {
 
       <ClubStatusStrip edition={edition} clubId={clubId} sessions={sessions} />
 
-      {/* Edition + tabs pill row */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      {/* Filter row — pickers édition/session (vrais filtres de data, distincts des tabs nav) */}
+      <div className="flex flex-wrap items-center gap-3 mb-3">
         <label className="inline-flex items-center gap-2 text-[12.5px]" style={{ color: INK }}>
           <span className="uppercase tracking-[0.14em] text-[10.5px] font-medium" style={{ color: MUTED }}>
             {t(CLUB_UI.edition)}
@@ -254,24 +233,17 @@ export default function ClubCockpit({ clubId }) {
             </select>
           </label>
         )}
-
-        {/* Pill tabs — overflow-scroll on small screens pour éviter la rupture mobile */}
-        <div
-          className="flex flex-nowrap lg:flex-wrap gap-1.5 ml-auto overflow-x-auto lg:overflow-visible -mx-1 px-1"
-          role="tablist"
-          aria-label={t(CLUB_UI.eyebrow)}
-        >
-          {TAB_IDS.map((id) => (
-            <Tab
-              key={id}
-              id={id}
-              active={tab === id}
-              label={t(CLUB_TABS[id])}
-              onClick={() => setTab(id)}
-            />
-          ))}
-        </div>
       </div>
+
+      {/* Tabs — underline editorial style (cockpit nav, pas filter chip) */}
+      <CockpitTabs
+        idPrefix="club"
+        items={TAB_IDS.map((id) => ({ id, label: t(CLUB_TABS[id]) }))}
+        active={tab}
+        onChange={setTab}
+        ariaLabel={t(CLUB_UI.eyebrow)}
+        className="mb-4"
+      />
 
       {/* Panel body */}
       <div

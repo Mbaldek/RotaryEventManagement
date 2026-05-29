@@ -328,7 +328,7 @@ export default function OnePageDossier({
               className="uppercase text-[10px] tracking-[0.18em] font-medium"
               style={{ color: GOLD }}
             >
-              RSA {editionTag}
+              {editionTag}
               {clubLabel && (
                 <>
                   <span style={{ color: MUTED }}> · </span>

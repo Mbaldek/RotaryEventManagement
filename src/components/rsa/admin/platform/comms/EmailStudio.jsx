@@ -14,31 +14,13 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CREAM2, NAVY, INK, GOLD, SERIF, EASE } from '@/components/design/tokens';
+import { NAVY, INK, GOLD, SERIF, EASE } from '@/components/design/tokens';
+import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
 import { COMMS_TABS, COMMS_TAB_IDS, COMMS_UI } from './i18n';
 import EmailComposer from './EmailComposer';
 import TemplatesLibrary from './TemplatesLibrary';
 import SendHistory from './SendHistory';
-
-function Tab({ id, label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="px-3 py-1.5 rounded-full text-[12.5px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] transition-colors"
-      style={{
-        background: active ? NAVY : 'white',
-        color: active ? 'white' : INK,
-        border: `1px solid ${active ? NAVY : CREAM2}`,
-      }}
-      aria-pressed={active}
-      aria-controls={`comms-panel-${id}`}
-    >
-      {label}
-    </button>
-  );
-}
 
 export default function EmailStudio({ clubId = null, edition = null }) {
   const editionId = edition?.id || null;
@@ -91,20 +73,17 @@ export default function EmailStudio({ clubId = null, edition = null }) {
         </p>
       </header>
 
-      {/* Tabs pill */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-5" role="tablist">
-        {COMMS_TAB_IDS.map((id) => (
-          <Tab
-            key={id}
-            id={id}
-            active={tab === id}
-            label={t(COMMS_TABS[id])}
-            onClick={() => setTab(id)}
-          />
-        ))}
-      </div>
+      {/* Tabs — underline editorial style */}
+      <CockpitTabs
+        idPrefix="comms"
+        items={COMMS_TAB_IDS.map((id) => ({ id, label: t(COMMS_TABS[id]) }))}
+        active={tab}
+        onChange={setTab}
+        ariaLabel={t(COMMS_UI.eyebrow)}
+        className="mb-5"
+      />
 
-      <div id={`comms-panel-${tab}`} role="tabpanel">
+      <div id={`comms-panel-${tab}`} role="tabpanel" aria-labelledby={`comms-tab-${tab}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
