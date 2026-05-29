@@ -11,13 +11,29 @@
 // Le composant est contrôlé : il lit `values` et émet `onPatch(partial)` à
 // chaque change. C'est le hook autosave qui décide de la persistance.
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import { useLang } from '@/lib/platform/i18n';
+import { supabase } from '@/lib/supabase';
 import { CREAM2, EASE, NAVY, MUTED, INK } from '@/components/design/tokens';
 import { EDITION_STATUSES } from '../../i18n';
 import { COMP, COMPETITION_MODELS } from '../i18n';
 import { FieldLabel, TextRow, TextareaRow, SelectRow } from './fields';
+
+// Bucket Supabase Storage existant déjà utilisé pour les photos de jury.
+// Réutilisé ici car la photo du président du jury appartient sémantiquement
+// au même domaine (jurys), évitant la création d'un bucket supplémentaire.
+const PHOTO_BUCKET = 'jury-photos';
+const PHOTO_MAX_BYTES = 5 * 1024 * 1024; // 5 Mo
+const PHOTO_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png';
+
+const safeFilename = (name) =>
+  String(name || 'photo')
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]+/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 80);
 
 // Stagger modéré sur le mount des champs (premium, pas saturé).
 // Chaque enfant apparait avec opacity+y delta, décalé de 40ms.
@@ -36,6 +52,54 @@ export default function IdentityTab({ values = {}, onPatch, mode = 'edit', error
   const reduce = useReducedMotion();
   const parent = reduce ? {} : STAGGER_PARENT;
   const child = reduce ? {} : STAGGER_CHILD;
+
+  // — Upload photo du président·e du jury — purement informationnel.
+  // On stocke le path renvoyé par Storage dans values.jury_president_photo_path
+  // via onPatch ; l'autosave du parent (CompetitionEditView) projette le patch
+  // sur la row editions correspondante.
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState(null);
+
+  const onPickPhoto = useCallback(async (e) => {
+    const file = e.target?.files?.[0];
+    // Reset input pour permettre la re-sélection du même fichier.
+    if (e.target) e.target.value = '';
+    if (!file) return;
+    setPhotoError(null);
+    if (file.size > PHOTO_MAX_BYTES) {
+      setPhotoError(t({
+        fr: 'Fichier trop volumineux (5 Mo max).',
+        en: 'File too large (5 MB max).',
+        de: 'Datei zu groß (max. 5 MB).',
+      }));
+      return;
+    }
+    setPhotoUploading(true);
+    try {
+      const edId = values.id || 'unknown';
+      const safe = safeFilename(file.name);
+      const path = `editions/${edId}/president/${Date.now()}-${safe}`;
+      const up = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .upload(path, file, { cacheControl: '3600', upsert: true });
+      if (up.error) throw up.error;
+      onPatch({ jury_president_photo_path: up.data?.path || path });
+    } catch (err) {
+      console.error('[IdentityTab] jury president photo upload failed', err);
+      setPhotoError(t({
+        fr: 'Échec de l’envoi de la photo.',
+        en: 'Photo upload failed.',
+        de: 'Foto-Upload fehlgeschlagen.',
+      }));
+    } finally {
+      setPhotoUploading(false);
+    }
+  }, [onPatch, t, values.id]);
+
+  const onClearPhoto = useCallback(() => {
+    setPhotoError(null);
+    onPatch({ jury_president_photo_path: null });
+  }, [onPatch]);
 
   return (
     <motion.div className="space-y-5" variants={parent} initial="initial" animate="animate">
@@ -193,6 +257,102 @@ export default function IdentityTab({ values = {}, onPatch, mode = 'edit', error
             })}
           </p>
         )}
+      </motion.div>
+
+      {/* Président·e du jury — info éditoriale, affichée sur la page publique
+          du palmarès. Aucune logique métier : pas de vote, pas de pondération,
+          pas d'autorisation spéciale. Le parent (CompetitionEditView) projette
+          jury_president + jury_president_photo_path via son autosave. */}
+      <motion.div className="pt-3" style={{ borderTop: `1px dashed ${CREAM2}` }} variants={child}>
+        <FieldLabel>{t(COMP.juryPresidentSection)}</FieldLabel>
+        <p className="text-[11.5px] mb-3" style={{ color: MUTED }}>
+          {t(COMP.juryPresidentHint)}
+        </p>
+        <div className="flex flex-col gap-3">
+          <TextRow
+            id="comp-jury-president"
+            label={t(COMP.juryPresidentLabel)}
+            value={values.jury_president}
+            onChange={(v) => onPatch({ jury_president: v })}
+            placeholder={t(COMP.juryPresidentPlaceholder)}
+          />
+          <div>
+            <FieldLabel htmlFor="comp-jury-president-photo">
+              {t(COMP.juryPresidentPhotoLabel)}
+            </FieldLabel>
+            <div className="flex items-center gap-3 flex-wrap">
+              <label
+                htmlFor="comp-jury-president-photo"
+                className="inline-flex items-center gap-2 text-[12px] rounded-[4px] px-3 py-1.5 cursor-pointer"
+                style={{ background: 'white', border: `1px solid ${CREAM2}`, color: NAVY }}
+              >
+                {photoUploading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                    <span>
+                      {t({
+                        fr: 'Envoi…',
+                        en: 'Uploading…',
+                        de: 'Hochladen…',
+                      })}
+                    </span>
+                  </>
+                ) : (
+                  <span>
+                    {values.jury_president_photo_path
+                      ? t({
+                          fr: 'Remplacer la photo',
+                          en: 'Replace photo',
+                          de: 'Foto ersetzen',
+                        })
+                      : t({
+                          fr: 'Choisir une photo',
+                          en: 'Choose a photo',
+                          de: 'Foto auswählen',
+                        })}
+                  </span>
+                )}
+              </label>
+              <input
+                id="comp-jury-president-photo"
+                type="file"
+                accept={PHOTO_ACCEPT}
+                onChange={onPickPhoto}
+                disabled={photoUploading}
+                className="sr-only"
+              />
+              {values.jury_president_photo_path && (
+                <>
+                  <span
+                    className="font-mono text-[11px] truncate max-w-[260px]"
+                    title={values.jury_president_photo_path}
+                    style={{ color: INK }}
+                  >
+                    {values.jury_president_photo_path}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onClearPhoto}
+                    disabled={photoUploading}
+                    className="text-[11.5px] underline-offset-2 hover:underline disabled:opacity-50"
+                    style={{ color: MUTED }}
+                  >
+                    {t({
+                      fr: 'Retirer',
+                      en: 'Remove',
+                      de: 'Entfernen',
+                    })}
+                  </button>
+                </>
+              )}
+            </div>
+            {photoError && (
+              <p className="text-[11.5px] mt-1.5" style={{ color: '#a23b2d' }}>
+                {photoError}
+              </p>
+            )}
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );

@@ -51,6 +51,19 @@ export const PRIZES_UI = {
     en: 'All sessions',
     de: 'Alle Sessions',
   },
+  // V3 — Auto-award + réassignation (cf. migration 20260604_rsa_v3_prizes_v2_jury.sql).
+  autoAwardedHint: {
+    fr: 'Ce prix est décerné automatiquement à la conclusion de la session.',
+    en: 'This prize is awarded automatically when the session is concluded.',
+    de: 'Dieser Preis wird beim Abschluss der Session automatisch verliehen.',
+  },
+  reassign: { fr: 'Réassigner', en: 'Reassign', de: 'Neu zuweisen' },
+  reassignWarning: {
+    fr: 'Ce prix est déjà décerné. La réassignation sera tracée dans le journal d’audit.',
+    en: 'This prize is already awarded. Reassignment will be tracked in the audit log.',
+    de: 'Dieser Preis ist bereits verliehen. Die Neuzuweisung wird im Audit-Protokoll erfasst.',
+  },
+  reassigned: { fr: 'Prix réassigné.', en: 'Prize reassigned.', de: 'Preis neu zugewiesen.' },
 };
 
 // ── Form (création / édition) ───────────────────────────────────────────────
@@ -81,14 +94,6 @@ export const PRIZE_FORM = {
     fr: 'Un club ne peut définir que des prix spéciaux. Le grand prix reste du ressort de la compétition.',
     en: 'A club can only define special prizes. The grand prize remains a competition-level matter.',
     de: 'Ein Club kann ausschließlich Sonderpreise definieren. Der Hauptpreis bleibt auf Wettbewerbsebene vorbehalten.',
-  },
-  juryTypeLabel: { fr: 'Type de jury',       en: 'Jury type',          de: 'Jury-Art' },
-  juryRegular:   { fr: 'Jury régulier',      en: 'Regular jury',       de: 'Reguläre Jury' },
-  jurySpecial:   { fr: 'Jury spécial',       en: 'Special jury',       de: 'Sonderjury' },
-  juryHint: {
-    fr: 'Régulier = le jury constitué de la session. Spécial = jury distinct (partenaires, fondateurs…).',
-    en: 'Regular = the session’s standing jury. Special = a distinct jury (partners, founders…).',
-    de: 'Regulär = die reguläre Jury der Session. Sonderjury = eine separate Jury (Partner, Gründer…).',
   },
   sessionLabel:  { fr: 'Session associée',   en: 'Associated session', de: 'Verknüpfte Session' },
   sessionPlaceholder: {
@@ -196,4 +201,3 @@ export const CURRENCY_OPTIONS = [
 ];
 
 export const KIND_VALUES = ['general', 'special'];
-export const JURY_TYPE_VALUES = ['regular', 'special'];

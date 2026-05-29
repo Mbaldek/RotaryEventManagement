@@ -91,3 +91,15 @@ export function useAwardPrize(editionId) {
     onSuccess: () => invalidatePrizes(qc, editionId),
   });
 }
+
+// V3 — réassignation d'un prix déjà décerné. Appelle rsa_reassign_prize
+// (cf. migration 20260604_rsa_v3_prizes_v2_jury.sql) ; trace l'ancien lauréat
+// dans admin_audit_log côté serveur. À distinguer de useAwardPrize : le RPC
+// rsa_award_prize refuse d'écraser un awarded_to existant (idempotence).
+export function useReassignPrize(editionId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, startupId }) => Prize.reassign({ id, startupId }),
+    onSuccess: () => invalidatePrizes(qc, editionId),
+  });
+}

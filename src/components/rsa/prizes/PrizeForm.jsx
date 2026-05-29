@@ -11,9 +11,13 @@
 //                autorisé en 'competition' ; 'special' forcé en 'club')
 //   sessions   : Array  (sessions disponibles pour le dropdown)
 //   initial    : Prize? (mode édition : on pré-remplit ; undefined = création)
-//   onSubmit   : ({ name, amount, currency, kind, juryType, sessionId, description }) => Promise
+//   onSubmit   : ({ name, amount, currency, kind, sessionId, description }) => Promise
 //   onCancel   : () => void
 //   busy       : bool   (parent indique pendant la mutation)
+//
+// Note V3 : la colonne prizes.jury_type a été supprimée (migration
+// 20260604_rsa_v3_prizes_v2_jury.sql). Le tag « jury régulier vs spécial » est
+// désormais porté par platform_jury_assignments.role, plus par le prix.
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -56,7 +60,6 @@ export default function PrizeForm({
   const [amount, setAmount]           = useState(initial?.amount ?? '');
   const [currency, setCurrency]       = useState(initial?.currency || 'EUR');
   const [kind, setKind]               = useState(initialKind);
-  const [juryType, setJuryType]       = useState(initial?.jury_type || 'regular');
   const [sessionId, setSessionId]     = useState(initial?.session_id || '');
   const [description, setDescription] = useState(initial?.description || '');
   const [localError, setLocalError]   = useState(null);
@@ -67,7 +70,6 @@ export default function PrizeForm({
     setAmount(initial?.amount ?? '');
     setCurrency(initial?.currency || 'EUR');
     setKind(isClub ? 'special' : (initial?.kind || 'general'));
-    setJuryType(initial?.jury_type || 'regular');
     setSessionId(initial?.session_id || '');
     setDescription(initial?.description || '');
     setLocalError(null);
@@ -95,7 +97,6 @@ export default function PrizeForm({
         amount: asNumberOrNull(amount) ?? 0,
         currency,
         kind: isClub ? 'special' : kind,
-        juryType,
         sessionId: sessionId || null,
         description: description?.trim() || null,
       });
@@ -115,11 +116,6 @@ export default function PrizeForm({
   const kindOptions = useMemo(() => ([
     { value: 'general', label: t(PRIZE_FORM.kindGeneral) },
     { value: 'special', label: t(PRIZE_FORM.kindSpecial) },
-  ]), [t]);
-
-  const juryOptions = useMemo(() => ([
-    { value: 'regular', label: t(PRIZE_FORM.juryRegular) },
-    { value: 'special', label: t(PRIZE_FORM.jurySpecial) },
   ]), [t]);
 
   const currencyOptions = useMemo(
@@ -215,24 +211,6 @@ export default function PrizeForm({
               value={kind}
               onChange={(e) => setKind(e.target.value)}
               disabled={busy || isClub}
-            />
-          )}
-        </Field>
-
-        {/* Jury type */}
-        <Field
-          label={t(PRIZE_FORM.juryTypeLabel)}
-          required
-          helper={t(PRIZE_FORM.juryHint)}
-        >
-          {({ id, describedBy }) => (
-            <Select
-              id={id}
-              aria-describedby={describedBy}
-              options={juryOptions}
-              value={juryType}
-              onChange={(e) => setJuryType(e.target.value)}
-              disabled={busy}
             />
           )}
         </Field>

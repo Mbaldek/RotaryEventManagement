@@ -13,9 +13,9 @@
 
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, AlertTriangle } from 'lucide-react';
 import { NAVY, INK, MUTED, GOLD, CREAM2, SERIF, EASE } from '@/components/design/tokens';
-import { DANGER } from '@/components/design/tokens.app';
+import { DANGER, WARNING, TINT_WARNING } from '@/components/design/tokens.app';
 import { Field, Select } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { AWARD_MODAL, PRIZES_UI } from './i18n';
@@ -30,6 +30,7 @@ export default function AwardPrizeModal({
   const { t } = useLang();
   const [picked, setPicked] = useState('');
   const [error, setError] = useState(null);
+  const isReassign = prize?.awarded_to != null;
 
   async function handleConfirm() {
     setError(null);
@@ -105,6 +106,19 @@ export default function AwardPrizeModal({
           </button>
         </header>
 
+        {isReassign && (
+          <div
+            className="rounded-[4px] p-3 mb-3 flex items-start gap-2"
+            style={{ background: TINT_WARNING, border: `1px solid ${CREAM2}` }}
+            role="alert"
+          >
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: WARNING }} aria-hidden />
+            <p className="text-[12.5px]" style={{ color: NAVY }}>
+              {t(PRIZES_UI.reassignWarning)}
+            </p>
+          </div>
+        )}
+
         <p className="text-[13px] mb-4" style={{ color: INK }}>
           {t(AWARD_MODAL.lede)}
         </p>
@@ -153,7 +167,9 @@ export default function AwardPrizeModal({
             style={{ background: NAVY, color: 'white' }}
           >
             {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            {busy ? t(AWARD_MODAL.awarding) : t(AWARD_MODAL.confirm)}
+            {busy
+              ? t(AWARD_MODAL.awarding)
+              : (isReassign ? t(PRIZES_UI.reassign) : t(AWARD_MODAL.confirm))}
           </button>
         </div>
         </motion.div>

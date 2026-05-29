@@ -19,7 +19,7 @@ import React, { useMemo, useState } from 'react';
 import { Plus, Loader2, Pencil, Trash2, Award, AlertTriangle, X } from 'lucide-react';
 import {
   NAVY, INK, MUTED, GOLD, CREAM2, SERIF,
-  TINT_BEIGE, TINT_BLUE, TINT_SAGE,
+  TINT_BEIGE, TINT_SAGE,
 } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -32,6 +32,7 @@ import {
   useUpdatePrize,
   useDeletePrize,
   useAwardPrize,
+  useReassignPrize,
 } from './usePrizes';
 import { PRIZES_UI, PRIZE_FORM, PRIZE_DELETE, CURRENCY_OPTIONS } from './i18n';
 import PrizeForm from './PrizeForm';
@@ -67,24 +68,6 @@ function KindBadge({ kind }) {
         background: isGeneral ? '#fdf6e8' : TINT_BEIGE,
         color: isGeneral ? NAVY : INK,
         border: `1px solid ${isGeneral ? GOLD : CREAM2}`,
-      }}
-    >
-      {label}
-    </span>
-  );
-}
-
-function JuryBadge({ juryType }) {
-  const { t } = useLang();
-  const isSpecial = juryType === 'special';
-  const label = isSpecial ? t(PRIZE_FORM.jurySpecial) : t(PRIZE_FORM.juryRegular);
-  return (
-    <span
-      className="inline-flex items-center text-[10.5px] uppercase tracking-[0.14em] font-medium px-2 py-0.5 rounded-full"
-      style={{
-        background: isSpecial ? TINT_BLUE : 'white',
-        color: INK,
-        border: `1px solid ${CREAM2}`,
       }}
     >
       {label}
@@ -294,24 +277,27 @@ function PrizeCard({
           )}
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             <KindBadge kind={prize.kind} />
-            <JuryBadge juryType={prize.jury_type} />
             <AwardedPill prize={prize} awardedName={awardedName} />
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
-          {!prize.awarded_to && (
-            <button
-              type="button"
-              onClick={onAward}
-              className="inline-flex items-center gap-1.5 text-[12px] px-2 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-              style={{ color: NAVY, border: `1px solid ${GOLD}`, background: '#fdf6e8' }}
-              title={t(PRIZES_UI.award)}
-            >
-              <Award className="w-3.5 h-3.5" />
-              {t(PRIZES_UI.award)}
-            </button>
-          )}
+          {(() => {
+            const awarded = prize.awarded_to != null;
+            const label = awarded ? t(PRIZES_UI.reassign) : t(PRIZES_UI.award);
+            return (
+              <button
+                type="button"
+                onClick={onAward}
+                className="inline-flex items-center gap-1.5 text-[12px] px-2 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
+                style={{ color: NAVY, border: `1px solid ${GOLD}`, background: '#fdf6e8' }}
+                title={label}
+              >
+                <Award className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            );
+          })()}
           <button
             type="button"
             onClick={onEdit}
@@ -365,10 +351,11 @@ export default function PrizesList({
   const sessionsQ    = useSessionsForScope({ editionId, clubId, scope });
   const startupsQ    = useStartupsForScope({ editionId, clubId, scope });
 
-  const createPrize = useCreatePrize(editionId);
-  const updatePrize = useUpdatePrize(editionId);
-  const deletePrize = useDeletePrize(editionId);
-  const awardPrize  = useAwardPrize(editionId);
+  const createPrize   = useCreatePrize(editionId);
+  const updatePrize   = useUpdatePrize(editionId);
+  const deletePrize   = useDeletePrize(editionId);
+  const awardPrize    = useAwardPrize(editionId);
+  const reassignPrize = useReassignPrize(editionId);
 
   // UI state (inline form / confirm typé / modale)
   const [creating, setCreating] = useState(false);
@@ -394,7 +381,6 @@ export default function PrizesList({
       name: payload.name,
       amount: payload.amount,
       currency: payload.currency,
-      juryType: payload.juryType,
       description: payload.description,
     });
     setCreating(false);
@@ -406,7 +392,6 @@ export default function PrizesList({
       name: payload.name,
       amount: payload.amount,
       currency: payload.currency,
-      juryType: payload.juryType,
       sessionId: payload.sessionId === null ? '' : payload.sessionId, // '' = vider côté RPC
       description: payload.description ?? '',
     });
@@ -418,8 +403,17 @@ export default function PrizesList({
     setDeletingId(null);
   }
 
+  // V3 : choisit la bonne mutation selon que le prix est déjà décerné ou non.
+  // - awarded_to == null  → rsa_award_prize (idempotent côté serveur)
+  // - awarded_to != null  → rsa_reassign_prize (trace l'ancien lauréat dans
+  //   admin_audit_log avec action='prize_reassigned')
   async function handleAward({ id, startupId }) {
-    await awardPrize.mutateAsync({ id, startupId });
+    const isReassign = awardingPrize?.awarded_to != null;
+    if (isReassign) {
+      await reassignPrize.mutateAsync({ id, startupId });
+    } else {
+      await awardPrize.mutateAsync({ id, startupId });
+    }
     setAwardingPrize(null);
   }
 
@@ -516,7 +510,7 @@ export default function PrizesList({
           startups={startups}
           onAward={handleAward}
           onClose={() => setAwardingPrize(null)}
-          busy={awardPrize.isPending}
+          busy={awardPrize.isPending || reassignPrize.isPending}
         />
       )}
     </section>

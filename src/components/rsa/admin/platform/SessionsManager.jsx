@@ -19,6 +19,10 @@ import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { UI, SETUP, SESSION_KINDS } from './i18n';
 import { useCreateSession, useResetSessionTemplate } from './useAdmin';
+// V3 — Composition jury par session (équipe jurys par session). N'est rendu que
+// sur le scope club (clubId fourni) : depuis le Master Cockpit ou la finale,
+// la gestion du jury passe par d'autres écrans.
+import SessionJurorsList from './club/jury/SessionJurorsList';
 
 const EMPTY_PAYLOAD = {
   id: '',
@@ -444,6 +448,12 @@ export default function SessionsManager({
                     )}
                   </div>
                 </div>
+                {/* Composition jury — uniquement scope club (clubId fourni).
+                    Pour le Master Cockpit (finale), la gestion du jury passe
+                    par un autre écran (out-of-scope ici). */}
+                {clubId && (
+                  <SessionJurorsList sessionId={s.id} clubId={clubId} />
+                )}
               </li>
             );
           })}

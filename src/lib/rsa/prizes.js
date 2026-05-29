@@ -35,9 +35,13 @@ export const Prize = {
   },
 
   // Création d'un prix. Côté serveur :
-  //   - master_admin pour kind='general' OU clubId IS NULL
+  //   - master_admin OR competition_admin pour kind='general' OU clubId IS NULL
   //   - master_admin OR club_admin du club sinon
   // Validation centralisée côté RPC (nom non vide, amount >= 0, devises whitelist).
+  // Note V3 : la colonne prizes.jury_type a été supprimée (migration
+  // 20260604_rsa_v3_prizes_v2_jury.sql). Le RPC rsa_create_prize ne prend plus
+  // p_jury_type ; la role/tag du juré est désormais portée par
+  // platform_jury_assignments.role.
   async create({
     editionId,
     clubId = null,
@@ -46,7 +50,6 @@ export const Prize = {
     name,
     amount,
     currency = 'EUR',
-    juryType = 'regular',
     description = null,
   }) {
     const { data, error } = await supabase.rpc('rsa_create_prize', {
@@ -57,7 +60,6 @@ export const Prize = {
       p_name:        name,
       p_amount:      amount,
       p_currency:    currency,
-      p_jury_type:   juryType,
       p_description: description ?? null,
     });
     if (error) throw error;
@@ -66,11 +68,11 @@ export const Prize = {
 
   // Update partiel. Chaque champ undefined / null = ne pas toucher.
   // Pour vider session_id, passer la chaîne vide ''.
+  // Note V3 : p_jury_type supprimé de la signature côté serveur.
   async update(id, {
     name,
     amount,
     currency,
-    juryType,
     description,
     sessionId,
     position,
@@ -81,7 +83,6 @@ export const Prize = {
       p_name:        name ?? null,
       p_amount:      amount ?? null,
       p_currency:    currency ?? null,
-      p_jury_type:   juryType ?? null,
       p_description: description ?? null,
       p_session_id:  sessionId ?? null,
       p_position:    position ?? null,
@@ -98,6 +99,8 @@ export const Prize = {
   },
 
   // Décerne un prix à une startup. SET awarded_to + awarded_at côté serveur.
+  // Pour un prix DÉJÀ décerné, utiliser Prize.reassign — rsa_award_prize
+  // refuse de remplacer une valeur existante (idempotence côté serveur).
   async award({ id, startupId }) {
     if (!id || !startupId) {
       throw new Error('Prize.award: id et startupId requis');
@@ -105,6 +108,21 @@ export const Prize = {
     const { data, error } = await supabase.rpc('rsa_award_prize', {
       p_id:         id,
       p_startup_id: startupId,
+    });
+    if (error) throw error;
+    return unwrap(data);
+  },
+
+  // Réassigne un prix déjà décerné. Trace l'ancien lauréat dans
+  // admin_audit_log (action='prize_reassigned'). Permission :
+  // master_admin OR competition_admin (édition) OR club_admin (club du prix).
+  async reassign({ id, startupId }) {
+    if (!id || !startupId) {
+      throw new Error('Prize.reassign: id et startupId requis');
+    }
+    const { data, error } = await supabase.rpc('rsa_reassign_prize', {
+      p_prize_id:       id,
+      p_new_startup_id: startupId,
     });
     if (error) throw error;
     return unwrap(data);
