@@ -55,7 +55,7 @@ function Spinner({ label }) {
   );
 }
 
-export default function ClubCockpit({ clubId }) {
+export default function ClubCockpit({ clubId, editionId: propEditionId }) {
   const { t } = useLang();
   const [params, setParams] = useSearchParams();
 
@@ -65,6 +65,20 @@ export default function ClubCockpit({ clubId }) {
     : 'setup';
   const editionId = params.get('edition') || null;
   const sessionId = params.get('session') || null;
+
+  // V3 hiérarchie — quand le ClubCockpit est monté depuis ?scope=club:{eid}/{cid},
+  // Admin.jsx nous passe `editionId` en prop. On l'écrit dans ?edition= au mount
+  // pour que la suite du shell (sélecteurs, sessions, etc.) suive normalement.
+  // Le bootstrap automatique (useEffect plus bas) skip car editionId sera défini.
+  useEffect(() => {
+    if (propEditionId && editionId !== propEditionId) {
+      const p = new URLSearchParams(params);
+      p.set('edition', propEditionId);
+      p.delete('session');
+      setParams(p, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propEditionId]);
 
   const setTab = (next) => {
     const p = new URLSearchParams(params);

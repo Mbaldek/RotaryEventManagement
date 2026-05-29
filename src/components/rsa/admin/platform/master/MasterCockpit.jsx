@@ -20,11 +20,9 @@ import { useLang } from '@/lib/platform/i18n';
 import { TABS, TAB_IDS, STRIP, UI } from './i18n';
 import {
   useAllCompetitions,
-  useAllClubs,
   useCountsForEdition,
 } from './useMaster';
 import CompetitionsTab from './tabs/CompetitionsTab';
-import ClubsTab from './tabs/ClubsTab';
 import GlobalRolesTab from './tabs/GlobalRolesTab';
 import CompetitionAdminsTab from './tabs/CompetitionAdminsTab';
 // FinaleTab retiré du master cockpit 2026-05-29 : la Finale est un attribut
@@ -36,7 +34,8 @@ import CompetitionAdminsTab from './tabs/CompetitionAdminsTab';
 // club_admin du club concerné via /DevenirJury?edition=X&club=Y. Le master_admin
 // peut bascule via le persona selector vers un club s'il veut consulter.
 // Composant gardé temporairement, à supprimer une fois confirmé inutile.
-import CompetitionEditView from './CompetitionEditView';
+// CompetitionEditView est désormais montée par Admin.jsx au scope ?scope=competition:{id}
+// (refonte hiérarchie — drill-down depuis le breadcrumb), plus en subview interne.
 import ClubEditView from './ClubEditView';
 // Équipe A — Overview landing.
 // AdvancedSection a été retirée du master cockpit le 2026-05-29 :
@@ -60,7 +59,6 @@ function Dot({ color }) {
 function MasterStatusStrip() {
   const { t } = useLang();
   const competitions = useAllCompetitions();
-  const clubsAll = useAllClubs();
 
   // Compétition active : 1re en status 'open'|'sessions'|'finale', sinon la + récente
   const active = useMemo(() => {
@@ -149,18 +147,6 @@ function MasterStatusStrip() {
         )}
       </span>
 
-      <span style={{ color: CREAM2 }}>·</span>
-      <span className="inline-flex items-center gap-1.5 ml-auto" style={{ color: MUTED }}>
-        <strong className="tabular-nums" style={{ color: NAVY }}>
-          {(competitions.data || []).length}
-        </strong>
-        <span>{t(STRIP.totalCompetitions)}</span>
-        <span style={{ color: CREAM2 }}>·</span>
-        <strong className="tabular-nums" style={{ color: NAVY }}>
-          {(clubsAll.data || []).length}
-        </strong>
-        <span>{t(STRIP.clubsCount)}</span>
-      </span>
     </div>
   );
 }
@@ -199,18 +185,11 @@ export default function MasterCockpit() {
     setParams(p, { replace: true });
   };
 
-  // Sous-vue d'édition de compétition — remplace le shell standard.
-  if (subview === 'edit-competition' && subviewId && tab === 'competitions') {
-    return (
-      <CompetitionEditView
-        editionId={subviewId}
-        onClose={clearSubview}
-      />
-    );
-  }
-
   // Sous-vue d'édition de club — remplace le shell standard.
-  if (subview === 'edit-club' && subviewId && tab === 'clubs') {
+  // Refonte hiérarchie : on accepte le subview indépendamment du tab actif,
+  // puisque l'annuaire des clubs a migré dans OverviewPanel (tab 'overview').
+  // Pour l'édition d'une compétition, voir ?scope=competition:{eid} (Admin.jsx).
+  if (subview === 'edit-club' && subviewId) {
     return (
       <ClubEditView
         clubId={subviewId}
@@ -255,7 +234,6 @@ export default function MasterCockpit() {
           >
             {tab === 'overview'           && <OverviewPanel />}
             {tab === 'competitions'       && <CompetitionsTab />}
-            {tab === 'clubs'              && <ClubsTab />}
             {tab === 'roles'              && <GlobalRolesTab />}
             {tab === 'competition_admins' && <CompetitionAdminsTab />}
           </motion.div>

@@ -57,6 +57,11 @@ import {
 import FunnelChart from '@/components/rsa/analytics/FunnelChart';
 import ClubsBreakdownChart from '@/components/rsa/analytics/ClubsBreakdownChart';
 import JuryActivityTable from '@/components/rsa/analytics/JuryActivityTable';
+// Refonte hiérarchie : l'annuaire des clubs n'est plus un tab racine du
+// MasterCockpit (un club n'est pas au même niveau qu'une compétition). On le
+// rend ici comme section de fin de l'overview pour conserver l'accès cross-
+// compétition (création/édition globale) sans casser la hiérarchie nav.
+import ClubsTab from './tabs/ClubsTab';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -511,6 +516,16 @@ export default function OverviewPanel() {
         </div>
         <ActivityFeedSection feedQ={feedQ} />
       </section>
+
+      {/* ── 4. Annuaire des clubs (refonte hiérarchie) ──
+          Auparavant un tab racine du Master Cockpit ; déplacé ici car un club
+          n'est pas un objet plateforme au même niveau qu'une compétition.
+          On garde la création + l'accès édition globale par souci de
+          continuité (master_admin a besoin de provisionner des clubs avant
+          de les attacher à une compétition). */}
+      <div className="mt-12">
+        <ClubsTab />
+      </div>
 
       {/* ROLES non utilisé directement mais tag i18n future-proof — silence eslint. */}
       <span className="sr-only">{t(ROLES.sectionTitle)}</span>

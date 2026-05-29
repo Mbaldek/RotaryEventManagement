@@ -110,9 +110,12 @@ export default function ClubsTab() {
   const clubs = useMemo(() => list.data || [], [list.data]);
 
   function openClub(clubId) {
+    // Refonte hiérarchie : le tab racine 'clubs' n'existe plus, l'annuaire est
+    // rendu dans OverviewPanel. On revient sur ?tab=overview après fermeture
+    // de ClubEditView.
     setParams((prev) => {
       const p = new URLSearchParams(prev);
-      p.set('tab', 'clubs');
+      p.set('tab', 'overview');
       p.set('subview', 'edit-club');
       p.set('id', clubId);
       return p;

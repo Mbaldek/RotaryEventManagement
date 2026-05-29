@@ -1078,6 +1078,35 @@ export const EditionClub = {
     if (error) throw error;
   },
 
+  // Refonte hiérarchie (Phase 1) — Renvoie l'edition_id le plus pertinent
+  // pour un club donné, pour résoudre les liens legacy `?scope=club:{cid}` en
+  // `?scope=club:{eid}/{cid}`. Priorité : édition active (status ∈ open|sessions|
+  // finale), sinon la plus récente par year DESC. Renvoie null si le club n'est
+  // attaché à aucune compétition.
+  async forClub(clubId) {
+    if (!clubId) return null;
+    const { data, error } = await supabase
+      .from('edition_clubs')
+      .select('edition_id, edition:editions(id, status, year, application_open)')
+      .eq('club_id', clubId);
+    if (error) throw error;
+    const rows = (data || []).filter((r) => r.edition);
+    if (rows.length === 0) return null;
+    const ACTIVE = new Set(['open', 'sessions', 'finale']);
+    rows.sort((a, b) => {
+      const ea = a.edition;
+      const eb = b.edition;
+      const aActive = ACTIVE.has(ea.status) ? 0 : 1;
+      const bActive = ACTIVE.has(eb.status) ? 0 : 1;
+      if (aActive !== bActive) return aActive - bActive;
+      if ((eb.year || 0) !== (ea.year || 0)) return (eb.year || 0) - (ea.year || 0);
+      const aDate = ea.application_open || '';
+      const bDate = eb.application_open || '';
+      return bDate.localeCompare(aDate);
+    });
+    return rows[0].edition_id;
+  },
+
   // Chantier 2 — Renvoie l'objet eligibility_rules per-club (JSONB) pour
   // (editionId, clubId). Utilisé par useEditionClubRules pour fusionner avec
   // les règles globales d'édition. null si la junction n'existe pas, {} si

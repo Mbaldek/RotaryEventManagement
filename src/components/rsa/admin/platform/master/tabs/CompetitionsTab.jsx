@@ -4,8 +4,9 @@
 //   * "Nouvelle compétition" ouvre <CompetitionFunnel /> (modal funnel
 //     backdrop-blur, autosave debounced),
 //   * Le clic sur "Ouvrir l'éditeur" d'une card pousse l'URL
-//     ?subview=edit-competition&id={editionId} ; MasterCockpit intercepte
-//     ce subview pour rendre <CompetitionEditView /> à la place du shell.
+//     ?scope=competition:{editionId} ; Admin.jsx route vers
+//     <CompetitionAdminCockpit /> (refonte hiérarchie : drill-down via
+//     breadcrumb Master ▸ Compétition).
 //   * Plus de panel inline qui se déploie sous la carte.
 //
 // La liste des compétitions reste identique côté UI (card + counts + status
@@ -121,10 +122,14 @@ export default function CompetitionsTab() {
   const competitions = useMemo(() => list.data || [], [list.data]);
 
   function openEditor(id) {
+    // Drill-down hiérarchie : on bascule au scope compétition. Admin.jsx
+    // monte alors <CompetitionAdminCockpit editionId={id} /> et affiche le
+    // breadcrumb [Master ▸ {edition.name}].
     const p = new URLSearchParams(params);
-    p.set('tab', 'competitions');
-    p.set('subview', 'edit-competition');
-    p.set('id', id);
+    p.set('scope', `competition:${id}`);
+    p.delete('subview');
+    p.delete('id');
+    p.delete('tab');
     setParams(p, { replace: false });
   }
 

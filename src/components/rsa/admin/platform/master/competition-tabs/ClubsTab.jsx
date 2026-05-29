@@ -78,8 +78,11 @@ function AttachedClubRowActions({ club, editionId }) {
   });
 
   const handleOpenCockpit = () => {
-    // Persona selector équipe A : /Admin?scope=club:<id>.
-    navigate(`/Admin?scope=club:${encodeURIComponent(club.id)}`);
+    // Refonte hiérarchie : drill-down canonique club:{eid}/{cid} pour que
+    // le breadcrumb Master ▸ Compétition ▸ Club reste cohérent au mount du
+    // ClubCockpit (sinon, l'éditionId est résolu silencieusement et on perd
+    // l'info "vient de cette compétition").
+    navigate(`/Admin?scope=club:${encodeURIComponent(editionId)}/${encodeURIComponent(club.id)}`);
   };
 
   const items = useMemo(() => {
