@@ -18,6 +18,7 @@ export { default as UpcomingList } from "@/components/design/UpcomingList";
 export { default as PageShell } from "@/components/design/shell/PageShell";
 export { default as TopNav } from "@/components/design/shell/TopNav";
 export { default as NavMenu } from "@/components/design/shell/NavMenu";
+export { default as UserMenu } from "@/components/design/shell/UserMenu";
 export { default as Footer } from "@/components/design/shell/Footer";
 export { default as PlatformFooter } from "@/components/design/shell/PlatformFooter";
 export { default as LanguageSwitcher } from "@/components/design/shell/LanguageSwitcher";

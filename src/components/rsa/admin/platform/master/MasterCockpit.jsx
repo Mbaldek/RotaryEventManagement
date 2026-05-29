@@ -26,6 +26,7 @@ import {
 import CompetitionsTab from './tabs/CompetitionsTab';
 import ClubsTab from './tabs/ClubsTab';
 import GlobalRolesTab from './tabs/GlobalRolesTab';
+import CompetitionAdminsTab from './tabs/CompetitionAdminsTab';
 import FinaleTab from './tabs/FinaleTab';
 import JuryApplicationsPanel from './JuryApplicationsPanel';
 import CompetitionEditView from './CompetitionEditView';
@@ -242,13 +243,14 @@ export default function MasterCockpit() {
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2, ease: EASE }}
           >
-            {tab === 'overview'     && <OverviewPanel />}
-            {tab === 'competitions' && <CompetitionsTab />}
-            {tab === 'clubs'        && <ClubsTab />}
-            {tab === 'roles'        && <GlobalRolesTab />}
-            {tab === 'jury_apps'    && <JuryApplicationsPanel />}
-            {tab === 'finale'       && <FinaleTab />}
-            {tab === 'advanced'     && <AdvancedSection />}
+            {tab === 'overview'           && <OverviewPanel />}
+            {tab === 'competitions'       && <CompetitionsTab />}
+            {tab === 'clubs'              && <ClubsTab />}
+            {tab === 'roles'              && <GlobalRolesTab />}
+            {tab === 'competition_admins' && <CompetitionAdminsTab />}
+            {tab === 'jury_apps'          && <JuryApplicationsPanel />}
+            {tab === 'finale'             && <FinaleTab />}
+            {tab === 'advanced'           && <AdvancedSection />}
           </motion.div>
         </AnimatePresence>
       </div>

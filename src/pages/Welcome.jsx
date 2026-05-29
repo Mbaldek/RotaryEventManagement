@@ -22,7 +22,6 @@ import {
   PageShell,
   PlatformFooter,
   NAVY,
-  GOLD,
   CREAM,
   CREAM2,
   INK,
@@ -30,8 +29,21 @@ import {
   SERIF,
   EASE,
 } from '@/components/design';
+import { FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
+import ProfileCompletionForm from '@/components/rsa/profile/ProfileCompletionForm';
+
+// Rôles qui DOIVENT compléter leur profil avant d'accéder au cockpit. Ces rôles
+// apparaissent ensuite dans les vues d'admins compétition / pickers club, donc
+// avoir un full_name est une exigence ergonomique.
+const PROFILE_COMPLETION_ROLES = new Set([
+  'master_admin',
+  'admin',
+  'competition_admin',
+  'club_admin',
+  'comite',
+]);
 
 const T = {
   greeting: { fr: 'Bonjour', en: 'Hello', de: 'Hallo' },
@@ -85,6 +97,19 @@ const T = {
       cta: { fr: 'Accéder au cockpit Master', en: 'Open Master cockpit', de: 'Master-Cockpit öffnen' },
       to: '/Admin',
     },
+    competition_admin: {
+      subline: {
+        fr: 'Une compétition vous est confiée.',
+        en: 'A competition is entrusted to you.',
+        de: 'Ein Wettbewerb ist Ihnen anvertraut.',
+      },
+      cta: {
+        fr: 'Accéder au cockpit Compétition',
+        en: 'Open Competition cockpit',
+        de: 'Wettbewerbs-Cockpit öffnen',
+      },
+      to: '/Admin',
+    },
   },
   fallback: {
     subline: {
@@ -97,7 +122,14 @@ const T = {
   },
 };
 
-const ALLOWED_ROLES = new Set(['jury', 'comite', 'club_admin', 'admin', 'master_admin']);
+const ALLOWED_ROLES = new Set([
+  'jury',
+  'comite',
+  'club_admin',
+  'admin',
+  'master_admin',
+  'competition_admin',
+]);
 
 // Extrait un prénom depuis full_name (en gardant le premier mot) ou le préfixe
 // de l'email. "mathieu.balde@gmail.com" → "Mathieu", "Mathieu Baldé" → "Mathieu".
@@ -118,13 +150,14 @@ function extractFirstName(user) {
 
 export default function Welcome() {
   const { t } = useLang();
-  const { isAuthenticated, authUser, loading } = usePlatformAuth();
+  const { isAuthenticated, authUser, loading, profile, roles } = usePlatformAuth();
   const [searchParams] = useSearchParams();
   const reduce = useReducedMotion();
 
   const role = searchParams.get('role');
   const edition = searchParams.get('edition');
   const inviter = searchParams.get('inviter');
+  const firstLoginParam = searchParams.get('firstLogin') === '1';
 
   // Auth-gate : on préserve les query params pour que le post-login route bien.
   if (loading) {
@@ -145,6 +178,37 @@ export default function Welcome() {
   const cfg = (role && ALLOWED_ROLES.has(role)) ? T.rolesT[role] : T.fallback;
   const firstName = extractFirstName(authUser);
   const greetingLine = firstName ? `${t(T.greeting)}, ${firstName}.` : `${t(T.greeting)}.`;
+
+  // ── Gate "profile completion" ──────────────────────────────────────────────
+  // Critère 1 : ?firstLogin=1 dans l'URL (envoyé par l'edge function invite-user).
+  // Critère 2 : profile.full_name est null/vide ET l'utilisateur porte un rôle
+  //             "staff" (master_admin / admin / competition_admin / club_admin /
+  //             comite). Les juges purs ont leur propre funnel JuryCandidate.
+  // L'un OU l'autre des deux critères déclenche le form bloquant.
+  const hasStaffRole = Array.isArray(roles)
+    ? roles.some((r) => PROFILE_COMPLETION_ROLES.has(r))
+    : false;
+  const missingFullName = !profile || !profile.full_name || !String(profile.full_name).trim();
+  const shouldCompleteProfile =
+    firstLoginParam || (hasStaffRole && missingFullName);
+
+  if (shouldCompleteProfile) {
+    // Le redirect post-completion est le CTA cible computé pour le rôle (cfg.to)
+    // ou /Admin par défaut quand le rôle n'est pas explicitement passé en URL.
+    const redirectTo = cfg?.to || '/Admin';
+    return (
+      <PageShell nav footer={<PlatformFooter />}>
+        <ProfileCompletionForm
+          redirectTo={redirectTo}
+          initialFullName={
+            authUser?.user_metadata?.full_name
+            || authUser?.user_metadata?.name
+            || ''
+          }
+        />
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell nav footer={<PlatformFooter />}>
@@ -237,7 +301,7 @@ export default function Welcome() {
           >
             <Link
               to={cfg.to}
-              className="inline-flex items-center justify-center min-h-[44px] px-6 text-[14px] font-medium rounded-[4px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+              className={`inline-flex items-center justify-center min-h-[44px] px-6 text-[14px] font-medium rounded-[4px] transition-colors ${FOCUS_RING_CLASS}`}
               style={{ background: NAVY, color: 'white', border: `1px solid ${NAVY}` }}
             >
               {t(cfg.cta)} →

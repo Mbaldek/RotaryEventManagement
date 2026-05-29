@@ -26,13 +26,25 @@
 // Auth model
 // ─────────────────────────────────────────────────────────────────────────────
 //   - JWT requis (Authorization: Bearer <jwt>)
-//   - Le caller est résolu via rsa_my_roles + my_club_memberships (mêmes RPC
-//     SECURITY DEFINER que PlatformAuth + send-bulk)
-//   - Matrice :
-//       role='master_admin' | 'admin'           -> caller doit être master_admin
-//       role='club_admin' | 'comite' | 'jury'   -> caller doit être master_admin
-//                                                  OU club_admin du club_id ciblé
-//   - Tous les rôles club-scoped exigent club_id ; rejet 400 sinon.
+//   - Le caller est résolu via rsa_my_roles + my_club_memberships +
+//     my_competition_admin_editions (mêmes RPC SECURITY DEFINER que PlatformAuth
+//     + send-bulk).
+//   - Matrice (V3 — 5 tiers) :
+//       role='master_admin' | 'admin'         -> caller doit être master_admin
+//       role='competition_admin'              -> caller doit être master_admin
+//                                                 (édition cible via edition_id)
+//       role='club_admin'                     -> caller doit être master_admin
+//                                                 OU competition_admin de
+//                                                 l'édition à laquelle le club
+//                                                 ciblé (club_id) est attaché
+//                                                 via edition_clubs.
+//       role='comite' | 'jury'                -> caller doit être master_admin
+//                                                 OU competition_admin de
+//                                                 l'édition du club ciblé OU
+//                                                 club_admin du club_id ciblé
+//   - Rôles club-scoped (club_admin/comite/jury) exigent club_id ; rejet 400 sinon.
+//   - Rôle competition_admin exige edition_id ; rejet 400 sinon.
+//   - Rôles globaux (master_admin/admin) n'exigent ni l'un ni l'autre.
 //
 // Rate-limit
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,8 +58,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 //   {
 //     email:           string,
-//     role:            'master_admin' | 'admin' | 'club_admin' | 'comite' | 'jury',
+//     role:            'master_admin' | 'admin' | 'competition_admin'
+//                       | 'club_admin' | 'comite' | 'jury',
 //     club_id?:        string,                                // requis si role club-scoped
+//     edition_id?:     string,                                // requis si role='competition_admin'
 //     custom_message?: string,                                // optionnel, ~300c
 //     lang?:           'fr' | 'en' | 'de'                     // défaut 'fr'
 //   }
@@ -84,7 +98,11 @@ const CORS: Record<string, string> = {
 const FROM = "Rotary Startup Award <contact@rotary-startup.org>";
 const REPLY_TO = "contact@rotary-startup.org";
 const APP_URL = "https://app.rotary-startup.org";
-const REDIRECT_TO = `${APP_URL}/Login`;
+// V3 — Magic-link redirige vers /Welcome avec param firstLogin=1, ce qui déclenche
+// le form profile-completion bloquant côté Welcome.jsx (cf. plan §"Welcome.jsx").
+// /Welcome route inconditionnellement vers /Login si aucune session ; le magic-link
+// pose la session avant le render, donc on atterrit bien sur le form welcome.
+const WELCOME_PATH = "/Welcome";
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 // Brand tokens (mirror src/components/design/tokens.js).
@@ -98,8 +116,9 @@ const COLORS = {
 } as const;
 
 const GLOBAL_ROLES = ["master_admin", "admin"] as const;
+const COMPETITION_ROLES = ["competition_admin"] as const;
 const CLUB_ROLES = ["club_admin", "comite", "jury"] as const;
-const ALL_ROLES = [...GLOBAL_ROLES, ...CLUB_ROLES] as const;
+const ALL_ROLES = [...GLOBAL_ROLES, ...COMPETITION_ROLES, ...CLUB_ROLES] as const;
 
 type Lang = "fr" | "en" | "de";
 type Role = (typeof ALL_ROLES)[number];
@@ -108,6 +127,7 @@ interface Payload {
   email: string;
   role: Role;
   club_id?: string;
+  edition_id?: string;
   custom_message?: string;
   lang?: Lang;
 }
@@ -148,11 +168,45 @@ function isClubScopedRole(role: Role): boolean {
   return (CLUB_ROLES as readonly string[]).includes(role);
 }
 
+function isCompetitionScopedRole(role: Role): boolean {
+  return (COMPETITION_ROLES as readonly string[]).includes(role);
+}
+
+function isGlobalRole(role: Role): boolean {
+  return (GLOBAL_ROLES as readonly string[]).includes(role);
+}
+
+// Erreur typée pour interrompre la matrice d'authz depuis un helper async sans
+// chaîner des early returns dans des closures.
+class AuthzError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthzError";
+  }
+}
+
 function normalizeEmail(s: unknown): string | null {
   if (typeof s !== "string") return null;
   const trimmed = s.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return null;
   return trimmed;
+}
+
+// V3 — Build redirect URL pointing to /Welcome with role + scope params, so
+// Welcome.jsx can show the right post-login form. firstLogin=1 forces the
+// profile-completion form for tiered admin roles. URL params are escaped via
+// URLSearchParams (safe against injection / control chars in role/edition_id).
+function buildRedirectTo(args: {
+  role: Role;
+  clubId: string | null;
+  editionId: string | null;
+}): string {
+  const params = new URLSearchParams();
+  params.set("role", args.role);
+  if (args.editionId) params.set("edition", args.editionId);
+  if (args.clubId) params.set("club", args.clubId);
+  params.set("firstLogin", "1");
+  return `${APP_URL}${WELCOME_PATH}?${params.toString()}`;
 }
 
 // ─── i18n copy ───────────────────────────────────────────────────────────────
@@ -178,6 +232,11 @@ function roleLabel(role: Role, lang: Lang): string {
   const dict: Record<Role, Record<Lang, string>> = {
     master_admin: { fr: "Administrateur principal", en: "Master Administrator", de: "Hauptadministrator/in" },
     admin: { fr: "Administrateur", en: "Administrator", de: "Administrator/in" },
+    competition_admin: {
+      fr: "Administrateur de compétition",
+      en: "Competition Administrator",
+      de: "Wettbewerbs-Administrator/in",
+    },
     club_admin: { fr: "Administrateur de club", en: "Club Administrator", de: "Club-Administrator/in" },
     comite: { fr: "Membre du comité", en: "Selection Committee Member", de: "Auswahlausschuss-Mitglied" },
     jury: { fr: "Juré", en: "Jury Member", de: "Jurymitglied" },
@@ -185,12 +244,18 @@ function roleLabel(role: Role, lang: Lang): string {
   return dict[role][lang];
 }
 
-function buildRoleLine(role: Role, lang: Lang, clubName: string | null): string {
+function buildRoleLine(
+  role: Role,
+  lang: Lang,
+  clubName: string | null,
+  editionName: string | null,
+): string {
   const label = roleLabel(role, lang);
-  if (isClubScopedRole(role) && clubName) {
-    if (lang === "fr") return `Rôle attribué : <strong>${esc(label)}</strong> — ${esc(clubName)}.`;
-    if (lang === "en") return `Assigned role: <strong>${esc(label)}</strong> — ${esc(clubName)}.`;
-    return `Zugewiesene Rolle: <strong>${esc(label)}</strong> — ${esc(clubName)}.`;
+  const scope = isCompetitionScopedRole(role) ? editionName : isClubScopedRole(role) ? clubName : null;
+  if (scope) {
+    if (lang === "fr") return `Rôle attribué : <strong>${esc(label)}</strong> — ${esc(scope)}.`;
+    if (lang === "en") return `Assigned role: <strong>${esc(label)}</strong> — ${esc(scope)}.`;
+    return `Zugewiesene Rolle: <strong>${esc(label)}</strong> — ${esc(scope)}.`;
   }
   if (lang === "fr") return `Rôle attribué : <strong>${esc(label)}</strong>.`;
   if (lang === "en") return `Assigned role: <strong>${esc(label)}</strong>.`;
@@ -201,10 +266,11 @@ function resolveCopy(args: {
   lang: Lang;
   role: Role;
   clubName: string | null;
+  editionName: string | null;
   customMessage: string;
   wasAlreadyExisting: boolean;
 }): InviteCopy {
-  const { lang, role, clubName, customMessage, wasAlreadyExisting } = args;
+  const { lang, role, clubName, editionName, customMessage, wasAlreadyExisting } = args;
 
   if (lang === "fr") {
     return {
@@ -216,7 +282,7 @@ function resolveCopy(args: {
       intro: wasAlreadyExisting
         ? "Votre compte sur la plateforme Rotary Startup Award vient d'être mis à jour."
         : "Vous êtes invité(e) à rejoindre la plateforme Rotary Startup Award.",
-      roleLine: buildRoleLine(role, lang, clubName),
+      roleLine: buildRoleLine(role, lang, clubName, editionName),
       messageLabel: "Message personnel :",
       ctaIntro: "Cliquez ci-dessous pour accéder à votre espace.",
       ctaLabel: "Accéder à la plateforme",
@@ -238,7 +304,7 @@ function resolveCopy(args: {
       intro: wasAlreadyExisting
         ? "Your Rotary Startup Award account has just been updated."
         : "You are invited to join the Rotary Startup Award platform.",
-      roleLine: buildRoleLine(role, lang, clubName),
+      roleLine: buildRoleLine(role, lang, clubName, editionName),
       messageLabel: "Personal note:",
       ctaIntro: "Please click below to access your space.",
       ctaLabel: "Open the platform",
@@ -260,7 +326,7 @@ function resolveCopy(args: {
     intro: wasAlreadyExisting
       ? "Ihr Konto auf der Rotary Startup Award Plattform wurde soeben aktualisiert."
       : "Sie sind eingeladen, der Rotary Startup Award Plattform beizutreten.",
-    roleLine: buildRoleLine(role, lang, clubName),
+    roleLine: buildRoleLine(role, lang, clubName, editionName),
     messageLabel: "Persönliche Nachricht:",
     ctaIntro: "Bitte klicken Sie unten, um Ihren Bereich zu öffnen.",
     ctaLabel: "Zur Plattform",
@@ -514,6 +580,9 @@ Deno.serve(async (req: Request) => {
   const role = payload.role;
   const lang: Lang = isLang(payload.lang) ? payload.lang : "fr";
   const clubId = typeof payload.club_id === "string" && payload.club_id.trim() ? payload.club_id.trim() : null;
+  const editionId = typeof payload.edition_id === "string" && payload.edition_id.trim()
+    ? payload.edition_id.trim()
+    : null;
   let customMessage = typeof payload.custom_message === "string" ? payload.custom_message.trim() : "";
   if (customMessage.length > MAX_CUSTOM_MESSAGE_LENGTH) {
     customMessage = customMessage.slice(0, MAX_CUSTOM_MESSAGE_LENGTH);
@@ -521,6 +590,9 @@ Deno.serve(async (req: Request) => {
 
   if (isClubScopedRole(role) && !clubId) {
     return jsonResponse(400, { ok: false, error: "club_id_required_for_role" });
+  }
+  if (isCompetitionScopedRole(role) && !editionId) {
+    return jsonResponse(400, { ok: false, error: "edition_id_required_for_role" });
   }
 
   // ── validate caller ──
@@ -538,33 +610,129 @@ Deno.serve(async (req: Request) => {
   const callerRoles = Array.isArray(rolesData) ? rolesData.map((r) => String(r).toLowerCase()) : [];
   const isMasterAdmin = callerRoles.includes("master_admin");
 
-  // Authz matrix.
-  if ((GLOBAL_ROLES as readonly string[]).includes(role)) {
-    if (!isMasterAdmin) {
-      return jsonResponse(403, {
-        ok: false,
-        error: "forbidden",
-        detail: "global role assignment requires master_admin",
-      });
+  // Authz matrix (V3 — 5 tiers).
+  // Helper : on lit my_competition_admin_editions paresseusement (uniquement
+  // si nécessaire pour ne pas pénaliser le path global/master par un RPC en plus).
+  let competitionAdminEditionsCache: string[] | null = null;
+  const loadCompetitionAdminEditions = async (): Promise<string[]> => {
+    if (competitionAdminEditionsCache !== null) return competitionAdminEditionsCache;
+    const { data, error } = await supabase.rpc("my_competition_admin_editions");
+    if (error) {
+      // Tolérance : si l'RPC n'existe pas (build local sans migration), on
+      // dégrade vers liste vide — l'authz traitera le caller comme non
+      // competition_admin et tombera correctement sur 403 si requis.
+      console.warn("[invite-user] my_competition_admin_editions lookup failed:", error.message);
+      competitionAdminEditionsCache = [];
+      return competitionAdminEditionsCache;
     }
-  } else {
-    // Club-scoped : master_admin OU club_admin du club ciblé.
-    if (!isMasterAdmin) {
-      const { data: cmRows, error: cmErr } = await supabase.rpc("my_club_memberships");
-      if (cmErr) {
-        return jsonResponse(500, { ok: false, error: `memberships_lookup_failed:${cmErr.message}` });
-      }
-      const isClubAdmin = Array.isArray(cmRows)
-        && cmRows.some((m: { club_id: string; role: string }) =>
-          m.club_id === clubId && m.role === "club_admin");
-      if (!isClubAdmin) {
+    competitionAdminEditionsCache = Array.isArray(data) ? data.map((v: unknown) => String(v)) : [];
+    return competitionAdminEditionsCache;
+  };
+
+  let clubMembershipsCache: Array<{ club_id: string; role: string }> | null = null;
+  const loadClubMemberships = async (): Promise<Array<{ club_id: string; role: string }>> => {
+    if (clubMembershipsCache !== null) return clubMembershipsCache;
+    const { data, error } = await supabase.rpc("my_club_memberships");
+    if (error) {
+      return jsonResponseThrow(`memberships_lookup_failed:${error.message}`);
+    }
+    clubMembershipsCache = Array.isArray(data)
+      ? data.map((m: { club_id: string; role: string }) => ({ club_id: m.club_id, role: m.role }))
+      : [];
+    return clubMembershipsCache;
+  };
+
+  // Helper interne : on signalise une erreur d'authz via une exception capturée
+  // ci-dessous. Plus simple que d'imbriquer des early returns dans des branches
+  // asynchrones.
+  function jsonResponseThrow(error: string): never {
+    throw new AuthzError(error);
+  }
+
+  try {
+    if (isGlobalRole(role)) {
+      // master_admin / admin -> caller doit être master_admin.
+      if (!isMasterAdmin) {
         return jsonResponse(403, {
           ok: false,
           error: "forbidden",
-          detail: `requires master_admin OR club_admin of ${clubId}`,
+          detail: "global role assignment requires master_admin",
         });
       }
+    } else if (isCompetitionScopedRole(role)) {
+      // competition_admin -> caller doit être master_admin (uniquement).
+      if (!isMasterAdmin) {
+        return jsonResponse(403, {
+          ok: false,
+          error: "forbidden",
+          detail: "competition_admin role assignment requires master_admin",
+        });
+      }
+    } else if (role === "club_admin") {
+      // club_admin -> master_admin OU competition_admin de l'édition à laquelle
+      // le club ciblé (clubId) est attaché via edition_clubs. On résout l'édition
+      // côté serveur pour éviter qu'un caller forge un edition_id arbitraire.
+      if (!isMasterAdmin) {
+        const editions = await loadCompetitionAdminEditions();
+        if (editions.length === 0) {
+          return jsonResponse(403, {
+            ok: false,
+            error: "forbidden",
+            detail: "club_admin assignment requires master_admin OR competition_admin",
+          });
+        }
+        const { data: ecRows, error: ecErr } = await supabaseAdmin
+          .from("edition_clubs")
+          .select("edition_id")
+          .eq("club_id", clubId)
+          .in("edition_id", editions);
+        if (ecErr) {
+          return jsonResponse(500, { ok: false, error: `edition_club_lookup_failed:${ecErr.message}` });
+        }
+        if (!Array.isArray(ecRows) || ecRows.length === 0) {
+          return jsonResponse(403, {
+            ok: false,
+            error: "forbidden",
+            detail: `competition_admin not authorized for club ${clubId}`,
+          });
+        }
+      }
+    } else {
+      // comite / jury -> master_admin OU competition_admin de l'édition du club
+      // OU club_admin du club ciblé.
+      if (!isMasterAdmin) {
+        const memberships = await loadClubMemberships();
+        const isClubAdmin = memberships.some((m) => m.club_id === clubId && m.role === "club_admin");
+        if (!isClubAdmin) {
+          // Fallback : competition_admin d'une édition à laquelle clubId est attaché.
+          const editions = await loadCompetitionAdminEditions();
+          let isCompetitionAdminForClub = false;
+          if (editions.length > 0) {
+            const { data: ecRows, error: ecErr } = await supabaseAdmin
+              .from("edition_clubs")
+              .select("edition_id")
+              .eq("club_id", clubId)
+              .in("edition_id", editions);
+            if (ecErr) {
+              return jsonResponse(500, { ok: false, error: `edition_club_lookup_failed:${ecErr.message}` });
+            }
+            isCompetitionAdminForClub = Array.isArray(ecRows) && ecRows.length > 0;
+          }
+          if (!isCompetitionAdminForClub) {
+            return jsonResponse(403, {
+              ok: false,
+              error: "forbidden",
+              detail: `requires master_admin OR competition_admin of ${clubId}'s edition OR club_admin of ${clubId}`,
+            });
+          }
+        }
+      }
     }
+  } catch (err) {
+    if (err instanceof AuthzError) {
+      return jsonResponse(500, { ok: false, error: err.message });
+    }
+    throw err;
   }
 
   // ── rate-limit : pas plus d'une invite/heure pour le même email ──
@@ -606,6 +774,24 @@ Deno.serve(async (req: Request) => {
     clubName = clubRow.name || clubId;
   }
 
+  // ── récupère le nom de l'édition si competition-scoped (pour l'email) ──
+  // On lit editions.name (V3) en tombant sur editions.id en fallback.
+  let editionName: string | null = null;
+  if (editionId) {
+    const { data: editionRow, error: editionErr } = await supabaseAdmin
+      .from("editions")
+      .select("id, name")
+      .eq("id", editionId)
+      .maybeSingle();
+    if (editionErr) {
+      return jsonResponse(500, { ok: false, error: `edition_lookup_failed:${editionErr.message}` });
+    }
+    if (!editionRow) {
+      return jsonResponse(404, { ok: false, error: "edition_not_found" });
+    }
+    editionName = (editionRow as { name?: string | null }).name || editionId;
+  }
+
   // ── recherche / création du user dans auth.users ──
   let userId: string | null = null;
   let wasAlreadyExisting = false;
@@ -641,7 +827,7 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── applique le rôle ──
-  if ((GLOBAL_ROLES as readonly string[]).includes(role)) {
+  if (isGlobalRole(role)) {
     // Rôle global : UPSERT app_user_roles (on ajoute le rôle à la liste).
     // master_admin et admin sont stockés comme entries dans roles[].
     const { data: existingRow, error: existingErr } = await supabaseAdmin
@@ -671,6 +857,19 @@ Deno.serve(async (req: Request) => {
     if (upsertErr) {
       return jsonResponse(500, { ok: false, error: `role_apply_failed:${upsertErr.message}` });
     }
+  } else if (isCompetitionScopedRole(role)) {
+    // V3 — Rôle competition_admin : RPC SECURITY DEFINER rsa_grant_competition_admin.
+    // L'RPC valide caller=master_admin et INSERT competition_admins (idempotent
+    // via ON CONFLICT (user_id, edition_id)). On passe par le service_role
+    // client pour bypass RLS et appliquer le grant de manière déterministe (la
+    // matrice authz a déjà confirmé que le caller est master_admin).
+    const { error: grantErr } = await supabaseAdmin.rpc("rsa_grant_competition_admin", {
+      p_user_id: userId,
+      p_edition_id: editionId,
+    });
+    if (grantErr) {
+      return jsonResponse(500, { ok: false, error: `competition_admin_apply_failed:${grantErr.message}` });
+    }
   } else {
     // Rôle club-scoped : INSERT club_memberships (idempotent via ON CONFLICT).
     const { error: insertErr } = await supabaseAdmin
@@ -691,10 +890,14 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── génère le magic-link ──
+  // V3 — la redirection cible /Welcome?role=...&edition=...&club=...&firstLogin=1.
+  // Welcome.jsx lit ces query-params pour afficher le bon form post-login
+  // (notamment le profile-completion bloquant pour les rôles tiers admin).
+  const redirectTo = buildRedirectTo({ role, clubId, editionId });
   const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
     type: "magiclink",
     email,
-    options: { redirectTo: REDIRECT_TO },
+    options: { redirectTo },
   });
   if (linkErr || !linkData?.properties?.action_link) {
     return jsonResponse(500, {
@@ -705,7 +908,7 @@ Deno.serve(async (req: Request) => {
   const magicLink = linkData.properties.action_link;
 
   // ── rend + envoie l'email ──
-  const copy = resolveCopy({ lang, role, clubName, customMessage, wasAlreadyExisting });
+  const copy = resolveCopy({ lang, role, clubName, editionName, customMessage, wasAlreadyExisting });
   const html = renderInviteEmail({ lang, copy, magicLink, customMessage, wasAlreadyExisting });
 
   const sendRes = await sendViaResend({
@@ -731,6 +934,7 @@ Deno.serve(async (req: Request) => {
     audience_filter: {
       role,
       lang,
+      edition_id: editionId,
       was_already_existing: wasAlreadyExisting,
       caller_email: callerEmail,
     },

@@ -20,6 +20,47 @@ test('club_admin only -> /Admin?scope=club:<id>', () => {
   assert.equal(r, '/Admin?scope=club:paris-etoile');
 });
 
+test('competition_admin only -> /Admin?scope=competition:<id>', () => {
+  const r = computeLandingRoute({
+    roles: [],
+    competitionAdminEditions: ['edition-2027'],
+  });
+  assert.equal(r, '/Admin?scope=competition:edition-2027');
+});
+
+test('competition_admin with multiple editions -> first one wins', () => {
+  const r = computeLandingRoute({
+    roles: [],
+    competitionAdminEditions: ['edition-2027', 'edition-2028'],
+  });
+  assert.equal(r, '/Admin?scope=competition:edition-2027');
+});
+
+test('competition_admin + club_admin -> competition wins (priority 4bis > 5)', () => {
+  const r = computeLandingRoute({
+    roles: [],
+    competitionAdminEditions: ['edition-2027'],
+    clubMemberships: [{ club_id: 'paris-etoile', role: 'club_admin' }],
+  });
+  assert.equal(r, '/Admin?scope=competition:edition-2027');
+});
+
+test('master_admin + competition_admin -> master wins (/Admin)', () => {
+  const r = computeLandingRoute({
+    roles: ['master_admin'],
+    competitionAdminEditions: ['edition-2027'],
+  });
+  assert.equal(r, '/Admin');
+});
+
+test('competition_admin + admin legacy -> competition scope wins (priority 4bis > 6)', () => {
+  const r = computeLandingRoute({
+    roles: ['admin'],
+    competitionAdminEditions: ['edition-2027'],
+  });
+  assert.equal(r, '/Admin?scope=competition:edition-2027');
+});
+
 test('club_admin + master_admin -> master wins (/Admin)', () => {
   const r = computeLandingRoute({
     roles: ['master_admin'],

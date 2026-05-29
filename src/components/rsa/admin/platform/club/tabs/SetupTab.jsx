@@ -13,12 +13,24 @@
 import React from 'react';
 import { CREAM2, MUTED, INK, GOLD, NAVY, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
+import { usePlatformAuth } from '@/lib/platform/auth';
 import { UI } from '../../i18n';
 import { CLUB_SETUP } from '../i18n';
 import SessionsManager from '../../SessionsManager';
+import OtherClubsSection from '../OtherClubsSection';
 
 export default function SetupTab({ edition, clubId, sessions, isSessionsLoading, onSelectSession }) {
   const { t } = useLang();
+  const { roles, hasClubRole, isMasterAdmin } = usePlatformAuth();
+
+  // OtherClubsSection est strictement réservé aux club_admin : les master_admin
+  // et competition_admin disposent déjà de la liste complète des clubs participants
+  // dans leurs cockpits dédiés (ClubsTab du Master + onglet correspondant).
+  const isCompetitionAdmin = Array.isArray(roles) && roles.includes('competition_admin');
+  const isClubAdminOfThis = clubId && typeof hasClubRole === 'function'
+    ? hasClubRole(clubId, 'club_admin')
+    : false;
+  const showOtherClubs = isClubAdminOfThis && !isMasterAdmin && !isCompetitionAdmin;
 
   if (!edition) {
     return (
@@ -61,6 +73,10 @@ export default function SetupTab({ edition, clubId, sessions, isSessionsLoading,
         onSelectSession={onSelectSession}
         clubId={clubId}
       />
+
+      {showOtherClubs && (
+        <OtherClubsSection editionId={edition.id} clubId={clubId} />
+      )}
     </>
   );
 }

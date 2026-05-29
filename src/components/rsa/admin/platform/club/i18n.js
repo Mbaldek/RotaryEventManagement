@@ -112,3 +112,44 @@ export const CLUB_ROLE_OPTIONS = ['club_admin', 'comite', 'jury'];
 // 'extensions' → 'marketplace' → 'comms' reflète la mention dans le plan : "tab
 // Marketplace dans ClubCockpit (entre Extensions et Communications)".
 export const TAB_IDS = ['setup', 'live', 'results', 'team', 'jury_applications', 'rules', 'prizes', 'analytics', 'extensions', 'marketplace', 'comms'];
+
+// ── Other clubs section (Club Cockpit / Setup tab) ───────────────────────────
+// Bloc lecture seule pour qu'un club_admin sache qui sont les autres clubs
+// participants à la même compétition multiclub.
+export const CLUB_OTHERS = {
+  sectionEyebrow: {
+    fr: 'Compétition',
+    en: 'Competition',
+    de: 'Wettbewerb',
+  },
+  sectionTitle: {
+    fr: 'Autres clubs de cette compétition',
+    en: 'Other clubs in this competition',
+    de: 'Andere Clubs in diesem Wettbewerb',
+  },
+  sectionHint: {
+    fr: 'Lecture seule — les autres clubs participants à la même édition, leurs contacts et leur progression.',
+    en: 'Read only — the other participating clubs for this edition, their contacts and their progress.',
+    de: 'Nur lesend — die anderen teilnehmenden Clubs dieser Ausgabe, ihre Kontakte und ihr Fortschritt.',
+  },
+  loading: {
+    fr: 'Chargement des autres clubs…',
+    en: 'Loading other clubs…',
+    de: 'Andere Clubs werden geladen…',
+  },
+  loadError: {
+    fr: 'Impossible de charger les autres clubs.',
+    en: 'Could not load other clubs.',
+    de: 'Andere Clubs konnten nicht geladen werden.',
+  },
+  empty: {
+    fr: 'Vous êtes pour l’instant le seul club participant à cette compétition.',
+    en: 'You are the only participating club in this competition so far.',
+    de: 'Sie sind bisher der einzige teilnehmende Club in diesem Wettbewerb.',
+  },
+  metaApplications: { fr: 'candidatures', en: 'applications', de: 'Bewerbungen' },
+  metaSessions:     { fr: 'sessions',     en: 'sessions',     de: 'Sessions' },
+  metaFinalists:    { fr: 'finalistes',   en: 'finalists',    de: 'Finalisten' },
+  contactNoName:    { fr: 'Contact club', en: 'Club contact', de: 'Club-Kontakt' },
+  noContact:        { fr: 'Pas de contact public', en: 'No public contact', de: 'Kein öffentlicher Kontakt' },
+};

@@ -1,43 +1,42 @@
 // TopNav — sticky navy top bar: a round gold "R" + serif wordmark, a role-aware
-// NavMenu, the LanguageSwitcher, and an account / sign-out affordance. Formalizes
-// the hand-rolled navy `Header` pattern from RsaFinaleRsvp / StartupUpload.
+// NavMenu, the LanguageSwitcher, and the UserMenu dropdown for the signed-in user.
 //
-// Reads usePlatformAuth() internally to build the role-aware default menu:
-//   startup (any signed-in, role-less owner) → "Mon dossier"
-//   jury   → "Jury"
-//   comité → "Sélection"
-//   admin  → "Admin"
-// Labels are trilingual via useLang. Pass `items` to override the menu entirely.
+// Role-aware default menu via computePrimaryNav (pure helper) :
+//   admin (any form) → Administration (single item)
+//   comité / jury     → Sélection and/or Jury
+//   default            → Mon dossier + Concours
 //
-// Props:
+// The bouton "Se déconnecter" inline a été remplacé par <UserMenu /> : Logout
+// reste accessible mais est groupé avec d'autres shortcuts (Vue candidat,
+// Palmarès public, Documentation) sous l'identité du user.
+//
+// Props :
 //   wordmark   : node — brand title. When omitted, falls back to a neutral
 //                trilingual default ("Plateforme" / "Platform" / "Plattform").
-//                Pages with branding needs (Resultats public, Index marketing,
-//                email templates) pass their own wordmark explicitly.
 //   subtitle   : node — small uppercase line under the wordmark (optional).
-//   items      : NavMenu items override (else the role-aware default below).
+//   items      : NavMenu items override (else computePrimaryNav default below).
+//                Compat préservée : passe un tableau d'items déjà labelisé
+//                (string ou node), pas un dico { fr, en, de }.
 //   right      : node — extra slot before the language switcher (optional).
 //   homeTo     : string — wordmark link target (default "/").
 //
-// Mobile: the menu collapses behind a hamburger toggle (vertical NavMenu drawer).
+// Mobile : le menu se replie derrière un hamburger (NavMenu vertical drawer),
+// les mêmes items qu'en desktop pour cohérence. UserMenu reste visible juste
+// en dessous du drawer.
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { NAVY, GOLD, SERIF } from "@/components/design/tokens";
 import { usePlatformAuth } from "@/lib/platform/auth";
 import { useLang } from "@/lib/platform/i18n";
 import NavMenu from "@/components/design/shell/NavMenu";
 import LanguageSwitcher from "@/components/design/shell/LanguageSwitcher";
+import UserMenu from "@/components/design/shell/UserMenu";
+import { computePrimaryNav } from "@/lib/platform/computePrimaryNav";
 
 const NAV_T = {
-  myDossier: { fr: "Mon dossier", en: "My application", de: "Meine Bewerbung" },
-  jury: { fr: "Jury", en: "Jury", de: "Jury" },
-  selection: { fr: "Sélection", en: "Selection", de: "Auswahl" },
-  admin: { fr: "Admin", en: "Admin", de: "Admin" },
-  signOut: { fr: "Se déconnecter", en: "Sign out", de: "Abmelden" },
   menu: { fr: "Menu", en: "Menu", de: "Menü" },
-  concours: { fr: "Concours", en: "Awards", de: "Wettbewerb" }, // V2.5
   // Neutral default wordmark — pages avec branding spécifique passent leur propre prop.
   defaultWordmark: { fr: "Plateforme", en: "Platform", de: "Plattform" },
 };
@@ -52,43 +51,27 @@ export default function TopNav({
   const { t } = useLang();
   // Default neutre + trilingue quand aucun wordmark n'est passé en prop.
   const resolvedWordmark = wordmark ?? t(NAV_T.defaultWordmark);
-  const { isAuthenticated, signOut, roles, clubMemberships } = usePlatformAuth();
+  const {
+    isAuthenticated,
+    roles,
+    clubMemberships,
+    // V2.5 — competitionAdminEditions n'existe pas encore sur le ctx auth :
+    // on degrade gracieusement avec [] (le helper sait gérer null/undefined).
+  } = usePlatformAuth();
   const [open, setOpen] = useState(false);
 
-  // Default role-aware menu. A role-less signed-in user (startup owner) sees only
-  // "Mon dossier"; jury/comité/admin see their hubs.
-  //
-  // Chantier 1 (mai 2026) : NavMenu filtre via `hasRole(role)` qui ne regarde
-  // QUE le tableau global `roles` (pas `clubMemberships`). Pour gérer master_admin
-  // et club_admin/comité/jury *club-scoped*, on filtre côté TopNav avant de
-  // passer à NavMenu (qui ne re-filtre plus puisque les items n'ont pas de
-  // `roles` array). Cf. computeLandingRoute pour la priorité de routage post-login.
-  const hasGlobalRole = (r) => Array.isArray(roles) && roles.includes(r);
-  const hasClubRoleOf = (r) =>
-    Array.isArray(clubMemberships) && clubMemberships.some((m) => m.role === r);
-  const isMaster = hasGlobalRole("master_admin");
-  const isLegacyAdmin = hasGlobalRole("admin");
+  // ÉQUIPE C nav-refactor : computePrimaryNav remplace l'ancien bloc defaultItems
+  // hand-rolled. Labels résolus via t() pour respecter useLang. Items sans
+  // `show` filter — computePrimaryNav garantit déjà la cohérence rôle.
+  const defaultItems = useMemo(() => {
+    if (!isAuthenticated) return [];
+    return computePrimaryNav({
+      roles,
+      clubMemberships,
+      competitionAdminEditions: [],
+    }).map((it) => ({ to: it.to, label: t(it.label) }));
+  }, [isAuthenticated, roles, clubMemberships, t]);
 
-  // Visibilité : master_admin voit tout. Sinon, on combine rôles globaux + club-scoped.
-  const defaultItems = [
-    { to: "/MonDossier", label: t(NAV_T.myDossier), show: isAuthenticated },
-    { to: "/Concours", label: t(NAV_T.concours), show: isAuthenticated },
-    {
-      to: "/Jury",
-      label: t(NAV_T.jury),
-      show: isMaster || hasGlobalRole("jury") || hasClubRoleOf("jury"),
-    },
-    {
-      to: "/Selection",
-      label: t(NAV_T.selection),
-      show: isMaster || hasGlobalRole("comite") || hasClubRoleOf("comite"),
-    },
-    {
-      to: "/Admin",
-      label: t(NAV_T.admin),
-      show: isMaster || isLegacyAdmin || hasClubRoleOf("club_admin"),
-    },
-  ].filter((i) => i.show).map(({ show, ...rest }) => rest);
   const menuItems = items || defaultItems;
 
   return (
@@ -131,17 +114,7 @@ export default function TopNav({
           <NavMenu items={menuItems} />
           {right}
           <LanguageSwitcher variant="onNavy" />
-          {isAuthenticated && (
-            <button
-              type="button"
-              onClick={signOut}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] text-[13px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-[#0f1f3d]"
-              style={{ color: "rgba(255,255,255,0.7)" }}
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              {t(NAV_T.signOut)}
-            </button>
-          )}
+          {isAuthenticated && <UserMenu />}
         </div>
 
         {/* Mobile: language + hamburger */}
@@ -167,18 +140,9 @@ export default function TopNav({
         >
           <NavMenu items={menuItems} orientation="vertical" onNavigate={() => setOpen(false)} />
           {isAuthenticated && (
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                signOut();
-              }}
-              className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-[#0f1f3d]"
-              style={{ color: "rgba(255,255,255,0.7)" }}
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              {t(NAV_T.signOut)}
-            </button>
+            <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(201,168,76,0.12)" }}>
+              <UserMenu />
+            </div>
           )}
         </div>
       )}

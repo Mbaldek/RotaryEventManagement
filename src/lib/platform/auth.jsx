@@ -74,6 +74,7 @@ export function PlatformAuthProvider({ children }) {
   const [profile, setProfile] = useState(null); // ligne profiles (identité, peut être null)
   const [roles, setRoles] = useState([]); // app_user_roles.roles (globaux)
   const [clubMemberships, setClubMemberships] = useState([]); // V2 : [{club_id, role}, ...]
+  const [competitionAdminEditions, setCompetitionAdminEditions] = useState([]); // V3 : text[]
   const [loading, setLoading] = useState(true);
 
   const loadIdentity = useCallback(async (email) => {
@@ -81,6 +82,7 @@ export function PlatformAuthProvider({ children }) {
       setProfile(null);
       setRoles([]);
       setClubMemberships([]);
+      setCompetitionAdminEditions([]);
       return;
     }
     // R-M4 : eq + normalisation lowercase plutôt qu'ilike (wildcards %_ exploitables).
@@ -107,13 +109,19 @@ export function PlatformAuthProvider({ children }) {
           setTimeout(() => resolve({ data: null, error: { message: `${label} timeout ${ms}ms` } }), ms),
         ),
       ]);
-    const [profRes, rolesRes, cmRes] = await Promise.all([
+    // V3 — 4e appel parallèle : my_competition_admin_editions (RPC SECURITY
+    // DEFINER, retourne text[] des éditions que le user administre). Si l'RPC
+    // n'existe pas encore en local (migration V3 non appliquée), withTimeout
+    // dégrade vers data=null et on retombe sur [] — la plateforme reste
+    // fonctionnelle en mode V2.
+    const [profRes, rolesRes, cmRes, caRes] = await Promise.all([
       withTimeout(
         supabase.from('profiles').select('id, email, full_name, role').eq('email', norm).maybeSingle(),
         4000, 'profiles',
       ),
       withTimeout(supabase.rpc('rsa_my_roles'), 4000, 'rsa_my_roles'),
       withTimeout(supabase.rpc('my_club_memberships'), 4000, 'my_club_memberships'),
+      withTimeout(supabase.rpc('my_competition_admin_editions'), 4000, 'my_competition_admin_editions'),
     ]);
     // DIAGNOSTIC : on logge le résultat de chaque promise individuellement pour
     // identifier en prod quelle requête échoue silencieusement (cf. spinner
@@ -126,10 +134,14 @@ export function PlatformAuthProvider({ children }) {
       profile: { data: !!profRes?.data, error: profRes?.error?.message ?? null },
       roles: { data: rolesRes?.data, error: rolesRes?.error?.message ?? null },
       clubMemberships: { data: cmRes?.data, error: cmRes?.error?.message ?? null },
+      competitionAdminEditions: { data: caRes?.data, error: caRes?.error?.message ?? null },
     });
     setProfile(profRes?.data ?? null);
     setRoles(Array.isArray(rolesRes?.data) ? rolesRes.data : []);
     setClubMemberships(Array.isArray(cmRes?.data) ? cmRes.data : []);
+    setCompetitionAdminEditions(
+      Array.isArray(caRes?.data) ? caRes.data.map((v) => String(v)) : [],
+    );
   }, []);
 
   useEffect(() => {
@@ -365,6 +377,7 @@ export function PlatformAuthProvider({ children }) {
     setProfile(null);
     setRoles([]);
     setClubMemberships([]);
+    setCompetitionAdminEditions([]);
     // F8 — Coordination cross-provider : on signale aux autres AuthProviders
     // (AuthContext hérité déjeuners, éventuels providers V4 multi-club) que la
     // session a été détruite, sans attendre que onAuthStateChange fire (qui
@@ -389,6 +402,12 @@ export function PlatformAuthProvider({ children }) {
     [clubMemberships],
   );
 
+  // V3 — helper competition_admin scoped à une édition donnée.
+  const isCompetitionAdminOf = useCallback(
+    (editionId) => competitionAdminEditions.includes(editionId),
+    [competitionAdminEditions],
+  );
+
   // Liste dédupliquée des club_id que le user peut administrer (club_admin direct OU master_admin = tous)
   // Note : pour les master_admins, "tous les clubs" ne peut être résolu qu'en chargeant Club.listAll()
   // côté consommateur. Ici on expose uniquement les club_admin directs.
@@ -407,6 +426,10 @@ export function PlatformAuthProvider({ children }) {
     isMasterAdmin: roles.includes('master_admin'),
     clubMemberships,                                   // [{club_id, role}, ...]
     myAdminClubs,                                      // string[] (club_admin direct)
+    // V3 competition_admin tier
+    competitionAdminEditions,                          // string[] (text[] des éditions administrées)
+    isCompetitionAdmin: competitionAdminEditions.length > 0,
+    isCompetitionAdminOf,
     hasRole,
     hasClubRole,
     signInWithMagicLink,
