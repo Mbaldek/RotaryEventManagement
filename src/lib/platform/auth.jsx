@@ -76,6 +76,12 @@ export function PlatformAuthProvider({ children }) {
   const [clubMemberships, setClubMemberships] = useState([]); // V2 : [{club_id, role}, ...]
   const [competitionAdminEditions, setCompetitionAdminEditions] = useState([]); // V3 : text[]
   const [loading, setLoading] = useState(true);
+  // V3 hardening — true après le PREMIER loadIdentity ayant abouti (au moins
+  // 1 RPC sur les 3 sans erreur). Permet aux gates UI (Admin.jsx) de distinguer
+  // "pas encore chargé" vs "chargé mais aucun rôle" et d'éviter le Forbidden
+  // flash quand le watchdog 10s fire avant que loadIdentity ne complète sur
+  // réseau froid. Cf. docs/deepsolve/auth-rights-stability.md.
+  const [identityLoaded, setIdentityLoaded] = useState(false);
 
   const loadIdentity = useCallback(async (email) => {
     if (!email) {
@@ -83,6 +89,7 @@ export function PlatformAuthProvider({ children }) {
       setRoles([]);
       setClubMemberships([]);
       setCompetitionAdminEditions([]);
+      setIdentityLoaded(true); // pas authentifié = "settled" pour les gates
       return;
     }
     // R-M4 : eq + normalisation lowercase plutôt qu'ilike (wildcards %_ exploitables).
@@ -141,12 +148,47 @@ export function PlatformAuthProvider({ children }) {
       clubMemberships: { data: cmRes?.data, error: cmRes?.error?.message ?? null },
       competitionAdminEditions: { data: caRes?.data, error: caRes?.error?.message ?? null },
     });
-    setProfile(profRes?.data ?? null);
-    setRoles(Array.isArray(rolesRes?.data) ? rolesRes.data : []);
-    setClubMemberships(Array.isArray(cmRes?.data) ? cmRes.data : []);
-    setCompetitionAdminEditions(
-      Array.isArray(caRes?.data) ? caRes.data.map((v) => String(v)) : [],
-    );
+    // IDEMPOTENT : si la query échoue (timeout, network, RPC down), on PRÉSERVE
+    // l'état précédent au lieu de reset à []. Cause root du kick-out : avant ce
+    // fix, un timeout RPC sur loadIdentity (cold-start, réseau froid, refresh
+    // post-veille) wipait les rôles → master_admin tombait en Forbidden instantané
+    // malgré une session valide. Maintenant : success → écrase l'état ; failure →
+    // log warning + garde l'état actuel. Le user reste logged + autorisé tant
+    // qu'un succès n'a pas écrasé. Si le user n'a réellement plus de rôles, le
+    // backend RLS le bloquera au query suivant — ceinture + bretelles serveur.
+    if (profRes?.error) {
+      // eslint-disable-next-line no-console
+      console.warn('[PlatformAuth] profile load failed — preserving previous value');
+    } else {
+      setProfile(profRes?.data ?? null);
+    }
+    if (rolesRes?.error) {
+      // eslint-disable-next-line no-console
+      console.warn('[PlatformAuth] roles load failed — preserving previous roles');
+    } else if (Array.isArray(rolesRes?.data)) {
+      setRoles(rolesRes.data);
+    }
+    if (cmRes?.error) {
+      // eslint-disable-next-line no-console
+      console.warn('[PlatformAuth] club_memberships load failed — preserving previous value');
+    } else if (Array.isArray(cmRes?.data)) {
+      setClubMemberships(cmRes.data);
+    }
+    if (caRes?.error) {
+      // eslint-disable-next-line no-console
+      console.warn('[PlatformAuth] competition_admin_editions load failed — preserving previous value');
+    } else if (Array.isArray(caRes?.data)) {
+      setCompetitionAdminEditions(caRes.data.map((v) => String(v)));
+    }
+    // identityLoaded = true si AU MOINS l'une des sources d'identité a réussi.
+    // Si toutes ont timeout (réseau down complet), on reste à false pour que
+    // les gates UI affichent un état "loading access" plutôt que Forbidden.
+    const anySuccess =
+      !profRes?.error || !rolesRes?.error || !cmRes?.error || !caRes?.error;
+    if (anySuccess) setIdentityLoaded(true);
+    // Retourne un drapeau pour permettre au caller (init / onAuthStateChange)
+    // de programmer un retry si toutes les RPC ont échoué (full outage).
+    return { anySuccess };
   }, []);
 
   useEffect(() => {
@@ -251,7 +293,16 @@ export function PlatformAuthProvider({ children }) {
         }
         if (!active) return;
         setAuthUser(session?.user ?? null);
-        await loadIdentity(session?.user?.email);
+        const result = await loadIdentity(session?.user?.email);
+        // V3 hardening — retry background si full outage (toutes RPC failed).
+        // Évite à l'user de rester bloqué sur spinner Forbidden quand le réseau
+        // revient. Retry simple : 1 essai après 3s, 1 essai après 8s.
+        if (active && session?.user && result && !result.anySuccess) {
+          // eslint-disable-next-line no-console
+          console.warn('[PlatformAuth] loadIdentity full outage — scheduling retry');
+          setTimeout(() => { if (active) loadIdentity(session.user.email); }, 3000);
+          setTimeout(() => { if (active) loadIdentity(session.user.email); }, 8000);
+        }
         // Sentry : on attache l'identité dès qu'on a la session. {id, email}
         // seulement — pas de PII supplémentaire (cf. observability/sentry.js).
         if (session?.user) {
@@ -447,6 +498,7 @@ export function PlatformAuthProvider({ children }) {
     profile,
     roles,
     loading,
+    identityLoaded,                                    // true après 1er loadIdentity réussi
     isAuthenticated: !!authUser,
     isJury: roles.includes('jury'),
     isComite: roles.includes('comite'),

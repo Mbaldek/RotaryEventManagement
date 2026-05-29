@@ -60,6 +60,7 @@ export default function Admin() {
     isMasterAdmin,
     myAdminClubs,
     loading: authLoading,
+    identityLoaded,
   } = usePlatformAuth();
   const { t } = useLang();
   const [params, setParams] = useSearchParams();
@@ -132,6 +133,21 @@ export default function Admin() {
     );
   }
   if (!isAuthenticated) return <Navigate to="/Login" replace />;
+
+  // V3 hardening — tant que l'identité (roles + clubs + comp-editions) n'a
+  // pas été chargée AU MOINS UNE FOIS avec succès, on ne tranche pas sur
+  // Forbidden. Sinon : watchdog 10s + RPCs hung sur réseau froid = Forbidden
+  // flash alors que le user EST master_admin. On affiche un spinner jusqu'à
+  // ce que identityLoaded passe à true.
+  if (!identityLoaded) {
+    return (
+      <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
+        <Centered>
+          <Spinner />
+        </Centered>
+      </PageShell>
+    );
+  }
 
   // Aucun rôle admin (master, club_admin ni legacy admin) → Forbidden
   if (!hasMaster && !hasClubAdmin && !hasLegacyAdmin) {
