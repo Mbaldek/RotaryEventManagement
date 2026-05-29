@@ -15,8 +15,6 @@ export const CLUB_TABS = {
   prizes:             { fr: 'Prix',              en: 'Prizes',         de: 'Preise' },
   comms:              { fr: 'Communications',    en: 'Communications', de: 'Kommunikation' },
   analytics:          { fr: 'Analytics',          en: 'Analytics',      de: 'Analytics' },
-  extensions:         { fr: 'Extensions',        en: 'Extensions',     de: 'Erweiterungen' },
-  marketplace:        { fr: 'Marketplace',       en: 'Marketplace',    de: 'Marktplatz' },
 };
 
 export const CLUB_UI = {
@@ -107,11 +105,9 @@ export const CLUB_RULES = {
 // Roles disponibles dans la TeamTab (parallèle à ROLE_OPTIONS du legacy).
 export const CLUB_ROLE_OPTIONS = ['club_admin', 'comite', 'jury'];
 
-// Note V3 Vague 4 : 'marketplace' est inséré juste après 'extensions' (catalogue
-// puis l'extension installée est gérée dans l'onglet Extensions adjacent). L'ordre
-// 'extensions' → 'marketplace' → 'comms' reflète la mention dans le plan : "tab
-// Marketplace dans ClubCockpit (entre Extensions et Communications)".
-export const TAB_IDS = ['setup', 'live', 'results', 'team', 'jury_applications', 'rules', 'prizes', 'analytics', 'extensions', 'marketplace', 'comms'];
+// Note 2026-05-29 — équipe D "kill extensions" : retrait des onglets 'extensions'
+// et 'marketplace' (archi droppée intégralement, plus de tab catalogue/install).
+export const TAB_IDS = ['setup', 'live', 'results', 'team', 'jury_applications', 'rules', 'prizes', 'analytics', 'comms'];
 
 // ── Other clubs section (Club Cockpit / Setup tab) ───────────────────────────
 // Bloc lecture seule pour qu'un club_admin sache qui sont les autres clubs

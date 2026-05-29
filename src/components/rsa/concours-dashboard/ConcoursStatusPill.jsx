@@ -1,25 +1,18 @@
-// ConcoursStatusPill — pill de statut session (Élysée navy/gold + sémantique).
+// ConcoursStatusPill v2 — pill statut session avec teinte session-aware (V3).
 //
-// Reproduit visuellement le pattern RsaJuryHub V1 (SessionStatusBadge) tout en
-// restant strictement dans la palette Élysée :
-//   - draft     -> "À venir" (gris muted, fond cream)
-//   - live      -> "En direct" (rouge vif, point pulsant)
-//   - locked    -> "Notations closes" (orange ambré)
-//   - published -> "Résultats publiés" (vert sage)
-// Si days < 0 et status != 'published', on affiche "Terminée" (souvent une
-// session live qui a passé minuit sans être encore lockée).
+// Refonte : le pill prend désormais des tint* optionnels (bg/border/fg) pour
+// s'aligner sur la palette thématique de la session quand il est rendu sur
+// une card colorée. Si aucun tint passé, on retombe sur la sémantique Élysée
+// d'origine (live = rouge, locked = ambré, published = sage, draft = neutre).
 //
-// Props :
-//   status : 'draft' | 'live' | 'locked' | 'published'
-//   days   : number | null — issu de computeCountdown si applicable
-//   t      : function de useLang() (déjà résolu côté parent)
-//   T      : dictionnaire i18n (UI de concours-dashboard/i18n.js)
+// Comportement inchangé : si days < 0 et status != 'published', on bascule
+// en "Terminée".
 
 import React from 'react';
 import { Check, Calendar, Lock } from 'lucide-react';
 import { CREAM, CREAM2, INK, MUTED, GREEN_TODAY } from '@/components/design/tokens';
 
-const PALETTE = {
+const DEFAULT_PALETTE = {
   draft: { bg: 'white', border: CREAM2, fg: INK, icon: Calendar },
   live: { bg: 'rgba(220,38,38,0.10)', border: 'rgba(220,38,38,0.35)', fg: '#b91c1c', icon: null },
   locked: { bg: 'rgba(201,168,76,0.10)', border: 'rgba(201,168,76,0.45)', fg: '#8a6b1f', icon: Lock },
@@ -27,16 +20,22 @@ const PALETTE = {
   finished: { bg: CREAM, border: CREAM2, fg: MUTED, icon: Check },
 };
 
-export default function ConcoursStatusPill({ status, days, T, t }) {
-  // Resolved label.
+export default function ConcoursStatusPill({ status, days, T, t, tintBg, tintBorder, tintFg }) {
   let key = status || 'draft';
-  // Si la session est draft mais la date est passée, on bascule en "Terminée".
   if (key === 'draft' && typeof days === 'number' && days < 0) {
     key = 'finished';
   }
 
-  const palette = PALETTE[key] || PALETTE.draft;
+  const palette = DEFAULT_PALETTE[key] || DEFAULT_PALETTE.draft;
   const Icon = palette.icon;
+
+  // Live status keeps its red regardless of session theme color (semantic).
+  // For other statuses, if tintBg/tintBorder/tintFg passed, override the
+  // default neutral chrome to align with the session palette.
+  const usesTint = key !== 'live' && tintBg && tintBorder && tintFg;
+  const bg = usesTint ? tintBg : palette.bg;
+  const border = usesTint ? tintBorder : palette.border;
+  const fg = usesTint ? tintFg : palette.fg;
 
   const label = (() => {
     switch (key) {
@@ -51,12 +50,8 @@ export default function ConcoursStatusPill({ status, days, T, t }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[10.5px] font-medium uppercase tracking-[0.1em]"
-      style={{
-        background: palette.bg,
-        border: `1px solid ${palette.border}`,
-        color: palette.fg,
-      }}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[10.5px] font-semibold uppercase tracking-[0.1em] whitespace-nowrap"
+      style={{ background: bg, border: `1px solid ${border}`, color: fg }}
     >
       {key === 'live' && (
         <span

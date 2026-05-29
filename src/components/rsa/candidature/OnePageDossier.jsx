@@ -41,6 +41,8 @@ import StepProject from './steps/StepProject';
 import StepFinance from './steps/StepFinance';
 import StepDocuments from './steps/StepDocuments';
 import { stepHasMissingRequired, firstStepWithMissing } from './validation';
+import CustomFieldsRenderer, { validateCustomFields } from '@/components/rsa/forms/CustomFieldsRenderer';
+import { uploadCustomField } from '@/lib/rsa/uploadCustomField';
 
 const AUTOSAVE_MS = 600;
 
@@ -110,6 +112,20 @@ const UI = {
   closeOn: { fr: 'Clôture le', en: 'Closes on', de: 'Schluss am' },
   expandAll: { fr: 'Tout déplier', en: 'Expand all', de: 'Alles aufklappen' },
   collapseAll: { fr: 'Tout replier', en: 'Collapse all', de: 'Alles einklappen' },
+  // V2.5+ Wave Custom Fields
+  customEyebrow: {
+    fr: 'Section 6', en: 'Section 6', de: 'Abschnitt 6',
+  },
+  customTitle: {
+    fr: 'Questions supplémentaires',
+    en: 'Additional questions',
+    de: 'Zusätzliche Fragen',
+  },
+  customSubtitle: {
+    fr: 'Questions spécifiques posées par le jury de cette compétition.',
+    en: 'Specific questions asked by the jury of this competition.',
+    de: 'Spezifische Fragen der Jury dieses Wettbewerbs.',
+  },
 };
 
 export default function OnePageDossier({
@@ -133,9 +149,18 @@ export default function OnePageDossier({
     project: false,
     finance: false,
     documents: false,
+    // V2.5+ Wave Custom Fields — section dynamique, ouverte si custom fields existent
+    // et au moins un champ requis pas encore rempli (déterminé plus bas).
+    custom: false,
   });
   const [sectionErrors, setSectionErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
+
+  // V2.5+ — custom fields dérivés de l'édition. Stables si edition?.id stable.
+  const customFields = useMemo(() => {
+    const raw = edition?.custom_fields_candidate;
+    return Array.isArray(raw) ? raw : [];
+  }, [edition?.custom_fields_candidate]);
 
   const debounceRef = useRef(null);
   const pendingRef = useRef(null);
@@ -208,6 +233,13 @@ export default function OnePageDossier({
     [],
   );
 
+  // V2.5+ — errors map calculée pour les custom fields. Sert à la fois aux
+  // markers incomplete/complete ET à l'affichage inline (sectionErrors.custom).
+  const customErrorsLive = useMemo(
+    () => validateCustomFields(customFields, draft.custom_data || {}, t),
+    [customFields, draft.custom_data, t],
+  );
+
   // État incomplete pour chaque section (point GOLD).
   const incompleteSections = useMemo(() => {
     const out = {};
@@ -216,8 +248,12 @@ export default function OnePageDossier({
       if (s.id === 'finance') continue;
       if (stepHasMissingRequired(draft, s.id, rules)) out[s.id] = true;
     }
+    // V2.5+ — custom : incomplete si au moins un required pas rempli.
+    if (customFields.some((f) => f?.required) && Object.keys(customErrorsLive).length > 0) {
+      out.custom = true;
+    }
     return out;
-  }, [draft, rules]);
+  }, [draft, rules, customFields, customErrorsLive]);
 
   // État complete (toutes requis OK) — montre check vert.
   const completeSections = useMemo(() => {
@@ -226,8 +262,12 @@ export default function OnePageDossier({
       if (s.id === 'finance') continue;
       if (!stepHasMissingRequired(draft, s.id, rules)) out[s.id] = true;
     }
+    // V2.5+ — custom : complete si aucune erreur live ET au moins un field existant.
+    if (customFields.length > 0 && Object.keys(customErrorsLive).length === 0) {
+      out.custom = true;
+    }
     return out;
-  }, [draft, rules]);
+  }, [draft, rules, customFields, customErrorsLive]);
 
   const toggle = useCallback(
     (id) => {
@@ -246,28 +286,32 @@ export default function OnePageDossier({
   );
 
   const expandAll = useCallback(() => {
-    setOpen({ contact: true, company: true, project: true, finance: true, documents: true });
+    setOpen({ contact: true, company: true, project: true, finance: true, documents: true, custom: true });
   }, []);
 
   const collapseAll = useCallback(() => {
     flushPending();
-    setOpen({ contact: false, company: false, project: false, finance: false, documents: false });
+    setOpen({ contact: false, company: false, project: false, finance: false, documents: false, custom: false });
   }, [flushPending]);
 
   const handleSubmit = useCallback(async () => {
     setSubmitError(null);
     await flushPending();
     const missing = firstStepWithMissing(draft, rules);
-    if (missing) {
-      // Ouvre TOUTES les sections en erreur + scroll vers la première
+    // V2.5+ — check custom fields (required + format) APRÈS les sections classiques.
+    const customErrs = validateCustomFields(customFields, draft.custom_data || {}, t);
+    const hasCustomErr = Object.keys(customErrs).length > 0;
+    if (missing || hasCustomErr) {
       const errs = {};
       for (const id of ['contact', 'company', 'project', 'documents']) errs[id] = validateSection(id, draft);
+      if (hasCustomErr) errs.custom = customErrs;
       setSectionErrors(errs);
-      setOpen({ contact: true, company: true, project: true, finance: true, documents: true });
+      setOpen({ contact: true, company: true, project: true, finance: true, documents: true, custom: true });
+      const target = missing || 'custom';
       if (typeof window !== 'undefined') {
         // Petit délai pour laisser l'animation expand se faire avant le scroll
         setTimeout(() => {
-          const el = document.querySelector(`[data-section="${missing}"]`);
+          const el = document.querySelector(`[data-section="${target}"]`);
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 200);
       }
@@ -278,7 +322,7 @@ export default function OnePageDossier({
     } catch (err) {
       setSubmitError(err?.message || String(err));
     }
-  }, [flushPending, draft, rules, validateSection, onSubmit]);
+  }, [flushPending, draft, rules, validateSection, onSubmit, customFields, t]);
 
   const errsFor = (id) => sectionErrors[id] || {};
 
@@ -392,6 +436,70 @@ export default function OnePageDossier({
             </CollapsibleSection>
           </div>
         ))}
+
+        {/* V2.5+ Wave Custom Fields — section dynamique (rendue uniquement si fields configurés). */}
+        {customFields.length > 0 && (
+          <div data-section="custom">
+            <CollapsibleSection
+              eyebrow={t(UI.customEyebrow)}
+              title={t(UI.customTitle)}
+              subtitle={t(UI.customSubtitle)}
+              open={open.custom}
+              onToggle={() => {
+                setOpen((prev) => {
+                  const willOpen = !prev.custom;
+                  if (!willOpen) {
+                    flushPending();
+                    setSectionErrors((curr) => ({
+                      ...curr,
+                      custom: validateCustomFields(customFields, draft.custom_data || {}, t),
+                    }));
+                  }
+                  return { ...prev, custom: willOpen };
+                });
+              }}
+              complete={completeSections.custom}
+              incomplete={incompleteSections.custom}
+            >
+              <CustomFieldsRenderer
+                fields={customFields}
+                values={draft.custom_data || {}}
+                errors={sectionErrors.custom || {}}
+                onChange={(key, value) => {
+                  setSectionErrors((curr) => {
+                    if (!curr?.custom?.[key]) return curr;
+                    const subNext = { ...curr.custom };
+                    delete subNext[key];
+                    const next = { ...curr };
+                    if (Object.keys(subNext).length === 0) delete next.custom;
+                    else next.custom = subNext;
+                    return next;
+                  });
+                  const merged = { ...(draft.custom_data || {}), [key]: value };
+                  setDraft((d) => ({ ...d, custom_data: merged }));
+                  queueAutosave({ custom_data: merged });
+                }}
+                disabled={readOnly}
+                readonly={readOnly}
+                onUpload={async (file, field) => {
+                  if (!edition?.id || !startup?.id) {
+                    throw new Error('upload_no_owner_yet');
+                  }
+                  const path = await uploadCustomField({
+                    editionId: edition.id,
+                    ownerKind: 'startup',
+                    ownerId: startup.id,
+                    fieldKey: field.key,
+                    file,
+                    accept: field.accept,
+                    maxSizeMb: field.maxSizeMb,
+                  });
+                  return { path, name: file.name };
+                }}
+              />
+            </CollapsibleSection>
+          </div>
+        )}
       </div>
 
       {/* Submit footer */}
@@ -409,6 +517,7 @@ export default function OnePageDossier({
               <ul className="flex flex-wrap gap-2">
                 {Object.keys(incompleteSections).map((id) => {
                   const s = SECTIONS.find((x) => x.id === id);
+                  const title = s ? t(s.title) : (id === 'custom' ? t(UI.customTitle) : id);
                   return (
                     <li key={id}>
                       <button
@@ -418,7 +527,7 @@ export default function OnePageDossier({
                         style={{ background: 'white', border: `1px solid ${CREAM2}`, color: INK }}
                       >
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: GOLD }} aria-hidden />
-                        {s ? t(s.title) : id}
+                        {title}
                       </button>
                     </li>
                   );

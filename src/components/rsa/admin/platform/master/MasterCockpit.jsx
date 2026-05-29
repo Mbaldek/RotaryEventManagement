@@ -41,9 +41,8 @@ import ClubEditView from './ClubEditView';
 // Équipe A — Overview landing.
 // AdvancedSection a été retirée du master cockpit le 2026-05-29 :
 //   * Email Studio (opérationnel) part dans son propre flow (équipe B).
-//   * Extensions + Marketplace (placeholders dev) relocalisés dans
-//     /AdminAdvanced, accessible via UserMenu (visible master_admin only).
-// Le tab 'advanced' n'a donc plus sa place dans le flow opérationnel.
+// 2026-05-29 (équipe D — "kill extensions") : Extensions + Marketplace ont été
+// intégralement supprimés (archi UI + entité + hooks). Plus de /AdminAdvanced.
 import OverviewPanel from './OverviewPanel';
 
 function Dot({ color }) {
@@ -172,7 +171,7 @@ export default function MasterCockpit() {
 
   // URL state : ?tab=overview|competitions|clubs|roles|competition_admins
   // Default = 'overview' (équipe A — landing dashboard).
-  // Note 2026-05-29 : 'advanced' a été retiré, voir UserMenu > "Paramètres avancés".
+  // Note 2026-05-29 : 'advanced' a été retiré (équipe D — kill extensions).
   const tab = (params.get('tab') && TAB_IDS.includes(params.get('tab')))
     ? params.get('tab')
     : 'overview';

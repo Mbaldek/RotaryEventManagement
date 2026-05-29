@@ -1,14 +1,14 @@
-// /Concours — Dashboard public du concours (V2.5).
+// /Concours — Dashboard public du concours (V3 visual refresh).
 //
-// Vitrine éditoriale ouverte à tous les utilisateurs authentifiés (jury,
-// comité, club_admin, master_admin, candidat). Lecture seule, aucun panneau
-// admin : un juré voit en 3 secondes l'état du concours (clubs participants,
-// sessions à venir / live / terminées, prochaine session, finalistes), peut
-// cliquer sur une session pour voir le détail (startups + decks + jurés).
+// Vitrine éditoriale ouverte à tous les utilisateurs authentifiés. La v3
+// remplace le Hero éditorial générique par un H-Ambient (logo Rotary qui
+// respire + KPI rail), insère une Timeline horizontale entre Hero et
+// ClubSections, et ré-introduit la couleur thématique par session sur les
+// cartes + dans le drawer détail.
 //
-// Pattern : reproduit le RsaJuryHub V1 (legacy 1107 lignes) en multi-club V2,
-// en strict Élysée (navy/gold/cream) via les composants partagés. Auth-gate
-// magic-link (redirige /Login si non authentifié — tout rôle authentifié OK).
+// Pattern : auth-gate magic-link (redirige /Login si non authentifié — tout
+// rôle authentifié OK). Lecture seule. RPC SECURITY DEFINER pour l'overview
+// (gating + masquage des champs sensibles ; cf. docs/hardening/concours-v2-rls-audit.md).
 
 import React, { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
 import ConcoursHero from '@/components/rsa/concours-dashboard/ConcoursHero';
+import ConcoursTimeline from '@/components/rsa/concours-dashboard/ConcoursTimeline';
 import ClubSection from '@/components/rsa/concours-dashboard/ClubSection';
 import FinaleSection from '@/components/rsa/concours-dashboard/FinaleSection';
 import SessionDetailDrawer from '@/components/rsa/concours-dashboard/SessionDetailDrawer';
@@ -31,7 +32,10 @@ import { computeCountdown } from '@/components/rsa/jury/constants';
 
 function CenterSpinner({ label }) {
   return (
-    <div className="min-h-[50vh] flex items-center justify-center gap-2.5" style={{ color: MUTED }}>
+    <div
+      className="min-h-[50vh] flex items-center justify-center gap-2.5"
+      style={{ color: MUTED }}
+    >
       <Loader2 className="w-4 h-4 animate-spin" />
       <span className="text-[13px]">{label}</span>
     </div>
@@ -40,13 +44,13 @@ function CenterSpinner({ label }) {
 
 export default function Concours() {
   const { isAuthenticated, loading: authLoading } = usePlatformAuth();
-  const { t, lang } = useLang();
+  const { t } = useLang();
 
   const editionsQ = useEditionsAvailable();
   const editions = editionsQ.data || [];
 
   // Édition sélectionnée : par défaut, la plus récente 'open' OU sinon la plus
-  // récente tout court (status != 'draft' déjà filtré par useEditionsAvailable).
+  // récente tout court (status != 'draft' déjà filtré).
   const [selectedEditionId, setSelectedEditionId] = useState(null);
   const effectiveEditionId = useMemo(() => {
     if (selectedEditionId) return selectedEditionId;
@@ -56,8 +60,6 @@ export default function Concours() {
   }, [selectedEditionId, editions]);
 
   const overviewQ = useEditionOverview(effectiveEditionId);
-
-  // Drawer state.
   const [openSessionId, setOpenSessionId] = useState(null);
 
   const overview = overviewQ.data;
@@ -67,7 +69,6 @@ export default function Concours() {
   const kpis = useMemo(() => {
     if (!overview) return null;
     const clubsCount = (overview.clubs || []).length;
-    // Sessions: tout sauf la finale ; le compte « done » = status 'published'.
     let total = 0;
     let done = 0;
     let nextSession = null;
@@ -86,7 +87,6 @@ export default function Concours() {
         }
       }
     }
-    // La finale compte aussi dans le "prochain" si rien d'autre n'arrive.
     for (const s of overview.finale_sessions || []) {
       const cd = computeCountdown(s?.session_date);
       const status = s?.config?.status || 'draft';
@@ -114,16 +114,8 @@ export default function Concours() {
     };
   }, [overview, t]);
 
-  // ── Finalistes pour la section finale ────────────────────────────────────
   const finaleFinalists = useMemo(() => {
     if (!overview) return [];
-    // On extrait les startups status='finaliste' depuis les indices ; comme on
-    // n'a pas un endpoint dédié finaliste-par-source, on s'appuie sur
-    // finalists_by_source_session pour compter, et on essaie d'afficher les
-    // noms via le drawer detail (sinon liste vide).
-    // Pour l'instant : on liste les sources et c'est tout. Le RPC final
-    // (`rsa_concours_edition_overview`) DOIT idéalement renvoyer
-    // `finalists: [{startup_name, source_session_name}]`.
     if (Array.isArray(overview.finalists)) return overview.finalists;
     return [];
   }, [overview]);
@@ -139,21 +131,15 @@ export default function Concours() {
 
   const finaleSession = (overview?.finale_sessions || [])[0] || null;
 
-  // ── Auth gate (after hooks to respect rules-of-hooks) ──────────────────────
+  // ── Auth gate ──────────────────────────────────────────────────────────────
   if (!authLoading && !isAuthenticated) {
     return <Navigate to="/Login" replace />;
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <PageShell
       width="wide"
-      nav={
-        <TopNav
-          wordmark={t(UI.navTitle)}
-          subtitle={t(UI.navSubtitle)}
-        />
-      }
+      nav={<TopNav wordmark={t(UI.navTitle)} subtitle={t(UI.navSubtitle)} />}
       footer={
         <Footer
           width="wide"
@@ -194,7 +180,11 @@ export default function Concours() {
             <div
               role="alert"
               className="text-[13px] px-4 py-4 rounded-[4px]"
-              style={{ color: INK, background: TINT_DANGER, borderLeft: `2px solid ${DANGER}` }}
+              style={{
+                color: INK,
+                background: TINT_DANGER,
+                borderLeft: `2px solid ${DANGER}`,
+              }}
             >
               {t(UI.loadError)}
             </div>
@@ -202,11 +192,23 @@ export default function Concours() {
 
           {overview && (
             <>
+              {/* Timeline horizontale — entre Hero et ClubSections. */}
+              <ConcoursTimeline
+                sessionsByClub={overview.sessions_by_club || {}}
+                finaleSessions={overview.finale_sessions || []}
+                clubs={overview.clubs || []}
+                onOpenSession={(s) => setOpenSessionId(s.id)}
+              />
+
               {(overview.clubs || []).length === 0 ? (
                 <div
                   role="status"
-                  className="text-[14px] italic px-6 py-10 text-center rounded-[4px] mb-12"
-                  style={{ color: MUTED, background: 'white', border: `1px dashed ${CREAM2}` }}
+                  className="text-[14px] italic px-6 py-10 text-center rounded-[8px] mb-12"
+                  style={{
+                    color: MUTED,
+                    background: 'white',
+                    border: `1px dashed ${CREAM2}`,
+                  }}
                 >
                   {t(UI.noClubs)}
                 </div>

@@ -30,7 +30,6 @@ import __Layout from './Layout.jsx';
 // React Router (v6) déclenche le fetch dès qu'une route match ; <Suspense>
 // dans App.jsx affiche un loader doré le temps du download.
 const Admin = lazy(() => import('./pages/Admin'));
-const AdminAdvanced = lazy(() => import('./pages/AdminAdvanced'));
 const AdminControl = lazy(() => import('./pages/AdminControl'));
 const Archives = lazy(() => import('./pages/Archives'));
 const Candidater = lazy(() => import('./pages/Candidater'));
@@ -44,7 +43,6 @@ const Index = lazy(() => import('./pages/Index'));
 const Jury = lazy(() => import('./pages/Jury'));
 const JuryCandidate = lazy(() => import('./pages/JuryCandidate'));
 const Login = lazy(() => import('./pages/Login'));
-const Marketplace = lazy(() => import('./pages/Marketplace'));
 const MonDossier = lazy(() => import('./pages/MonDossier'));
 const ReservationRequest = lazy(() => import('./pages/ReservationRequest'));
 const Reservations = lazy(() => import('./pages/Reservations'));
@@ -69,7 +67,6 @@ const Welcome = lazy(() => import('./pages/Welcome'));
 
 export const PAGES = {
     "Admin": Admin,
-    "AdminAdvanced": AdminAdvanced,
     "AdminControl": AdminControl,
     "Archives": Archives,
     "Candidater": Candidater,
@@ -83,7 +80,6 @@ export const PAGES = {
     "Jury": Jury,
     "JuryCandidate": JuryCandidate,
     "Login": Login,
-    "Marketplace": Marketplace,
     "MonDossier": MonDossier,
     "ReservationRequest": ReservationRequest,
     "Reservations": Reservations,

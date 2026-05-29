@@ -70,6 +70,17 @@ export const T = {
     onN: (n) => `sur ${n}`,
     juror: 'juré',
     jurors: 'jurés',
+    // V3 visual sweep — Stats rail
+    statsRailSessions: 'Sessions',
+    statsRailStartups: 'Startups',
+    statsRailJurors: 'Jurés mobilisés',
+    statsRailLaureat: 'Grand Lauréat',
+    // V3 visual sweep — Retrospective timeline
+    retrospectiveEyebrow: 'Rétrospective',
+    retrospectiveLead: 'Le parcours du concours',
+    retrospectiveEmpty: 'Pas encore de session publiée pour cette édition.',
+    fromSession: (label) => `Issu de ${label}`,
+    qualifiedFrom: (label) => `Vainqueur ${label}`,
   },
   en: {
     // TODO refine EN copy
@@ -118,6 +129,16 @@ export const T = {
     onN: (n) => `across ${n}`,
     juror: 'juror',
     jurors: 'jurors',
+    // V3 visual sweep
+    statsRailSessions: 'Sessions',
+    statsRailStartups: 'Startups',
+    statsRailJurors: 'Jurors',
+    statsRailLaureat: 'Grand Prize',
+    retrospectiveEyebrow: 'Retrospective',
+    retrospectiveLead: 'The competition journey',
+    retrospectiveEmpty: 'No session published yet for this edition.',
+    fromSession: (label) => `From ${label}`,
+    qualifiedFrom: (label) => `Winner of ${label}`,
   },
   de: {
     htmlTitle: 'Palmarès — Rotary Startup Award',
@@ -165,6 +186,16 @@ export const T = {
     onN: (n) => `von ${n}`,
     juror: 'Juror',
     jurors: 'Juroren',
+    // V3 visual sweep
+    statsRailSessions: 'Sessions',
+    statsRailStartups: 'Startups',
+    statsRailJurors: 'Jurymitglieder',
+    statsRailLaureat: 'Hauptpreis',
+    retrospectiveEyebrow: 'Rückblick',
+    retrospectiveLead: 'Der Verlauf des Wettbewerbs',
+    retrospectiveEmpty: 'Noch keine Session in dieser Ausgabe veröffentlicht.',
+    fromSession: (label) => `Aus ${label}`,
+    qualifiedFrom: (label) => `Sieger·in von ${label}`,
   },
 };
 

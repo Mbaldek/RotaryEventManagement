@@ -11,7 +11,7 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
-import { NAVY, INK, MUTED, GOLD, CREAM2, EASE } from '@/components/design';
+import { NAVY, INK, MUTED, GOLD, CREAM2, EASE, SERIF } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import Stepper from './Stepper';
 import { STEP_IDS, UI } from './i18n';
@@ -22,9 +22,10 @@ import StepProject from './steps/StepProject';
 import StepFinance from './steps/StepFinance';
 import StepDocuments from './steps/StepDocuments';
 import StepReview from './steps/StepReview';
-// V3 Vague 4 — extensions funnel_step rendues sous le step Documents (les
-// custom fields master/club sont persistés dans draft.extension_inputs).
-import ExtensionSlot from '@/components/rsa/extensions/ExtensionSlot';
+// V2.5+ Wave Custom Fields — fields dynamiques par compétition (edition.custom_fields_candidate).
+// Remplace l'ancienne architecture Extensions (drop 2026-05-29 équipe D).
+import CustomFieldsRenderer, { validateCustomFields } from '@/components/rsa/forms/CustomFieldsRenderer';
+import { uploadCustomField } from '@/lib/rsa/uploadCustomField';
 
 const AUTOSAVE_MS = 800;
 
@@ -140,16 +141,34 @@ export default function CandidatureFunnel({
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === STEP_IDS.length - 1;
 
+  // V2.5+ Wave Custom Fields — fields dynamiques côté candidat.
+  const customFields = useMemo(() => {
+    const raw = edition?.custom_fields_candidate;
+    return Array.isArray(raw) ? raw : [];
+  }, [edition?.custom_fields_candidate]);
+  const customErrorsLive = useMemo(
+    () => validateCustomFields(customFields, draft.custom_data || {}, t),
+    [customFields, draft.custom_data, t],
+  );
+
   // Points « incomplet » par étape (champs requis manquants) — sans bloquer.
   // V2.5+ : `rules` est nécessaire pour déterminer les docs requis dynamiquement.
+  // Les custom fields s'affichent au step `documents` — on cumule leur état
+  // d'incomplétude (au moins un required fautif) au flag documents.
   const incompleteSteps = useMemo(() => {
     const out = {};
     for (const id of STEP_IDS) {
       if (id === 'review' || id === 'finance') continue; // finance n'a pas de requis
       if (stepHasMissingRequired(draft, id, rules)) out[id] = true;
     }
+    if (
+      customFields.some((f) => f?.required)
+      && Object.keys(customErrorsLive).length > 0
+    ) {
+      out.documents = true;
+    }
     return out;
-  }, [draft, rules]);
+  }, [draft, rules, customFields, customErrorsLive]);
 
   // Soumission : valide tout, saute à la 1re étape fautive sinon délègue.
   // R-M1 : on AWAIT le flush avant d'appeler onSubmit pour s'assurer que la dernière
@@ -158,17 +177,23 @@ export default function CandidatureFunnel({
   const handleSubmit = useCallback(async () => {
     await flushPending();
     const missingStep = firstStepWithMissing(draft, rules);
-    if (missingStep) {
-      // surligne toutes les étapes à problème
+    // V2.5+ — bloque aussi si custom fields requis incomplets / format invalide.
+    const customErrs = validateCustomFields(customFields, draft.custom_data || {}, t);
+    const hasCustomErr = Object.keys(customErrs).length > 0;
+    if (missingStep || hasCustomErr) {
       const errs = {};
       for (const id of ['contact', 'company', 'project', 'documents']) errs[id] = validateStep(id, draft);
+      if (hasCustomErr) {
+        // Stocke les erreurs custom à côté du step documents pour rendu inline.
+        errs.documents = { ...(errs.documents || {}), __custom: customErrs };
+      }
       setStepErrors(errs);
-      setStep(missingStep);
+      setStep(missingStep || 'documents');
       if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     await onSubmit?.(draft);
-  }, [flushPending, draft, rules, validateStep, onSubmit]);
+  }, [flushPending, draft, rules, validateStep, onSubmit, customFields, t]);
 
   // Saut vers une étape depuis le récap (avec surlignage éventuel).
   const editFrom = useCallback(
@@ -207,37 +232,76 @@ export default function CandidatureFunnel({
           startupId={startup?.id}
           disabled={readOnly}
         />
-        {/* V3 Vague 4 — funnel_step extensions actives au scope master (visibles
-            par tous) + scope club du club d'examen.
-            NOTE V4.1 : la persistance de ces inputs dans une colonne JSONB de
-            la table startups arrive avec une migration dédiée. Pour V4, on
-            stocke dans draft.extension_inputs (state local) — l'autosave passe
-            mais le champ n'a pas encore de support DB, ce qui donne un retour
-            d'erreur silencieux (déjà swallow par TanStack Query onError). */}
-        <ExtensionSlot
-          kind="funnel_step"
-          scope="master"
-          values={draft.extension_inputs || {}}
-          onChange={(extId, vals) => {
-            setDraft((d) => ({
-              ...d,
-              extension_inputs: { ...(d.extension_inputs || {}), [extId]: vals },
-            }));
-          }}
-        />
-        {startup?.club_id && (
-          <ExtensionSlot
-            kind="funnel_step"
-            scope="club"
-            clubId={startup.club_id}
-            values={draft.extension_inputs || {}}
-            onChange={(extId, vals) => {
-              setDraft((d) => ({
-                ...d,
-                extension_inputs: { ...(d.extension_inputs || {}), [extId]: vals },
-              }));
-            }}
-          />
+        {/* V2.5+ Wave Custom Fields — bloc dynamique par compétition.
+            Persisté dans startups.custom_data (jsonb) via l'autosave parent. */}
+        {customFields.length > 0 && (
+          <div
+            className="pt-5 mt-4 flex flex-col gap-3"
+            style={{ borderTop: `1px solid ${CREAM2}` }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="h-[1.5px] w-6" style={{ background: GOLD }} aria-hidden />
+              <span
+                className="uppercase text-[10px] tracking-[0.16em] font-medium"
+                style={{ color: GOLD }}
+              >
+                {t({
+                  fr: 'Questions supplémentaires',
+                  en: 'Additional questions',
+                  de: 'Zusätzliche Fragen',
+                })}
+              </span>
+            </div>
+            <h3
+              className="text-[18px] leading-tight"
+              style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+            >
+              {t({
+                fr: 'Spécifique à cette compétition',
+                en: 'Specific to this competition',
+                de: 'Spezifisch für diesen Wettbewerb',
+              })}
+            </h3>
+            <CustomFieldsRenderer
+              fields={customFields}
+              values={draft.custom_data || {}}
+              errors={(errsFor('documents') && errsFor('documents').__custom) || {}}
+              onChange={(key, value) => {
+                // Clear l'erreur granulaire (UX positive).
+                setStepErrors((prev) => {
+                  const prevDocs = (prev && prev.documents) || {};
+                  const sub = (prevDocs.__custom) || {};
+                  if (!sub[key]) return prev;
+                  const subNext = { ...sub };
+                  delete subNext[key];
+                  const docsNext = { ...prevDocs };
+                  if (Object.keys(subNext).length === 0) delete docsNext.__custom;
+                  else docsNext.__custom = subNext;
+                  return { ...prev, documents: docsNext };
+                });
+                const merged = { ...(draft.custom_data || {}), [key]: value };
+                setDraft((d) => ({ ...d, custom_data: merged }));
+                queueAutosave({ custom_data: merged });
+              }}
+              disabled={readOnly}
+              readonly={readOnly}
+              onUpload={async (file, field) => {
+                if (!edition?.id || !startup?.id) {
+                  throw new Error('upload_no_owner_yet');
+                }
+                const path = await uploadCustomField({
+                  editionId: edition.id,
+                  ownerKind: 'startup',
+                  ownerId: startup.id,
+                  fieldKey: field.key,
+                  file,
+                  accept: field.accept,
+                  maxSizeMb: field.maxSizeMb,
+                });
+                return { path, name: file.name };
+              }}
+            />
+          </div>
         )}
       </>
     );

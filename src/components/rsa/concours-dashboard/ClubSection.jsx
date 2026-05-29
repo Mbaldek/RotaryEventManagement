@@ -1,12 +1,10 @@
-// ClubSection — bloc d'un club avec son nom + grid de SessionCards (V2.5).
+// ClubSection v2 — bloc club + grid de SessionCards thématiquement colorées.
 //
-// Layout : eyebrow club + nom serif + meta, hairline gold, puis :
-//   - SI une session "prochaine" identifiable (non publiée, date à venir) :
-//     bloc "Prochaine session" featured (largeur 640px max sur md+),
-//     puis les autres sessions en grid 1/2/3 colonnes dessous.
-//   - SINON : grid 1/2/3 colonnes uniforme.
-//
-// Cf. design-upgrade-blueprint §3.1 + §4.13 (Concours).
+// Mise à jour v3 : on passe `indexInClub` à chaque SessionCard pour que les
+// couleurs soient distribuées via le hash + offset (cf. sessionTheme.js). Le
+// "Prochaine session" featured garde son emphase éditoriale ; l'index reste
+// stable que la session soit featured ou dans la grid (on le calcule sur la
+// liste source avant split).
 
 import React, { useMemo } from 'react';
 import { Eyebrow } from '@/components/design';
@@ -28,9 +26,16 @@ export default function ClubSection({
   const sessionsList = Array.isArray(sessions) ? sessions : [];
   const sessionsCount = sessionsList.length;
 
-  // "Prochaine session" = la plus proche dans le futur, status != 'published'.
-  // Sert à introduire une asymétrie éditoriale (1 featured + grid) au lieu de
-  // la grille uniforme qui faisait "template AI" quand un club a 5+ sessions.
+  // Index stable de chaque session dans son club (pour palette anti-adjacence).
+  const indexById = useMemo(() => {
+    const m = {};
+    sessionsList.forEach((s, i) => {
+      m[s.id] = i;
+    });
+    return m;
+  }, [sessionsList]);
+
+  // Prochaine session = la plus proche dans le futur, status != 'published'.
   const { featured, others } = useMemo(() => {
     if (!sessionsList.length) return { featured: null, others: [] };
     const now = Date.now();
@@ -55,6 +60,7 @@ export default function ClubSection({
       session={s}
       t={t}
       lang={lang}
+      indexInClub={indexById[s.id] ?? 0}
       startupsCount={startupsBySession?.[s.id] || 0}
       jurorsCount={jurorsBySession?.[s.id] || 0}
       finalistName={finalistsBySource?.[s.id]?.startup_name || null}
@@ -95,15 +101,14 @@ export default function ClubSection({
         </div>
       ) : featured ? (
         <>
-          {/* Featured : prochaine session, eyebrow inline + carte en largeur restreinte. */}
           <div className="mb-7">
             <div className="flex items-center gap-2.5 mb-3">
               <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
               <span
-                className="uppercase text-[10px] tracking-[0.18em] font-medium"
+                className="uppercase text-[10px] tracking-[0.18em] font-semibold"
                 style={{ color: GOLD }}
               >
-                {t({ fr: 'Prochaine session', en: 'Next session', de: 'Nächste Session' })}
+                {t(UI.clubNextLabel)}
               </span>
             </div>
             <div className="md:max-w-[640px]">

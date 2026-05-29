@@ -122,17 +122,60 @@ export function useEditionOverview(editionId) {
         }
       }
 
-      // Sessions par club.
+      // Sessions par club — fallback enrichi v3 : derive winner inline depuis
+      // final_ranking si status='published', + theme_color si présent.
       const sessionsByClub = {};
       const finaleSessions = [];
       for (const s of sessionsWithCfg || []) {
+        const cfg = s.config || {};
+        const fr = Array.isArray(cfg.final_ranking) ? cfg.final_ranking : [];
+        const winner =
+          cfg.status === 'published' && fr.length > 0
+            ? {
+                startup_name: fr[0].startup_name,
+                final_score: fr[0].final_score,
+                juror_count: fr[0].juror_count,
+              }
+            : null;
+        const enriched = {
+          ...s,
+          config: {
+            status: cfg.status || 'draft',
+            jury_pack_path: cfg.jury_pack_path || null,
+            theme_color: cfg.theme_color || null,
+            winner,
+          },
+        };
         if (s.kind === 'finale' && !s.club_id) {
-          finaleSessions.push(s);
+          finaleSessions.push(enriched);
           continue;
         }
         const cid = s.club_id || '__none__';
         if (!sessionsByClub[cid]) sessionsByClub[cid] = [];
-        sessionsByClub[cid].push(s);
+        sessionsByClub[cid].push(enriched);
+      }
+
+      // Index theme_color par session_id pour enrichir les finalists.
+      const themeColorBySession = {};
+      for (const s of sessionsWithCfg || []) {
+        if (s?.config?.theme_color) themeColorBySession[s.id] = s.config.theme_color;
+      }
+
+      // Liste finalists à plat — enrichie avec source_session_theme_color
+      // pour que FinaleSection puisse colorer les chips.
+      const sessionNameById = Object.fromEntries(
+        (sessionsWithCfg || []).map((s) => [s.id, s.name]),
+      );
+      const finalistsFlat = [];
+      for (const r of startupsRes.data || []) {
+        if (r.status === 'finaliste' || r.status === 'laureat') {
+          finalistsFlat.push({
+            startup_name: r.name || r.startup_name,
+            source_session_id: r.session_id || null,
+            source_session_name: sessionNameById[r.session_id] || null,
+            source_session_theme_color: themeColorBySession[r.session_id] || null,
+          });
+        }
       }
 
       return {
@@ -147,6 +190,7 @@ export function useEditionOverview(editionId) {
         startups_by_session: startupsBySession,
         jurors_by_session: jurorsBySession,
         finalists_by_source_session: finalistsBySourceSession,
+        finalists: finalistsFlat,
         finalists_count: finalistsCount,
         prizes: prizesRes.data || [],
       };

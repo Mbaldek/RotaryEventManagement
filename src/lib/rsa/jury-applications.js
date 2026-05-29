@@ -17,21 +17,45 @@ import { supabase } from '@/lib/supabase';
 export const JuryApplication = {
   // Soumission publique d'une candidature spontanée. Pas d'auth requise.
   // Renvoie la ligne créée ; throw sur erreur Supabase (le composant gère le toast).
-  async create({ email, fullName, editionId, clubId, expertise, motivation, availability }) {
+  // V2.5+ : `customData` est un objet { [field.key]: value } persisté dans la
+  // colonne JSONB `custom_data` (ALTER équipe A). Si la colonne n'existe pas encore
+  // côté DB, on retombe sur une seconde tentative SANS le champ pour préserver
+  // la rétro-compat (déploiement progressif équipe A → C).
+  async create({ email, fullName, editionId, clubId, expertise, motivation, availability, customData }) {
+    const base = {
+      email: String(email).trim().toLowerCase(),
+      full_name: fullName,
+      edition_id: editionId || null,
+      club_id: clubId || null,
+      expertise: expertise || [],
+      motivation: motivation || null,
+      availability: availability || null,
+    };
+    const payload = customData && Object.keys(customData).length > 0
+      ? { ...base, custom_data: customData }
+      : base;
     const { data, error } = await supabase
       .from('jury_applications')
-      .insert({
-        email: String(email).trim().toLowerCase(),
-        full_name: fullName,
-        edition_id: editionId || null,
-        club_id: clubId || null,
-        expertise: expertise || [],
-        motivation: motivation || null,
-        availability: availability || null,
-      })
+      .insert(payload)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      // Retombe en mode rétro-compat si la colonne `custom_data` n'existe pas
+      // encore en DB (équipe A non déployée). On tente sans, puis on relance
+      // l'erreur originale si ça échoue toujours.
+      const isMissingCol = typeof error.message === 'string'
+        && /custom_data/i.test(error.message)
+        && /(column|does not exist|schema cache)/i.test(error.message);
+      if (isMissingCol) {
+        const { data: d2, error: e2 } = await supabase
+          .from('jury_applications')
+          .insert(base)
+          .select()
+          .single();
+        if (!e2) return d2;
+      }
+      throw error;
+    }
     return data;
   },
 

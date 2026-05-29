@@ -40,11 +40,6 @@ import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
 import CommunicatePanel from '@/components/rsa/communicate/CommunicatePanel';
 // V2.5 — Module Prix
 import PrizesList from '@/components/rsa/prizes/PrizesList';
-// V3.0 — Plugins/Extensions architecture (Vague 1)
-import ExtensionsList from '@/components/rsa/extensions/ExtensionsList';
-// V3.0 Vague 4 — Marketplace (catalogue master → install club) + slot kind=cockpit_tab
-import MarketplaceTab from './tabs/MarketplaceTab';
-import ExtensionSlot from '@/components/rsa/extensions/ExtensionSlot';
 // V3.0 Vague 3 — Analytics real-time (Feature F)
 import AnalyticsPanel from '@/components/rsa/analytics/AnalyticsPanel';
 import { useClub, useClubEditions, useClubSessions } from './useClub';
@@ -314,22 +309,6 @@ export default function ClubCockpit({ clubId }) {
               )}
               {tab === 'analytics' && (
                 <AnalyticsPanel scope="club" editionId={editionId} clubId={clubId} />
-              )}
-              {tab === 'extensions' && (
-                <>
-                  {/* V4 : rendu réel des cockpit_tab actives au-dessus du CRUD.
-                      Les iframes sandbox="allow-scripts allow-same-origin" (URL)
-                      ou sandbox="allow-scripts" (srcdoc) sont la frontière de
-                      sécurité. */}
-                  <ExtensionSlot kind="cockpit_tab" scope="master" />
-                  <ExtensionSlot kind="cockpit_tab" scope="club" clubId={clubId} />
-                  <ExtensionSlot kind="webhook" scope="master" />
-                  <ExtensionSlot kind="webhook" scope="club" clubId={clubId} />
-                  <ExtensionsList scope="club" clubId={clubId} />
-                </>
-              )}
-              {tab === 'marketplace' && (
-                <MarketplaceTab clubId={clubId} />
               )}
             </motion.div>
           </AnimatePresence>

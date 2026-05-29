@@ -1,30 +1,19 @@
-// Dictionnaires trilingues FR/EN/DE du dashboard public du concours (V2.5).
+// Dictionnaires trilingues FR/EN/DE du dashboard public du concours (V3).
 //
-// Forme { fr, en, de } compatible useLang().t(dict). Co-localisés avec les
-// composants concours-dashboard/* (même patron que jury/i18n.js, candidature/i18n.js).
-// La page Concours est PUBLIQUE (juré + comité + admin + candidat authentifié) :
-// elle parle un langage non-administratif (« Concours », « En direct », « Voir
-// la session »), pas le jargon admin (« Setup », « Live tab »).
+// V3 enrichit V2.5 avec : eyebrow thématique session, KPI labels courts,
+// timeline horizontale, winner label, accès jury QR code dans le drawer.
 
 export const UI = {
   // ── TopNav ────────────────────────────────────────────────────────────────
-  navTitle: {
-    fr: 'Compétitions',
-    en: 'Competitions',
-    de: 'Wettbewerbe',
-  },
+  navTitle: { fr: 'Compétitions', en: 'Competitions', de: 'Wettbewerbe' },
   navSubtitle: {
     fr: 'Le concours en transparence',
     en: 'The awards in transparency',
     de: 'Der Award in voller Transparenz',
   },
 
-  // ── Hero ──────────────────────────────────────────────────────────────────
-  heroEyebrow: {
-    fr: 'Compétitions',
-    en: 'Competitions',
-    de: 'Wettbewerbe',
-  },
+  // ── Hero H-Ambient ────────────────────────────────────────────────────────
+  heroEyebrow: { fr: 'Compétition', en: 'Competition', de: 'Wettbewerb' },
   heroTitleLead: {
     fr: 'Le concours en un coup d’œil',
     en: 'The awards at a glance',
@@ -36,17 +25,13 @@ export const UI = {
     de: 'Alle Sessions, alle Clubs.',
   },
   heroIntro: {
-    fr: 'Cette page est consultable par tous les jurés, comités et candidats. Elle reflète en temps réel l’avancement du concours — sessions à venir, sessions live, résultats publiés, finalistes désignés.',
-    en: 'This page is open to every juror, comité member and applicant. It reflects the live state of the awards — upcoming sessions, sessions in progress, published results, designated finalists.',
-    de: 'Diese Seite steht allen Jurymitgliedern, Komitee-Mitgliedern und Bewerbern offen. Sie zeigt in Echtzeit den Stand des Wettbewerbs — anstehende Sessions, laufende Sessions, veröffentlichte Ergebnisse, benannte Finalisten.',
+    fr: 'Vue partagée à tous les jurés, comités et candidats — sessions à venir, sessions en direct, résultats publiés et finalistes désignés en temps réel.',
+    en: 'A shared view for every juror, comité member and applicant — upcoming sessions, sessions in progress, published results and designated finalists, in real time.',
+    de: 'Geteilte Übersicht für alle Jurymitglieder, Komitee-Mitglieder und Bewerber — anstehende Sessions, laufende Sessions, veröffentlichte Ergebnisse und benannte Finalisten in Echtzeit.',
   },
 
   // ── Edition selector ──────────────────────────────────────────────────────
-  selectEdition: {
-    fr: 'Compétition',
-    en: 'Competition',
-    de: 'Wettbewerb',
-  },
+  selectEdition: { fr: 'Compétition', en: 'Competition', de: 'Wettbewerb' },
   noEdition: {
     fr: 'Aucune compétition publiée.',
     en: 'No competition published yet.',
@@ -64,17 +49,25 @@ export const UI = {
     en: 'Finalists designated',
     de: 'Benannte Finalisten',
   },
-  kpiNext: {
-    fr: 'Prochaine session',
-    en: 'Next session',
-    de: 'Nächste Session',
-  },
-  kpiClubs: {
-    fr: 'Clubs participants',
-    en: 'Participating clubs',
-    de: 'Teilnehmende Clubs',
-  },
+  kpiNext: { fr: 'Prochaine session', en: 'Next session', de: 'Nächste Session' },
+  kpiClubs: { fr: 'Clubs participants', en: 'Participating clubs', de: 'Teilnehmende Clubs' },
   none: { fr: '—', en: '—', de: '—' },
+
+  // ── Timeline ──────────────────────────────────────────────────────────────
+  timelineEyebrow: { fr: 'Calendrier', en: 'Calendar', de: 'Kalender' },
+  timelineTitle: {
+    fr: 'Le parcours du concours',
+    en: 'The competition journey',
+    de: 'Der Verlauf des Wettbewerbs',
+  },
+  timelineLegendUpcoming: { fr: 'À venir', en: 'Upcoming', de: 'Bevorstehend' },
+  timelineLegendLive: { fr: 'En direct', en: 'Live', de: 'Live' },
+  timelineLegendDone: { fr: 'Publiée', en: 'Published', de: 'Veröffentlicht' },
+  timelineEmpty: {
+    fr: 'Aucune session programmée pour cette compétition.',
+    en: 'No session scheduled for this competition.',
+    de: 'Für diesen Wettbewerb ist keine Session geplant.',
+  },
 
   // ── Club section ──────────────────────────────────────────────────────────
   clubEyebrow: { fr: 'Club', en: 'Club', de: 'Club' },
@@ -98,8 +91,14 @@ export const UI = {
     en: 'No club attached to this competition yet.',
     de: 'Diesem Wettbewerb ist noch kein Club zugeordnet.',
   },
+  clubNextLabel: {
+    fr: 'Prochaine session',
+    en: 'Next session',
+    de: 'Nächste Session',
+  },
 
   // ── Session card ──────────────────────────────────────────────────────────
+  themeFallback: { fr: 'Session', en: 'Session', de: 'Session' },
   cardJurorsLabel: {
     fr: (n) => `${n} juré${n > 1 ? 's' : ''}`,
     en: (n) => `${n} juror${n > 1 ? 's' : ''}`,
@@ -110,16 +109,11 @@ export const UI = {
     en: (n) => `${n} startup${n > 1 ? 's' : ''}`,
     de: (n) => `${n} Startup${n > 1 ? 's' : ''}`,
   },
-  cardJuryPack: {
-    fr: 'Pack jury',
-    en: 'Jury pack',
-    de: 'Jury-Paket',
-  },
-  cardOpenSession: {
-    fr: 'Détail de la session',
-    en: 'Session details',
-    de: 'Session-Details',
-  },
+  // Short labels for the KPI bar (the number is rendered as a separate node).
+  cardJurorsShort: { fr: 'jurés', en: 'jurors', de: 'Juroren' },
+  cardStartupsShort: { fr: 'startups', en: 'startups', de: 'Startups' },
+  cardJuryPack: { fr: 'Pack jury', en: 'Jury pack', de: 'Jury-Paket' },
+  cardOpenSession: { fr: 'Détail', en: 'Details', de: 'Details' },
   cardFinalistLabel: {
     fr: 'Finaliste retenu',
     en: 'Selected finalist',
@@ -130,6 +124,7 @@ export const UI = {
     en: 'Finalist to be designated',
     de: 'Finalist noch zu bestimmen',
   },
+  cardWinner: { fr: 'Lauréat', en: 'Winner', de: 'Gewinner' },
 
   // ── Status pills ──────────────────────────────────────────────────────────
   statusDraft: { fr: 'À venir', en: 'Upcoming', de: 'Bevorstehend' },
@@ -172,18 +167,35 @@ export const UI = {
   },
   drawerDeck: { fr: 'Deck', en: 'Deck', de: 'Deck' },
   drawerExec: { fr: 'Executive summary', en: 'Executive summary', de: 'Executive Summary' },
-  drawerNotAvailable: {
-    fr: 'Non disponible',
-    en: 'Not available',
-    de: 'Nicht verfügbar',
+  drawerNotAvailable: { fr: 'Non disponible', en: 'Not available', de: 'Nicht verfügbar' },
+  drawerScoringLabel: {
+    fr: 'Accès scoring jury',
+    en: 'Jury scoring access',
+    de: 'Jury-Scoring-Zugang',
   },
+  drawerScoringHelp: {
+    fr: 'Scannez le QR avec votre téléphone, ou ouvrez le lien sur tout appareil. À l’arrivée, sélectionnez votre nom dans la liste.',
+    en: 'Scan the QR with your phone, or open the link on any device. On arrival, pick your name from the list.',
+    de: 'Scannen Sie den QR mit Ihrem Telefon oder öffnen Sie den Link auf einem beliebigen Gerät. Wählen Sie Ihren Namen aus der Liste.',
+  },
+  drawerCopy: { fr: 'Copier', en: 'Copy', de: 'Kopieren' },
+  drawerOpenScoring: { fr: 'Ouvrir le scoring', en: 'Open scoring', de: 'Scoring öffnen' },
+  drawerJuryPack: {
+    fr: 'Télécharger le pack jury',
+    en: 'Download jury pack',
+    de: 'Jury-Paket herunterladen',
+  },
+  drawerWinnerLabel: { fr: 'Lauréat de la session', en: 'Session winner', de: 'Sessionsgewinner' },
+  drawerRankingTitle: {
+    fr: 'Classement final',
+    en: 'Final ranking',
+    de: 'Endgültiges Ranking',
+  },
+  drawerCopied: { fr: 'Lien copié', en: 'Link copied', de: 'Link kopiert' },
+  drawerCopyFailed: { fr: 'Copie impossible', en: 'Copy failed', de: 'Kopieren fehlgeschlagen' },
 
   // ── Finale ────────────────────────────────────────────────────────────────
-  finaleEyebrow: {
-    fr: 'Grande Finale',
-    en: 'Grand Final',
-    de: 'Grand Finale',
-  },
+  finaleEyebrow: { fr: 'Grande Finale', en: 'Grand Final', de: 'Grand Finale' },
   finaleTitle: {
     fr: 'La Grande Finale',
     en: 'The Grand Final',
@@ -204,11 +216,7 @@ export const UI = {
     en: 'Finalists are designated as qualifying sessions go.',
     de: 'Die Finalisten werden im Laufe der Qualifikations-Sessions benannt.',
   },
-  finaleFromSession: {
-    fr: 'Issue de',
-    en: 'From',
-    de: 'Aus',
-  },
+  finaleFromSession: { fr: 'Issue de', en: 'From', de: 'Aus' },
   finaleRsvpCta: {
     fr: 'Confirmer ma présence à la finale',
     en: 'Confirm my attendance',
@@ -221,11 +229,7 @@ export const UI = {
     en: 'Page open to every authenticated juror, comité member and applicant. Updated in real time.',
     de: 'Diese Seite steht allen authentifizierten Jurymitgliedern, Komitee-Mitgliedern und Bewerbern offen. Aktualisierung in Echtzeit.',
   },
-  footerContact: {
-    fr: 'Contact :',
-    en: 'Contact:',
-    de: 'Kontakt:',
-  },
+  footerContact: { fr: 'Contact :', en: 'Contact:', de: 'Kontakt:' },
 
   // ── Misc ──────────────────────────────────────────────────────────────────
   loading: { fr: 'Chargement…', en: 'Loading…', de: 'Wird geladen…' },
@@ -237,7 +241,7 @@ export const UI = {
   retry: { fr: 'Réessayer', en: 'Retry', de: 'Erneut versuchen' },
 };
 
-// Date formatter trilingue : « lundi 5 novembre 2026 » / « Monday, 5 Nov 2026 » / « Montag, 5. Nov. 2026 ».
+// Date formatter trilingue.
 export function formatSessionDate(iso, lang = 'fr') {
   if (!iso) return '';
   try {
@@ -250,6 +254,19 @@ export function formatSessionDate(iso, lang = 'fr') {
       month: 'long',
       year: 'numeric',
     });
+  } catch {
+    return '';
+  }
+}
+
+// Date courte (timeline, badges) — « 6 mai », « May 6 », « 6. Mai ».
+export function formatShortDate(iso, lang = 'fr') {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const locale = lang === 'fr' ? 'fr-FR' : lang === 'de' ? 'de-DE' : 'en-GB';
+    return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
   } catch {
     return '';
   }

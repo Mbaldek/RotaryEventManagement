@@ -12,7 +12,6 @@
 - [Workflow annuel](#workflow-annuel)
 - [Cockpit master](#cockpit-master)
 - [Grande Finale](#grande-finale)
-- [Extensions marketplace](#extensions-marketplace)
 - [Hardening checklist](#hardening-checklist)
 
 ---
@@ -24,7 +23,6 @@ Tu opères la **plateforme fédération** :
 - Designer un club_admin par club.
 - Reviewer les candidatures jury publiques (form `/DevenirJury`).
 - Organiser la **Grande Finale** (Cyrus Conseil, mai chaque année).
-- Gérer les extensions marketplace (V4+) et leur facturation Stripe.
 - Surveiller la sécurité (RLS audits, logs, advisors Supabase).
 
 ---
@@ -55,7 +53,6 @@ Onglets :
 | **Clubs** | CRUD clubs Rotary. Assigner club_admins. |
 | **Users** | Liste tous les users + rôles. Inviter (`invite-user` edge fn) ou supprimer (`delete-user` edge fn → soft-delete + audit). |
 | **Candidatures jury** | Review form `/DevenirJury` : approve → trigger magic-link + role `jury`. Reject → email motivé. |
-| **Extensions** | Marketplace V4+ : activer/désactiver modules payants par club. |
 | **Analytics** | Funnel candidatures, taux participation jury, scores moyens par édition (Recharts). |
 | **Settings** | Config plateforme globale (templates emails, branding fallback). |
 | **Audit log** | UI V3.1+ (table `admin_audit_log` déjà alimentée). |
@@ -80,18 +77,11 @@ Onglets :
 
 ---
 
-## Extensions marketplace
-
-V4+. Modules payants activables par club :
-- **Premium analytics** (cohortes, benchmarks anonymisés)
-- **Branding custom** (logo, couleurs, domaine custom)
-- **Multi-langues** (DE V4.1, IT V4.2)
-- **Auto-jury matching** (ML basé expertise jurés × secteurs startups)
-
-Facturation via Stripe (extension `@stripe/react-stripe-js` déjà bundlée). Subscription
-par club, billing master_admin.
-
-Détail : blueprint à écrire en V4 (`docs/blueprints/module5-extensions.md`).
+> Note 2026-05-29 : la section « Extensions marketplace » a été retirée
+> (killed V3 2026-05-29, équipe D). L'archi Extensions/Marketplace (UI + entité
+> + hooks + routes) a été entièrement supprimée. Plus de catalogue master, plus
+> d'install par club, plus de page `/AdminAdvanced`. La migration DB associée
+> est gérée par l'équipe A.
 
 ---
 

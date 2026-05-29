@@ -35,6 +35,7 @@ import { DANGER, SUCCESS, FOCUS_RING_CLASS } from '@/components/design/tokens.ap
 import { useLang } from '@/lib/platform/i18n';
 import { supabase } from '@/lib/supabase';
 import { JuryApplication } from '@/lib/rsa/jury-applications';
+import CustomFieldsRenderer, { validateCustomFields } from '@/components/rsa/forms/CustomFieldsRenderer';
 import {
   UI,
   EXPERTISE_OPTIONS,
@@ -51,6 +52,8 @@ const EMPTY = {
   expertise: [],
   motivation: '',
   availability: '',
+  // V2.5+ Wave Custom Fields — payload des champs dynamiques (cf. edition.custom_fields_jury).
+  custom_data: {},
 };
 
 function isBlank(v) {
@@ -103,7 +106,7 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
       try {
         const { data } = await supabase
           .from('editions')
-          .select('id, name, year, status')
+          .select('id, name, year, status, custom_fields_jury')
           .in('status', ['open', 'sessions'])
           .order('year', { ascending: false });
         if (active) setEditions(Array.isArray(data) ? data : []);
@@ -169,6 +172,17 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
     [t],
   );
 
+  // V2.5+ — édition sélectionnée → on en extrait les custom_fields_jury.
+  // L'absence de colonne (DB pas encore migrée) ou la valeur null donnent [].
+  const selectedEdition = useMemo(
+    () => editions.find((e) => e.id === draft.editionId) || null,
+    [editions, draft.editionId],
+  );
+  const customFields = useMemo(() => {
+    const raw = selectedEdition?.custom_fields_jury;
+    return Array.isArray(raw) ? raw : [];
+  }, [selectedEdition]);
+
   const patch = (partial) => {
     setDraft((p) => ({ ...p, ...partial }));
     // Efface l'erreur dès que le user retape (UX positive).
@@ -187,12 +201,24 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
     setSubmitError(null);
 
     const errs = validate(draft, t);
+    // V2.5+ Custom fields — validation séparée puis mergée sous `custom_data`.
+    const customErrs = validateCustomFields(customFields, draft.custom_data || {}, t);
+    if (Object.keys(customErrs).length > 0) {
+      errs.custom_data = customErrs;
+    }
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
       // Focus le premier champ en erreur (UX a11y minimale).
       const first = Object.keys(errs)[0];
-      const el = document.getElementById(`devenir-jury-${first}`);
-      if (el && typeof el.focus === 'function') el.focus();
+      // Cas custom_data : focus le premier sous-champ custom invalide.
+      if (first === 'custom_data') {
+        const firstCustom = Object.keys(customErrs)[0];
+        const elc = firstCustom ? document.getElementById(`cf-${firstCustom}`) : null;
+        if (elc && typeof elc.focus === 'function') elc.focus();
+      } else {
+        const el = document.getElementById(`devenir-jury-${first}`);
+        if (el && typeof el.focus === 'function') el.focus();
+      }
       return;
     }
 
@@ -206,6 +232,7 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
         expertise: draft.expertise,
         motivation: draft.motivation.trim(),
         availability: draft.availability.trim() || null,
+        customData: draft.custom_data || {},
       });
       setStatus('success');
     } catch (err) {
@@ -402,6 +429,51 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
           />
         )}
       </Field>
+
+      {/* V2.5+ Wave — custom fields jury par compétition (rendus uniquement si non vides) */}
+      {customFields.length > 0 && (
+        <div
+          className="pt-4 mt-2 flex flex-col gap-1"
+          style={{ borderTop: `1px solid ${CREAM2}` }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span className="h-[1.5px] w-5" style={{ background: GOLD }} aria-hidden />
+            <span
+              className="uppercase text-[10px] tracking-[0.16em] font-medium"
+              style={{ color: GOLD }}
+            >
+              {lang === 'en'
+                ? 'Additional questions'
+                : lang === 'de'
+                  ? 'Zusätzliche Fragen'
+                  : 'Questions supplémentaires'}
+            </span>
+          </div>
+          <CustomFieldsRenderer
+            fields={customFields}
+            values={draft.custom_data || {}}
+            errors={errors.custom_data || {}}
+            onChange={(key, value) => {
+              // Efface l'erreur granulaire du sous-champ touché (UX positive)
+              setErrors((prev) => {
+                if (!prev?.custom_data?.[key]) return prev;
+                const subNext = { ...prev.custom_data };
+                delete subNext[key];
+                const next = { ...prev };
+                if (Object.keys(subNext).length === 0) delete next.custom_data;
+                else next.custom_data = subNext;
+                return next;
+              });
+              setDraft((d) => ({
+                ...d,
+                custom_data: { ...(d.custom_data || {}), [key]: value },
+              }));
+            }}
+            lang={lang}
+            disabled={status === 'submitting'}
+          />
+        </div>
+      )}
 
       {/* Erreur globale (submit) */}
       {status === 'error' && (

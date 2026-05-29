@@ -51,6 +51,25 @@ import {
 } from '@/components/rsa/results-public/useResults';
 import { T as RES_T, formatDate, formatPrize } from '@/components/rsa/results-public/i18n';
 import { championPhotoPublicUrl } from '@/lib/rsa/storage';
+import StatsRail from '@/components/rsa/results-public/StatsRail';
+import RetrospectiveTimeline from '@/components/rsa/results-public/RetrospectiveTimeline';
+import {
+  getSessionPalette,
+  getSessionEmoji,
+} from '@/components/rsa/concours-dashboard/sessionTheme';
+
+// Resolve a public_palmares view row into the session shape sessionTheme expects
+// (id / kind / name / theme / config). The view doesn't expose theme_color, so
+// fallback to the deterministic hash palette via session_id + index in club.
+function viewRowToSession(row, isFinale = false) {
+  return {
+    id: row.session_id,
+    kind: isFinale ? 'finale' : (row.session_kind || 'qualifying'),
+    name: row.session_name,
+    theme: row.session_theme,
+    config: {},
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEO meta — injection directe dans <head>, sans dépendance externe.
@@ -200,22 +219,38 @@ function PodiumRow({ entry, lang }) {
   );
 }
 
-function SessionCard({ session, lang, t }) {
+function SessionCard({ session, lang, t, index }) {
   const ranking = Array.isArray(session.final_ranking) ? session.final_ranking : [];
   const top3 = ranking.filter((r) => r.final_rank <= 3).sort((a, b) => a.final_rank - b.final_rank);
   const date = formatDate(session.session_date, lang);
+  // V3 visual sweep — palette + emoji par session (hash session_id + index club).
+  const themed = viewRowToSession(session, false);
+  const palette = getSessionPalette(themed, index || 0);
+  const emoji = getSessionEmoji(themed);
+  const tT = t(RES_T);
   return (
     <motion.article
       initial={{ opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.5, ease: EASE }}
-      className="rounded-[4px] p-5 md:p-6"
+      className="relative rounded-[4px] p-5 pl-6 md:p-6 md:pl-7 overflow-hidden"
       style={{ background: '#fff', border: `1px solid ${CREAM2}` }}
     >
+      {/* Color rail left — palette de la session */}
+      <span
+        aria-hidden
+        className="absolute left-0 top-0 bottom-0"
+        style={{ width: 4, background: palette.primary }}
+      />
+
       <header className="mb-3">
-        <p className="text-[10.5px] uppercase tracking-[0.18em]" style={{ color: GOLD }}>
-          {t(RES_T).sessionLabel(session.session_position ?? '?')}
+        <p
+          className="text-[10.5px] uppercase tracking-[0.18em] font-semibold flex items-center gap-1.5"
+          style={{ color: palette.primary }}
+        >
+          {emoji && <span aria-hidden style={{ fontSize: 12 }}>{emoji}</span>}
+          {session.session_theme || tT.sessionLabel(session.session_position ?? '?')}
         </p>
         <h3
           className="text-[20px] md:text-[22px] leading-tight mt-1"
@@ -223,10 +258,8 @@ function SessionCard({ session, lang, t }) {
         >
           {session.session_name}
         </h3>
-        {(session.session_theme || date) && (
+        {date && (
           <p className="text-[12.5px] mt-1.5" style={{ color: MUTED }}>
-            {session.session_theme}
-            {session.session_theme && date && ' · '}
             {date}
           </p>
         )}
@@ -243,6 +276,32 @@ function SessionCard({ session, lang, t }) {
         </p>
       )}
     </motion.article>
+  );
+}
+
+// V3 visual sweep — chip "Issu de X" colorée par la palette session source.
+// Affichée sous le nom d'un finaliste du podium / lauréat pour reconstituer
+// la provenance thématique. sourceSession est une row palmares (qualifying)
+// retrouvée par matching name → final_ranking[rank=1].name.
+function SourceSessionChip({ sourceSession, indexInClub, lang, t }) {
+  if (!sourceSession) return null;
+  const themed = viewRowToSession(sourceSession, false);
+  const palette = getSessionPalette(themed, indexInClub || 0);
+  const emoji = getSessionEmoji(themed);
+  const label = sourceSession.session_theme || sourceSession.session_name || '—';
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[10.5px] uppercase tracking-[0.12em] font-semibold px-2 py-0.5 rounded-full mt-1.5"
+      style={{
+        background: palette.light,
+        color: palette.primary,
+        border: `1px solid ${palette.border}`,
+      }}
+      title={label}
+    >
+      {emoji && <span aria-hidden style={{ fontSize: 11 }}>{emoji}</span>}
+      {label}
+    </span>
   );
 }
 
@@ -375,6 +434,23 @@ export default function Resultats() {
     .filter((r) => r.final_rank <= 3)
     .sort((a, b) => a.final_rank - b.final_rank);
 
+  // V3 visual sweep — résolution finalist.name → session source (qualifying).
+  // Le finaliste = vainqueur (rank=1) d'une session qualif. On cache un map
+  // { startupName: { sourceSession, indexInClub } } pour que les chips
+  // session-source colorées affichées dans le podium / grand lauréat soient
+  // déterministes (même couleur que la session card associée).
+  const finalistSourceMap = (() => {
+    const m = {};
+    const qual = palmares.qualifyingSessions || [];
+    qual.forEach((qs, i) => {
+      const ranking = Array.isArray(qs.final_ranking) ? qs.final_ranking : [];
+      const winner = ranking.find((r) => Number(r.final_rank) === 1);
+      const name = winner?.name || winner?.startup_name;
+      if (name) m[name] = { sourceSession: qs, indexInClub: i };
+    });
+    return m;
+  })();
+
   return (
     <PageShell width="wide" nav={<TopNav wordmark={tT.titleLead} subtitle={tT.eyebrow(ed.year)} />}>
       {/* Signature M-Editorial-Veil — voile CREAM se lève en 600ms au mount. */}
@@ -459,48 +535,62 @@ export default function Resultats() {
         )}
       </motion.section>
 
+      {/* V3 visual sweep — Stats rail (4 KPI compacts sous le Hero). */}
+      <StatsRail palmares={palmares} />
+
       {/* Grand Lauréat */}
-      {palmares.laureat && (
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: EASE, delay: 0.1 }}
-          className="rounded-[10px] p-6 md:p-10 mb-14"
-          style={{
-            background: 'linear-gradient(135deg,#fdf6e8,#faf2dc)',
-            border: `1px solid ${CREAM2}`,
-          }}
-        >
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-10">
-            <ChampionPortrait path={palmares.championPhotoPath} name={palmares.championName || palmares.laureat.name} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10.5px] uppercase tracking-[0.18em] mb-1" style={{ color: GOLD }}>
-                {tT.grandLaureat}
-              </p>
-              <h2
-                className="text-[36px] md:text-[44px] leading-tight"
-                style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-              >
-                {palmares.laureat.name}
-              </h2>
-              {grandPrize && (
-                <p className="mt-3 text-[15px]" style={{ color: INK }}>
-                  <span className="uppercase tracking-[0.12em] text-[10.5px]" style={{ color: MUTED }}>
-                    {tT.grandPrize}
-                  </span>{' '}
-                  <span style={{ fontFamily: SERIF, color: NAVY }}>{grandPrize}</span>
+      {palmares.laureat && (() => {
+        const laureatSource = finalistSourceMap[palmares.laureat.name] || null;
+        return (
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.1 }}
+            className="rounded-[10px] p-6 md:p-10 mb-14"
+            style={{
+              background: 'linear-gradient(135deg,#fdf6e8,#faf2dc)',
+              border: `1px solid ${CREAM2}`,
+            }}
+          >
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-10">
+              <ChampionPortrait path={palmares.championPhotoPath} name={palmares.championName || palmares.laureat.name} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10.5px] uppercase tracking-[0.18em] mb-1" style={{ color: GOLD }}>
+                  {tT.grandLaureat}
                 </p>
-              )}
-              {palmares.laureat.avg != null && (
-                <p className="mt-2 text-[13px]" style={{ color: MUTED }}>
-                  {tT.avg}: {Number(palmares.laureat.avg).toFixed(2)} / 5
-                  {palmares.laureat.n != null && ` (${tT.onN(palmares.laureat.n)} ${Number(palmares.laureat.n) > 1 ? tT.jurors : tT.juror})`}
-                </p>
-              )}
+                <h2
+                  className="text-[36px] md:text-[44px] leading-tight"
+                  style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+                >
+                  {palmares.laureat.name}
+                </h2>
+                {laureatSource && (
+                  <SourceSessionChip
+                    sourceSession={laureatSource.sourceSession}
+                    indexInClub={laureatSource.indexInClub}
+                    lang={lang}
+                    t={t}
+                  />
+                )}
+                {grandPrize && (
+                  <p className="mt-3 text-[15px]" style={{ color: INK }}>
+                    <span className="uppercase tracking-[0.12em] text-[10.5px]" style={{ color: MUTED }}>
+                      {tT.grandPrize}
+                    </span>{' '}
+                    <span style={{ fontFamily: SERIF, color: NAVY }}>{grandPrize}</span>
+                  </p>
+                )}
+                {palmares.laureat.avg != null && (
+                  <p className="mt-2 text-[13px]" style={{ color: MUTED }}>
+                    {tT.avg}: {Number(palmares.laureat.avg).toFixed(2)} / 5
+                    {palmares.laureat.n != null && ` (${tT.onN(palmares.laureat.n)} ${Number(palmares.laureat.n) > 1 ? tT.jurors : tT.juror})`}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        </motion.section>
-      )}
+          </motion.section>
+        );
+      })()}
 
       {/* Prix spécial (rank 2) */}
       {palmares.specialPrize && (
@@ -529,8 +619,12 @@ export default function Resultats() {
         </motion.section>
       )}
 
+      {/* V3 visual sweep — Timeline rétrospective (parcours année). */}
+      <RetrospectiveTimeline palmares={palmares} />
+
       {/* Finalistes (top 3 finale) — podium 3 cartes en hauteurs différentes.
-          Ordre visuel : 2e à gauche, 1er au centre (taller + scale-up), 3e à droite. */}
+          Ordre visuel : 2e à gauche, 1er au centre (taller + scale-up), 3e à droite.
+          V3 : chip source session colorée sous chaque finaliste. */}
       {top3Finale.length > 0 && (() => {
         const byRank = (r) => top3Finale.find((e) => e.final_rank === r) || null;
         const first = byRank(1);
@@ -540,8 +634,8 @@ export default function Resultats() {
           if (!entry) return <div aria-hidden />;
           const t2 = (d) => d[lang] || d.fr;
           const rankLabel = RANK_LABEL[entry.final_rank] ? t2(RANK_LABEL[entry.final_rank]) : `#${entry.final_rank}`;
-          // Le 1er au centre est plus haut (min-height + padding plus généreux).
           const isFirst = position === 'center';
+          const source = finalistSourceMap[entry.name] || null;
           return (
             <motion.article
               initial={{ opacity: 0, y: 12 }}
@@ -569,6 +663,14 @@ export default function Resultats() {
               >
                 {entry.name || '—'}
               </h3>
+              {source && (
+                <SourceSessionChip
+                  sourceSession={source.sourceSession}
+                  indexInClub={source.indexInClub}
+                  lang={lang}
+                  t={t}
+                />
+              )}
               {entry.avg != null && (
                 <p className="mt-2 text-[11.5px] tabular-nums" style={{ color: MUTED }}>
                   {Number(entry.avg).toFixed(2)} / 5
@@ -614,8 +716,14 @@ export default function Resultats() {
             </h2>
           </header>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-            {palmares.qualifyingSessions.map((session) => (
-              <SessionCard key={session.session_id} session={session} lang={lang} t={t} />
+            {palmares.qualifyingSessions.map((session, idx) => (
+              <SessionCard
+                key={session.session_id}
+                session={session}
+                lang={lang}
+                t={t}
+                index={idx}
+              />
             ))}
           </div>
         </section>

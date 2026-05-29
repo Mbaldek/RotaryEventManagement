@@ -32,6 +32,7 @@ import CalendarTab from './competition-tabs/CalendarTab';
 import ClubsTab from './competition-tabs/ClubsTab';
 import RulesTab from './competition-tabs/RulesTab';
 import PrizesTab from './competition-tabs/PrizesTab';
+import FormulairesTab from './competition-tabs/FormulairesTab';
 import CommunicationTab from './competition-tabs/CommunicationTab';
 import CommunicationTabRefonte from './competition-tabs/CommunicationTabRefonte';
 import RolesTab from './competition-tabs/RolesTab';
@@ -79,6 +80,12 @@ export default function CompetitionEditView({ editionId, onClose }) {
       // Champs legacy non éditables ici mais à préserver côté state.
       prize_main:               competition.prize_main ?? null,
       prize_special:            competition.prize_special ?? null,
+      // Équipe B — champs custom des formulaires public/jury. Persistés via
+      // autosave (utiliser une migration côté DB pour les colonnes JSONB).
+      custom_fields_candidate:  Array.isArray(competition.custom_fields_candidate)
+                                  ? competition.custom_fields_candidate : [],
+      custom_fields_jury:       Array.isArray(competition.custom_fields_jury)
+                                  ? competition.custom_fields_jury : [],
     };
   }, [competition]);
 
@@ -153,6 +160,11 @@ export default function CompetitionEditView({ editionId, onClose }) {
       id: 'prizes',
       label: t(COMP.tabPrizes),
       render: () => <PrizesTab competition={competitionRef} mode="edit" />,
+    },
+    {
+      id: 'formulaires',
+      label: t(COMP.tabFormulaires),
+      render: () => <FormulairesTab values={values} onPatch={patch} />,
     },
     {
       id: 'sessions',

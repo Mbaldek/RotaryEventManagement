@@ -1,6 +1,11 @@
 // QueueList — editorial list of submitted dossiers (Élysée, NOT a data table).
 // Renders one stacked row per startup with name + meta line + pills + chevron.
 // Calls onOpen(startupId) when a row is clicked / activated.
+//
+// V3 visual sweep : ajout d'une barre couleur gauche par VERDICT d'éligibilité
+// (eligible=sage, flagged=ochre, excluded=brick) pour permettre un scan visuel
+// rapide de la queue. Fallback sur le decision effective si pas de verdict.
+// Cf. project_concours_v2_visual_pattern (mémoire) — pattern étendu à Selection.
 
 import React from 'react';
 import { ChevronRight, Loader2 } from 'lucide-react';
@@ -13,6 +18,27 @@ import {
   needsAdminValidation,
   pickEffectiveReview,
 } from './constants';
+
+// ── Barre couleur gauche : verdict (priorité) → decision (fallback) → neutral
+const VERDICT_RAIL = {
+  eligible: '#1d6b4f', // sage
+  flagged:  '#9a6400', // ochre
+  excluded: '#a23b2d', // brick
+};
+const DECISION_RAIL = {
+  eligible:      '#1d6b4f',
+  liste_attente: '#9a6400',
+  rejete:        '#a23b2d',
+  a_examiner:    null, // pas de rail si pas encore décidé
+};
+function pickRailColor(startup, effective) {
+  const verdict = startup?.eligibility?.verdict;
+  if (verdict && VERDICT_RAIL[verdict]) return VERDICT_RAIL[verdict];
+  if (effective?.decision && DECISION_RAIL[effective.decision]) {
+    return DECISION_RAIL[effective.decision];
+  }
+  return null;
+}
 
 function MetaLine({ startup, lang }) {
   const sectorsList = Array.isArray(startup?.sectors) ? startup.sectors : [];
@@ -73,19 +99,27 @@ function QueueRow({ startup, onOpen, selected, lang, t }) {
   const effective = pickEffectiveReview(reviews);
   const validation = needsAdminValidation(effective);
   const final = !!effective?.is_final;
+  const railColor = pickRailColor(startup, effective);
 
   return (
     <li
-      className="rounded-[4px] transition-colors"
+      className="relative rounded-[4px] overflow-hidden transition-colors"
       style={{
         background: selected ? '#fbf9f5' : 'white',
         border: `1px solid ${selected ? GOLD : CREAM2}`,
       }}
     >
+      {railColor && (
+        <span
+          aria-hidden
+          className="absolute left-0 top-0 bottom-0"
+          style={{ width: 3, background: railColor }}
+        />
+      )}
       <button
         type="button"
         onClick={() => onOpen?.(startup.id)}
-        className="w-full text-left flex items-start gap-3 p-4 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] rounded-[4px]"
+        className={`w-full text-left flex items-start gap-3 p-4 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] rounded-[4px] ${railColor ? 'pl-5' : ''}`}
       >
         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-3 flex-wrap">
