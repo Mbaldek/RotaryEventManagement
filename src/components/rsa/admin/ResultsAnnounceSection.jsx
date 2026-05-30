@@ -157,7 +157,7 @@ export default function ResultsAnnounceSection() {
       { id: "clubs", Icon: Building2, color: "rose", title: "Clubs Rotary", group: emptyGroups(), build: buildClubs, manual: "Destinataires à saisir (contacts clubs)." },
       { id: "incubators", Icon: Sprout, color: "rose", title: "Incubateurs / partenaires — compte rendu", group: emptyGroups(), build: buildIncubators, manual: "Destinataires à saisir à la main (incubateurs / partenaires)." },
     ];
-  }, [winner, recipients]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [winner, recipients]);  
 
   if (loading) {
     return (

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Clock, User, FileText, Repeat, Archive as ArchiveIcon } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Clock, User, Repeat, Archive as ArchiveIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 

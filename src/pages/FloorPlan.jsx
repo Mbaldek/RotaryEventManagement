@@ -5,7 +5,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { getTableCapacity } from "@/lib/utils";
-import { ArrowLeft, Save, Users, CheckCircle2, Circle, BookmarkCheck } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle2, Circle, BookmarkCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 

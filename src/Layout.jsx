@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Settings, UtensilsCrossed } from "lucide-react";
+import { Settings } from "lucide-react";
 import NotificationProvider from "@/components/notifications/NotificationProvider";
 
 // Pages rendered standalone (no Rotary lunch chrome, no lunch notifications).

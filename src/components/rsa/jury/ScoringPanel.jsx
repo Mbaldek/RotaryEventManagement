@@ -82,7 +82,7 @@ export default function ScoringPanel({
   const initial = useMemo(
     () => ({ ...pickDraftShape(draft), ...pickDraftShape(myScore) }),
     // Re-init quand le startup change OU quand on a une nouvelle soumission OU un draft serveur.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [startup?.id, myScore?.updated_at, draft?.updated_at],
   );
 

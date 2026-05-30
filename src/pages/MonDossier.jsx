@@ -75,7 +75,7 @@ function LoadingWatchdog({ edLoading, dosLoading, onForceRetry }) {
   useEffect(() => {
     if (tick >= 6 && !autoHealing) {
       setAutoHealing(true);
-      // eslint-disable-next-line no-console
+       
       console.warn('[MonDossier] watchdog 6s — auto-healing : clearing storage + redirect /Login');
       try {
         if (typeof window !== 'undefined' && window.localStorage) {
@@ -238,7 +238,7 @@ export default function MonDossier() {
   // ── États de garde ─────────────────────────────────────────────────────────
   // DIAGNOSTIC : log l'état des queries à chaque render pour debug spinner infini
   // (à retirer une fois la cause root identifiée).
-  // eslint-disable-next-line no-console
+   
   console.debug('[MonDossier]', {
     authLoading, isAuthenticated, edLoading, dosLoading,
     editionId, edition: edition?.id, edError, dosError,

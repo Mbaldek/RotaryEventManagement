@@ -191,7 +191,7 @@ export default function StartupUpload() {
       setLoading(false);
     }
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   async function patchRow(patch) {

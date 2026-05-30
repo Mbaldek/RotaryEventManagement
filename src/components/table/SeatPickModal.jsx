@@ -88,7 +88,7 @@ export default function SeatPickModal({
       member_number: seatData?.member_number || "",
       comment: seatData?.comment || "",
     });
-  }, [open, seatData?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, seatData?.id]);  
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const canSubmit = form.first_name.trim() && form.last_name.trim();

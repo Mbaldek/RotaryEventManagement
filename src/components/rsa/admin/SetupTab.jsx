@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Copy, Plus, Trash2, ChevronUp, ChevronDown, Check, AlertTriangle, RotateCcw, Printer, QrCode } from "lucide-react";
 import { SESSION_BY_ID, JURY_STATUS } from "@/lib/rsa/constants";
-import { JuryProfile, SessionConfig, StartupConfirmation, JuryScore, JuryScoringSession } from "@/lib/db";
+import { JuryProfile, SessionConfig, StartupConfirmation } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 import FinalistsPicker from "./FinalistsPicker";
 import JurorLinkQR from "./JurorLinkQR";

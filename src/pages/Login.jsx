@@ -114,7 +114,7 @@ export default function Login() {
     // ci-dessus ré-évaluera et le routing se fera proprement.
     // Cf. docs/deepsolve/sso-google-master-admin-misroute.md §5 Patch 3.
     if (!rolesLoaded && roles.length === 0 && clubMemberships.length === 0) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[Login] safety net — rolesLoaded=false after timeout, refusing /MonDossier fallback. Waiting for retry…');
       const safetyCopy = t({
         fr: 'Vérification de vos accès…',
@@ -152,7 +152,7 @@ export default function Login() {
     // inattendus (ex. master_admin envoyé sur /MonDossier alors que /Admin
     // attendu — observé 2026-05-29). console.warn pour ne pas être filtré
     // par le niveau "Default" Chrome (info caché).
-    // eslint-disable-next-line no-console
+     
     console.warn('[Login] redirect →', target, { roles, clubMemberships: clubMemberships?.length, rolesLoaded, query });
     // ÉQUIPE C (history-nav) : on N'utilise PAS `replace` ici.
     // Conserver /Login dans l'history permet à un "back" depuis /Admin (ou

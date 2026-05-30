@@ -101,7 +101,7 @@ export function initSentry() {
     // Pas une erreur : en dev, on tourne sans Sentry. En prod, c'est qu'on a
     // oublié de configurer la var — un warn console aidera le diagnostic.
     if (import.meta.env.PROD) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[Sentry] VITE_SENTRY_DSN missing — error tracking disabled in production.');
     }
     return false;
@@ -173,7 +173,7 @@ export function clearSentryUser() {
  */
 export function captureException(error, context) {
   if (!__initialized) {
-    // eslint-disable-next-line no-console
+     
     console.error('[Sentry not initialized]', error, context);
     return;
   }

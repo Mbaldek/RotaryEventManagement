@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Trophy, Loader2, Check, AlertCircle, RotateCcw, Sparkles } from "lucide-react";
+import { Trophy, Loader2, Check, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { QUALIFYING_SESSIONS, FINAL_SESSION_ID, JURY_STATUS } from "@/lib/rsa/constants";
 import { SessionConfig, StartupConfirmation, JuryScore } from "@/lib/db";
@@ -102,7 +102,7 @@ export default function FinalistsPicker({ onChanged }) {
     const offCfg = SessionConfig.subscribe(() => load());
     const offFin = StartupConfirmation.subscribe(() => load());
     return () => { offCfg?.(); offFin?.(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const finalistBySource = useMemo(() => {

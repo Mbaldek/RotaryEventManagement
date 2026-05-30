@@ -44,7 +44,7 @@ export const Club = {
     clubPhone,
     clubAddress,
   }) {
-    // eslint-disable-next-line no-console
+     
     console.debug('[Club.createClub] start', { name, country, language });
     const rpcPromise = supabase.rpc('rsa_create_club', {
       p_name: name,
@@ -65,11 +65,11 @@ export const Club = {
       setTimeout(() => reject(new Error('createClub_timeout: pas de réponse après 12s — vérifier réseau, JWT ou Supabase status')), 12000),
     );
     const { data, error } = await Promise.race([rpcPromise, watchdog]).catch((timeoutErr) => {
-      // eslint-disable-next-line no-console
+       
       console.error('[Club.createClub] watchdog fired', timeoutErr);
       throw timeoutErr;
     });
-    // eslint-disable-next-line no-console
+     
     console.debug('[Club.createClub] response', { data, error });
     if (error) throw error;
     return data;

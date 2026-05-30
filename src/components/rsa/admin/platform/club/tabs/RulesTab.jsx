@@ -33,7 +33,7 @@ export default function RulesTab({ edition, clubId }) {
     setRules(attachmentQ.data?.eligibility_rules || {});
     setDirty(false);
     setFeedback(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [attachmentQ.data?.edition_id, attachmentQ.data?.club_id]);
 
   function onRulesChange(nextRules) {

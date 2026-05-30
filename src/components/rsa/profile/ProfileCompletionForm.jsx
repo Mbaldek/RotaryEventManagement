@@ -271,7 +271,7 @@ export default function ProfileCompletionForm({
         window.location.assign(redirectTo || '/Admin');
       }
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('[ProfileCompletionForm] submit failed', err);
       setSubmitError(t(T.errSubmit));
       setSubmitting(false);

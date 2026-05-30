@@ -103,7 +103,7 @@ function InviteCompetitionAdminModal({ editionId, editionName, onClose, onSucces
       }
       onSuccess?.(normalized);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('[CompetitionAdminsTab] invite failed', err);
       setError(t(COMP_ADMINS.inviteError) + (err?.message || ''));
       setSubmitting(false);

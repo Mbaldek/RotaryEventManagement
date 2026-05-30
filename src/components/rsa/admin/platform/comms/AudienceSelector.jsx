@@ -80,7 +80,7 @@ export default function AudienceSelector({
       const next = types.includes(def) ? def : types[0];
       onChange({ audienceType: next, audienceFilter: clubId ? { club_id: clubId } : {} });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [types.length]);
 
   // Quand on change de type, on rebuild filter de base (club_id automatique).

@@ -23,7 +23,7 @@ import { DANGER } from '@/components/design/tokens.app';
 import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { CRITERIA, weightedScore } from '@/lib/rsa/constants';
-import { UI, LIVE, RESULTS } from '../i18n';
+import { UI, LIVE } from '../i18n';
 import ScoreCell from '../ScoreCell';
 import {
   useLiveGrid,

@@ -85,7 +85,7 @@ export default function EditionEditor({ edition }) {
     setRules(edition.eligibility_rules || {});
     setDirty(false);
     setFeedback(null);
-  }, [edition?.id]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [edition?.id]);   
 
   function patch(part) {
     setForm((prev) => ({ ...prev, ...part }));

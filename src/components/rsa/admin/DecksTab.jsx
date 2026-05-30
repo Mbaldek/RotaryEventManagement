@@ -834,7 +834,7 @@ export default function DecksTab({ sessionId }) {
       setLoading(false);
     }
   }
-  useEffect(() => { load(); }, [sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [sessionId]);  
 
   async function markSent(row) {
     setWorking(row.id);

@@ -23,10 +23,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   NAVY,
   GOLD,
-  CREAM,
   CREAM2,
   INK,
-  MUTED,
   SERIF,
   EASE,
   Eyebrow,
@@ -36,7 +34,7 @@ import {
   Textarea,
   Select,
 } from '@/components/design';
-import { DANGER, TINT_DANGER, SUCCESS } from '@/components/design/tokens.app';
+import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { INVITE, ROLE_LABEL_KEYS } from './i18n';
 import { useInviteUser } from './useInvite';
@@ -77,7 +75,7 @@ export default function InviteUserModal({
 
   if (scope !== 'global' && scope !== 'club') {
     // Garde-fou dev : un appel sans scope est une erreur d'intégration.
-    // eslint-disable-next-line no-console
+     
     console.warn('[InviteUserModal] scope is required ("global" | "club")');
   }
 

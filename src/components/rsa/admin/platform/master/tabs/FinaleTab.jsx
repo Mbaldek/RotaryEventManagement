@@ -12,7 +12,7 @@
 import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, Trophy, Trash2 } from 'lucide-react';
 import {
-  CREAM2, NAVY, MUTED, INK, GOLD, FOCUS_RING_CLASS, SERIF, StatusPill, TINT_ADMIN,
+  CREAM2, NAVY, MUTED, INK, GOLD, SERIF, StatusPill, TINT_ADMIN,
 } from '@/components/design';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';

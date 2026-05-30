@@ -104,7 +104,7 @@ export default function CompetitionEditView({ editionId, onClose }) {
     // l'utilisateur n'a pas explicitement quitté la vue. (Si besoin un jour, on
     // peut comparer updated_at vs lastSavedAt et reset proprement.)
     // Cf. EditionEditor.jsx pour le même choix conservateur.
-  }, [competition?.updated_at]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [competition?.updated_at]);  
 
   const competitionRef = useMemo(() => ({
     id: editionId,

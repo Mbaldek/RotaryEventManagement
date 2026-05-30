@@ -123,7 +123,7 @@ export default function Admin() {
       p.set('scope', hierarchy.resolvedLegacyScope);
       setParams(p, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [hierarchy.resolvedLegacyScope]);
 
   // V3 — pour le master_admin, le selector dévoile toutes les compétitions

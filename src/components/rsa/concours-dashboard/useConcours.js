@@ -60,11 +60,11 @@ export function useEditionOverview(editionId) {
         // Si l'RPC retourne une erreur connue (function not found), on fallback
         // silencieusement. Tout autre error est remontée.
         if (error && error.code !== '42883' && error.code !== 'PGRST202') {
-          // eslint-disable-next-line no-console
+           
           console.warn('[useEditionOverview] RPC error, falling back to client agg', error);
         }
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.warn('[useEditionOverview] RPC threw, falling back', e);
       }
 
@@ -216,11 +216,11 @@ export function useSessionDetail(sessionId, enabled = true) {
           return Array.isArray(data) ? data[0] : data;
         }
         if (error && error.code !== '42883' && error.code !== 'PGRST202') {
-          // eslint-disable-next-line no-console
+           
           console.warn('[useSessionDetail] RPC error, falling back', error);
         }
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.warn('[useSessionDetail] RPC threw, falling back', e);
       }
 

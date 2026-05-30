@@ -26,10 +26,10 @@ export const Edition = {
     const timeout = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('[Edition.active] timeout 6s — Supabase request never resolved')), 6000),
     );
-    // eslint-disable-next-line no-console
+     
     console.warn('[Edition.active] start request');
     const { data, error } = await Promise.race([query, timeout]);
-    // eslint-disable-next-line no-console
+     
     console.warn('[Edition.active] result', { data, error: error?.message ?? null });
     if (error) throw error;
     return data?.[0] ?? null;

@@ -16,13 +16,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { CREAM2, INK, MUTED, NAVY } from '@/components/design/tokens';
+import { MUTED, NAVY } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import FunnelEditorModal from '../funnel/FunnelEditorModal';
 import useAutosaveCompetition from '../funnel/useAutosaveCompetition';
 import {
-  COMP, KEBAB_REGEX, UI,
+  COMP, KEBAB_REGEX,
 } from './i18n';
 import { useCreateCompetition } from './useMaster';
 import IdentityTab from './competition-tabs/IdentityTab';

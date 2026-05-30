@@ -200,7 +200,7 @@ export default function MagicLinkLogin({
       // sous un générique stérile. On garde le wording Élysée + on append le
       // détail technique en petit. Console.error pour les power-users qui
       // ouvrent DevTools.
-      // eslint-disable-next-line no-console
+       
       console.error("[MagicLinkLogin] signInWithMagicLink failed:", err);
       const detail = err?.message || err?.error_description || String(err);
       setError(`${L("errGeneric")} (${detail})`);
@@ -222,7 +222,7 @@ export default function MagicLinkLogin({
       if (sbError) throw sbError;
       // Supabase va rediriger vers le provider → on n'arrive pas ici normalement.
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error(`[MagicLinkLogin] SSO ${provider} failed:`, err);
       const detail = err?.message || err?.error_description || String(err);
       setError(`${L("ssoError")} (${detail})`);

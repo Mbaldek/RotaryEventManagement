@@ -191,7 +191,7 @@ export default function Step1Picker({ initialEdition = null, onSent }) {
       setStatus('sent');
       onSent?.(value);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('[Step1Picker] submit failed:', err);
       setError(mapError(err, t));
       setStatus('error');

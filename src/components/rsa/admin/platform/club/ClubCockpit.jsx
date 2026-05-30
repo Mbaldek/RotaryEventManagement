@@ -77,7 +77,7 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
       p.delete('session');
       setParams(p, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [propEditionId]);
 
   const setTab = (next) => {
@@ -112,7 +112,7 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
       p.set('edition', fallback.id);
       setParams(p, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [editionId, editions.length]);
 
   const edition = useMemo(
@@ -137,7 +137,7 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
       p.set('session', sessions[0].id);
       setParams(p, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [sessionId, sessions.length, tab]);
 
   // ── Header club ──────────────────────────────────────────────────────────

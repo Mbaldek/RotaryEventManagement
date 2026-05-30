@@ -3,7 +3,7 @@ import { UpcomingEvent, EventHistory, uploadFile } from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Calendar, FileUp, ExternalLink, Plus, Trash2, Edit2 } from "lucide-react";
+import { ArrowLeft, Calendar, FileUp, Plus, Trash2, Edit2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";

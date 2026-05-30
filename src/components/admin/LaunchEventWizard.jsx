@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { RestaurantTable, Seat, GlobalSettings, EventHistory, Reservation, getCurrentUser } from "@/lib/db";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Archive, Users, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";

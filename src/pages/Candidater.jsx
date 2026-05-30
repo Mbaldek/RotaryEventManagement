@@ -23,8 +23,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, MailCheck } from 'lucide-react';
 import {
-  PageShell, Footer,
-  Eyebrow, EditorialTitle,
+  PageShell, Footer, EditorialTitle,
   GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE,
 } from '@/components/design';
 
@@ -161,7 +160,7 @@ export default function Candidater() {
           navigate(target, { replace: true });
         }, 200);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.error('[Candidater] claim failed:', err);
         if (!active) return;
         // Échec rare : on route quand même vers /MonDossier — la RLS

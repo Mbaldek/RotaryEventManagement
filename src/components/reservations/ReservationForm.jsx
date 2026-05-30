@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, Users, X } from "lucide-react";
+import { Calendar, Users, X } from "lucide-react";
 
 export default function ReservationForm({ tables, events, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({

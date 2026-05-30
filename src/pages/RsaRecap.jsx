@@ -271,7 +271,7 @@ export default function RsaRecap() {
       next.set("view", view);
       setParams(next, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [view]);
 
   const [loading, setLoading] = useState(true);
