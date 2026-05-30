@@ -56,7 +56,7 @@ const LEGACY_AUTH_FALLBACK = {
 const LUNCH_PAGES = new Set([
   'AdminControl', 'Archives', 'Dashboard', 'EventPlanning', 'Features',
   'FloorPlan', 'Index', 'ReservationRequest', 'Reservations',
-  'TableView', 'TableViewMockup', 'UserManagement',
+  'TableView', 'UserManagement',
 ]);
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?

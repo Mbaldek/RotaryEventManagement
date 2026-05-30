@@ -60,7 +60,6 @@ const RsaScore = lazy(() => import('./pages/RsaScore'));
 const Selection = lazy(() => import('./pages/Selection'));
 const StartupUpload = lazy(() => import('./pages/StartupUpload'));
 const TableView = lazy(() => import('./pages/TableView'));
-const TableViewMockup = lazy(() => import('./pages/TableViewMockup'));
 const UserManagement = lazy(() => import('./pages/UserManagement'));
 const Welcome = lazy(() => import('./pages/Welcome'));
 
@@ -97,7 +96,6 @@ export const PAGES = {
     "Selection": Selection,
     "StartupUpload": StartupUpload,
     "TableView": TableView,
-    "TableViewMockup": TableViewMockup,
     "UserManagement": UserManagement,
     "Welcome": Welcome,
 }
