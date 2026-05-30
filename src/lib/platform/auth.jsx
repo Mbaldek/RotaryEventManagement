@@ -18,6 +18,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { isAuthError } from '@/lib/platform/authErrors';
 import { setSentryUser, clearSentryUser, captureException, Sentry } from '@/lib/observability/sentry';
 
 const PlatformAuthContext = createContext(null);
@@ -229,7 +230,16 @@ export function PlatformAuthProvider({ children }) {
     //     user reste avec roles=[] jusqu'au prochain SIGNED_IN (qu'on ne reçoit
     //     plus une fois SIGNED_IN initial passé) → spinner /Login infini ou
     //     pire, routing fallback /MonDossier.
-    return { anySuccess, rolesErrored: !!rolesRes?.error };
+    //   * rolesAuthError=true → rsa_my_roles a renvoyé une 401/JWT-error
+    //     DÉFINITIVE (pas un timeout). Combiné à anySuccess=false (toutes les
+    //     RPC rejetées → JWT mort cohérent), c'est une session zombie : retry
+    //     inutile, il faut LÂCHER la session locale pour retomber sur le form de
+    //     login (sinon spinner safety-net infini, cf. deepsolve §254).
+    return {
+      anySuccess,
+      rolesErrored: !!rolesRes?.error,
+      rolesAuthError: isAuthError(rolesRes?.error),
+    };
   }, []);
 
   // Wrapper single-flight autour de loadIdentityImpl : sérialise les appels
@@ -261,6 +271,54 @@ export function PlatformAuthProvider({ children }) {
 
   useEffect(() => {
     let active = true;
+
+    // FIX 2026-05-30 (boucle perpétuelle SSO) — pilotage centralisé de l'après
+    // loadIdentity. Appelé par l'IIFE init ET par onAuthStateChange(SIGNED_IN).
+    // POURQUOI centraliser : sur le flux SSO, getSession (IIFE) et l'événement
+    // SIGNED_IN déclenchent deux loadIdentity concurrents. Le single-flight n'en
+    // exécute qu'un ; l'autre caller reçoit `undefined`. Avant ce fix, seul
+    // l'IIFE programmait les retries → si c'est le SIGNED_IN qui a gagné le lock
+    // (et que rsa_my_roles a erreuré), AUCUN retry n'était programmé → spinner
+    // safety-net infini. Désormais les deux callers passent leur résultat ici ;
+    // celui qui a réellement exécuté l'impl (résultat non-undefined) pilote.
+    const handleLoadResult = (result, email) => {
+      if (!active || !result || !email) return;
+      // Session zombie : JWT mort rejeté par le serveur ET aucune RPC réussie
+      // (cohérent avec un token globalement invalide). Retry inutile — on lâche
+      // la session locale : onAuthStateChange(SIGNED_OUT) videra authUser et le
+      // user retombe sur le formulaire de login (SSO + magic-link + reset).
+      // signOut scope:'local' n'appelle pas le serveur (race-safe si réseau lent).
+      if (result.rolesAuthError && !result.anySuccess) {
+        // eslint-disable-next-line no-console
+        console.warn('[PlatformAuth] dead session (rsa_my_roles 401 + no RPC success) — clearing local session → login form');
+        try {
+          Sentry?.addBreadcrumb?.({
+            category: 'auth.dead-session',
+            level: 'warning',
+            message: 'rsa_my_roles auth error with no RPC success — local signOut',
+          });
+        } catch { /* Sentry indispo */ }
+        supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        return;
+      }
+      // Full outage (toutes RPC en échec, mais transitoire — pas un JWT mort) :
+      // retry tout. 1 essai à 3s, 1 à 8s.
+      if (!result.anySuccess) {
+        // eslint-disable-next-line no-console
+        console.warn('[PlatformAuth] loadIdentity full outage — scheduling retry');
+        setTimeout(() => { if (active) loadIdentity(email); }, 3000);
+        setTimeout(() => { if (active) loadIdentity(email); }, 8000);
+        return;
+      }
+      // Partial outage sur rsa_my_roles (la RPC canonique pour le routing) :
+      // retry ciblé même si les 3 autres RPC ont réussi.
+      if (result.rolesErrored) {
+        // eslint-disable-next-line no-console
+        console.warn('[PlatformAuth] rsa_my_roles errored — scheduling targeted retry');
+        setTimeout(() => { if (active) loadIdentity(email); }, 1500);
+        setTimeout(() => { if (active) loadIdentity(email); }, 5000);
+      }
+    };
 
     // SELF-HEALING (2026-05-29) : observé en prod app.rotary-startup.org —
     // `supabase.auth.getSession()` HANG indéfiniment quand le refresh-token
@@ -368,26 +426,9 @@ export function PlatformAuthProvider({ children }) {
         if (!active) return;
         setAuthUser(session?.user ?? null);
         const result = await loadIdentity(session?.user?.email);
-        // V3 hardening — retry background si full outage (toutes RPC failed).
-        // Évite à l'user de rester bloqué sur spinner Forbidden quand le réseau
-        // revient. Retry simple : 1 essai après 3s, 1 essai après 8s.
-        if (active && session?.user && result && !result.anySuccess) {
-          // eslint-disable-next-line no-console
-          console.warn('[PlatformAuth] loadIdentity full outage — scheduling retry');
-          setTimeout(() => { if (active) loadIdentity(session.user.email); }, 3000);
-          setTimeout(() => { if (active) loadIdentity(session.user.email); }, 8000);
-        }
-        // FIX 2026-05-30 — retry CIBLÉ si rsa_my_roles a échoué (partial outage),
-        // même si les 3 autres RPC ont réussi. Sans ce retry, master_admin reste
-        // avec roles=[] jusqu'au prochain SIGNED_IN/USER_UPDATED — c'est-à-dire
-        // jamais avant le refresh manuel — et Login route fallback /MonDossier.
-        // Cf. docs/deepsolve/sso-google-master-admin-misroute.md §5 Patch 2.
-        else if (active && session?.user && result?.rolesErrored) {
-          // eslint-disable-next-line no-console
-          console.warn('[PlatformAuth] rsa_my_roles errored — scheduling targeted retry');
-          setTimeout(() => { if (active) loadIdentity(session.user.email); }, 1500);
-          setTimeout(() => { if (active) loadIdentity(session.user.email); }, 5000);
-        }
+        // Retry background (full/partial outage) ou recovery session zombie —
+        // logique centralisée, partagée avec onAuthStateChange. Cf. handleLoadResult.
+        if (session?.user) handleLoadResult(result, session.user.email);
         // Sentry : on attache l'identité dès qu'on a la session. {id, email}
         // seulement — pas de PII supplémentaire (cf. observability/sentry.js).
         if (session?.user) {
@@ -449,7 +490,11 @@ export function PlatformAuthProvider({ children }) {
           }
           return;
         }
-        await loadIdentity(session?.user?.email);
+        const result = await loadIdentity(session?.user?.email);
+        // FIX 2026-05-30 — sur SIGNED_IN (notamment retour SSO Google/Microsoft),
+        // piloter retry/recovery comme l'IIFE. Avant, ce chemin ne programmait
+        // AUCUN retry : si rsa_my_roles erreurait ici, le user restait coincé.
+        if (session?.user) handleLoadResult(result, session.user.email);
         if (session?.user) {
           setSentryUser({ id: session.user.id, email: session.user.email });
         } else {

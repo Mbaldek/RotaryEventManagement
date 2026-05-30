@@ -24,6 +24,7 @@ import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Navigate, useLocation } from 'react-router-dom';
 import { PageShell, MagicLinkLogin, PlatformFooter } from '@/components/design';
+import ForceLogoutLink from '@/components/design/auth/ForceLogoutLink';
 import { GOLD, NAVY, SERIF, EASE } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
@@ -42,6 +43,12 @@ import { computeLandingRoute, parseLoginQuery } from '@/lib/platform/postLoginRo
 //     sans rôle voit le spinner ~9s max si RPC outage — préférable à un master
 //     éjecté vers le funnel candidat.
 const ROLE_RESOLVE_TIMEOUT_MS = 9000;
+
+// Délai au bout duquel le safety-net spinner (rsa_my_roles toujours pas résolue)
+// révèle une porte de sortie (ForceLogoutLink). 6s : assez pour laisser les
+// retries auth.jsx (1.5s/5s) populer les rôles dans le cas transitoire, mais
+// sans laisser l'utilisateur croire que l'app est gelée si la session est morte.
+const SAFETY_NET_ESCAPE_MS = 6000;
 
 export default function Login() {
   const { t } = useLang();
@@ -102,6 +109,27 @@ export default function Login() {
     return () => clearTimeout(id);
   }, [isAuthenticated, loading, roles, clubMemberships, rolesLoaded]);
 
+  // ESCAPE HATCH (FIX 2026-05-30) — le safety net (ci-dessous) refuse de router
+  // tant que rsa_my_roles n'a pas répondu. Si la session est zombie (refresh_token
+  // 400 / JWT mort), rsa_my_roles erreure à CHAQUE appel → rolesLoaded jamais true
+  // → spinner perpétuel SANS bouton de sortie ni formulaire SSO (symptôme rapporté
+  // 2026-05-30). auth.jsx tente désormais un signOut local sur token mort, mais on
+  // ajoute ICI un filet ultime, indépendant de toute détection : après SAFETY_NET_
+  // ESCAPE_MS passés dans le safety net, on révèle ForceLogoutLink (reset session +
+  // reload → form propre). L'utilisateur n'est JAMAIS coincé.
+  const inSafetyNet =
+    !loading && isAuthenticated && resolved &&
+    !rolesLoaded && roles.length === 0 && clubMemberships.length === 0;
+  const [showEscape, setShowEscape] = useState(false);
+  useEffect(() => {
+    if (!inSafetyNet) {
+      setShowEscape(false);
+      return undefined;
+    }
+    const id = setTimeout(() => setShowEscape(true), SAFETY_NET_ESCAPE_MS);
+    return () => clearTimeout(id);
+  }, [inSafetyNet]);
+
   // — État 1 : déjà authentifié + résolu → redirect computé. —
   if (!loading && isAuthenticated && resolved) {
     // SAFETY NET (FIX 2026-05-30) — si le fallback timer a expiré SANS que
@@ -121,6 +149,14 @@ export default function Login() {
         en: 'Verifying your access…',
         de: 'Berechtigungen werden geprüft…',
       });
+      // Copie qui s'affiche QUAND la sortie de secours est révélée (>6s sans
+      // résolution) : on bascule d'un ton « ça charge » vers un ton « ça coince,
+      // voici comment se débloquer » + ForceLogoutLink.
+      const stuckCopy = t({
+        fr: "Cela prend plus de temps que prévu. Si rien ne se passe, réinitialisez votre session.",
+        en: 'This is taking longer than expected. If nothing happens, reset your session.',
+        de: 'Das dauert länger als erwartet. Falls nichts passiert, setzen Sie Ihre Sitzung zurück.',
+      });
       return (
         <PageShell footer={<PlatformFooter />}>
           <div
@@ -136,6 +172,14 @@ export default function Login() {
             <p className="text-[14px]" style={{ color: NAVY, fontFamily: SERIF }}>
               {safetyCopy}
             </p>
+            {showEscape && (
+              <div className="flex flex-col items-center gap-1 mt-2 max-w-[360px] text-center">
+                <p className="text-[12px]" style={{ color: NAVY, opacity: 0.7 }}>
+                  {stuckCopy}
+                </p>
+                <ForceLogoutLink />
+              </div>
+            )}
           </div>
         </PageShell>
       );
