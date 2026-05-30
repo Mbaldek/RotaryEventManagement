@@ -6,7 +6,7 @@
 
 - **Stack** : React 18 + Vite, Tailwind + shadcn/ui, Supabase (DB + Realtime + private Storage), TanStack React Query. Imports via `@/`.
 - **Data spine** : the `startups` dossier (Modules 1+2) carries the candidate ; a new `platform_jury_scores` row hangs off it for each (startup × jury) couple ; assignments live in `platform_jury_assignments` (juror × session). The legacy `jury_scores` (composite PK `session_id + jury_name + startup_name`) stays as archive, untouched.
-- **Auth/roles** : `src/lib/platform/auth.jsx` (`usePlatformAuth`). Roles `'jury'` (R/W on own scores), `'admin'` (orchestrate session lifecycle + override), `'comite'` (read-only on scores). A user can be `'jury' + 'comite'` simultaneously (multi-role per memory). Source of truth = locked `app_user_roles` (cf. C1 hardening). **No public self-registration**: jurors are admin-provisioned; the legacy `RsaJuryForm.jsx` route is gone.
+- **Auth/roles** : `src/lib/platform/auth.jsx` (`usePlatformAuth`). Roles `'jury'` (R/W on own scores), `'admin'` (orchestrate session lifecycle + override), `'comite'` (read-only on scores). A user can be `'jury' + 'comite'` simultaneously (multi-role per memory). Source of truth = locked `app_user_roles` (cf. C1 hardening). ~~**No public self-registration**: jurors are admin-provisioned; the legacy `RsaJuryForm.jsx` route is gone.~~ **REVERSED 2026-05-30** — public per-competition jury self-registration is re-opened (beta `RsaJuryForm` model). See `docs/blueprints/jury-application-funnel.md`. Approval still grants `app_user_roles[role='jury']` (now via the `send-jury-welcome` edge function), so this scoring module is unchanged downstream.
 - **Reused from Modules 1+2** :
   - `signedDossierUrl(s)` from `src/lib/rsa/storage.js` (private `dossiers` bucket, staff read via `is_dossier_staff()`).
   - `CRITERIA` / `SCORE_FIELDS` / `MAX_WEIGHTED` / `weightedScore` / `getCriterion` / `JURY_STATUS` / `SESSIONS` from `src/lib/rsa/constants.js`. The 6 weighted dimensions and FR/EN/DE labels are the same as 2026.
@@ -48,7 +48,7 @@
 
 ### 2.1 The role grant
 - `INSERT INTO public.app_user_roles (email, roles) VALUES (lower(email), ARRAY['jury'])` — done by service_role (Supabase Studio / admin CLI script) or by a small SECURITY DEFINER admin RPC `rsa_grant_role(p_email, p_role)` (a useful Module-4 utility; for Module 3 we accept service_role-only writes).
-- The juror lands on the platform via the same magic-link flow as a candidate (`signInWithMagicLink`). The first auth call hydrates `roles = ['jury']` (or `['jury','comite']`) into `usePlatformAuth().roles`. **No public sign-up.**
+- The juror lands on the platform via the same magic-link flow as a candidate (`signInWithMagicLink`). The first auth call hydrates `roles = ['jury']` (or `['jury','comite']`) into `usePlatformAuth().roles`. ~~**No public sign-up.**~~ **REVERSED 2026-05-30** — public per-competition self-registration re-opened; the role grant now flows from application approval via `send-jury-welcome`/`invite-user` edge. See `docs/blueprints/jury-application-funnel.md`.
 
 ### 2.2 Per-juror profile — schema decision
 The 2026 `jury_profiles` table is string-keyed and carries Q-coded fields (`prenom`, `nom`, `qualite`, `organisation`, `email`, `assigned_sessions: text[]` of FR labels, `photo_base64`, `validated`, `grande_finale`). It stays as **archive only** — never read by the new app, never written by Module 3.
