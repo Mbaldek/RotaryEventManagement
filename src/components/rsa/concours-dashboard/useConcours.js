@@ -76,7 +76,7 @@ export function useEditionOverview(editionId) {
           RsaSession.withConfigForEdition(editionId),
           supabase.from('prizes').select('*').eq('edition_id', editionId),
           supabase.from('startups')
-            .select('id, club_id, status, session_id')
+            .select('id, name, club_id, status, session_id')
             .eq('edition_id', editionId),
         ]);
 
@@ -118,7 +118,12 @@ export function useEditionOverview(editionId) {
       const finalistsBySourceSession = {};
       for (const r of startupsRes.data || []) {
         if ((r.status === 'finaliste' || r.status === 'laureat') && r.session_id) {
-          finalistsBySourceSession[r.session_id] = true;
+          // Aligne sur la forme RPC : { "<session_id>": { startup_name, status } }
+          // (ClubSection lit finalistsBySource?.[s.id]?.startup_name).
+          finalistsBySourceSession[r.session_id] = {
+            startup_name: r.name,
+            status: r.status,
+          };
         }
       }
 

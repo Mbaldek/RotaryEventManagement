@@ -42,6 +42,7 @@ import {
   useRevokeClubRole,
 } from '../useMaster';
 import { COMP_ADMINS, UI } from '../i18n';
+import ConfirmModal from './ConfirmModal';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -111,6 +112,37 @@ const ROLES_TAB_I18N = {
     en: 'Only a master_admin can promote or revoke a competition admin.',
     de: 'Nur ein master_admin kann eine·n Wettbewerbsadministrator·in ernennen oder entziehen.',
   },
+  // ── Typed-confirm modals ──────────────────────────────────────────────────
+  revokeAdminTitle: {
+    fr: 'Révoquer cet admin compétition',
+    en: 'Revoke this competition admin',
+    de: 'Diese·n Wettbewerbsadministrator·in entziehen',
+  },
+  revokeAdminBody: {
+    fr: 'Cette personne perdra ses droits d’administration sur cette compétition. Pour confirmer, tapez la phrase ci-dessous.',
+    en: 'This person will lose their administration rights on this competition. To confirm, type the phrase below.',
+    de: 'Diese Person verliert ihre Administrationsrechte für diesen Wettbewerb. Tippen Sie zur Bestätigung die untenstehende Phrase.',
+  },
+  removeRoleTitle: {
+    fr: 'Retirer ce rôle',
+    en: 'Remove this role',
+    de: 'Diese Rolle entfernen',
+  },
+  removeRoleBody: {
+    fr: 'Ce membre perdra le rôle « {role} » dans ce club. Pour confirmer, tapez la phrase ci-dessous.',
+    en: 'This member will lose the “{role}” role in this club. To confirm, type the phrase below.',
+    de: 'Dieses Mitglied verliert die Rolle „{role}“ in diesem Club. Tippen Sie zur Bestätigung die untenstehende Phrase.',
+  },
+  typedConfirmLabel: {
+    fr: 'Phrase de confirmation',
+    en: 'Confirmation phrase',
+    de: 'Bestätigungsphrase',
+  },
+  typedConfirmMismatch: {
+    fr: 'La phrase saisie ne correspond pas.',
+    en: 'The phrase you typed does not match.',
+    de: 'Die eingegebene Phrase stimmt nicht überein.',
+  },
 };
 
 // ── Hooks data ──────────────────────────────────────────────────────────────
@@ -156,6 +188,7 @@ function CompetitionAdminsSection({ editionId, editionName, canMutate, t, lang }
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteErr, setInviteErr] = useState(null);
   const [inviting, setInviting] = useState(false);
+  const [revokeFor, setRevokeFor] = useState(null); // row à révoquer (typed-confirm)
 
   const fmtDate = (iso) => {
     if (!iso) return '—';
@@ -190,17 +223,20 @@ function CompetitionAdminsSection({ editionId, editionName, canMutate, t, lang }
     }
   }
 
-  async function onRevoke(row) {
-    const word = t(ROLES_TAB_I18N.removeWord);
-    const typed = window.prompt(`${word} ${row.email}`);
-    if (!typed || typed.trim() !== `${word} ${row.email}`) return;
+  async function confirmRevoke() {
+    if (!revokeFor) return;
     try {
-      await revoke.mutateAsync({ editionId, userId: row.user_id });
+      await revoke.mutateAsync({ editionId, userId: revokeFor.user_id });
       toast.success(t(COMP_ADMINS.revokeSuccess));
+      setRevokeFor(null);
     } catch (err) {
       toast.error(t(COMP_ADMINS.revokeError) + ' ' + (err?.message || ''));
+      setRevokeFor(null);
     }
   }
+
+  const revokeWord = t(ROLES_TAB_I18N.removeWord);
+  const revokePhrase = revokeFor ? `${revokeWord} ${revokeFor.email}` : '';
 
   return (
     <section className="mb-8">
@@ -331,7 +367,7 @@ function CompetitionAdminsSection({ editionId, editionName, canMutate, t, lang }
                 {canMutate && (
                   <button
                     type="button"
-                    onClick={() => onRevoke(row)}
+                    onClick={() => setRevokeFor(row)}
                     disabled={revoke.isPending}
                     className={`text-[12px] px-2.5 py-1.5 rounded-[4px] ${FOCUS_RING_CLASS} disabled:opacity-50`}
                     style={{ color: DANGER, background: 'white', border: `1px solid ${CREAM2}` }}
@@ -344,6 +380,20 @@ function CompetitionAdminsSection({ editionId, editionName, canMutate, t, lang }
           </ul>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!revokeFor}
+        title={t(ROLES_TAB_I18N.revokeAdminTitle)}
+        body={t(ROLES_TAB_I18N.revokeAdminBody)}
+        confirmPhrase={revokePhrase}
+        inputLabel={t(ROLES_TAB_I18N.typedConfirmLabel)}
+        mismatch={t(ROLES_TAB_I18N.typedConfirmMismatch)}
+        confirmLabel={t(COMP_ADMINS.revokeAction)}
+        cancelLabel={t(UI.cancel)}
+        onConfirm={confirmRevoke}
+        onClose={() => setRevokeFor(null)}
+        busy={revoke.isPending}
+      />
     </section>
   );
 }
@@ -359,6 +409,7 @@ function roleBadgeColor(role) {
 function ClubTeamPanel({ club, editionId, defaultOpen, t }) {
   const [open, setOpen] = useState(!!defaultOpen);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [removeFor, setRemoveFor] = useState(null); // { email, role } à retirer
   const membersQ = useClubMembers(open ? club.id : null);
   const revoke = useRevokeClubRole();
 
@@ -374,17 +425,23 @@ function ClubTeamPanel({ club, editionId, defaultOpen, t }) {
     return Array.from(map.values()).sort((a, b) => (a.email || '').localeCompare(b.email || ''));
   }, [membersQ.data]);
 
-  async function onRemove(email, role) {
-    const word = t(ROLES_TAB_I18N.removeWord);
-    const typed = window.prompt(`${word} ${email} (${role})`);
-    if (!typed || typed.trim() !== `${word} ${email} (${role})`) return;
+  async function confirmRemove() {
+    if (!removeFor) return;
+    const { email, role } = removeFor;
     try {
       await revoke.mutateAsync({ email, clubId: club.id, role });
       toast.success(t(COMP_ADMINS.revokeSuccess));
+      setRemoveFor(null);
     } catch (err) {
       toast.error(t(ROLES_TAB_I18N.removeError) + (err?.message || ''));
+      setRemoveFor(null);
     }
   }
+
+  const removeWord = t(ROLES_TAB_I18N.removeWord);
+  const removePhrase = removeFor
+    ? `${removeWord} ${removeFor.email} (${removeFor.role})`
+    : '';
 
   const clubName = club.club?.name || club.name || club.club_id || club.id;
   const totalMembers = (membersQ.data || []).length;
@@ -476,7 +533,7 @@ function ClubTeamPanel({ club, editionId, defaultOpen, t }) {
                       <button
                         key={r.role}
                         type="button"
-                        onClick={() => onRemove(row.email, r.role)}
+                        onClick={() => setRemoveFor({ email: row.email, role: r.role })}
                         disabled={revoke.isPending}
                         className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-[4px] ${FOCUS_RING_CLASS} disabled:opacity-50`}
                         style={{ color: DANGER, border: `1px solid ${CREAM2}`, background: 'white' }}
@@ -504,6 +561,20 @@ function ClubTeamPanel({ club, editionId, defaultOpen, t }) {
           }}
         />
       )}
+
+      <ConfirmModal
+        open={!!removeFor}
+        title={t(ROLES_TAB_I18N.removeRoleTitle)}
+        body={t(ROLES_TAB_I18N.removeRoleBody).replace('{role}', removeFor?.role || '')}
+        confirmPhrase={removePhrase}
+        inputLabel={t(ROLES_TAB_I18N.typedConfirmLabel)}
+        mismatch={t(ROLES_TAB_I18N.typedConfirmMismatch)}
+        confirmLabel={t(ROLES_TAB_I18N.removeRole)}
+        cancelLabel={t(UI.cancel)}
+        onConfirm={confirmRemove}
+        onClose={() => setRemoveFor(null)}
+        busy={revoke.isPending}
+      />
     </li>
   );
 }

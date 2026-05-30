@@ -162,5 +162,8 @@ export const UI = {
   assignmentsEmpty: { fr: 'Aucun juré dans app_user_roles. Provisionnez via Studio.',
                       en: 'No juror in app_user_roles. Provision via Studio.',
                       de: 'Kein Juror in app_user_roles. Bitte über das Studio zuweisen.' },
+  assignmentError:  { fr: "Échec de la mise à jour de l'affectation. Réessayez.",
+                      en: 'Failed to update the assignment. Please retry.',
+                      de: 'Zuweisung konnte nicht aktualisiert werden. Bitte erneut versuchen.' },
   jurorCol:         { fr: 'Juré',                en: 'Juror',              de: 'Juror' },
 };

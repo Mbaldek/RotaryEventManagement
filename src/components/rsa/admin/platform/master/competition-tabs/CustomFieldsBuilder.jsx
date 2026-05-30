@@ -48,6 +48,27 @@ import {
 import { DANGER, GOLD_TEXT } from '@/components/design/tokens.app';
 import { CUSTOM_FIELD_TYPES, FORMULAIRES } from '../i18n';
 import CustomFieldEditorModal, { buildEmptyField } from './CustomFieldEditorModal';
+import ConfirmModal from './ConfirmModal';
+
+// Libellés trilingues propres au dialogue de suppression de champ custom.
+// (Le corps explicatif réutilise FORMULAIRES.deleteConfirm.)
+const DELETE_CONFIRM_UI = {
+  title: {
+    fr: 'Supprimer ce champ custom',
+    en: 'Delete this custom field',
+    de: 'Dieses Custom-Feld löschen',
+  },
+  confirm: {
+    fr: 'Supprimer',
+    en: 'Delete',
+    de: 'Löschen',
+  },
+  cancel: {
+    fr: 'Annuler',
+    en: 'Cancel',
+    de: 'Abbrechen',
+  },
+};
 
 // Live form renderer fournie par l'équipe C
 // (src/components/rsa/forms/CustomFieldsRenderer.jsx). Le PreviewPane l'utilise
@@ -112,6 +133,9 @@ export default function CustomFieldsBuilder({
   const [modalOpen, setModalOpen] = useState(false);
   const [editingIdx, setEditingIdx] = useState(-1); // -1 = create
 
+  // Confirmation de suppression : { idx, fromModal } ou null.
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
   // Mobile preview accordion (open by default on desktop, collapsed on mobile)
   const [previewOpenMobile, setPreviewOpenMobile] = useState(false);
 
@@ -159,31 +183,31 @@ export default function CustomFieldsBuilder({
 
   const handleDelete = useCallback((idx) => {
     if (!onChange) return;
-    const confirmed = typeof window !== 'undefined'
-      ? window.confirm(t(FORMULAIRES.deleteConfirm))
-      : true;
-    if (!confirmed) return;
-    const next = safeFields.filter((_, i) => i !== idx);
-    // Re-number positions to keep them sequential.
-    const renumbered = next.map((f, i) => ({ ...f, position: i + 1 }));
-    onChange(renumbered);
-  }, [onChange, safeFields, t]);
+    setConfirmDelete({ idx, fromModal: false });
+  }, [onChange]);
 
   const handleDeleteFromModal = useCallback(() => {
     if (editingIdx === -1) {
       setModalOpen(false);
       return;
     }
-    const confirmed = typeof window !== 'undefined'
-      ? window.confirm(t(FORMULAIRES.deleteConfirm))
-      : true;
-    if (!confirmed) return;
-    const next = safeFields.filter((_, i) => i !== editingIdx);
+    setConfirmDelete({ idx: editingIdx, fromModal: true });
+  }, [editingIdx]);
+
+  // Exécute la suppression confirmée (depuis la liste ou depuis la modale).
+  const performDelete = useCallback(() => {
+    if (!confirmDelete) return;
+    const { idx, fromModal } = confirmDelete;
+    const next = safeFields.filter((_, i) => i !== idx);
+    // Re-number positions to keep them sequential.
     const renumbered = next.map((f, i) => ({ ...f, position: i + 1 }));
     onChange?.(renumbered);
-    setModalOpen(false);
-    setEditingIdx(-1);
-  }, [editingIdx, safeFields, onChange, t]);
+    setConfirmDelete(null);
+    if (fromModal) {
+      setModalOpen(false);
+      setEditingIdx(-1);
+    }
+  }, [confirmDelete, safeFields, onChange]);
 
   const handleDuplicate = useCallback((idx) => {
     if (!onChange) return;
@@ -465,6 +489,17 @@ export default function CustomFieldsBuilder({
         field={editingIdx === -1 ? null : safeFields[editingIdx]}
         existingKeys={existingKeys.filter((k) => editingIdx === -1 || k !== safeFields[editingIdx]?.key)}
         defaultPosition={safeFields.length + 1}
+      />
+
+      {/* Confirmation de suppression (remplace window.confirm) */}
+      <ConfirmModal
+        open={!!confirmDelete}
+        title={t(DELETE_CONFIRM_UI.title)}
+        body={t(FORMULAIRES.deleteConfirm)}
+        confirmLabel={t(DELETE_CONFIRM_UI.confirm)}
+        cancelLabel={t(DELETE_CONFIRM_UI.cancel)}
+        onConfirm={performDelete}
+        onClose={() => setConfirmDelete(null)}
       />
     </div>
   );

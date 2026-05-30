@@ -254,9 +254,9 @@ export default function Selection() {
   }
 
   // ── Mutation handlers (close over selectedId) ──────────────────────────
-  const handleSubmitReview = (payload) => upsert.mutate(payload);
-  const handleAdminValidate = (payload) => finalize.mutate(payload);
-  const handleAdminOverride = (payload) => override.mutate(payload);
+  const handleSubmitReview = (payload, options) => upsert.mutate(payload, options);
+  const handleAdminValidate = (payload, options) => finalize.mutate(payload, options);
+  const handleAdminOverride = (payload, options) => override.mutate(payload, options);
 
   return (
     <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>

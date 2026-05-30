@@ -5,10 +5,10 @@
 //
 // Disabled when the effective decision is is_final=true (admin lock).
 
-import React, { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { NAVY, INK, MUTED, GOLD, CREAM2, SERIF } from '@/components/design';
-import { TINT_DANGER, DANGER } from '@/components/design/tokens.app';
+import { TINT_DANGER, DANGER, SUCCESS } from '@/components/design/tokens.app';
 import { Field, Textarea } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
@@ -78,6 +78,27 @@ export default function DecisionPanel({
   );
   const [errors, setErrors] = useState({});
 
+  // Transient "enregistré" confirmation: the parent only signals success by the
+  // badge disappearing, so we surface a short-lived banner on the isPending
+  // true→false falling edge after a submit we initiated (avoids re-click doubt).
+  const [saved, setSaved] = useState(false);
+  const submittedRef = useRef(false);
+  const prevPendingRef = useRef(isPending);
+
+  useEffect(() => {
+    if (prevPendingRef.current && !isPending && submittedRef.current) {
+      submittedRef.current = false;
+      setSaved(true);
+    }
+    prevPendingRef.current = isPending;
+  }, [isPending]);
+
+  useEffect(() => {
+    if (!saved) return undefined;
+    const tid = setTimeout(() => setSaved(false), 3500);
+    return () => clearTimeout(tid);
+  }, [saved]);
+
   // If the props change (different dossier), reset the form.
   useEffect(() => {
     setDecision(latestMine?.decision || effectiveReview?.decision || DECISION_DEFAULT);
@@ -86,6 +107,8 @@ export default function DecisionPanel({
     );
     setRationale(latestMine?.rationale || effectiveReview?.rationale || '');
     setErrors({});
+    setSaved(false);
+    submittedRef.current = false;
   }, [startup?.id]);
 
   const handleSubmit = (e) => {
@@ -100,6 +123,8 @@ export default function DecisionPanel({
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
+    setSaved(false);
+    submittedRef.current = true;
     onSubmit?.({
       startupId: startup.id,
       reviewerId: authUser?.id,
@@ -215,6 +240,18 @@ export default function DecisionPanel({
             />
           )}
         </Field>
+
+        {saved && !isPending && (
+          <div
+            className="flex items-center gap-2 rounded-[4px] px-3 py-2 text-[12.5px]"
+            style={{ background: '#ecf1e5', color: NAVY, border: `1px solid ${CREAM2}` }}
+            role="status"
+            aria-live="polite"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: SUCCESS }} aria-hidden />
+            {t(UI.decisionSaved)}
+          </div>
+        )}
 
         <div className="flex justify-end">
           <button

@@ -21,6 +21,17 @@ const T = {
     en: 'No application open at the moment.',
     de: 'Derzeit ist keine Bewerbung geöffnet.',
   },
+  errorTitle: {
+    fr: 'Impossible de charger les compétitions',
+    en: 'Could not load the competitions',
+    de: 'Wettbewerbe konnten nicht geladen werden',
+  },
+  errorBody: {
+    fr: 'Un problème de connexion est survenu. Veuillez réessayer.',
+    en: 'A connection problem occurred. Please try again.',
+    de: 'Es ist ein Verbindungsproblem aufgetreten. Bitte erneut versuchen.',
+  },
+  retry: { fr: 'Réessayer', en: 'Retry', de: 'Erneut versuchen' },
   cta: { fr: 'Candidater', en: 'Apply', de: 'Bewerben' },
   deadline: { fr: 'Clôture le', en: 'Closes on', de: 'Anmeldeschluss' },
   noDeadline: { fr: 'Sans date de clôture', en: 'No closing date', de: 'Kein Stichtag' },
@@ -158,7 +169,7 @@ function Card({ entry }) {
 
 export default function OpenCompetitions() {
   const { t } = useLang();
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['rsa', 'open-competitions'],
     queryFn: () => Edition.openForApply(),
     staleTime: 60 * 1000,
@@ -173,9 +184,36 @@ export default function OpenCompetitions() {
     );
   }
 
-  // Erreur réseau → on traite comme un empty state (la page publique reste digne
-  // même si le backend hoquète ; l'utilisateur peut toujours passer par /Login).
-  if (isError || !data || data.length === 0) {
+  // Panne backend : état distinct du vrai empty — on signale clairement le
+  // problème de connexion et on offre un bouton « Réessayer », sans laisser
+  // croire qu'aucune compétition n'est ouverte.
+  if (isError) {
+    return (
+      <div
+        className="py-10 px-6 text-center rounded-[4px]"
+        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+        role="alert"
+      >
+        <p className="text-[15px] mb-1.5" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+          {t(T.errorTitle)}
+        </p>
+        <p className="text-[13.5px] mb-4" style={{ color: INK }}>
+          {t(T.errorBody)}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className={`text-[13.5px] font-medium px-4 py-2 rounded-[4px] text-white ${FOCUS_RING_CLASS}`}
+          style={{ background: NAVY }}
+        >
+          {t(T.retry)}
+        </button>
+      </div>
+    );
+  }
+
+  // Vrai empty state — succès backend mais aucune compétition ouverte.
+  if (!data || data.length === 0) {
     return (
       <div
         className="py-10 px-6 text-center rounded-[4px]"

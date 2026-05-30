@@ -14,7 +14,7 @@ export default function Stepper({ current, onStep, incompleteSteps = {} }) {
   const currentIndex = STEPS.findIndex((s) => s.id === current);
 
   return (
-    <nav aria-label="Étapes" className="mb-7">
+    <nav aria-label={t({ fr: 'Étapes', en: 'Steps', de: 'Schritte' })} className="mb-7">
       {/* Mobile : compact + barre de progression */}
       <div className="md:hidden">
         <div className="flex items-baseline justify-between mb-2">

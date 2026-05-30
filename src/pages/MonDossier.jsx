@@ -59,65 +59,131 @@ function Spinner() {
   return <Loader2 className="w-6 h-6 animate-spin" style={{ color: GOLD }} aria-hidden />;
 }
 
-// LoadingWatchdog — après 6s sans résolution, AUTOMATIQUEMENT clean la session
-// + redirect vers /Login. Évite le spinner infini quand une query Supabase
-// reste pending (zombie state, réseau, etc.). Pas de bouton à cliquer — on
-// fait le ménage tout seul pour l'utilisateur.
-function LoadingWatchdog({ edLoading, dosLoading, onForceRetry }) {
+// LoadingWatchdog — surveille un chargement qui dure. NON destructif par défaut :
+// un réseau lent ou un cold start Supabase ne doit JAMAIS signer-out
+// silencieusement une session saine. On distingue deux cas :
+//   1. Aucune erreur avérée → après un seuil long, on propose un simple bouton
+//      « Réessayer » (refetch des queries). On ne touche pas au localStorage.
+//   2. Erreur réelle ET persistante (edError/dosError) → on présume un état
+//      zombie du client et, seulement là, on propose le nettoyage de session
+//      (manuel, via bouton) avant un re-login propre.
+const PATIENCE_S = 20; // seuil avant de proposer "Réessayer" (chargement sain)
+const HEAL_HINT_S = 8;  // seuil avant de proposer le nettoyage (erreur avérée)
+
+function LoadingWatchdog({ edLoading, dosLoading, hasError, onForceRetry }) {
+  const { t } = useLang();
   const [tick, setTick] = useState(0);
-  const [autoHealing, setAutoHealing] = useState(false);
+  const [healing, setHealing] = useState(false);
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    const id = setInterval(() => setTick((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, []);
-  // Self-healing : au-delà de 6s, on présume client supabase zombie. Clean
-  // localStorage + redirect /Login propre. L'utilisateur re-login fresh.
-  useEffect(() => {
-    if (tick >= 6 && !autoHealing) {
-      setAutoHealing(true);
-       
-      console.warn('[MonDossier] watchdog 6s — auto-healing : clearing storage + redirect /Login');
-      try {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          const toRemove = [];
-          for (let i = 0; i < window.localStorage.length; i++) {
-            const key = window.localStorage.key(i);
-            if (key && (key.startsWith('sb-') || key.startsWith('supabase.auth.'))) {
-              toRemove.push(key);
-            }
+
+  // Nettoyage de session — strictement MANUEL (jamais déclenché par un timer).
+  // Purge les clés Supabase du localStorage puis redirige vers /Login.
+  const handleHeal = useCallback(() => {
+    setHealing(true);
+
+    console.warn('[MonDossier] manual session reset — clearing storage + redirect /Login');
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const toRemove = [];
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const key = window.localStorage.key(i);
+          if (key && (key.startsWith('sb-') || key.startsWith('supabase.auth.'))) {
+            toRemove.push(key);
           }
-          toRemove.forEach((k) => window.localStorage.removeItem(k));
         }
-      } catch {
-        /* localStorage indispo — on tente quand même le redirect */
+        toRemove.forEach((k) => window.localStorage.removeItem(k));
       }
-      setTimeout(() => { window.location.href = '/Login?reset=1'; }, 800);
+    } catch {
+      /* localStorage indispo — on tente quand même le redirect */
     }
-  }, [tick, autoHealing]);
-  if (autoHealing) {
+    setTimeout(() => { window.location.href = '/Login?reset=1'; }, 400);
+  }, []);
+
+  if (healing) {
     return (
       <div className="mt-6 max-w-[440px] mx-auto text-center">
         <p className="text-[13.5px] mb-2" style={{ color: INK }}>
-          Session zombie détectée. Nettoyage automatique en cours…
+          {t({
+            fr: 'Réinitialisation de la session en cours…',
+            en: 'Resetting your session…',
+            de: 'Sitzung wird zurückgesetzt…',
+          })}
         </p>
         <p className="text-[11.5px]" style={{ color: MUTED }}>
-          Vous allez être redirigé vers la page de connexion dans 1 seconde.
+          {t({
+            fr: 'Vous allez être redirigé vers la page de connexion.',
+            en: 'You will be redirected to the sign-in page.',
+            de: 'Sie werden zur Anmeldeseite weitergeleitet.',
+          })}
         </p>
       </div>
     );
   }
+
+  // Cas 2 — erreur réelle avérée : on propose le nettoyage de session manuel.
+  if (hasError && tick >= HEAL_HINT_S) {
+    return (
+      <div className="mt-6 max-w-[440px] mx-auto text-center">
+        <p className="text-[13px] mb-3" style={{ color: INK }}>
+          {t({
+            fr: 'Le chargement échoue de façon persistante. Votre session est peut-être expirée.',
+            en: 'Loading keeps failing. Your session may have expired.',
+            de: 'Das Laden schlägt wiederholt fehl. Ihre Sitzung ist möglicherweise abgelaufen.',
+          })}
+        </p>
+        <div className="flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={onForceRetry}
+            className={`text-[13px] font-medium px-4 py-2 rounded-[4px] ${FOCUS_RING_CLASS}`}
+            style={{ color: NAVY, border: `1px solid ${CREAM2}` }}
+          >
+            {t(UI.retry)}
+          </button>
+          <button
+            type="button"
+            onClick={handleHeal}
+            className={`text-[13px] font-medium px-4 py-2 rounded-[4px] text-white ${FOCUS_RING_CLASS}`}
+            style={{ background: NAVY }}
+          >
+            {t({
+              fr: 'Réinitialiser la session',
+              en: 'Reset session',
+              de: 'Sitzung zurücksetzen',
+            })}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Cas 1 — chargement sain mais long : ligne de diagnostic, puis bouton
+  // « Réessayer » NON destructif. Aucun wipe, aucun redirect automatique.
   if (tick < 4) {
     return null;
   }
   return (
     <div className="mt-6 max-w-[440px] mx-auto text-center">
       <p className="text-[12px]" style={{ color: MUTED }}>
-        Chargement… ({tick}s) · edition={edLoading ? '…' : 'ok'} · dossier={dosLoading ? '…' : 'ok'}
+        {t({
+          fr: `Chargement… (${tick}s)`,
+          en: `Loading… (${tick}s)`,
+          de: `Wird geladen… (${tick}s)`,
+        })}
+        {' · '}edition={edLoading ? '…' : 'ok'} · dossier={dosLoading ? '…' : 'ok'}
       </p>
-      {tick >= 5 && (
-        <p className="text-[11.5px] mt-2" style={{ color: MUTED }}>
-          Nettoyage auto dans {6 - tick}s…
-        </p>
+      {tick >= PATIENCE_S && (
+        <button
+          type="button"
+          onClick={onForceRetry}
+          className={`mt-3 text-[13px] font-medium px-4 py-2 rounded-[4px] ${FOCUS_RING_CLASS}`}
+          style={{ color: NAVY, border: `1px solid ${CREAM2}` }}
+        >
+          {t(UI.retry)}
+        </button>
       )}
     </div>
   );
@@ -265,6 +331,7 @@ export default function MonDossier() {
             <LoadingWatchdog
               edLoading={edLoading}
               dosLoading={dosLoading}
+              hasError={!!(edError || dosError)}
               onForceRetry={() => {
                 refetchEdition();
                 refetchDossier();
@@ -493,6 +560,7 @@ export default function MonDossier() {
         onPatch={handlePatch}
         onFlush={handleFlush}
         onSubmit={handleSubmit}
+        onCancel={editingSubmitted ? () => setEditingSubmitted(false) : undefined}
         saving={saveDraft.isPending}
         submitting={submit.isPending}
         readOnly={closed && !canEditSubmitted}

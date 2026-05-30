@@ -117,6 +117,10 @@ export const UI = {
   saveDecision:    { fr: 'Enregistrer la décision',   en: 'Save decision',        de: 'Entscheidung speichern' },
   updateDecision:  { fr: 'Modifier ma décision',      en: 'Update my decision',   de: 'Meine Entscheidung ändern' },
   saving:          { fr: 'Enregistrement…',           en: 'Saving…',              de: 'Wird gespeichert…' },
+  decisionSaved:   { fr: 'Décision enregistrée.',     en: 'Decision saved.',      de: 'Entscheidung gespeichert.' },
+  decisionSaveError: { fr: "Échec de l'enregistrement. Réessayez.",
+                       en: 'Save failed. Please retry.',
+                       de: 'Speichern fehlgeschlagen. Bitte erneut versuchen.' },
   errEligibleNeedsCluster: { fr: 'Choisissez un cluster pour une décision « éligible ».',
                              en: 'Pick a cluster for an "eligible" decision.',
                              de: 'Bitte wählen Sie ein Cluster, um die Entscheidung „förderfähig" festzulegen.' },
@@ -148,6 +152,9 @@ export const UI = {
                     en: 'Ask the admin to reopen.',
                     de: 'Bitte wenden Sie sich an die Administration, um die Entscheidung wiederzuöffnen.' },
   overrideOf:    { fr: 'Remplace #{id}',              en: 'Overrides #{id}',      de: 'Ersetzt #{id}' },
+  actionError:   { fr: "L'action a échoué. Réessayez.",
+                   en: 'The action failed. Please retry.',
+                   de: 'Die Aktion ist fehlgeschlagen. Bitte erneut versuchen.' },
 
   // Timeline
   byReviewer:    { fr: 'par',                          en: 'by',                  de: 'von' },

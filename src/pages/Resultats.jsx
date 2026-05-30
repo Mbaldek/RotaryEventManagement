@@ -133,6 +133,13 @@ const RANK_LABEL = {
   3: { fr: 'Bronze', en: 'Bronze', de: 'Bronze' },
 };
 
+// Libellés locaux à cette page (le dico canonique results-public/i18n.js est hors
+// périmètre de ce correctif — on évite l'inline t({fr,en,de}) en les regroupant ici).
+const T = {
+  noRanking: { fr: 'Aucun classement.', en: 'No ranking.', de: 'Keine Rangliste.' },
+  editionLabel: { fr: 'Édition', en: 'Edition', de: 'Ausgabe' },
+};
+
 function PodiumDot({ rank }) {
   // Or, argent, bronze — pastilles sobres, alignées à la palette Élysée.
   const palette = {
@@ -272,7 +279,7 @@ function SessionCard({ session, lang, t, index }) {
         </ul>
       ) : (
         <p className="text-[13px] italic" style={{ color: MUTED }}>
-          {t({ fr: 'Aucun classement.', en: 'No ranking.', de: 'Keine Rangliste.' })}
+          {t(T.noRanking)}
         </p>
       )}
     </motion.article>
@@ -333,7 +340,7 @@ export default function Resultats() {
 
   const seoDescription = useMemo(() => {
     if (palmares?.laureat) {
-      return `${tT.titleLead} ${palmares.edition.year} — ${tT.grandLaureat}: ${palmares.laureat.name}.`;
+      return `${tT.titleLead} ${palmares?.edition?.year} — ${tT.grandLaureat}: ${palmares.laureat.name}.`;
     }
     return tT.subtitleLead;
   }, [palmares, tT]);
@@ -516,7 +523,7 @@ export default function Resultats() {
               className="text-[11px] uppercase tracking-[0.15em]"
               style={{ color: MUTED }}
             >
-              {t({ fr: 'Édition', en: 'Edition', de: 'Ausgabe' })}
+              {t(T.editionLabel)}
             </label>
             <select
               id="edition-select"

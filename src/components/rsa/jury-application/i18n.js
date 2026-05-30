@@ -106,6 +106,19 @@ export const UI = {
     en: 'Pick at least one area.',
     de: 'Wählen Sie mindestens einen Bereich aus.',
   },
+  errClubRequired: {
+    fr: 'Sélectionnez un club hôte.',
+    en: 'Select a host club.',
+    de: 'Wählen Sie einen gastgebenden Club aus.',
+  },
+
+  // Avertissement discret quand AUCUN club n'est rattaché à la compétition :
+  // la candidature partira sans club et restera invisible des écrans club.
+  clubNoneWarning: {
+    fr: 'Aucun club partenaire n’est encore rattaché à cette compétition. Votre candidature sera transmise à l’organisation centrale.',
+    en: 'No partner club is attached to this competition yet. Your application will be routed to the central organisation.',
+    de: 'Diesem Wettbewerb ist noch kein Partnerclub zugeordnet. Ihre Bewerbung wird an die zentrale Organisation weitergeleitet.',
+  },
 
   // ── Submit & feedback ────────────────────────────────────────────────────
   submitCta: {
@@ -138,6 +151,19 @@ export const UI = {
     fr: 'caractères',
     en: 'characters',
     de: 'Zeichen',
+  },
+
+  // Bloc custom fields V2.5+ (séparateur "Questions supplémentaires")
+  additionalQuestions: {
+    fr: 'Questions supplémentaires',
+    en: 'Additional questions',
+    de: 'Zusätzliche Fragen',
+  },
+  // Foot de garantie (calmer la friction perçue)
+  noCommitment: {
+    fr: 'Aucun engagement tant que votre candidature n’est pas examinée.',
+    en: 'No commitment until your application is reviewed.',
+    de: 'Keine Verpflichtung, solange Ihre Bewerbung nicht geprüft wurde.',
   },
 
   // ── Master cockpit panel — review queue ───────────────────────────────────

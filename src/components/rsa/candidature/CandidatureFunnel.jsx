@@ -36,6 +36,7 @@ export default function CandidatureFunnel({
   onPatch, // (patch) => void — autosave débouncé (le parent fait saveDraft)
   onFlush, // (patch) => Promise — enregistrement immédiat
   onSubmit, // (draft) => Promise — soumission (status soumis + snapshot)
+  onCancel, // () => void — optionnel : retour à la vue suivi (édition d'un dossier soumis)
   saving = false,
   submitting = false,
   readOnly = false,
@@ -205,6 +206,13 @@ export default function CandidatureFunnel({
     [validateStep, draft],
   );
 
+  // Retour au suivi (mode édition d'un dossier soumis) : on flush l'autosave en
+  // vol pour ne perdre aucune saisie, puis on rend la main au parent.
+  const handleCancel = useCallback(() => {
+    flushPending();
+    onCancel?.();
+  }, [flushPending, onCancel]);
+
   const errsFor = (id) => stepErrors[id] || {};
 
   let stepNode = null;
@@ -346,6 +354,23 @@ export default function CandidatureFunnel({
             </span>
           )}
         </div>
+      )}
+      {/* Mode édition d'un dossier déjà soumis : retour explicite vers le suivi
+          (sinon quasi dead-end — l'utilisateur repart à l'étape 1 sans issue). */}
+      {onCancel && (
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-medium rounded-[4px] px-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+          style={{ color: NAVY }}
+        >
+          <ArrowLeft className="w-4 h-4" aria-hidden />
+          {t({
+            fr: 'Revenir au suivi de mon dossier',
+            en: 'Back to application tracking',
+            de: 'Zurück zur Bewerbungsverfolgung',
+          })}
+        </button>
       )}
       <Stepper current={step} onStep={goTo} incompleteSteps={incompleteSteps} />
 

@@ -639,9 +639,13 @@ export default function CommunicationTabRefonte({
     }
   };
 
-  const onDuplicateTpl = (template) => {
-    // Duplicate = open modal with copy and a different id (just bump id for now).
-    setOpenTpl({ ...template, id: `${template.id}-copy` });
+  const onDuplicateTpl = (template, stageLabel) => {
+    // Duplicate = open modal with a copy under a distinct id, while preserving
+    // the stage eyebrow. We strip any existing "-copy" suffix from the id so
+    // duplicating twice yields "…-copy", not "…-copy-copy".
+    const baseId = String(template.id || '').replace(/-copy$/, '');
+    setOpenTpl({ ...template, id: `${baseId}-copy` });
+    setOpenStageLabel(stageLabel || '');
   };
 
   const compName = competition?.name || '';
@@ -701,7 +705,7 @@ export default function CommunicationTabRefonte({
                   clubId={clubId}
                   editionId={editionId}
                   onPrepare={(tpl) => onOpenTemplate(tpl, stageLabel)}
-                  onDuplicate={onDuplicateTpl}
+                  onDuplicate={(tpl) => onDuplicateTpl(tpl, stageLabel)}
                 />
               ))}
             </div>

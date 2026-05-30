@@ -60,7 +60,11 @@ function isBlank(v) {
   return v == null || (typeof v === 'string' && v.trim() === '');
 }
 
-function validate(draft, t) {
+// `clubRequired` : true quand l'édition expose au moins un club rattaché.
+// Dans ce cas, le choix d'un club est OBLIGATOIRE — sinon la candidature
+// spontanée part avec club_id NULL et reste invisible de JuryApplicationsTab
+// (le panneau master couvrant club_id IS NULL a été retiré le 2026-05-29).
+function validate(draft, t, clubRequired) {
   const errs = {};
   if (isBlank(draft.email)) errs.email = t(UI.errRequired);
   else if (!EMAIL_RE.test(String(draft.email).trim())) errs.email = t(UI.errEmail);
@@ -70,6 +74,10 @@ function validate(draft, t) {
 
   if (!Array.isArray(draft.expertise) || draft.expertise.length === 0) {
     errs.expertise = t(UI.errExpertiseEmpty);
+  }
+
+  if (clubRequired && isBlank(draft.clubId)) {
+    errs.clubId = t(UI.errClubRequired);
   }
 
   const mlen = (draft.motivation || '').trim().length;
@@ -167,6 +175,13 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
     () => clubs.map((c) => ({ value: c.id, label: c.name || c.id })),
     [clubs],
   );
+  // Le club devient OBLIGATOIRE dès que l'édition expose au moins un club
+  // rattaché et que le champ n'est pas verrouillé par l'URL (?club=). Sinon on
+  // tolère club null — voie spontanée centrale, signalée par un avertissement.
+  const clubRequired = !clubLocked && clubOptions.length > 0;
+  // Édition choisie mais aucun club rattaché → club null toléré + warning discret.
+  const clubNoneAvailable =
+    !clubLocked && !loadingClubs && !!draft.editionId && clubOptions.length === 0;
   const expertiseOptions = useMemo(
     () => EXPERTISE_OPTIONS.map((o) => ({ value: o.value, label: t(o.label) })),
     [t],
@@ -200,7 +215,7 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
     if (status === 'submitting') return;
     setSubmitError(null);
 
-    const errs = validate(draft, t);
+    const errs = validate(draft, t, clubRequired);
     // V2.5+ Custom fields — validation séparée puis mergée sous `custom_data`.
     const customErrs = validateCustomFields(customFields, draft.custom_data || {}, t);
     if (Object.keys(customErrs).length > 0) {
@@ -338,16 +353,20 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
         </Field>
       )}
 
-      {/* Club préféré (optionnel) — masqué si pré-rempli via URL ?club= */}
+      {/* Club hôte — masqué si pré-rempli via URL ?club=. Obligatoire dès que
+          l'édition expose au moins un club rattaché (clubRequired), sinon
+          optionnel + avertissement discret (clubNoneAvailable). */}
       {clubLocked ? (
         <input type="hidden" name="clubId" value={draft.clubId} />
       ) : (
         <Field
           label={t(UI.fieldClub)}
           id="devenir-jury-clubId"
+          required={clubRequired}
           helper={t(UI.clubHelper)}
+          error={errors.clubId}
         >
-          {({ id, describedBy }) => (
+          {({ id, describedBy, invalid }) => (
             <Select
               id={id}
               value={draft.clubId}
@@ -361,10 +380,19 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
                     : t(UI.clubPlaceholder)
               }
               options={clubOptions}
+              invalid={invalid}
               aria-describedby={describedBy}
             />
           )}
         </Field>
+      )}
+
+      {/* Avertissement discret : édition sans club rattaché → candidature
+          spontanée centrale (club null toléré). */}
+      {clubNoneAvailable && (
+        <p className="-mt-2 text-[12px] leading-relaxed" style={{ color: MUTED }}>
+          <span style={{ color: GOLD }}>·</span> {t(UI.clubNoneWarning)}
+        </p>
       )}
 
       {/* Expertise (multi-chips) */}
@@ -442,11 +470,7 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
               className="uppercase text-[10px] tracking-[0.16em] font-medium"
               style={{ color: GOLD }}
             >
-              {lang === 'en'
-                ? 'Additional questions'
-                : lang === 'de'
-                  ? 'Zusätzliche Fragen'
-                  : 'Questions supplémentaires'}
+              {t(UI.additionalQuestions)}
             </span>
           </div>
           <CustomFieldsRenderer
@@ -507,12 +531,7 @@ export default function JuryApplicationForm({ initialEdition = null, initialClub
 
       {/* Petit foot de garantie : pas de hot air, calmer la friction perçue */}
       <p className="text-xs mt-1" style={{ color: MUTED }}>
-        <span style={{ color: GOLD }}>·</span>{' '}
-        {lang === 'en'
-          ? 'No commitment until your application is reviewed.'
-          : lang === 'de'
-            ? 'Keine Verpflichtung, solange Ihre Bewerbung nicht geprüft wurde.'
-            : 'Aucun engagement tant que votre candidature n’est pas examinée.'}
+        <span style={{ color: GOLD }}>·</span> {t(UI.noCommitment)}
       </p>
     </form>
   );

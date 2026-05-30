@@ -9,7 +9,7 @@
 // UI : matrice checkbox juré × session. Toggle = useAssignJuror / useUnassignJuror.
 
 import React, { useMemo, useState } from 'react';
-import { Loader2, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Settings2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import {
   NAVY,
   INK,
@@ -18,6 +18,7 @@ import {
   CREAM2,
   SERIF,
 } from '@/components/design/tokens';
+import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import {
   useAllAssignments,
@@ -32,6 +33,7 @@ import { compareSessions } from './constants';
 export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
   const { t, lang } = useLang();
   const [open, setOpen] = useState(false);
+  const [toggleError, setToggleError] = useState(false);
 
   const jurors = useJurorsDirectory();
   const sessions = useSessionsForEdition(editionId);
@@ -59,14 +61,21 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
     if (!juror?.user_id) return; // juror sans profil = pas d'auth.uid() -> can't assign yet
     const key = `${juror.user_id}|${session.id}`;
     const has = assignedIndex.has(key);
-    if (has) {
-      await unassign.mutateAsync({ juryUserId: juror.user_id, sessionId: session.id });
-    } else {
-      await assign.mutateAsync({
-        juryUserId: juror.user_id,
-        sessionId: session.id,
-        createdBy: adminUserId ?? null,
-      });
+    setToggleError(false);
+    try {
+      if (has) {
+        await unassign.mutateAsync({ juryUserId: juror.user_id, sessionId: session.id });
+      } else {
+        await assign.mutateAsync({
+          juryUserId: juror.user_id,
+          sessionId: session.id,
+          createdBy: adminUserId ?? null,
+        });
+      }
+    } catch {
+      // mutateAsync rejette si la RPC échoue — on surface un feedback au lieu
+      // de laisser la promesse rejetée non gérée.
+      setToggleError(true);
     }
   };
 
@@ -102,6 +111,18 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
           <p className="text-[12px] mb-3" style={{ color: INK }}>
             {t(UI.assignmentsHelp)}
           </p>
+
+          {toggleError && (
+            <div
+              className="rounded-[4px] p-2.5 mb-3 flex items-start gap-2 text-[12px]"
+              style={{ background: TINT_DANGER, color: NAVY, border: `1px solid ${DANGER}33` }}
+              role="alert"
+              aria-live="assertive"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: DANGER }} aria-hidden />
+              <span>{t(UI.assignmentError)}</span>
+            </div>
+          )}
 
           {isLoading ? (
             <div className="flex items-center gap-2 text-[12px]" style={{ color: MUTED }}>

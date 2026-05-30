@@ -75,6 +75,14 @@ export default function CompetitionEditView({ editionId, onClose }) {
       eligibility_rules:        competition.eligibility_rules || {},
       public_results_enabled:   !!competition.public_results_enabled,
       description_md:           competition.description_md || '',
+      // Hero éditorial + président·e du jury — lus/écrits par IdentityTab.
+      // À seeder ici sinon ils s'affichent vides à l'ouverture d'une compétition
+      // existante et l'autosave risque d'écraser les valeurs DB en blanc.
+      hero_title:               competition.hero_title || '',
+      hero_tagline:             competition.hero_tagline || '',
+      hero_description:         competition.hero_description || '',
+      jury_president:           competition.jury_president || '',
+      jury_president_photo_path: competition.jury_president_photo_path || null,
       // Champs legacy non éditables ici mais à préserver côté state.
       prize_main:               competition.prize_main ?? null,
       prize_special:            competition.prize_special ?? null,

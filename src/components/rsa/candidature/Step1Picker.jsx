@@ -110,6 +110,11 @@ const T = {
     en: 'Something went wrong. Please try again.',
     de: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
   },
+  legalSignature: {
+    fr: 'Service candidatures',
+    en: 'Applications service',
+    de: 'Bewerbungsservice',
+  },
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -123,7 +128,7 @@ function mapError(raw, t) {
 }
 
 export default function Step1Picker({ initialEdition = null, onSent }) {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   const { signInWithMagicLink } = usePlatformAuth();
 
   const [editionId, setEditionId] = useState('');
@@ -356,9 +361,7 @@ export default function Step1Picker({ initialEdition = null, onSent }) {
 
       <p className="mt-6 pt-5 text-center text-[11px]" style={{ color: MUTED, borderTop: `1px solid ${CREAM2}` }}>
         {/* signature légale */}
-        {lang === 'fr' && 'Service candidatures'}
-        {lang === 'en' && 'Applications service'}
-        {lang === 'de' && 'Bewerbungsservice'}
+        {t(T.legalSignature)}
       </p>
     </motion.div>
   );

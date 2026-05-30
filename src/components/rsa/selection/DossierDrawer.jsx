@@ -3,9 +3,10 @@
 // Renders nothing useful if no startup is selected (the parent decides whether to
 // show an empty-state hint).
 
-import React from 'react';
-import { ArrowLeft, Loader2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, AlertTriangle, Loader2, X } from 'lucide-react';
 import { NAVY, INK, MUTED, GOLD, CREAM2, SERIF } from '@/components/design';
+import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import StatusBadge from './StatusBadge';
@@ -117,6 +118,29 @@ export default function DossierDrawer({
   const { t } = useLang();
   const { isComite, isAdmin } = usePlatformAuth();
 
+  // The parent fires mutate(payload) without surfacing failures here. We inject
+  // a per-call onError into each handler so a failed RPC isn't silent.
+  const [actionError, setActionError] = useState(null);
+
+  // Clear any stale error when switching dossiers.
+  useEffect(() => {
+    setActionError(null);
+  }, [startupId]);
+
+  const withErrorFeedback = (handler) =>
+    handler
+      ? (payload) => {
+          setActionError(null);
+          handler(payload, {
+            onError: () => setActionError(t(UI.actionError)),
+          });
+        }
+      : undefined;
+
+  const handleSubmitReviewSafe = withErrorFeedback(onSubmitReview);
+  const handleAdminValidateSafe = withErrorFeedback(onAdminValidate);
+  const handleAdminOverrideSafe = withErrorFeedback(onAdminOverride);
+
   if (!startupId) {
     return (
       <div
@@ -191,13 +215,25 @@ export default function DossierDrawer({
         <ReviewHistoryTimeline reviews={reviews} sessions={sessions} />
       </Section>
 
+      {actionError && (
+        <div
+          className="rounded-[4px] p-3 mb-4 flex items-start gap-2 text-[12.5px]"
+          style={{ background: TINT_DANGER, color: NAVY, border: `1px solid ${DANGER}33` }}
+          role="alert"
+          aria-live="assertive"
+        >
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: DANGER }} aria-hidden />
+          <span>{actionError}</span>
+        </div>
+      )}
+
       {canDecide && (
         <DecisionPanel
           startup={startup}
           effectiveReview={effective}
           reviews={reviews}
           sessions={sessions}
-          onSubmit={onSubmitReview}
+          onSubmit={handleSubmitReviewSafe}
           isPending={isSubmittingReview}
           isLocked={!!effective?.is_final}
           className="mb-4"
@@ -209,8 +245,8 @@ export default function DossierDrawer({
           startup={startup}
           effectiveReview={effective}
           sessions={sessions}
-          onValidate={onAdminValidate}
-          onOverride={onAdminOverride}
+          onValidate={handleAdminValidateSafe}
+          onOverride={handleAdminOverrideSafe}
           isValidating={isAdminValidating}
           isOverriding={isAdminOverriding}
         />
