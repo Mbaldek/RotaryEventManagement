@@ -82,6 +82,14 @@ export function PlatformAuthProvider({ children }) {
   // flash quand le watchdog 10s fire avant que loadIdentity ne complète sur
   // réseau froid. Cf. docs/deepsolve/auth-rights-stability.md.
   const [identityLoaded, setIdentityLoaded] = useState(false);
+  // FIX 2026-05-30 — rolesLoaded = rsa_my_roles a *réellement* répondu (success
+  // OU array vide confirmé). C'est le SEUL signal fiable pour autoriser le
+  // routing post-Login : si rsa_my_roles n'a pas chargé, on ne peut PAS
+  // décider qu'un user est candidat (roles=[]). identityLoaded est un OR de 4
+  // RPC dont 3 peuvent être vides légitimement (profile, club, competition) —
+  // mauvaise source de vérité pour décider du routing.
+  // Cf. docs/deepsolve/sso-google-master-admin-misroute.md.
+  const [rolesLoaded, setRolesLoaded] = useState(false);
 
   // FIX 2026-06-04 — Single-flight loadIdentity contre les concurrent calls
   // déclenchés par le double SIGNED_IN de React StrictMode + le re-emit
@@ -98,6 +106,7 @@ export function PlatformAuthProvider({ children }) {
     if (!email) {
       setProfile(null);
       setRoles([]);
+      setRolesLoaded(false); // pas d'utilisateur = pas de roles à charger — reset pour le prochain login
       setClubMemberships([]);
       setCompetitionAdminEditions([]);
       setIdentityLoaded(true); // pas authentifié = "settled" pour les gates
@@ -187,6 +196,12 @@ export function PlatformAuthProvider({ children }) {
       console.warn('[PlatformAuth] roles load failed — preserving previous roles');
     } else if (Array.isArray(rolesRes?.data)) {
       setRoles(rolesRes.data);
+      // FIX 2026-05-30 — rolesLoaded passe à true UNIQUEMENT quand rsa_my_roles
+      // a réellement répondu sans erreur (array, même vide = candidat sans rôle
+      // = vrai signal positif). Sur erreur/timeout : on laisse rolesLoaded à
+      // false pour que Login.jsx attende un retry plutôt que de router vers
+      // /MonDossier par fallback.
+      setRolesLoaded(true);
     }
     if (cmRes?.error) {
       // eslint-disable-next-line no-console
@@ -206,9 +221,15 @@ export function PlatformAuthProvider({ children }) {
     const anySuccess =
       !profRes?.error || !rolesRes?.error || !cmRes?.error || !caRes?.error;
     if (anySuccess) setIdentityLoaded(true);
-    // Retourne un drapeau pour permettre au caller (init / onAuthStateChange)
-    // de programmer un retry si toutes les RPC ont échoué (full outage).
-    return { anySuccess };
+    // Retourne deux drapeaux pour permettre au caller (init / onAuthStateChange)
+    // de programmer un retry :
+    //   * anySuccess=false → full outage (retry tout)
+    //   * rolesErrored=true → partial outage sur rsa_my_roles (la RPC canonique
+    //     pour le routing) — retry agressif même si anySuccess=true, sinon le
+    //     user reste avec roles=[] jusqu'au prochain SIGNED_IN (qu'on ne reçoit
+    //     plus une fois SIGNED_IN initial passé) → spinner /Login infini ou
+    //     pire, routing fallback /MonDossier.
+    return { anySuccess, rolesErrored: !!rolesRes?.error };
   }, []);
 
   // Wrapper single-flight autour de loadIdentityImpl : sérialise les appels
@@ -355,6 +376,17 @@ export function PlatformAuthProvider({ children }) {
           console.warn('[PlatformAuth] loadIdentity full outage — scheduling retry');
           setTimeout(() => { if (active) loadIdentity(session.user.email); }, 3000);
           setTimeout(() => { if (active) loadIdentity(session.user.email); }, 8000);
+        }
+        // FIX 2026-05-30 — retry CIBLÉ si rsa_my_roles a échoué (partial outage),
+        // même si les 3 autres RPC ont réussi. Sans ce retry, master_admin reste
+        // avec roles=[] jusqu'au prochain SIGNED_IN/USER_UPDATED — c'est-à-dire
+        // jamais avant le refresh manuel — et Login route fallback /MonDossier.
+        // Cf. docs/deepsolve/sso-google-master-admin-misroute.md §5 Patch 2.
+        else if (active && session?.user && result?.rolesErrored) {
+          // eslint-disable-next-line no-console
+          console.warn('[PlatformAuth] rsa_my_roles errored — scheduling targeted retry');
+          setTimeout(() => { if (active) loadIdentity(session.user.email); }, 1500);
+          setTimeout(() => { if (active) loadIdentity(session.user.email); }, 5000);
         }
         // Sentry : on attache l'identité dès qu'on a la session. {id, email}
         // seulement — pas de PII supplémentaire (cf. observability/sentry.js).
@@ -509,6 +541,7 @@ export function PlatformAuthProvider({ children }) {
     setAuthUser(null);
     setProfile(null);
     setRoles([]);
+    setRolesLoaded(false);
     setClubMemberships([]);
     setCompetitionAdminEditions([]);
     // F8 — Coordination cross-provider : on signale aux autres AuthProviders
@@ -551,7 +584,8 @@ export function PlatformAuthProvider({ children }) {
     profile,
     roles,
     loading,
-    identityLoaded,                                    // true après 1er loadIdentity réussi
+    identityLoaded,                                    // true après 1er loadIdentity réussi (1 RPC sur 4)
+    rolesLoaded,                                       // true UNIQUEMENT après rsa_my_roles confirmée — source de vérité pour le routing post-Login
     isAuthenticated: !!authUser,
     isJury: roles.includes('jury'),
     isComite: roles.includes('comite'),
