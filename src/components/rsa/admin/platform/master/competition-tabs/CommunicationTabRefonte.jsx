@@ -158,10 +158,10 @@ function HistorySection({ editionId, clubId, t, lang }) {
 
       {filtered.length > 0 && (
         <div
-          className="rounded-[4px] overflow-hidden"
+          className="rounded-[4px] overflow-x-auto"
           style={{ background: 'white', border: `1px solid ${CREAM2}` }}
         >
-          <table className="w-full text-[12.5px]">
+          <table className="min-w-full text-[12.5px]">
             <thead>
               <tr style={{ background: TINT_ADMIN, borderBottom: `1px solid ${CREAM2}` }}>
                 <th className="text-left px-3 py-2 uppercase tracking-[0.12em] text-[10.5px]" style={{ color: MUTED }}>

@@ -71,12 +71,12 @@ export default function JuryActivityTable({
 
   return (
     <div
-      className="overflow-hidden rounded-[4px]"
+      className="overflow-x-auto rounded-[4px]"
       style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
       <table
         role="table"
-        className="w-full text-[13px]"
+        className="min-w-full text-[13px]"
         style={{ borderCollapse: 'collapse' }}
       >
         <thead>

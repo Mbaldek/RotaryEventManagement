@@ -1204,8 +1204,8 @@ export default function DecksTab({ sessionId }) {
             </span>
           )}
         </div>
-        <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white border border-stone-200 rounded-lg overflow-x-auto">
+          <table className="min-w-full text-sm">
             <thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500">
               <tr>
                 <th className="px-3 py-2 text-left w-6">#</th>
@@ -1478,8 +1478,8 @@ export default function DecksTab({ sessionId }) {
           </div>
         </div>
 
-        <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white border border-stone-200 rounded-lg overflow-x-auto">
+          <table className="min-w-full text-sm">
             <thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500">
               <tr>
                 <th className="px-3 py-2 text-left w-6">#</th>
