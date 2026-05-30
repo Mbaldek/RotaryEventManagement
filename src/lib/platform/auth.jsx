@@ -19,6 +19,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { isAuthError } from '@/lib/platform/authErrors';
+import { withTimeout } from '@/lib/platform/promiseTimeout';
 import { setSentryUser, clearSentryUser, captureException, Sentry } from '@/lib/observability/sentry';
 
 const PlatformAuthContext = createContext(null);
@@ -135,22 +136,13 @@ export function PlatformAuthProvider({ children }) {
     // Sur timeout, on retombe sur {data: null, error: timeout} → roles=[] —
     // mais grâce au skip loadIdentity sur TOKEN_REFRESHED (cf. onAuthStateChange
     // plus bas), ce cas ne survient qu'au boot initial.
-    // FIX 2026-06-04 — Catch silencieux des late rejections : si la promise
-    // sous-jacente est ABORTED après que le timeout a déjà gagné la race
-    // (cas typique du navigator.locks "steal" sur sb-*-auth-token entre 2
-    // tabs / StrictMode double-mount), Promise.race a déjà résolu mais la
-    // promise originale rejette plus tard → "Uncaught (in promise) AbortError"
-    // dans la console. On attache un .catch() no-op pour que l'erreur soit
-    // "handled" même si plus personne n'attend la valeur.
-    const withTimeout = (promise, ms, label) => {
-      promise.catch(() => {});
-      return Promise.race([
-        promise,
-        new Promise((resolve) =>
-          setTimeout(() => resolve({ data: null, error: { message: `${label} timeout ${ms}ms` } }), ms),
-        ),
-      ]);
-    };
+    // FIX 2026-06-04 / 2026-05-30 — late rejections + thenable PostgREST :
+    // withTimeout vit désormais dans @/lib/platform/promiseTimeout (pur, testé).
+    // Il NORMALISE le builder PostgREST (thenable sans .catch) en vraie Promise
+    // avant de swallow les late rejections (AbortError navigator.locks). Avant,
+    // `promise.catch()` sur le builder jetait « catch is not a function » et
+    // faisait throw loadIdentity AVANT tout appel réseau → spinner /Login
+    // perpétuel. Cf. docs/deepsolve/sso-google-master-admin-misroute.md §11.
     // V3 — 4e appel parallèle : my_competition_admin_editions (RPC SECURITY
     // DEFINER, retourne text[] des éditions que le user administre). Si l'RPC
     // n'existe pas encore en local (migration V3 non appliquée), withTimeout
