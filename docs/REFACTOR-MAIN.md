@@ -347,3 +347,52 @@ Ajustements collatéraux :
 - `src/App.jsx` — supprimer `'TableViewMockup'` du `LUNCH_PAGES` set.
 
 Pas de redirection nécessaire : `TableViewMockup` n'a jamais été linké en nav. Les 4 autres fichiers n'avaient pas de route.
+
+### Vagues livrées — récapitulatif
+
+| Vague | Commit | Status | LOC delta | Files delta |
+|---|---|---|---:|---:|
+| R-dead-code | `0a47f63` | ✅ | -3 707 | -5 |
+| R5a — split `entities.js` | `f685168` | ✅ | ~+30 (boilerplate facade) | +11 |
+| R5b — split master `i18n.js` | `ac315d5` | ✅ | ~+40 (boilerplate facade) | +15 |
+| **Total à 2026-05-30** | | | **-3 637** | **+21** |
+
+État `src/` post-R5 :
+- LOC : 81 308 (avant pipeline 84 942 → -4.3 %)
+- Fichiers : 383 (split structurel attendu, pas un régression)
+- Lint : 21 erreurs (baseline inchangée, aucune régression)
+- Build : ✅ 10.78s
+
+R5a domaines : `editions`, `sessions`, `app-user-roles`, `startups`, `selection`, `jury`, `clubs`, `competition-admins`, `jury-applications` + `_createEntity.js` helper + `index.js` facade.
+
+R5b tabs : `tabs`, `competition-admins`, `ui`, `competitions`, `pilotage`, `clubs`, `roles`, `finale`, `overview`, `diffusion`, `communication`, `constants`, `formulaires`, `session-jury` + `index.js` merge.
+
+### Découverte critique (Phase 2 workflow `wzbblh733`)
+
+L'audit import-only sur les 6 god-components Rsa* a produit 4 "orphan" (`RsaDashboard`, `RsaJuryHub`, `RsaRecap`, `RsaScore`) qui sont en réalité **endpoints URL actifs** depuis V3 admin (QR codes jurés, emails finale, deep links). Toute future vague kill RSA legacy doit **grep aussi les URL templatées** (`href={`/Rsa\\w+...`}`), pas seulement les imports JS.
+
+URLs runtime à migrer ou conserver :
+- `/RsaScore?s=...` — `LiveTab`, `SetupTab`, `JurorLinkQR`, `DecksTab`, `FinaleEmailsSection`, `SessionDetailDrawer`
+- `/RsaRecap?s=...` — `ResultsTab`, `CommunicationsSection`
+- `/RsaJuryHub` — emails finale, `CommunicationsSection`
+- `/RsaDashboard` — `RsaAdmin.jsx:197`
+
+→ Nouvelle vague potentielle **R-rsa-url-migration** (feature, pas refactor pur) : remplacer ces URLs par les routes V3 équivalentes avant kill.
+
+### Vagues restantes à exécuter
+
+| Vague | Statut | Bloquant ? |
+|---|---|---|
+| R1 — extraction lunch | ⏳ planifiée | Phase 3 du workflow `wzbblh733` n'a pas tenu — à découper en sous-tâches < 15 min |
+| R-rsa-url-migration | ⏳ optionnelle, prérequis kill RSA legacy | Décision user : migrer ou garder |
+| R2 — split god-components RSA | ⏳ planifiée | Dépend du sort des Rsa* legacy (kill ou migrate) |
+| R3 — fusion admin triplet | ⏳ planifiée | Dépend R1 (AdminControl + UserManagement lunch) |
+| R4 — aplatissement structure | ⏳ planifiée | Après R3 |
+| R-tail — cosmétique | ⏳ planifiée | Dernier |
+
+### Note bundle (post-R5)
+
+Chunks > 200 kB encore présents :
+- `Admin` 993 kB / gzip 262 kB → **candidat #1 split** (R2/R3 le découpera)
+- `RsaAdmin` 208 kB / gzip 60 kB → idem
+- `supabase` 176 / `react` 167 / `ui` 154 / `motion` 123 — vendors normaux, pas d'action.
