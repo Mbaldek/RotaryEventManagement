@@ -33,10 +33,6 @@ export default function CandidatureFunnel({
   startup,
   edition,
   rules,
-  // Chantier 2 — libellé humain du club d'examen (résolu par MonDossier).
-  // Affiché dans le mini-banner contextualisé pour que le candidat sache QUI
-  // review son dossier à chaque step.
-  clubLabel,
   onPatch, // (patch) => void — autosave débouncé (le parent fait saveDraft)
   onFlush, // (patch) => Promise — enregistrement immédiat
   onSubmit, // (draft) => Promise — soumission (status soumis + snapshot)
@@ -319,9 +315,10 @@ export default function CandidatureFunnel({
     );
   }
 
-  // Chantier 2 — mini-banner contextualisé toujours visible (au-dessus du Stepper).
-  // Rappelle en permanence à QUELLE compétition (édition × club) le dossier est rattaché
-  // + la date de clôture, pour que le candidat ne perde jamais le repère.
+  // Mini-banner contextualisé toujours visible (au-dessus du Stepper). Rappelle
+  // en permanence à QUELLE compétition le dossier est rattaché + la date de
+  // clôture, pour que le candidat ne perde jamais le repère. Pas de mention de
+  // club : la startup candidate au concours en général, l'admin route ensuite.
   const editionTag = edition?.year || edition?.name || null;
   const contextDeadline = closeDate
     ? t({ fr: `Clôture le ${closeDate}`, en: `Closes on ${closeDate}`, de: `Schluss am ${closeDate}` })
@@ -341,12 +338,6 @@ export default function CandidatureFunnel({
               style={{ color: GOLD }}
             >
               {editionTag}
-              {clubLabel && (
-                <>
-                  <span style={{ color: MUTED }}> · </span>
-                  {clubLabel}
-                </>
-              )}
             </span>
           </div>
           {contextDeadline && (

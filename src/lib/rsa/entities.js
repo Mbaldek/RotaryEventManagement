@@ -145,17 +145,13 @@ export const Edition = {
     return data ?? null;
   },
 
-  // Chantier 2 — Liste les compétitions ouvertes à candidature (édition × club).
+  // Liste les compétitions ouvertes à candidature — 1 ligne par édition.
   //
-  // Forme retournée : [{ edition, club, rules }] où rules = merge des règles
-  // globales d'édition + override edition_clubs.eligibility_rules (le per-club
-  // écrase les clés correspondantes).
+  // Forme retournée : [{ edition, rules }] où rules = règles globales d'édition
+  // uniquement (plus de merge per-club côté candidat : le candidat ne distingue
+  // pas les clubs, c'est l'admin qui route post-soumission).
   //
   // "Ouverte" = editions.status='open' AND (application_close >= today OR null).
-  // - monoclub : 1 ligne par édition avec le club implicite via edition_clubs
-  //   (backfill 'paris' pour les éditions historiques) ; si aucun lien n'existe,
-  //   on tombe sur null pour le club (UX : on saute l'entrée plutôt que de mentir).
-  // - multiclub : 1 ligne par (edition_id, club_id) attaché.
   async openForApply() {
     const today = new Date().toISOString().slice(0, 10);
     const { data: editions, error: e1 } = await supabase
@@ -167,40 +163,13 @@ export const Edition = {
       .order('application_open', { ascending: false });
     if (e1) throw e1;
     const list = editions || [];
-    if (!list.length) return [];
-    const ids = list.map((e) => e.id);
-    // JOIN sur edition_clubs (lecture publique, cf. ec_read policy) avec le club.
-    const { data: links, error: e2 } = await supabase
-      .from('edition_clubs')
-      .select('edition_id, club_id, eligibility_rules, club:clubs(*)')
-      .in('edition_id', ids);
-    if (e2) throw e2;
-    const linksByEdition = new Map();
-    for (const row of links || []) {
-      const arr = linksByEdition.get(row.edition_id) || [];
-      arr.push(row);
-      linksByEdition.set(row.edition_id, arr);
-    }
-    const out = [];
-    for (const edition of list) {
-      const baseRules =
+    return list.map((edition) => ({
+      edition,
+      rules:
         edition.eligibility_rules && typeof edition.eligibility_rules === 'object'
           ? edition.eligibility_rules
-          : {};
-      const rows = linksByEdition.get(edition.id) || [];
-      for (const row of rows) {
-        const override =
-          row.eligibility_rules && typeof row.eligibility_rules === 'object'
-            ? row.eligibility_rules
-            : {};
-        out.push({
-          edition,
-          club: row.club || { id: row.club_id, name: row.club_id },
-          rules: { ...baseRules, ...override },
-        });
-      }
-    }
-    return out;
+          : {},
+    }));
   },
 };
 
@@ -411,10 +380,13 @@ export const Startup = {
   //    on rafraîchit la TTL et renvoie son id (on ne crée pas un nouveau).
   // Renvoie l'id du startup ; le claim définitif (rattacher owner_id) se fait
   // au callback post-magic-link via rsa_claim_pending_application().
-  async createPendingApplication({ editionId, clubId = null, email }) {
+  async createPendingApplication({ editionId, email }) {
+    // p_club_id reste dans la signature SQL mais on passe systématiquement NULL :
+    // la startup candidate au concours en général, l'admin route ensuite vers
+    // un club organisateur post-soumission.
     const { data, error } = await supabase.rpc('rsa_create_pending_application', {
       p_edition_id: editionId,
-      p_club_id: clubId,
+      p_club_id: null,
       p_email: email,
     });
     if (error) throw error;

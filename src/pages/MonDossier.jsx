@@ -14,20 +14,17 @@
 // Auto-création tôt : la ligne dossier doit exister avant le 1er upload de document
 // (RLS storage clé sur startup_id), donc « Commencer » insère immédiatement le brouillon.
 //
-// V2 multi-club : si l'édition active a model='multiclub', on insère AVANT le tunnel
-// un step « Choisis ton club » qui liste les clubs rattachés à la compétition (via
-// EditionClub.forEdition). La startup est créée avec son club_id dès « Commencer ».
-// Pour les monoclub historiques, le club est implicite ('paris' par backfill).
+// Pas de choix de club côté candidat : la startup candidate au concours en général.
+// L'admin (master/competition_admin) route ensuite le dossier vers un club organisateur
+// post-soumission (par pays / affinité). startups.club_id reste NULL jusque-là.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Loader2, MapPin } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import {
   PageShell,
   PlatformFooter,
   Eyebrow,
-  EditorialTitle,
   GOLD,
   NAVY,
   INK,
@@ -44,7 +41,6 @@ import {
   CandidatureTracking,
   useActiveEdition,
   useEdition,
-  useEditionClubRules,
   useMyDossier,
   useCreateDraft,
   useSaveDraft,
@@ -54,7 +50,6 @@ import {
 import ChampionPhotoOptIn from '@/components/rsa/candidature/ChampionPhotoOptIn';
 import { UI } from '@/components/rsa/candidature/i18n';
 import { formatDate } from '@/components/rsa/candidature/validation';
-import { EditionClub } from '@/lib/rsa/entities';
 
 function Centered({ children }) {
   return <div className="min-h-[40vh] flex items-center justify-center">{children}</div>;
@@ -132,12 +127,11 @@ export default function MonDossier() {
   const { isAuthenticated, loading: authLoading, authUser } = usePlatformAuth();
   const { t, lang } = useLang();
 
-  // Chantier 2 — query params `?edition=…&club=…` posés par OpenCompetitions /
-  // Login. Si fournis : on épingle l'édition (au lieu de l'active globale) et
-  // on pré-remplit le choix de club. Si absents : comportement historique.
+  // Query param `?edition=…` posé par OpenCompetitions / Candidater. Si fourni :
+  // on épingle l'édition (au lieu de l'active globale). Pas de notion de club
+  // côté candidat — l'admin route post-soumission.
   const [searchParams] = useSearchParams();
   const editionParam = searchParams.get('edition') || null;
-  const clubParam = searchParams.get('club') || null;
 
   // Si l'URL épingle une édition, on l'utilise — sinon on retombe sur l'active.
   const activeQ = useActiveEdition();
@@ -158,37 +152,8 @@ export default function MonDossier() {
   // Mode édition forcé après soumission (« Modifier mon dossier »).
   const [editingSubmitted, setEditingSubmitted] = useState(false);
 
-  // V2 multi-club : club choisi par le candidat (état local pour le step picker).
-  // Pré-rempli avec dossier.club_id si dossier déjà créé.
-  // Chantier 2 : si `?club=…` est fourni dans l'URL ET qu'il n'y a pas encore de
-  // dossier, on adopte immédiatement ce club comme choix initial.
-  const [chosenClubId, setChosenClubId] = useState(clubParam);
-  // Sync : dès qu'on a un dossier, on adopte SON club_id (réouverture après reload).
-  useEffect(() => {
-    if (dossier?.club_id && chosenClubId !== dossier.club_id) {
-      setChosenClubId(dossier.club_id);
-    }
-  }, [dossier?.club_id, chosenClubId]);
-
-  const isMulticlub = edition?.model === 'multiclub';
-
-  // Clubs rattachés à la compétition active (utilisé uniquement en multiclub).
-  const editionClubsQ = useQuery({
-    queryKey: ['rsa', 'mon-dossier', 'edition-clubs', editionId],
-    queryFn: () => EditionClub.forEdition(editionId),
-    enabled: !!editionId && isMulticlub,
-    staleTime: 5 * 60 * 1000,
-  });
-  const editionClubs = editionClubsQ.data || [];
-
-  // Chantier 2 — règles d'éligibilité effectives.
-  // Si on a un dossier avec un club_id assigné, on merge edition.rules + per-club
-  // override via useEditionClubRules. Sinon (avant choix), on garde les règles
-  // globales d'édition seules (rulesFromEdition) pour le step picker.
-  const dossierClubId = dossier?.club_id || null;
-  const effectiveRulesQ = useEditionClubRules(editionId, dossierClubId);
-  const rulesGlobal = useMemo(() => rulesFromEdition(edition), [edition]);
-  const rules = dossierClubId ? effectiveRulesQ.data : rulesGlobal;
+  // Règles d'éligibilité : globales de l'édition (pas de merge per-club côté candidat).
+  const rules = useMemo(() => rulesFromEdition(edition), [edition]);
 
   // Clôture des candidatures dépassée ? (lecture seule après la deadline)
   const closed = useMemo(() => {
@@ -209,15 +174,6 @@ export default function MonDossier() {
   }, [edition]);
 
   const closeDate = formatDate(edition?.application_close, lang);
-
-  // Chantier 2 — Résolution du libellé humain du club pour l'eyebrow du Funnel.
-  // Hoisté ici (avant tout early-return) pour respecter les rules-of-hooks :
-  // ce useMemo doit être appelé dans le même ordre à chaque render.
-  const clubLabel = useMemo(() => {
-    if (!dossier?.club_id) return null;
-    const row = editionClubs.find((r) => r.club_id === dossier.club_id);
-    return row?.club?.name || dossier.club_id;
-  }, [dossier?.club_id, editionClubs]);
 
   // ── Mutations exposées au funnel ───────────────────────────────────────────
   const handlePatch = useCallback(
@@ -252,30 +208,21 @@ export default function MonDossier() {
     [dossier?.id, submit],
   );
 
-  // V2 multi-club : pour une édition multiclub, le club DOIT être choisi avant la
-  // création du brouillon (la colonne startups.club_id est NOT NULL après migration).
-  // Pour les monoclub, on retombe sur 'paris' (backfill 2026) qui doit exister.
-  const resolveClubIdForCreate = useCallback(() => {
-    if (isMulticlub) return chosenClubId; // requis ; null bloque le démarrage
-    return 'paris'; // legacy monoclub (édition 2026 backfillée)
-  }, [isMulticlub, chosenClubId]);
-
+  // Création du brouillon : club_id reste NULL (admin routera post-soumission).
   const handleStart = useCallback(() => {
     if (createDraft.isPending || dossier?.id) return;
-    const club_id = resolveClubIdForCreate();
-    if (!club_id) return; // multiclub sans club choisi → bouton désactivé en aval
     createDraft.mutate({
       ownerId: authUser?.id,
-      patch: { name: 'Brouillon', email: authUser?.email ?? null, club_id },
+      patch: { name: 'Brouillon', email: authUser?.email ?? null, club_id: null },
     });
-  }, [createDraft, dossier?.id, authUser, resolveClubIdForCreate]);
+  }, [createDraft, dossier?.id, authUser]);
 
-  // Chantier 2 — auto-création du brouillon quand l'URL fournit ?edition=…&club=…
-  // ET qu'aucun dossier n'existe encore. Skip l'écran intro/picker, le candidat
-  // arrive direct dans le funnel. Garde-fou via ref pour ne mutate qu'UNE fois.
+  // Auto-création du brouillon quand l'URL fournit ?edition=… ET qu'aucun dossier
+  // n'existe encore. Skip l'écran intro, le candidat arrive direct dans le funnel.
+  // Garde-fou via ref pour ne mutate qu'UNE fois.
   const autoCreateRef = useRef(false);
   useEffect(() => {
-    if (!editionParam || !clubParam) return;
+    if (!editionParam) return;
     if (!edition || !authUser) return;
     if (dossier) return;
     if (createDraft.isPending) return;
@@ -284,9 +231,9 @@ export default function MonDossier() {
     autoCreateRef.current = true;
     createDraft.mutate({
       ownerId: authUser.id,
-      patch: { name: 'Brouillon', email: authUser.email ?? null, club_id: clubParam },
+      patch: { name: 'Brouillon', email: authUser.email ?? null, club_id: null },
     });
-  }, [editionParam, clubParam, edition, authUser, dossier, createDraft, closed]);
+  }, [editionParam, edition, authUser, dossier, createDraft, closed]);
 
   // ── États de garde ─────────────────────────────────────────────────────────
   // DIAGNOSTIC : log l'état des queries à chaque render pour debug spinner infini
@@ -376,10 +323,7 @@ export default function MonDossier() {
 
   // ── Intro (aucun dossier) ──────────────────────────────────────────────────
   if (!dossier) {
-    // V2 multi-club : si l'édition active est multiclub et le candidat n'a pas
-    // encore choisi, on l'oblige à sélectionner un club avant le « Commencer ».
-    const needsClubPick = isMulticlub && !chosenClubId;
-    const canStart = !closed && !createDraft.isPending && (!isMulticlub || !!chosenClubId);
+    const canStart = !closed && !createDraft.isPending;
     return (
       <PageShell nav footer={<PlatformFooter />}>
         {/* Hero H-Vertical-Rule — barre gold gauche + texte stacké, voix dossier personnel. */}
@@ -481,73 +425,6 @@ export default function MonDossier() {
           </p>
         </nav>
 
-        {/* V2 step — picker de club (compétitions multiclub uniquement) */}
-        {isMulticlub && !closed && (
-          <section className="mb-7" aria-label={t(UI.pickClubEyebrow)}>
-            <div className="flex items-center gap-2.5 mb-2">
-              <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-              <span
-                className="uppercase text-[10.5px] tracking-[0.18em] font-medium"
-                style={{ color: GOLD }}
-              >
-                {t(UI.pickClubEyebrow)}
-              </span>
-            </div>
-            <p className="text-[13.5px] mb-4 max-w-[60ch]" style={{ color: INK, lineHeight: 1.6 }}>
-              {t(UI.pickClubBody)}
-            </p>
-            {editionClubsQ.isLoading && (
-              <p className="text-[13px]" style={{ color: MUTED }}>{t(UI.pickClubLoading)}</p>
-            )}
-            {!editionClubsQ.isLoading && editionClubs.length === 0 && (
-              <p className="text-[13px]" style={{ color: MUTED }}>
-                {t(UI.pickClubEmpty)}
-              </p>
-            )}
-            {editionClubs.length > 0 && (
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup" aria-label={t(UI.pickClubEyebrow)}>
-                {editionClubs.map((row) => {
-                  const c = row.club || {};
-                  const selected = chosenClubId === row.club_id;
-                  return (
-                    <li key={row.club_id}>
-                      <button
-                        type="button"
-                        onClick={() => setChosenClubId(row.club_id)}
-                        role="radio"
-                        aria-checked={selected}
-                        aria-pressed={selected}
-                        className={`w-full text-left rounded-[4px] p-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[#c9a84c]/60 ${FOCUS_RING_CLASS}`}
-                        style={{
-                          background: selected ? '#f5ede0' : 'white',
-                          border: `1px solid ${selected ? GOLD : CREAM2}`,
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[15px]" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
-                              {c.name || row.club_id}
-                            </p>
-                            {c.region && (
-                              <p className="text-[12px] mt-1 inline-flex items-center gap-1.5" style={{ color: MUTED }}>
-                                <MapPin className="w-3 h-3" aria-hidden /> {c.region}
-                              </p>
-                            )}
-                            <p className="text-[11px] mt-1 font-mono" style={{ color: MUTED }}>{row.club_id}</p>
-                          </div>
-                          {selected && (
-                            <span className="uppercase text-[10px] tracking-[0.18em]" style={{ color: GOLD }} aria-hidden>·</span>
-                          )}
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-        )}
-
         {closed ? (
           <p className="text-[14px]" style={{ color: INK }}>
             {t(UI.noOpenEdition)}
@@ -561,7 +438,7 @@ export default function MonDossier() {
             style={{ background: createDraft.isPending ? MUTED : NAVY }}
           >
             {createDraft.isPending && <Loader2 className="w-4 h-4 animate-spin" aria-hidden />}
-            {needsClubPick ? t(UI.pickClubFirst) : t(UI.introStart)}
+            {t(UI.introStart)}
           </button>
         )}
         {createDraft.isError && (
@@ -602,9 +479,8 @@ export default function MonDossier() {
   }
 
   // ── Tunnel (brouillon, ou édition d'un dossier soumis) ─────────────────────
-  // Note Chantier 2 : on n'affiche plus ici l'eyebrow `… · edition · club` car
-  // le CandidatureFunnel porte désormais son propre mini-banner contextualisé
-  // (toujours visible quel que soit le step). On garde juste l'eyebrow générique.
+  // Le mini-banner contextualisé du Funnel affiche désormais l'édition seule
+  // (plus de club côté candidat — assigné par admin post-soumission).
   return (
     <PageShell nav footer={<PlatformFooter />}>
       <div className="mb-5">
@@ -614,7 +490,6 @@ export default function MonDossier() {
         startup={dossier}
         edition={edition}
         rules={rules}
-        clubLabel={clubLabel}
         onPatch={handlePatch}
         onFlush={handleFlush}
         onSubmit={handleSubmit}

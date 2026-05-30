@@ -1,13 +1,13 @@
-// Step1Picker — V3 Vague 2, feature E (Candidater self-signup public).
+// Step1Picker — écran public self-signup (Candidater).
 //
-// Premier écran public quand un visiteur anonyme arrive sur /Candidater?intent=apply
-// (ou via "Candidater" depuis OpenCompetitions). Il choisit :
-//   - une compétition (édition × club) parmi les ouvertures (Edition.openForApply)
+// Le candidat choisit :
+//   - une compétition (édition seule, pas de club — la startup candidate au
+//     concours en général, l'admin route ensuite vers un club organisateur)
 //   - une adresse email
 //
 // Au submit :
-//   1. RPC rsa_create_pending_application(edition_id, club_id, email) — crée un
-//      draft pending dans startups (owner_id=NULL, pending_expires_at = +7j).
+//   1. RPC rsa_create_pending_application(edition_id, email) — crée un draft
+//      pending dans startups (owner_id=NULL, club_id=NULL, pending_expires_at = +7j).
 //   2. Magic-link envoyé via supabase.auth.signInWithOtp(email,
 //      emailRedirectTo=/Candidater?claim=1)
 //   3. Confirmation "Vérifiez votre email"
@@ -15,8 +15,7 @@
 // Idempotence : si un draft pending existe déjà pour (email, edition), le RPC
 // rafraîchit la TTL et renvoie l'id — pas de doublon.
 //
-// Pré-remplissage : si edition + club arrivent en query (?edition=...&club=...),
-// les selects sont préfocus.
+// Pré-remplissage : si ?edition=… arrive en query, le select est préfocus.
 //
 // 100% tokens. i18n FR/EN/DE. framer-motion pour la transition states.
 
@@ -123,12 +122,11 @@ function mapError(raw, t) {
   return `${t(T.errGeneric)}${msg ? ` (${msg})` : ''}`;
 }
 
-export default function Step1Picker({ initialEdition = null, initialClub = null, onSent }) {
+export default function Step1Picker({ initialEdition = null, onSent }) {
   const { t, lang } = useLang();
   const { signInWithMagicLink } = usePlatformAuth();
 
-  const [editionKey, setEditionKey] = useState('');
-  // editionKey = `${editionId}__${clubId || ''}` — combo pour gérer multi-club.
+  const [editionId, setEditionId] = useState('');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
   const [error, setError] = useState(null);
@@ -139,32 +137,26 @@ export default function Step1Picker({ initialEdition = null, initialClub = null,
     staleTime: 60 * 1000,
   });
 
-  // Pre-select si query params fournis et match dans la liste ouverte.
+  // Pre-select si query param fourni et match dans la liste ouverte.
   useEffect(() => {
-    if (!openList.length || editionKey) return;
+    if (!openList.length || editionId) return;
     if (initialEdition) {
-      const match = openList.find(
-        (e) => e.edition.id === initialEdition && (e.club?.id || '') === (initialClub || ''),
-      );
-      if (match) setEditionKey(`${match.edition.id}__${match.club?.id || ''}`);
+      const match = openList.find((e) => e.edition.id === initialEdition);
+      if (match) setEditionId(match.edition.id);
     }
-  }, [openList, initialEdition, initialClub, editionKey]);
+  }, [openList, initialEdition, editionId]);
 
   const options = useMemo(() => {
-    return openList.map((entry) => {
-      const value = `${entry.edition.id}__${entry.club?.id || ''}`;
-      const editionLabel = entry.edition.name || `${entry.edition.year}`;
-      const clubLabel = entry.club?.name ? ` · ${entry.club.name}` : '';
-      return { value, label: `${editionLabel}${clubLabel}` };
-    });
+    return openList.map((entry) => ({
+      value: entry.edition.id,
+      label: entry.edition.name || `${entry.edition.year}`,
+    }));
   }, [openList]);
 
   const selected = useMemo(() => {
-    if (!editionKey) return null;
-    return openList.find(
-      (e) => `${e.edition.id}__${e.club?.id || ''}` === editionKey,
-    ) || null;
-  }, [openList, editionKey]);
+    if (!editionId) return null;
+    return openList.find((e) => e.edition.id === editionId) || null;
+  }, [openList, editionId]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -184,10 +176,9 @@ export default function Step1Picker({ initialEdition = null, initialClub = null,
 
     setStatus('sending');
     try {
-      // 1. Crée le draft pending (owner_id=NULL, expire dans 7j)
+      // 1. Crée le draft pending (owner_id=NULL, club_id=NULL, expire dans 7j)
       await Startup.createPendingApplication({
         editionId: selected.edition.id,
-        clubId: selected.club?.id || null,
         email: value,
       });
 
@@ -287,8 +278,8 @@ export default function Step1Picker({ initialEdition = null, initialClub = null,
               id={id}
               aria-describedby={describedBy}
               invalid={invalid}
-              value={editionKey}
-              onChange={(e) => setEditionKey(e.target.value)}
+              value={editionId}
+              onChange={(e) => setEditionId(e.target.value)}
               placeholder={t(T.competitionPlaceholder)}
               options={options}
               disabled={sending || isLoading || options.length === 0}

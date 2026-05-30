@@ -234,32 +234,19 @@ export default function usePilotageStatus({ competition }) {
     // on considère done quand step 1-5 sont done & step 2-4 ne sont pas vides)
     const step6Done = step1.done && step2.done && step3.done && step4.done && (step5.done || step5.optional);
 
-    // Mode mono-club OR 0-1 club attaché → 2 liens génériques (apply + jury)
-    // + 1 lien public. Le candidat/juré peut arriver sans préciser le club, le
-    // form le déduira (mono : auto-sélectionné ; multi : il sélectionne).
-    //
-    // Mode multi-club avec ≥2 clubs attachés → 1 lien apply ET 1 lien jury PAR
-    // CLUB (= N mini-compétitions). Pré-remplir &club= permet de masquer le
-    // sélecteur de club dans le funnel candidat/juré et lui parle directement
-    // de SA mini-compétition. Plus 1 lien public commun.
+    // Apply : 1 lien UNIQUE pour toute la compétition (la startup candidate au
+    // concours en général, l'admin route ensuite vers un club organisateur).
+    // Jury : reste club-aware (un juré rejoint le comité d'UN club précis) →
+    // en multi-club, 1 lien jury par club + 1 lien public partagé.
     let links = [];
     if (editionId) {
-      const useGenericLinks = isMonoclub || attached.length <= 1;
-      if (useGenericLinks) {
-        links = [
-          { key: 'apply',  path: `/Candidater?edition=${editionId}`, clubName: null },
-          { key: 'jury',   path: `/DevenirJury?edition=${editionId}`, clubName: null },
-          { key: 'public', path: '/Concours', clubName: null },
-        ];
+      links.push({ key: 'apply', path: `/Candidater?edition=${editionId}`, clubName: null });
+
+      const useGenericJury = isMonoclub || attached.length <= 1;
+      if (useGenericJury) {
+        links.push({ key: 'jury', path: `/DevenirJury?edition=${editionId}`, clubName: null });
       } else {
         for (const row of attachedListEnriched) {
-          links.push({
-            key: `apply:${row.id}`,
-            kind: 'apply',
-            path: `/Candidater?edition=${editionId}&club=${encodeURIComponent(row.id)}`,
-            clubId: row.id,
-            clubName: row.name,
-          });
           links.push({
             key: `jury:${row.id}`,
             kind: 'jury',
@@ -268,8 +255,9 @@ export default function usePilotageStatus({ competition }) {
             clubName: row.name,
           });
         }
-        links.push({ key: 'public', kind: 'public', path: '/Concours', clubName: null });
       }
+
+      links.push({ key: 'public', kind: 'public', path: '/Concours', clubName: null });
     }
 
     const step6 = {

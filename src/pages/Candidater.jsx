@@ -130,7 +130,6 @@ export default function Candidater() {
 
   const claim = searchParams.get('claim') === '1';
   const editionParam = searchParams.get('edition') || null;
-  const clubParam = searchParams.get('club') || null;
 
   // SEO meta — toujours actif quel que soit l'état.
   useSeoMeta(lang, t);
@@ -179,24 +178,18 @@ export default function Candidater() {
   }, [claim, authLoading, isAuthenticated, editionParam, navigate, claimState]);
 
   // Si l'utilisateur est déjà authentifié SANS flag claim : on l'envoie sur
-  // /MonDossier (il est déjà connecté, pas besoin de re-choisir).
-  // V3 bug bash V4 — préserve les query params `?edition=…&club=…` pour que les
-  // deep-links partagés par les clubs (ex. "candidatez à RSA 2027 - Paris") ne
-  // perdent pas leur contexte quand le destinataire est déjà loggé.
+  // /MonDossier (il est déjà connecté, pas besoin de re-choisir). On préserve
+  // ?edition=… pour que les deep-links partagés gardent leur contexte.
   useEffect(() => {
     if (claim) return;
     if (authLoading) return;
     if (isAuthenticated && authUser) {
-      const params = new URLSearchParams();
-      if (editionParam) params.set('edition', editionParam);
-      if (clubParam) params.set('club', clubParam);
-      const qs = params.toString();
-      navigate(qs ? `/MonDossier?${qs}` : '/MonDossier', { replace: true });
+      const qs = editionParam ? `?edition=${encodeURIComponent(editionParam)}` : '';
+      navigate(`/MonDossier${qs}`, { replace: true });
     }
-  }, [claim, authLoading, isAuthenticated, authUser, navigate, editionParam, clubParam]);
+  }, [claim, authLoading, isAuthenticated, authUser, navigate, editionParam]);
 
   const initialEdition = useMemo(() => editionParam, [editionParam]);
-  const initialClub = useMemo(() => clubParam, [clubParam]);
 
   // ── Claim view ─────────────────────────────────────────────────────────────
   if (claim && (authLoading || claimState === 'claiming' || claimState === 'done')) {
@@ -271,7 +264,7 @@ export default function Candidater() {
         </p>
         <PublicEventBadge
           editionId={initialEdition}
-          clubId={initialClub}
+          clubId={null}
           kind="startup"
           className="mt-6"
         />
@@ -365,7 +358,6 @@ export default function Candidater() {
                 <Step1Picker
                   key="step1"
                   initialEdition={initialEdition}
-                  initialClub={initialClub}
                 />
               </AnimatePresence>
             </div>

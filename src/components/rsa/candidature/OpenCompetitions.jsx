@@ -1,15 +1,13 @@
-// OpenCompetitions — Chantier 2 : liste publique des compétitions ouvertes à
-// candidature (une carte par couple édition × club). Sert d'entrée découverte
-// depuis la page `/Candidater` et oriente vers `/Login?intent=candidate&edition=…&club=…`
-// qui retombe sur `/MonDossier` une fois authentifié.
-//
-// Utilise Edition.openForApply() qui flatten les éditions ouvertes par club
-// rattaché (cf. entities.js) + applique le merge eligibility_rules global+club.
+// OpenCompetitions — liste publique des compétitions ouvertes à candidature.
+// 1 carte par édition (plus de différenciation par club côté candidat : la
+// startup candidate au concours en général, l'admin route ensuite). Sert
+// d'entrée découverte depuis `/Candidater` et navigue vers `/Candidater?edition=…`
+// qui prépare Step1Picker / claim post-magic-link.
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Loader2, ArrowRight, Calendar } from 'lucide-react';
+import { Loader2, ArrowRight, Calendar } from 'lucide-react';
 import { NAVY, GOLD, INK, MUTED, CREAM2, SERIF, FOCUS_RING_CLASS } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { Edition } from '@/lib/rsa/entities';
@@ -79,19 +77,12 @@ function summarizeRules(rules, t, lang) {
 function Card({ entry }) {
   const navigate = useNavigate();
   const { t, lang } = useLang();
-  const { edition, club, rules } = entry;
+  const { edition, rules } = entry;
   const criteria = summarizeRules(rules, t, lang);
   const closeDate = edition.application_close ? formatDate(edition.application_close, lang) : null;
-  const location = club?.region || club?.country || null;
 
   const handleApply = () => {
-    // V3 Vague 2 (feature E) — route directe vers /Candidater avec deep-link
-    // pré-remplissant le Step1Picker. Avant : on routait vers /Login?intent=…
-    // qui forçait l'auth d'abord. Maintenant la self-signup permet de démarrer
-    // un dossier en draft (pending_email) AVANT auth.
-    const params = new URLSearchParams({ edition: edition.id });
-    if (club?.id) params.set('club', club.id);
-    navigate(`/Candidater?${params.toString()}`);
+    navigate(`/Candidater?edition=${encodeURIComponent(edition.id)}`);
   };
 
   return (
@@ -114,19 +105,7 @@ function Card({ entry }) {
           style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
         >
           {edition.name}
-          {club?.name && (
-            <>
-              <span style={{ color: MUTED }}> · </span>
-              {club.name}
-            </>
-          )}
         </h3>
-        {location && (
-          <p className="text-[12.5px] mt-1.5 inline-flex items-center gap-1.5" style={{ color: MUTED }}>
-            <MapPin className="w-3.5 h-3.5" aria-hidden />
-            {location}
-          </p>
-        )}
       </div>
 
       {criteria.length > 0 && (
@@ -213,7 +192,7 @@ export default function OpenCompetitions() {
   return (
     <ul className="grid grid-cols-1 md:grid-cols-2 gap-5 list-none m-0 p-0">
       {data.map((entry) => (
-        <li key={`${entry.edition.id}_${entry.club?.id || 'none'}`} className="flex">
+        <li key={entry.edition.id} className="flex">
           <div className="flex-1 flex">
             <Card entry={entry} />
           </div>
