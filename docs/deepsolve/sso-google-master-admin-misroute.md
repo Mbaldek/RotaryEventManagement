@@ -274,6 +274,27 @@ Deux défauts combinés :
 
 ---
 
+## 11. VRAIE cause-racine — `withTimeout` crashait sur le thenable PostgREST (2026-05-30, commit `9c5a3e5`)
+
+**Mea culpa : le Plan A.2 (§10) traitait une fausse piste.** Le diagnostic « session morte » reposait sur les logs serveur (un `refresh_token 400`) + une console PARTIELLE. La console COMPLÈTE a révélé l'erreur réelle :
+
+```
+[PlatformAuth] onAuthStateChange failed: TypeError: X.catch is not a function
+[PlatformAuth] init failed (tokens preserved): TypeError: X.catch is not a function
+```
+
+**Cause :** `withTimeout` (ajouté au single-flight le 2026-06-04) faisait `promise.catch(() => {})` sur le résultat de `supabase.from(...).maybeSingle()` / `supabase.rpc(...)`. Or **les query builders PostgREST sont des _thenables_ (ils ont `.then`) mais PAS de vraies Promises — ils n'ont ni `.catch` ni `.finally`**. La ligne jetait donc `TypeError: catch is not a function` SYNCHRONEMENT, à la première des 4 requêtes → `loadIdentityImpl` throw AVANT le moindre appel réseau → `loadIdentity` throw → capturé par le try/catch de l'IIFE et de `onAuthStateChange`. Conséquence : `setRoles`/`setRolesLoaded(true)` jamais atteints → `rolesLoaded` éternellement `false` → safety-net spinner perpétuel.
+
+**Indice sous-exploité §2 :** il n'y avait AUCUN appel `rsa_my_roles` dans les logs API serveur. C'était cohérent — `loadIdentity` crashait avant d'émettre la moindre requête. Cet indice aurait dû primer sur le `refresh_token 400` (événement antérieur, sans rapport).
+
+**Fix (`9c5a3e5`) :** `src/lib/platform/promiseTimeout.js` (pur, testé — `promiseTimeout.test.js`, 5 cas dont la régression « thenable sans `.catch` »). `withTimeout` normalise d'abord : `const normalized = Promise.resolve(promise)` (adopte le thenable, exécution unique) PUIS `normalized.catch(() => {})` + `Promise.race`. `auth.jsx` importe ce helper et supprime la version inline cassée.
+
+**Statut des fixes §10 (Plan A.2) :** conservés — ils restent corrects et utiles en défense en profondeur (escape hatch `ForceLogoutLink` après 6s ; retry centralisé `handleLoadResult` piloté aussi par `onAuthStateChange`/SSO ; recovery sur vraie 401). Ils ne suffisaient simplement pas, car la cause réelle était en amont (`loadIdentity` ne s'exécutait jamais).
+
+**Leçon (systematic-debugging) :** ne pas proposer de fix sur une console partielle. La console COMPLÈTE (avec la stack `X.catch is not a function`) pointait directement la ligne. Exiger l'erreur exacte AVANT toute hypothèse.
+
+---
+
 ## 9. Liens
 
 - Protocole : [/DEEP_SOLVE.md](../../DEEP_SOLVE.md)
