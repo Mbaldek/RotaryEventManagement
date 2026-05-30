@@ -348,14 +348,57 @@ Ajustements collatéraux :
 
 Pas de redirection nécessaire : `TableViewMockup` n'a jamais été linké en nav. Les 4 autres fichiers n'avaient pas de route.
 
-### Vagues livrées — récapitulatif
+### Vagues livrées — récapitulatif (session 2026-05-30)
 
 | Vague | Commit | Status | LOC delta | Files delta |
 |---|---|---|---:|---:|
 | R-dead-code | `0a47f63` | ✅ | -3 707 | -5 |
 | R5a — split `entities.js` | `f685168` | ✅ | ~+30 (boilerplate facade) | +11 |
 | R5b — split master `i18n.js` | `ac315d5` | ✅ | ~+40 (boilerplate facade) | +15 |
-| **Total à 2026-05-30** | | | **-3 637** | **+21** |
+| µ1 — lint:fix (21 errors → 0) + 3 docs | `641e7a0` | ✅ | -4 (net) | +3 docs |
+| µ2 — split `lib/db.js` par scope (lunch/rsa-legacy/facade) | `a0245b2` | ✅ | ~+15 (boilerplate facade) | +5/-1 = +4 |
+| µ6 — mv 10 pages RSA legacy → `src/pages/legacy/` | `0b3d41a` | ✅ | 0 (rename pur) | +0 (rename) |
+| **Cumulé session** | | | **~-3 626** | **+28** |
+
+État `src/` final post-µ-pipeline :
+- LOC : 81 338 (vs 84 942 avant session → -4.2 %)
+- Fichiers : 386 (vs 364 → +22, split structurel intentionnel)
+- Lint : **0 errors** (vs 21 baseline), 41 warnings unused-vars/args non-fixables auto
+- Build Vite : ✅ 10.80s
+- Pages plateforme V3 actives : 12 (Login, MonDossier, Selection, Jury, Admin, Concours, DevenirJury, Candidater, Welcome, Resultats, JuryCandidate, RsaAdmin)
+- Pages lunch dans `src/pages/` : 11 (Index, Dashboard, Reservations, EventPlanning, FloorPlan, TableView, Archives, AdminControl, ReservationRequest, UserManagement, Features) — **parquées pour R1**
+- Pages legacy URL-active dans `src/pages/legacy/` : 10 (RsaDashboard, RsaJuryHub, RsaScore, RsaRecap, RsaFinaleResults, RsaFinaleRsvp, RsaJuryForm, RsaJuryView, RsaPrintSheets, StartupUpload)
+
+### Conclusion µ8 — audit admin
+
+3 pages auditées : Admin (443 LOC), RsaAdmin (279 LOC), UserManagement (170 LOC).
+- **Admin.jsx** = entry V3 master/competition/club admin (active V3) — **garde tel quel**
+- **RsaAdmin.jsx** = shell legacy `VITE_RSA_ADMIN_KEY` + 5 tabs (Setup/Live/Results/Decks/RsvpFinale) partagés avec V3 admin — **garde tel quel** (transition vers V3)
+- **UserManagement.jsx** = lunch (import `User` from `@/lib/db/lunch`) — **garde tel quel** jusqu'à R1 sprint dédié
+
+Aucune fusion. Décision : la "duplication" admin est en réalité une cohabitation V3/legacy transitoire qui se résoudra avec R1 lunch + migration URL legacy.
+
+### Conclusion µ9 — knip strict
+
+Vrais positifs détectés mais TOUS lunch (à régler avec R1 sprint) :
+- `src/components/calendar/UserCalendarWidget.jsx`
+- `src/components/table/GuestCard.jsx`
+- `src/hooks/use-mobile.jsx` (transitif via `ui/sidebar.jsx`)
+
+Faux positifs knip à ignorer : `ui/*` (shadcn lib utilisé dynamiquement), `landing/*` (sous-projet Astro), `supabase/functions/*` (edge functions), `__tests__/*` (tests Vitest), `lib/platform/transactional.js` (utilisé transitivement par `userManagement`/`bulk` chain → 9 callers).
+
+Aucun kill µ10 hors lunch. Tout passe avec R1.
+
+### Reste à faire — vagues parquées
+
+| Vague | Statut | Bloquant |
+|---|---|---|
+| **R1 lunch sprint** | Parqué | Sandbox Write refuse `c:/Users/mathi/Desktop/rotary-event-lunch/` → demande `/add-dir` ou repo cible intra-`Active projects/` |
+| **R-rsa-url-migration phase 1** | Plan livré | Décide Mathieu sur 6 décisions §8 [rsa-legacy-url-migration.md](deepsolve/rsa-legacy-url-migration.md) |
+| **R2 split god-components** | Bloqué | Dépend R-rsa-url phase 2 (kill 4 pages legacy d'abord) |
+| **R3 fusion admin** | Sans objet | Audit µ8 conclut : pas de fusion, cohabitation transitoire |
+| **R4 aplatissement** | Reportée | Pas critique post-µ-pipeline |
+| **R-tail D11-D15** | Reportée | Cosmétique, faible ROI |
 
 État `src/` post-R5 :
 - LOC : 81 308 (avant pipeline 84 942 → -4.3 %)
