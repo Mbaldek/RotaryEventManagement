@@ -39,6 +39,9 @@ const SAVE_DRAFT_FIELDS = new Set([
   'video_pitch_url',
   'partner_institution',
   'rotary_club',
+  // Club organisateur affilié (choisi obligatoirement dans le funnel — StepClub).
+  // Le serveur (rsa_submit_dossier / edition_clubs) valide l'appartenance à l'édition.
+  'club_id',
   // V3 Vague 2 C — opt-in palmarès public.
   'champion_photo_optin',
   'champion_photo_path',

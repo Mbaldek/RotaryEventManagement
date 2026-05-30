@@ -131,6 +131,9 @@ export const REQUIRED_FIELDS_STATIC = [
   { field: 'team', step: 'project' },
   { field: 'traction', step: 'project' },
   { field: 'sectors', step: 'project' },
+  // Affiliation club obligatoire (blueprint §5) — bloque la soumission tant
+  // qu'aucun club organisateur n'est choisi. Champ texte (clubs.id = text).
+  { field: 'club_id', step: 'club' },
 ];
 
 // Mapping doc_key (catalogue) -> nom de colonne `startups`. null = pas wired.
@@ -243,6 +246,9 @@ export function validateField(field, value, _startup) {
       return isBlank(value) ? 'errRequired' : null;
     case 'sectors':
       return Array.isArray(value) && value.length > 0 ? null : 'errSectors';
+    case 'club_id':
+      // Affiliation club obligatoire (blueprint §5). Clé d'erreur dédiée.
+      return isBlank(value) ? 'errClubRequired' : null;
     case 'last_revenue':
     case 'amount_raised': {
       if (isBlank(value)) return null; // optionnel

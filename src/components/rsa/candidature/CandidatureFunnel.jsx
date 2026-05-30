@@ -21,6 +21,7 @@ import StepCompany from './steps/StepCompany';
 import StepProject from './steps/StepProject';
 import StepFinance from './steps/StepFinance';
 import StepDocuments from './steps/StepDocuments';
+import StepClub from './steps/StepClub';
 import StepReview from './steps/StepReview';
 // V2.5+ Wave Custom Fields — fields dynamiques par compétition (edition.custom_fields_candidate).
 // Remplace l'ancienne architecture Extensions (drop 2026-05-29 équipe D).
@@ -117,6 +118,7 @@ export default function CandidatureFunnel({
       project: StepProject.validate,
       finance: StepFinance.validate,
       documents: StepDocuments.validate,
+      club: StepClub.validate,
     };
     const fn = map[stepId];
     return fn ? fn(value) : {};
@@ -179,7 +181,7 @@ export default function CandidatureFunnel({
     const hasCustomErr = Object.keys(customErrs).length > 0;
     if (missingStep || hasCustomErr) {
       const errs = {};
-      for (const id of ['contact', 'company', 'project', 'documents']) errs[id] = validateStep(id, draft);
+      for (const id of ['contact', 'company', 'project', 'documents', 'club']) errs[id] = validateStep(id, draft);
       if (hasCustomErr) {
         // Stocke les erreurs custom à côté du step documents pour rendu inline.
         errs.documents = { ...(errs.documents || {}), __custom: customErrs };
@@ -197,7 +199,7 @@ export default function CandidatureFunnel({
     (stepId, opts) => {
       if (opts?.highlight) {
         const errs = {};
-        for (const id of ['contact', 'company', 'project', 'documents']) errs[id] = validateStep(id, draft);
+        for (const id of ['contact', 'company', 'project', 'documents', 'club']) errs[id] = validateStep(id, draft);
         setStepErrors((prev) => ({ ...prev, ...errs }));
       }
       setStep(stepId);
@@ -308,6 +310,16 @@ export default function CandidatureFunnel({
           </div>
         )}
       </>
+    );
+  } else if (step === 'club') {
+    stepNode = (
+      <StepClub
+        value={draft}
+        onChange={handleField}
+        errors={errsFor('club')}
+        editionId={edition?.id}
+        disabled={readOnly}
+      />
     );
   } else if (step === 'review') {
     stepNode = (

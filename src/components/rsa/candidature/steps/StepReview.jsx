@@ -5,10 +5,12 @@
 // uniquement par les champs requis manquants (blueprint §5/§6).
 
 import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Pencil, AlertTriangle } from 'lucide-react';
 import { NAVY, INK, GOLD, MUTED, CREAM2, SERIF } from '@/components/design';
 import { TINT_WARNING, WARNING } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
+import { Club } from '@/lib/rsa/entities';
 import { evaluateEligibility } from '@/lib/rsa/eligibility';
 import { STEPS, FIELDS, UI } from '../i18n';
 import StepShell from './StepShell';
@@ -118,6 +120,20 @@ export default function StepReview({ value, onEdit, rules, onSubmit, submitting 
   const canSubmit = missing.length === 0;
   const verdict = useMemo(() => evaluateEligibility(v, rules).verdict, [v, rules]);
 
+  // Résout le nom lisible du club affilié (recap). On ne fetch que si un club est
+  // choisi ; la liste est mise en cache (staleTime). Repli sur l'id si non résolu.
+  const { data: clubs = [] } = useQuery({
+    queryKey: ['rsa', 'clubs', 'all'],
+    queryFn: () => Club.listAll(),
+    enabled: !!v.club_id,
+    staleTime: 5 * 60 * 1000,
+  });
+  const clubLabel = useMemo(() => {
+    if (!v.club_id) return null;
+    const found = clubs.find((c) => c.id === v.club_id);
+    return found?.name || v.club_id;
+  }, [clubs, v.club_id]);
+
   const sectorLabel = (id) => {
     const o = SECTOR_OPTIONS.find((s) => s.value === id);
     return o ? t(o.label) : id;
@@ -137,7 +153,7 @@ export default function StepReview({ value, onEdit, rules, onSubmit, submitting 
 
   return (
     <StepShell
-      eyebrow={t(STEPS[5].label)}
+      eyebrow={t(STEPS[6].label)}
       title={t({ fr: 'Récapitulatif', en: 'Review', de: 'Zusammenfassung' })}
       subtitle={t(UI.reviewIntro)}
     >
@@ -184,6 +200,11 @@ export default function StepReview({ value, onEdit, rules, onSubmit, submitting 
         <Row label={t(FIELDS.pitch_deck_path.label)}>{v.pitch_deck_path ? fileNameFromPath(v.pitch_deck_path) : null}</Row>
         <Row label={t(FIELDS.exec_summary_path.label)}>{v.exec_summary_path ? fileNameFromPath(v.exec_summary_path) : null}</Row>
         <Row label={t(FIELDS.video_pitch_url.label)}>{v.video_pitch_url}</Row>
+      </Section>
+
+      {/* Section Club — affiliation obligatoire (blueprint §5) */}
+      <Section stepId="club" title={t(STEPS[5].label)} onEdit={onEdit} disabled={disabled}>
+        <Row label={t(FIELDS.club_id.label)}>{clubLabel}</Row>
       </Section>
 
       {/* Aperçu d'éligibilité complet */}

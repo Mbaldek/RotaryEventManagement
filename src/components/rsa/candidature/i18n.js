@@ -15,6 +15,7 @@ export const STEPS = [
   { id: 'project', label: { fr: 'Projet', en: 'Project', de: 'Projekt' } },
   { id: 'finance', label: { fr: 'Finances', en: 'Financials', de: 'Finanzen' } },
   { id: 'documents', label: { fr: 'Documents', en: 'Documents', de: 'Dokumente' } },
+  { id: 'club', label: { fr: 'Club', en: 'Club', de: 'Club' } },
   { id: 'review', label: { fr: 'Récapitulatif', en: 'Review', de: 'Zusammenfassung' } },
 ];
 
@@ -86,6 +87,13 @@ export const FIELDS = {
   },
   rotary_club: {
     label: { fr: 'Club Rotary parrain', en: 'Sponsoring Rotary club', de: 'Patenschaftsclub (Rotary)' },
+  },
+
+  // Étape Club — affiliation obligatoire (blueprint §5). NB : distinct du champ
+  // texte libre `rotary_club` ci-dessus ; `club_id` est la clé structurée vers
+  // le club organisateur dont le comité examinera le dossier.
+  club_id: {
+    label: { fr: 'Club organisateur', en: 'Organising club', de: 'Organisierender Club' },
   },
 
   // Step 3 — Projet (Art. 4)
@@ -249,6 +257,51 @@ export const UI = {
     fr: 'Choisissez d’abord un club',
     en: 'Pick a club first',
     de: 'Wählen Sie zuerst einen Club',
+  },
+
+  // ── Étape Club (startup) — sélection OBLIGATOIRE + hint pays/proche ──────────
+  // Décision verrouillée (blueprint §5/§9.1) : hint seul, pas de champ pays ni de
+  // tri/matching automatique. Le choix reste libre mais bloquant.
+  clubStepTitle: {
+    fr: 'Votre club organisateur',
+    en: 'Your organising club',
+    de: 'Ihr organisierender Club',
+  },
+  clubStepSubtitle: {
+    fr: 'Votre candidature sera rattachée à un club et examinée par son comité de sélection.',
+    en: 'Your application will be affiliated with a club and reviewed by its selection committee.',
+    de: 'Ihre Bewerbung wird einem Club zugeordnet und von dessen Auswahlkomitee geprüft.',
+  },
+  clubSelectPlaceholder: {
+    fr: 'Sélectionnez un club…',
+    en: 'Select a club…',
+    de: 'Club auswählen…',
+  },
+  // Hint sous le sélecteur (texte exact verrouillé : pays ou le plus proche).
+  clubRecommendHint: {
+    fr: 'Choisissez le club de votre pays ou le plus proche.',
+    en: 'Choose the club of your country or the closest one.',
+    de: 'Wählen Sie den Club Ihres Landes oder den nächstgelegenen.',
+  },
+  clubLoading: {
+    fr: 'Chargement des clubs…',
+    en: 'Loading clubs…',
+    de: 'Clubs werden geladen…',
+  },
+  clubEmpty: {
+    fr: 'Aucun club n’est rattaché à cette compétition pour le moment. Contactez l’organisation.',
+    en: 'No club is attached to this competition yet. Please contact the organisers.',
+    de: 'Diesem Wettbewerb ist noch kein Club zugeordnet. Bitte wenden Sie sich an die Organisation.',
+  },
+  clubLoadError: {
+    fr: 'Impossible de charger les clubs. Réessayez.',
+    en: 'Could not load the clubs. Please try again.',
+    de: 'Clubs konnten nicht geladen werden. Bitte erneut versuchen.',
+  },
+  errClubRequired: {
+    fr: 'Veuillez choisir un club pour rattacher votre candidature.',
+    en: 'Please choose a club to affiliate your application.',
+    de: 'Bitte wählen Sie einen Club, um Ihre Bewerbung zuzuordnen.',
   },
 
   // Récapitulatif / soumission
