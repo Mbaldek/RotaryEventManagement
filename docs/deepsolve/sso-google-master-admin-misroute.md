@@ -102,7 +102,8 @@ Les fixes 2026-05-29 / 2026-06-04 / 2026-06-05 ont chacun traité une manifestat
 | 2026-06-04 | c7eff0c  | AbortError uncaught | single-flight loadIdentity + late rejection swallow |
 | 2026-06-05 | 036762e  | Kick master_admin après 30 min | skip loadIdentity sur TOKEN_REFRESHED |
 | 2026-06-05 | (auth.jsx) | Forbidden /Admin cold-start | loadIdentity idempotent (préserve l'état sur erreur) |
-| **TODO**   | —        | **SSO Google → /MonDossier** | **Plan A ci-dessous** |
+| 2026-05-30 | (auth.jsx) | SSO Google → /MonDossier | Plan A ci-dessous (rolesLoaded + safety net) |
+| 2026-05-30 | 701addd  | **Safety-net = boucle perpétuelle sur session morte** | **Plan A.2 ci-dessous (§10)** |
 
 Tous = même classe de bug : **timing entre l'auth client Supabase, le state React, et le routing**. Le Plan A est le dernier maillon visible.
 
@@ -253,6 +254,23 @@ Pas de migration SQL. Pas de touche à `postLoginRoute.js` (la fonction est corr
 - **Toujours** garder les logs `console.warn('[PlatformAuth] init start' → 'getSession resolved' → 'loadIdentity result' → 'loadIdentity done' → '[Login] redirect → X')`. Suffit d'ouvrir DevTools quand le bug réapparaît pour reconstituer la séquence.
 - **Si bug réapparaît malgré Plan A** : probablement navigator.locks (sb-*-auth-token) qui hang sur multi-tab. Inspecter via DevTools → Application → Local Storage → clé `sb-uaoucznptxmvhhytapso-auth-token`. Si présent mais expiré : signOut local + re-login.
 - **Anti-pattern à éviter à l'avenir** : `setTimeout(setResolved, N)` comme béquille pour cacher une async race. Préférer un flag réactif basé sur l'état réel des promesses.
+
+---
+
+## 10. Plan A.2 — Le safety net pouvait devenir une boucle perpétuelle (2026-05-30, commit `701addd`)
+
+**Régression du Plan A, exactement le risque flaggé §181.** Le safety net (Login.jsx) refuse de router tant que `rolesLoaded === false`. Sur une **session zombie** (refresh_token → `400`, JWT mort), `rsa_my_roles` renvoie une **401 à chaque appel** → `rolesLoaded` ne passe JAMAIS à `true` → spinner « Vérification de vos accès… » **perpétuel**, sans formulaire SSO ni bouton de sortie. Confirmé par les logs auth (`POST | 400 | /auth/v1/token?grant_type=refresh_token`) ; côté DB tout était sain (rôles présents, `rsa_my_roles` OK).
+
+Deux défauts combinés :
+1. **Retry avalé par le single-flight sur SSO.** Le retry ciblé `rsa_my_roles` n'était programmé que par l'IIFE init. Sur SSO, `getSession` (IIFE) et l'événement `SIGNED_IN` lancent deux `loadIdentity` concurrents ; le single-flight (commit `c7eff0c`) n'en exécute qu'un, l'autre caller reçoit `undefined`. Si `SIGNED_IN` gagnait le lock, l'IIFE recevait `undefined` → **aucun retry programmé**, et le chemin `onAuthStateChange` n'en programmait aucun.
+2. **Aucune sortie de secours.** Le `ForceLogoutLink` (F10, conçu pile pour les sessions zombies) ne vit que dans le formulaire de login — inatteignable tant que le safety net tient.
+
+**Fix (`701addd`) :**
+- `src/lib/platform/authErrors.js` (nouveau, pur, testé — `auth.isAuthError.test.js`, 11 cas) : `isAuthError()` distingue une **401/JWT-error définitive** (PGRST301, message « JWT expired »…) d'un **timeout transitoire** (notre sentinelle `withTimeout` — surtout pas à confondre).
+- `auth.jsx` : `loadIdentityImpl` retourne `rolesAuthError`. Logique retry/recovery centralisée dans `handleLoadResult`, appelée par **l'IIFE ET `onAuthStateChange(SIGNED_IN)`** (ferme le trou §1). Recovery session zombie : si `rolesAuthError && !anySuccess` (JWT rejeté ET aucune RPC réussie = token globalement mort), `signOut({scope:'local'})` → `SIGNED_OUT` → form de login. Retry inutile sur un token mort.
+- `Login.jsx` : **escape hatch ultime** indépendant de toute détection — après `SAFETY_NET_ESCAPE_MS` (6s) dans le safety net, on révèle `ForceLogoutLink`. Filet de sécurité quelle que soit la cause.
+
+**Garde-fou anti-régression :** la recovery ne fire QUE sur `rolesAuthError && !anySuccess` — un timeout (faux positif réseau froid, cf. fix 2026-05-29) n'est jamais classé auth-error, donc ne déclenche jamais de signOut. On ne réintroduit pas l'éjection des sessions valides.
 
 ---
 
