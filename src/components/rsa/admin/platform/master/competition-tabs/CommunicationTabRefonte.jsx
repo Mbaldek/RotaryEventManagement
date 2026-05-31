@@ -306,9 +306,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Bestätigung Ihrer Bewerbung',
           },
           body: {
-            fr: 'Madame, Monsieur,\n\nNous accusons réception de votre candidature au **Rotary Startup Award**. Votre dossier est désormais entre les mains de notre comité de sélection.\n\nVous serez informé·e du résultat dans les semaines à venir.\n\nBien cordialement,',
-            en: 'Dear applicant,\n\nWe confirm receipt of your application to the **Rotary Startup Award**. Your dossier is now in the hands of our selection committee.\n\nYou will be informed of the outcome over the coming weeks.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Damen und Herren,\n\nwir bestätigen den Eingang Ihrer Bewerbung beim **Rotary Startup Award**. Ihre Unterlagen werden nun von unserer Auswahlkommission geprüft.\n\nÜber das Ergebnis informieren wir Sie in den kommenden Wochen.\n\nMit freundlichen Grüßen,',
+            fr: '## Candidature bien reçue\n\nMadame, Monsieur,\n\nNous accusons réception de votre candidature au **Rotary Startup Award**. Votre dossier est désormais **entre les mains de notre comité de sélection**.\n\nVous serez informé·e du résultat dans les semaines à venir.\n\n[Consulter mon dossier](https://app.rotary-startup.org/MonDossier)\n\nBien cordialement,',
+            en: '## Application received\n\nDear applicant,\n\nWe confirm receipt of your application to the **Rotary Startup Award**. Your dossier is now **in the hands of our selection committee**.\n\nYou will be informed of the outcome over the coming weeks.\n\n[View my application](https://app.rotary-startup.org/MonDossier)\n\nWith kindest regards,',
+            de: '## Bewerbung eingegangen\n\nSehr geehrte Damen und Herren,\n\nwir bestätigen den Eingang Ihrer Bewerbung beim **Rotary Startup Award**. Ihre Unterlagen liegen nun **bei unserer Auswahlkommission**.\n\nÜber das Ergebnis informieren wir Sie in den kommenden Wochen.\n\n[Meine Bewerbung ansehen](https://app.rotary-startup.org/MonDossier)\n\nMit freundlichen Grüßen,',
           },
         },
         {
@@ -324,9 +324,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Ihr Entwurf wartet',
           },
           body: {
-            fr: 'Madame, Monsieur,\n\nNous avons remarqué que votre candidature au **Rotary Startup Award** est encore à l’état de brouillon.\n\nNous vous invitons à la finaliser avant la clôture des inscriptions afin que votre projet puisse être étudié par notre comité.\n\nVous pouvez reprendre votre dossier depuis votre espace personnel.\n\nBien cordialement,',
-            en: 'Dear applicant,\n\nWe noticed that your application to the **Rotary Startup Award** is still in draft.\n\nWe kindly invite you to finalise it before the application deadline so that our committee may review your project.\n\nYou can pick up where you left off from your personal space.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Damen und Herren,\n\nuns ist aufgefallen, dass Ihre Bewerbung beim **Rotary Startup Award** noch im Entwurfsstatus ist.\n\nWir laden Sie ein, sie vor Ablauf der Frist abzuschließen, damit unser Komitee Ihr Projekt prüfen kann.\n\nSie können dort weitermachen, wo Sie aufgehört haben.\n\nMit freundlichen Grüßen,',
+            fr: '## Votre dossier vous attend\n\nMadame, Monsieur,\n\nNous avons remarqué que votre candidature au **Rotary Startup Award** est encore à l’état de **brouillon**.\n\nNous vous invitons à la finaliser afin que votre projet puisse être étudié par notre comité. Vous pouvez reprendre votre dossier là où vous l’avez laissé.\n\n> Pensez à **soumettre votre dossier avant la clôture des inscriptions**. Passé ce délai, les brouillons ne pourront plus être pris en compte.\n\n[Finaliser mon dossier](https://app.rotary-startup.org/MonDossier)\n\nBien cordialement,',
+            en: '## Your draft is waiting\n\nDear applicant,\n\nWe noticed that your application to the **Rotary Startup Award** is still in **draft**.\n\nWe kindly invite you to finalise it so that our committee may review your project. You can pick up exactly where you left off.\n\n> Please **submit your application before the registration deadline**. After this date, drafts can no longer be considered.\n\n[Finalise my application](https://app.rotary-startup.org/MonDossier)\n\nWith kindest regards,',
+            de: '## Ihr Entwurf wartet\n\nSehr geehrte Damen und Herren,\n\nuns ist aufgefallen, dass Ihre Bewerbung beim **Rotary Startup Award** noch im **Entwurfsstatus** ist.\n\nWir laden Sie ein, sie abzuschließen, damit unser Komitee Ihr Projekt prüfen kann. Sie können dort weitermachen, wo Sie aufgehört haben.\n\n> Bitte **reichen Sie Ihre Bewerbung vor dem Anmeldeschluss ein**. Danach können Entwürfe nicht mehr berücksichtigt werden.\n\n[Bewerbung abschließen](https://app.rotary-startup.org/MonDossier)\n\nMit freundlichen Grüßen,',
           },
         },
         {
@@ -342,9 +342,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Bewerbung bestätigt',
           },
           body: {
-            fr: 'Madame, Monsieur,\n\nVotre dossier au **Rotary Startup Award** est officiellement validé et transmis à notre comité de sélection.\n\nNous reviendrons vers vous dans les semaines à venir avec les résultats de cette première étape.\n\nBien cordialement,',
-            en: 'Dear applicant,\n\nYour application to the **Rotary Startup Award** is officially validated and forwarded to our selection committee.\n\nWe will get back to you over the coming weeks with the outcome of this first stage.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Damen und Herren,\n\nIhre Bewerbung beim **Rotary Startup Award** ist offiziell bestätigt und an unsere Auswahlkommission weitergeleitet.\n\nWir melden uns in den kommenden Wochen mit dem Ergebnis dieser ersten Etappe bei Ihnen.\n\nMit freundlichen Grüßen,',
+            fr: '## Dossier validé\n\nMadame, Monsieur,\n\nVotre dossier au **Rotary Startup Award** est officiellement **validé** et transmis à notre comité de sélection.\n\nNous reviendrons vers vous dans les semaines à venir avec les résultats de cette **première étape**.\n\n[Consulter mon dossier](https://app.rotary-startup.org/MonDossier)\n\nBien cordialement,',
+            en: '## Application validated\n\nDear applicant,\n\nYour application to the **Rotary Startup Award** is officially **validated** and forwarded to our selection committee.\n\nWe will get back to you over the coming weeks with the outcome of this **first stage**.\n\n[View my application](https://app.rotary-startup.org/MonDossier)\n\nWith kindest regards,',
+            de: '## Bewerbung bestätigt\n\nSehr geehrte Damen und Herren,\n\nIhre Bewerbung beim **Rotary Startup Award** ist offiziell **bestätigt** und an unsere Auswahlkommission weitergeleitet.\n\nWir melden uns in den kommenden Wochen mit dem Ergebnis dieser **ersten Etappe** bei Ihnen.\n\n[Meine Bewerbung ansehen](https://app.rotary-startup.org/MonDossier)\n\nMit freundlichen Grüßen,',
           },
         },
       ],
@@ -371,9 +371,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Komitee-Einladung',
           },
           body: {
-            fr: 'Chères et chers membres du comité,\n\nNous vous convions à la **session d’instruction** des dossiers de candidature au Rotary Startup Award.\n\nVotre regard sera précieux pour identifier les projets à présenter au jury.\n\nVous trouverez l’ordre du jour et les modalités logistiques sur votre espace.\n\nBien cordialement,',
-            en: 'Dear committee members,\n\nWe invite you to the **review session** for the Rotary Startup Award applications.\n\nYour judgement will be valuable to identify the projects that should be presented to the jury.\n\nAgenda and logistics are available on your space.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Komitee-Mitglieder,\n\nwir laden Sie zur **Prüfungssitzung** der Bewerbungen für den Rotary Startup Award ein.\n\nIhre Einschätzung wird wertvoll sein, um die Projekte für die Jury auszuwählen.\n\nTagesordnung und Logistik finden Sie in Ihrem Bereich.\n\nMit freundlichen Grüßen,',
+            fr: '## Convocation du comité\n\nChères et chers membres du comité,\n\nNous vous convions à la **session d’instruction** des dossiers de candidature au Rotary Startup Award.\n\nVotre regard sera précieux pour identifier les projets à présenter au jury.\n\n> **Ordre du jour et modalités logistiques** (date, lieu, horaires) sont disponibles sur votre espace comité.\n\nBien cordialement,',
+            en: '## Committee summons\n\nDear committee members,\n\nWe invite you to the **review session** for the Rotary Startup Award applications.\n\nYour judgement will be valuable to identify the projects that should be presented to the jury.\n\n> **Agenda and logistics** (date, venue, schedule) are available on your committee space.\n\nWith kindest regards,',
+            de: '## Komitee-Einladung\n\nSehr geehrte Komitee-Mitglieder,\n\nwir laden Sie zur **Prüfungssitzung** der Bewerbungen für den Rotary Startup Award ein.\n\nIhre Einschätzung wird wertvoll sein, um die Projekte für die Jury auszuwählen.\n\n> **Tagesordnung und Logistik** (Datum, Ort, Zeitplan) finden Sie in Ihrem Komitee-Bereich.\n\nMit freundlichen Grüßen,',
           },
         },
         {
@@ -389,9 +389,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Ihre Bewerbung wird geprüft',
           },
           body: {
-            fr: 'Madame, Monsieur,\n\nNotre comité de sélection étudie actuellement votre dossier de candidature au **Rotary Startup Award**.\n\nVous recevrez très prochainement le résultat de cette étape.\n\nNous vous remercions pour votre patience.\n\nBien cordialement,',
-            en: 'Dear applicant,\n\nOur selection committee is currently reviewing your application to the **Rotary Startup Award**.\n\nYou will hear back from us very shortly with the outcome of this stage.\n\nThank you for your patience.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Damen und Herren,\n\nunsere Auswahlkommission prüft derzeit Ihre Bewerbung beim **Rotary Startup Award**.\n\nWir werden uns in Kürze mit dem Ergebnis dieser Etappe bei Ihnen melden.\n\nVielen Dank für Ihre Geduld.\n\nMit freundlichen Grüßen,',
+            fr: '## Votre dossier est en cours d’étude\n\nMadame, Monsieur,\n\nNotre comité de sélection étudie actuellement votre dossier de candidature au **Rotary Startup Award**.\n\nVous recevrez **très prochainement** le résultat de cette étape. Nous vous remercions pour votre patience.\n\n[Suivre mon dossier](https://app.rotary-startup.org/MonDossier)\n\nBien cordialement,',
+            en: '## Your application is under review\n\nDear applicant,\n\nOur selection committee is currently reviewing your application to the **Rotary Startup Award**.\n\nYou will hear back from us **very shortly** with the outcome of this stage. Thank you for your patience.\n\n[Track my application](https://app.rotary-startup.org/MonDossier)\n\nWith kindest regards,',
+            de: '## Ihre Bewerbung wird geprüft\n\nSehr geehrte Damen und Herren,\n\nunsere Auswahlkommission prüft derzeit Ihre Bewerbung beim **Rotary Startup Award**.\n\nWir melden uns **in Kürze** mit dem Ergebnis dieser Etappe bei Ihnen. Vielen Dank für Ihre Geduld.\n\n[Meine Bewerbung verfolgen](https://app.rotary-startup.org/MonDossier)\n\nMit freundlichen Grüßen,',
           },
         },
       ],
@@ -418,9 +418,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Einladung zur Jury-Sitzung',
           },
           body: {
-            fr: 'Chères et chers jurés,\n\nNous vous invitons à la prochaine **session de jury** du Rotary Startup Award.\n\nVotre présence et votre regard professionnel sont précieux pour évaluer les pitchs des startups retenues.\n\nLes modalités logistiques (date, lieu, horaires, ordre de passage) vous seront communiquées dans un message suivant.\n\nBien cordialement,',
-            en: 'Dear jurors,\n\nWe invite you to the next **jury session** of the Rotary Startup Award.\n\nYour presence and professional expertise are valuable to assess the pitches of the selected startups.\n\nThe logistical details (date, venue, schedule, running order) will be shared in a follow-up message.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Jury-Mitglieder,\n\nwir laden Sie zur nächsten **Jury-Sitzung** des Rotary Startup Award ein.\n\nIhre Anwesenheit und Ihr fachlicher Blick sind wertvoll für die Bewertung der Pitches der ausgewählten Startups.\n\nDie logistischen Details (Datum, Ort, Zeitplan, Reihenfolge) folgen in einer separaten Nachricht.\n\nMit freundlichen Grüßen,',
+            fr: '## Invitation à la session jury\n\nChères et chers jurés,\n\nNous vous invitons à la prochaine **session de jury** du Rotary Startup Award.\n\nVotre présence et votre regard professionnel sont précieux pour évaluer les pitchs des startups retenues.\n\n> Les **modalités logistiques** (date, lieu, horaires, ordre de passage) vous seront communiquées dans un message suivant.\n\n[Accéder à mon espace jury](https://app.rotary-startup.org/Jury)\n\nBien cordialement,',
+            en: '## Jury session invitation\n\nDear jurors,\n\nWe invite you to the next **jury session** of the Rotary Startup Award.\n\nYour presence and professional expertise are valuable to assess the pitches of the selected startups.\n\n> The **logistical details** (date, venue, schedule, running order) will be shared in a follow-up message.\n\n[Open my jury space](https://app.rotary-startup.org/Jury)\n\nWith kindest regards,',
+            de: '## Einladung zur Jury-Sitzung\n\nSehr geehrte Jury-Mitglieder,\n\nwir laden Sie zur nächsten **Jury-Sitzung** des Rotary Startup Award ein.\n\nIhre Anwesenheit und Ihr fachlicher Blick sind wertvoll für die Bewertung der Pitches der ausgewählten Startups.\n\n> Die **logistischen Details** (Datum, Ort, Zeitplan, Reihenfolge) folgen in einer separaten Nachricht.\n\n[Zu meinem Jury-Bereich](https://app.rotary-startup.org/Jury)\n\nMit freundlichen Grüßen,',
           },
         },
         {
@@ -436,9 +436,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Briefing Pitch + Q&A (D-7)',
           },
           body: {
-            fr: 'Chères et chers jurés,\n\nLa session approche — voici le rappel de format en vue de votre préparation :\n\n- **Pitch** : 10 à 12 minutes par startup\n- **Q&A** : 8 à 10 minutes après chaque pitch\n- **Slot total** : 20 minutes par projet\n- **Session** : ~2h30 au total\n\nLes critères d’évaluation sont disponibles dans votre espace juré.\n\nBien cordialement,',
-            en: 'Dear jurors,\n\nThe session is approaching — here is the format reminder for your preparation:\n\n- **Pitch**: 10 to 12 minutes per startup\n- **Q&A**: 8 to 10 minutes after each pitch\n- **Total slot**: 20 minutes per project\n- **Session**: ~2h30 in total\n\nThe scoring criteria are available in your jury space.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Jury-Mitglieder,\n\ndie Sitzung rückt näher — hier zur Vorbereitung der Formatüberblick:\n\n- **Pitch**: 10 bis 12 Minuten je Startup\n- **Q&A**: 8 bis 10 Minuten nach jedem Pitch\n- **Gesamt-Slot**: 20 Minuten pro Projekt\n- **Sitzung**: insgesamt ca. 2h30\n\nDie Bewertungskriterien finden Sie in Ihrem Jury-Bereich.\n\nMit freundlichen Grüßen,',
+            fr: '## Briefing : format pitch + Q&A\n\nChères et chers jurés,\n\nLa session approche — voici le rappel de format en vue de votre préparation :\n\n- **Pitch** : 10 à 12 minutes par startup\n- **Q&A** : 8 à 10 minutes après chaque pitch\n- **Slot total** : 20 minutes par projet\n- **Session** : ~2h30 au total\n\nLes **critères d’évaluation** sont disponibles dans votre espace juré.\n\n[Préparer la session](https://app.rotary-startup.org/Jury)\n\nBien cordialement,',
+            en: '## Briefing: pitch + Q&A format\n\nDear jurors,\n\nThe session is approaching — here is the format reminder for your preparation:\n\n- **Pitch**: 10 to 12 minutes per startup\n- **Q&A**: 8 to 10 minutes after each pitch\n- **Total slot**: 20 minutes per project\n- **Session**: ~2h30 in total\n\nThe **scoring criteria** are available in your jury space.\n\n[Prepare for the session](https://app.rotary-startup.org/Jury)\n\nWith kindest regards,',
+            de: '## Briefing: Format Pitch + Q&A\n\nSehr geehrte Jury-Mitglieder,\n\ndie Sitzung rückt näher — hier zur Vorbereitung der Formatüberblick:\n\n- **Pitch**: 10 bis 12 Minuten je Startup\n- **Q&A**: 8 bis 10 Minuten nach jedem Pitch\n- **Gesamt-Slot**: 20 Minuten pro Projekt\n- **Sitzung**: insgesamt ca. 2h30\n\nDie **Bewertungskriterien** finden Sie in Ihrem Jury-Bereich.\n\n[Sitzung vorbereiten](https://app.rotary-startup.org/Jury)\n\nMit freundlichen Grüßen,',
           },
         },
         {
@@ -454,9 +454,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — letzte Erinnerung vor der Sitzung',
           },
           body: {
-            fr: 'Chères et chers jurés,\n\nUn dernier rappel logistique avant la **session de jury** :\n\n- Lieu, horaire et ordre de passage disponibles sur votre espace.\n- Merci d’arriver 15 minutes avant l’ouverture pour l’accueil.\n\nAu plaisir de vous retrouver très prochainement.\n\nBien cordialement,',
-            en: 'Dear jurors,\n\nA final logistical reminder before the **jury session**:\n\n- Venue, schedule and running order available on your space.\n- Please arrive 15 minutes before the opening for the welcome.\n\nLooking forward to meeting you very soon.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Jury-Mitglieder,\n\neine letzte logistische Erinnerung vor der **Jury-Sitzung**:\n\n- Ort, Zeitplan und Reihenfolge stehen in Ihrem Bereich bereit.\n- Bitte erscheinen Sie 15 Minuten vor Beginn zur Begrüßung.\n\nWir freuen uns, Sie bald zu sehen.\n\nMit freundlichen Grüßen,',
+            fr: '## Dernier rappel avant la session\n\nChères et chers jurés,\n\nUn dernier rappel logistique avant la **session de jury** :\n\n- **Lieu, horaire et ordre de passage** disponibles sur votre espace.\n- Merci d’**arriver 15 minutes avant l’ouverture** pour l’accueil.\n\nAu plaisir de vous retrouver très prochainement.\n\n[Voir les détails de la session](https://app.rotary-startup.org/Jury)\n\nBien cordialement,',
+            en: '## Final reminder before the session\n\nDear jurors,\n\nA final logistical reminder before the **jury session**:\n\n- **Venue, schedule and running order** available on your space.\n- Please **arrive 15 minutes before the opening** for the welcome.\n\nLooking forward to meeting you very soon.\n\n[See the session details](https://app.rotary-startup.org/Jury)\n\nWith kindest regards,',
+            de: '## Letzte Erinnerung vor der Sitzung\n\nSehr geehrte Jury-Mitglieder,\n\neine letzte logistische Erinnerung vor der **Jury-Sitzung**:\n\n- **Ort, Zeitplan und Reihenfolge** stehen in Ihrem Bereich bereit.\n- Bitte erscheinen Sie **15 Minuten vor Beginn** zur Begrüßung.\n\nWir freuen uns, Sie bald zu sehen.\n\n[Sitzungsdetails ansehen](https://app.rotary-startup.org/Jury)\n\nMit freundlichen Grüßen,',
           },
         },
       ],
@@ -484,9 +484,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Sie wurden ausgezeichnet',
           },
           body: {
-            fr: 'Madame, Monsieur,\n\nNous avons l’honneur de vous informer que votre projet a été distingué au palmarès du **Rotary Startup Award**.\n\nNous reviendrons rapidement vers vous concernant la cérémonie officielle, la remise du prix et les modalités de communication associées.\n\nNous saluons l’engagement et la qualité de votre projet.\n\nBien cordialement,',
-            en: 'Dear laureate,\n\nWe are honoured to inform you that your project has been recognised in the **Rotary Startup Award** palmarès.\n\nWe will get back to you shortly regarding the official ceremony, the award delivery, and the related communication arrangements.\n\nWe commend the commitment and quality of your project.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Damen und Herren,\n\nwir freuen uns sehr, Ihnen mitzuteilen, dass Ihr Projekt im Palmarès des **Rotary Startup Award** ausgezeichnet wurde.\n\nWir melden uns in Kürze mit Details zur offiziellen Zeremonie, zur Preisübergabe und zur begleitenden Kommunikation.\n\nWir würdigen das Engagement und die Qualität Ihres Projekts.\n\nMit freundlichen Grüßen,',
+            fr: '## Vous figurez au palmarès\n\nMadame, Monsieur,\n\nNous avons l’honneur de vous informer que votre projet a été **distingué au palmarès** du **Rotary Startup Award**.\n\nNous reviendrons rapidement vers vous concernant la **cérémonie officielle**, la remise du prix et les modalités de communication associées.\n\nNous saluons l’engagement et la qualité de votre projet.\n\n[Découvrir le palmarès](https://app.rotary-startup.org/Resultats)\n\nBien cordialement,',
+            en: '## You have been awarded\n\nDear laureate,\n\nWe are honoured to inform you that your project has been **recognised in the palmarès** of the **Rotary Startup Award**.\n\nWe will get back to you shortly regarding the **official ceremony**, the award delivery, and the related communication arrangements.\n\nWe commend the commitment and quality of your project.\n\n[Discover the palmarès](https://app.rotary-startup.org/Resultats)\n\nWith kindest regards,',
+            de: '## Sie sind im Palmarès\n\nSehr geehrte Damen und Herren,\n\nwir freuen uns sehr, Ihnen mitzuteilen, dass Ihr Projekt **im Palmarès** des **Rotary Startup Award** ausgezeichnet wurde.\n\nWir melden uns in Kürze mit Details zur **offiziellen Zeremonie**, zur Preisübergabe und zur begleitenden Kommunikation.\n\nWir würdigen das Engagement und die Qualität Ihres Projekts.\n\n[Das Palmarès entdecken](https://app.rotary-startup.org/Resultats)\n\nMit freundlichen Grüßen,',
           },
         },
         {
@@ -502,9 +502,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Sie ziehen ins Finale ein',
           },
           body: {
-            fr: 'Madame, Monsieur,\n\nVotre projet a été *promu en finale* du **Rotary Startup Award**. Félicitations.\n\nNous vous transmettrons prochainement les modalités pratiques de la grande finale : date, lieu, format de pitch, présence média.\n\nBien cordialement,',
-            en: 'Dear finalist,\n\nYour project has been *promoted to the finale* of the **Rotary Startup Award**. Congratulations.\n\nWe will share the practical details of the grand finale shortly: date, venue, pitch format, media presence.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Damen und Herren,\n\nIhr Projekt wurde *ins Finale befördert* beim **Rotary Startup Award**. Herzlichen Glückwunsch.\n\nDie praktischen Details des Grand Finale (Datum, Ort, Pitch-Format, Medienpräsenz) folgen in Kürze.\n\nMit freundlichen Grüßen,',
+            fr: '## Vous êtes promu·e en finale\n\nMadame, Monsieur,\n\nVotre projet a été **promu en finale** du **Rotary Startup Award**. Félicitations.\n\n> Nous vous transmettrons prochainement les **modalités pratiques de la grande finale** : date, lieu, format de pitch, présence média.\n\n[Accéder à mon dossier](https://app.rotary-startup.org/MonDossier)\n\nBien cordialement,',
+            en: '## You are promoted to the finale\n\nDear finalist,\n\nYour project has been **promoted to the finale** of the **Rotary Startup Award**. Congratulations.\n\n> We will share the **practical details of the grand finale** shortly: date, venue, pitch format, media presence.\n\n[Open my application](https://app.rotary-startup.org/MonDossier)\n\nWith kindest regards,',
+            de: '## Sie ziehen ins Finale ein\n\nSehr geehrte Damen und Herren,\n\nIhr Projekt wurde **ins Finale befördert** beim **Rotary Startup Award**. Herzlichen Glückwunsch.\n\n> Die **praktischen Details des Grand Finale** (Datum, Ort, Pitch-Format, Medienpräsenz) folgen in Kürze.\n\n[Meine Bewerbung öffnen](https://app.rotary-startup.org/MonDossier)\n\nMit freundlichen Grüßen,',
           },
         },
         {
@@ -520,9 +520,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Palmarès und Press-Kit',
           },
           body: {
-            fr: 'Madame, Monsieur,\n\nNous avons le plaisir de partager avec vous le palmarès du **Rotary Startup Award** ainsi que le press kit associé.\n\nVous trouverez ci-joint les visuels et éléments de langage à destination des relais médias et partenaires.\n\nNous restons à votre disposition pour toute information complémentaire.\n\nBien cordialement,',
-            en: 'Dear partner,\n\nWe are pleased to share the **Rotary Startup Award** palmarès together with the associated press kit.\n\nYou will find attached the visuals and key messages for use with media partners and stakeholders.\n\nWe remain available for any further information.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Damen und Herren,\n\nwir freuen uns, Ihnen das Palmarès des **Rotary Startup Award** sowie das zugehörige Press-Kit zu übermitteln.\n\nIm Anhang finden Sie Visuals und Sprachregelungen für Medienpartner und Förderer.\n\nFür Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen,',
+            fr: '## Palmarès et press kit\n\nMadame, Monsieur,\n\nNous avons le plaisir de partager avec vous le **palmarès** du **Rotary Startup Award** ainsi que le **press kit** associé.\n\nVous trouverez ci-joint les visuels et éléments de langage à destination des relais médias et partenaires.\n\nNous restons à votre disposition pour toute information complémentaire.\n\n[Consulter le palmarès en ligne](https://app.rotary-startup.org/Resultats)\n\nBien cordialement,',
+            en: '## Palmarès and press kit\n\nDear partner,\n\nWe are pleased to share the **palmarès** of the **Rotary Startup Award** together with the associated **press kit**.\n\nYou will find attached the visuals and key messages for use with media partners and stakeholders.\n\nWe remain available for any further information.\n\n[View the palmarès online](https://app.rotary-startup.org/Resultats)\n\nWith kindest regards,',
+            de: '## Palmarès und Press-Kit\n\nSehr geehrte Damen und Herren,\n\nwir freuen uns, Ihnen das **Palmarès** des **Rotary Startup Award** sowie das zugehörige **Press-Kit** zu übermitteln.\n\nIm Anhang finden Sie Visuals und Sprachregelungen für Medienpartner und Förderer.\n\nFür Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\n[Das Palmarès online ansehen](https://app.rotary-startup.org/Resultats)\n\nMit freundlichen Grüßen,',
           },
         },
       ],
@@ -549,9 +549,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Danke für diese Edition',
           },
           body: {
-            fr: 'Chères et chers contributrices, contributeurs,\n\nL’édition du **Rotary Startup Award** que nous venons de clôturer doit beaucoup à votre engagement.\n\nCandidats, comité, jurés, partenaires, équipe d’organisation — chacun a contribué à la qualité du processus et à la valeur des projets distingués.\n\nNous vous en remercions très sincèrement, et donnons rendez-vous à la prochaine édition.\n\nBien cordialement,',
-            en: 'Dear contributors,\n\nThe **Rotary Startup Award** edition we have just closed owes a great deal to your commitment.\n\nApplicants, committee, jurors, partners, organising team — each contributed to the quality of the process and the value of the distinguished projects.\n\nWe thank you sincerely and look forward to the next edition.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Mitwirkende,\n\ndie soeben abgeschlossene Edition des **Rotary Startup Award** verdankt sich in hohem Maße Ihrem Engagement.\n\nBewerber, Komitee, Jury, Partner, Organisationsteam — jede·r hat zur Qualität des Prozesses und zum Wert der ausgezeichneten Projekte beigetragen.\n\nWir danken Ihnen sehr herzlich und freuen uns auf die nächste Edition.\n\nMit freundlichen Grüßen,',
+            fr: '## Merci pour cette édition\n\nChères et chers contributrices, contributeurs,\n\nL’édition du **Rotary Startup Award** que nous venons de clôturer doit beaucoup à votre engagement.\n\nCandidats, comité, jurés, partenaires, équipe d’organisation — **chacun a contribué** à la qualité du processus et à la valeur des projets distingués.\n\nNous vous en remercions très sincèrement, et donnons **rendez-vous à la prochaine édition**.\n\nBien cordialement,',
+            en: '## Thank you for this edition\n\nDear contributors,\n\nThe **Rotary Startup Award** edition we have just closed owes a great deal to your commitment.\n\nApplicants, committee, jurors, partners, organising team — **each one contributed** to the quality of the process and the value of the distinguished projects.\n\nWe thank you sincerely and look forward to the **next edition**.\n\nWith kindest regards,',
+            de: '## Danke für diese Edition\n\nSehr geehrte Mitwirkende,\n\ndie soeben abgeschlossene Edition des **Rotary Startup Award** verdankt sich in hohem Maße Ihrem Engagement.\n\nBewerber, Komitee, Jury, Partner, Organisationsteam — **jede·r hat beigetragen** zur Qualität des Prozesses und zum Wert der ausgezeichneten Projekte.\n\nWir danken Ihnen sehr herzlich und freuen uns auf die **nächste Edition**.\n\nMit freundlichen Grüßen,',
           },
         },
         {
@@ -567,9 +567,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — abschließende Pressemitteilung',
           },
           body: {
-            fr: 'Madame, Monsieur,\n\nVeuillez trouver ci-joint le **communiqué de presse final** du Rotary Startup Award.\n\nCe communiqué présente le palmarès, les lauréats, les chiffres-clés et les partenaires de l’édition.\n\nNous restons à votre disposition pour toute interview ou complément d’information.\n\nBien cordialement,',
-            en: 'Dear media partner,\n\nPlease find attached the **final press release** of the Rotary Startup Award.\n\nThis release covers the palmarès, the laureates, the key figures and the partners of the edition.\n\nWe remain available for any interview or further information.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Damen und Herren,\n\nim Anhang erhalten Sie die **abschließende Pressemitteilung** des Rotary Startup Award.\n\nDie Mitteilung umfasst Palmarès, Preisträger, Kennzahlen und Partner der Edition.\n\nFür Interviews oder weitere Informationen stehen wir gern zur Verfügung.\n\nMit freundlichen Grüßen,',
+            fr: '## Communiqué de presse final\n\nMadame, Monsieur,\n\nVeuillez trouver ci-joint le **communiqué de presse final** du Rotary Startup Award.\n\nCe communiqué présente le palmarès, les lauréats, les chiffres-clés et les partenaires de l’édition.\n\nNous restons à votre disposition pour toute interview ou complément d’information.\n\n[Consulter le palmarès en ligne](https://app.rotary-startup.org/Resultats)\n\nBien cordialement,',
+            en: '## Final press release\n\nDear media partner,\n\nPlease find attached the **final press release** of the Rotary Startup Award.\n\nThis release covers the palmarès, the laureates, the key figures and the partners of the edition.\n\nWe remain available for any interview or further information.\n\n[View the palmarès online](https://app.rotary-startup.org/Resultats)\n\nWith kindest regards,',
+            de: '## Abschließende Pressemitteilung\n\nSehr geehrte Damen und Herren,\n\nim Anhang erhalten Sie die **abschließende Pressemitteilung** des Rotary Startup Award.\n\nDie Mitteilung umfasst Palmarès, Preisträger, Kennzahlen und Partner der Edition.\n\nFür Interviews oder weitere Informationen stehen wir gern zur Verfügung.\n\n[Das Palmarès online ansehen](https://app.rotary-startup.org/Resultats)\n\nMit freundlichen Grüßen,',
           },
         },
         {
@@ -585,9 +585,9 @@ function buildStages({ editionId }) {
             de: 'Rotary Startup Award — Save the Date',
           },
           body: {
-            fr: 'Madame, Monsieur,\n\nLa prochaine édition du **Rotary Startup Award** se prépare déjà.\n\n*Save the date* — les inscriptions ouvriront prochainement. Nous vous tiendrons informé·e des étapes clés du calendrier au fil des prochaines semaines.\n\nBien cordialement,',
-            en: 'Dear friend,\n\nThe next edition of the **Rotary Startup Award** is already being prepared.\n\n*Save the date* — applications will open shortly. We will share key calendar milestones in the coming weeks.\n\nWith kindest regards,',
-            de: 'Sehr geehrte Damen und Herren,\n\ndie nächste Edition des **Rotary Startup Award** wird bereits vorbereitet.\n\n*Save the date* — die Bewerbungsphase startet in Kürze. Wir halten Sie in den kommenden Wochen über die wichtigsten Kalenderschritte auf dem Laufenden.\n\nMit freundlichen Grüßen,',
+            fr: '## Save the date\n\nMadame, Monsieur,\n\nLa prochaine édition du **Rotary Startup Award** se prépare déjà.\n\n> *Save the date* — les **inscriptions ouvriront prochainement**. Nous vous tiendrons informé·e des étapes clés du calendrier au fil des prochaines semaines.\n\nBien cordialement,',
+            en: '## Save the date\n\nDear friend,\n\nThe next edition of the **Rotary Startup Award** is already being prepared.\n\n> *Save the date* — **applications will open shortly**. We will share key calendar milestones in the coming weeks.\n\nWith kindest regards,',
+            de: '## Save the Date\n\nSehr geehrte Damen und Herren,\n\ndie nächste Edition des **Rotary Startup Award** wird bereits vorbereitet.\n\n> *Save the Date* — die **Bewerbungsphase startet in Kürze**. Wir halten Sie in den kommenden Wochen über die wichtigsten Kalenderschritte auf dem Laufenden.\n\nMit freundlichen Grüßen,',
           },
         },
       ],
