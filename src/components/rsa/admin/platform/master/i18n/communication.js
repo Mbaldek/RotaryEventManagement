@@ -355,9 +355,14 @@ export const COMMUNICATION_REFONTE = {
     de: 'Zielgruppe wird beim Versand ermittelt',
   },
   cardPrepareSend: {
-    fr: 'Préparer l’envoi',
-    en: 'Prepare send',
-    de: 'Versand vorbereiten',
+    fr: 'Prévisualiser & envoyer',
+    en: 'Preview & send',
+    de: 'Vorschau & senden',
+  },
+  cardPrepareMicrocopy: {
+    fr: 'Ouvre l’aperçu — aucun email n’est envoyé sans confirmation.',
+    en: 'Opens the preview — no email is sent without confirmation.',
+    de: 'Öffnet die Vorschau — keine E-Mail wird ohne Bestätigung gesendet.',
   },
   cardOpenTemplate: {
     fr: 'Voir le modèle',
@@ -527,5 +532,64 @@ export const COMMUNICATION_REFONTE = {
     fr: 'Ce modèle n’expose pas d’audience structurée — utilisez l’Email Studio pour un envoi sur mesure.',
     en: 'This template does not expose a structured audience — use the Email Studio for a custom send.',
     de: 'Diese Vorlage stellt keine strukturierte Zielgruppe bereit — nutzen Sie Email Studio für einen individuellen Versand.',
+  },
+
+  // ── Aperçu avant envoi / fallback manuel (C-comm-fallback) ──────────────────
+  modalEyebrowPreview: {
+    fr: 'Aperçu avant envoi',
+    en: 'Preview before sending',
+    de: 'Vorschau vor dem Versand',
+  },
+  modalPreviewNote: {
+    fr: 'L’envoi ne part qu’après confirmation en bas.',
+    en: 'Nothing is sent until you confirm at the bottom.',
+    de: 'Der Versand erfolgt erst nach Bestätigung unten.',
+  },
+  copyAllEmails: {
+    // {n} = recipients count
+    fr: 'Copier les {n} emails',
+    en: 'Copy the {n} emails',
+    de: 'Die {n} E-Mails kopieren',
+  },
+  copySubject: {
+    fr: 'Copier le sujet',
+    en: 'Copy subject',
+    de: 'Betreff kopieren',
+  },
+  copyBody: {
+    fr: 'Copier le corps',
+    en: 'Copy body',
+    de: 'Text kopieren',
+  },
+  copied: {
+    fr: 'Copié',
+    en: 'Copied',
+    de: 'Kopiert',
+  },
+  modalRecipientsLoading: {
+    fr: 'Chargement de la liste complète…',
+    en: 'Loading the full list…',
+    de: 'Vollständige Liste wird geladen…',
+  },
+  modalRecipientsError: {
+    fr: 'Impossible de charger la liste complète des destinataires.',
+    en: 'Could not load the full recipient list.',
+    de: 'Vollständige Empfängerliste konnte nicht geladen werden.',
+  },
+  modalRecipientsEmpty: {
+    fr: 'Aucun destinataire dans cette audience.',
+    en: 'No recipient in this audience.',
+    de: 'Keine Empfänger in dieser Zielgruppe.',
+  },
+  modalFallbackNote: {
+    fr: 'Fallback manuel — si l’envoi automatique échoue, copie les emails + le sujet + le corps et envoie depuis ta messagerie.',
+    en: 'Manual fallback — if the automatic send fails, copy the emails + subject + body and send from your own mailbox.',
+    de: 'Manueller Fallback — falls der automatische Versand fehlschlägt, kopiere die E-Mails + den Betreff + den Text und sende über dein eigenes Postfach.',
+  },
+  confirmSendN: {
+    // {n} = recipients count
+    fr: 'Confirmer l’envoi des {n} emails',
+    en: 'Confirm sending the {n} emails',
+    de: 'Versand der {n} E-Mails bestätigen',
   },
 };

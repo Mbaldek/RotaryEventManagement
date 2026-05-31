@@ -16,7 +16,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Loader2, Send, Eye, Copy, Users, CheckCircle2, AlertTriangle, Sparkles, Lock,
+  Loader2, Eye, Copy, Users, CheckCircle2, AlertTriangle, Sparkles, Lock,
 } from 'lucide-react';
 import {
   GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE,
@@ -233,7 +233,7 @@ export default function StageTemplateCard({
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[4px] text-[12.5px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: NAVY, color: 'white', border: `1px solid ${NAVY}` }}
         >
-          <Send className="w-3.5 h-3.5" aria-hidden />
+          <Eye className="w-3.5 h-3.5" aria-hidden />
           {t(COMMUNICATION_REFONTE.cardPrepareSend)}
         </button>
         {onPreview && (
@@ -261,6 +261,14 @@ export default function StageTemplateCard({
           </button>
         )}
       </div>
+
+      {/* Micro-réassurance : ouvrir l'aperçu n'envoie rien. Masquée pour les
+          templates auto (pas de bouton d'envoi manuel). */}
+      {!isAuto && (
+        <p className="text-[10.5px] italic mt-1" style={{ color: MUTED }}>
+          {t(COMMUNICATION_REFONTE.cardPrepareMicrocopy)}
+        </p>
+      )}
     </motion.article>
   );
 }

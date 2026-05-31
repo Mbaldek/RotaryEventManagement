@@ -27,17 +27,17 @@
 //   editionId     : string         — pour audit + log
 // ---------------------------------------------------------------------------
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Loader2, Send, CheckCircle2, AlertTriangle, Users, RotateCcw,
+  Loader2, Send, CheckCircle2, AlertTriangle, Users, RotateCcw, Copy, Check,
 } from 'lucide-react';
 import {
   NAVY, INK, MUTED, CREAM2, CREAM, SERIF, EASE,
 } from '@/components/design/tokens';
-import { DANGER } from '@/components/design/tokens.app';
+import { DANGER, WARNING, TINT_WARNING, GOLD_TEXT } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
-import { sendBulk, previewAudience } from '@/lib/platform/bulk';
+import { sendBulk, previewAudience, resolveAudienceList } from '@/lib/platform/bulk';
 import FunnelEditorModal from '@/components/rsa/admin/platform/funnel/FunnelEditorModal';
 import EmailPreview, { buildEmailHtml } from '@/components/rsa/admin/platform/comms/EmailPreview';
 import { COMMUNICATION_REFONTE } from '../i18n';
@@ -102,6 +102,83 @@ function useStageAudience({ open, audienceType, audienceFilter, clubId }) {
   return state;
 }
 
+// ── Full recipient list hook (rsa_resolve_audience RPC) ─────────────────────
+// Le dry-run de l'edge ne renvoie qu'un échantillon de 3 emails. Pour le
+// fallback manuel (« copier tous les emails ») on charge la LISTE COMPLÈTE via
+// la RPC rsa_resolve_audience — exécutable par l'admin authentifié, RLS-safe.
+function useFullAudience({ open, audienceType, audienceFilter }) {
+  const [state, setState] = useState({ loading: false, error: null, emails: [] });
+  const filterKey = JSON.stringify(audienceFilter || {});
+
+  useEffect(() => {
+    if (!open || !audienceType) {
+      setState({ loading: false, error: null, emails: [] });
+      return undefined;
+    }
+    let aborted = false;
+    setState({ loading: true, error: null, emails: [] });
+    (async () => {
+      const res = await resolveAudienceList({
+        audienceType,
+        audienceFilter: audienceFilter || {},
+      });
+      if (aborted) return;
+      if (!res || res.ok === false) {
+        setState({ loading: false, error: res?.error || 'resolve_failed', emails: [] });
+        return;
+      }
+      setState({ loading: false, error: null, emails: res.emails || [] });
+    })();
+    return () => { aborted = true; };
+  }, [open, audienceType, filterKey]);
+
+  return state;
+}
+
+// ── Copy-to-clipboard with transient feedback ───────────────────────────────
+function useCopyFeedback(timeoutMs = 1600) {
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  const copy = useCallback(async (text) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(String(text ?? ''));
+      } else {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+    setCopied(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setCopied(false), timeoutMs);
+    return true;
+  }, [timeoutMs]);
+
+  return { copied, copy };
+}
+
+// Petit bouton-texte or « Copier … » avec feedback transitoire « Copié ».
+function CopyButton({ onCopy, label, copiedLabel, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      disabled={disabled}
+      className="inline-flex items-center gap-1 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] rounded-[2px] disabled:opacity-40 disabled:cursor-not-allowed"
+      style={{ color: GOLD_TEXT, borderBottom: '1px solid transparent' }}
+    >
+      {copiedLabel
+        ? <Check className="w-3 h-3" aria-hidden />
+        : <Copy className="w-3 h-3" aria-hidden />}
+      {copiedLabel || label}
+    </button>
+  );
+}
+
 // ── Confirm dialog ────────────────────────────────────────────────────────
 function ConfirmDialog({ open, count, sending, onConfirm, onCancel, t }) {
   return (
@@ -158,7 +235,9 @@ function ConfirmDialog({ open, count, sending, onConfirm, onCancel, t }) {
                 {sending
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   : <Send className="w-3.5 h-3.5" />}
-                {sending ? t(COMMUNICATION_REFONTE.modalSending) : t(COMMUNICATION_REFONTE.modalConfirmYes)}
+                {sending
+                  ? t(COMMUNICATION_REFONTE.modalSending)
+                  : fill(t(COMMUNICATION_REFONTE.confirmSendN), { n: count })}
               </button>
             </div>
           </motion.div>
@@ -202,8 +281,12 @@ function Toast({ tone, title, body, onClose }) {
 }
 
 // ── Audience tab ──────────────────────────────────────────────────────────
-function AudienceTab({ preview, template, t }) {
+function AudienceTab({ preview, fullList, template, t }) {
   const statuses = template?.statuses || [];
+  const { copied, copy } = useCopyFeedback();
+  const emails = fullList?.emails || [];
+  const onCopyAll = useCallback(() => { copy(emails.join(', ')); }, [copy, emails]);
+
   return (
     <div className="space-y-4">
       <div>
@@ -258,20 +341,77 @@ function AudienceTab({ preview, template, t }) {
         </p>
       )}
 
-      {preview.sample?.length > 0 && (
+      {/* Liste COMPLÈTE des destinataires (rsa_resolve_audience RPC) + copie
+          de tous les emails pour le fallback manuel. */}
+      {template?.audienceType && (
         <div>
+          <div className="flex items-baseline justify-between gap-2 mb-1.5">
+            <p
+              className="uppercase tracking-[0.14em] text-[10.5px]"
+              style={{ color: MUTED }}
+            >
+              {t(COMMUNICATION_REFONTE.modalAudienceSampleLabel)}
+            </p>
+            {emails.length > 0 && (
+              <CopyButton
+                onCopy={onCopyAll}
+                label={fill(t(COMMUNICATION_REFONTE.copyAllEmails), { n: emails.length })}
+                copiedLabel={copied ? t(COMMUNICATION_REFONTE.copied) : null}
+              />
+            )}
+          </div>
+
+          {fullList?.loading ? (
+            <p
+              className="rounded-[4px] px-3 py-2 text-[12px] inline-flex items-center gap-2"
+              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: MUTED }}
+            >
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              {t(COMMUNICATION_REFONTE.modalRecipientsLoading)}
+            </p>
+          ) : fullList?.error ? (
+            <p
+              className="rounded-[4px] px-3 py-2 text-[12px]"
+              style={{ background: '#f6e7e3', border: `1px solid ${CREAM2}`, color: DANGER }}
+            >
+              {t(COMMUNICATION_REFONTE.modalRecipientsError)}
+            </p>
+          ) : emails.length === 0 ? (
+            <p
+              className="rounded-[4px] px-3 py-2 text-[12px]"
+              style={{ background: 'white', border: `1px solid ${CREAM2}`, color: MUTED }}
+            >
+              {t(COMMUNICATION_REFONTE.modalRecipientsEmpty)}
+            </p>
+          ) : (
+            <ul
+              className="rounded-[4px] overflow-y-auto text-[12px] font-mono [&>li:first-child]:border-t-0"
+              style={{
+                background: 'white',
+                border: `1px solid ${CREAM2}`,
+                color: INK,
+                maxHeight: 160,
+              }}
+            >
+              {emails.map((e) => (
+                <li
+                  key={e}
+                  className="px-3 py-1.5"
+                  style={{ borderTop: `1px solid ${CREAM2}` }}
+                >
+                  {e}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Encart fallback manuel (warning cream/gold). */}
           <p
-            className="uppercase tracking-[0.14em] text-[10.5px] mb-1.5"
-            style={{ color: MUTED }}
+            className="rounded-[4px] px-3 py-2 text-[11.5px] mt-3 leading-relaxed"
+            style={{ background: TINT_WARNING, border: '1px solid #e8d090', color: WARNING }}
           >
-            {t(COMMUNICATION_REFONTE.modalAudienceSampleLabel)}
+            {t(COMMUNICATION_REFONTE.modalFallbackNote)}
           </p>
-          <ul
-            className="rounded-[4px] p-3 text-[12.5px] font-mono space-y-1"
-            style={{ background: 'white', border: `1px solid ${CREAM2}`, color: INK }}
-          >
-            {preview.sample.slice(0, 5).map((e) => <li key={e}>· {e}</li>)}
-          </ul>
         </div>
       )}
 
@@ -321,6 +461,8 @@ function FieldLabel({ children, htmlFor }) {
 function TemplateTab({
   lang, setLang, subject, setSubject, body, setBody, onResetTemplate, t,
 }) {
+  const subjectCopy = useCopyFeedback();
+  const bodyCopy = useCopyFeedback();
   return (
     <div className="space-y-4">
       <div className="flex items-end gap-3 flex-wrap">
@@ -350,7 +492,15 @@ function TemplateTab({
       </div>
 
       <div>
-        <FieldLabel htmlFor="stage-mail-subject">{t(COMMUNICATION_REFONTE.modalSubjectLabel)}</FieldLabel>
+        <div className="flex items-baseline justify-between gap-2">
+          <FieldLabel htmlFor="stage-mail-subject">{t(COMMUNICATION_REFONTE.modalSubjectLabel)}</FieldLabel>
+          <CopyButton
+            onCopy={() => subjectCopy.copy(subject)}
+            label={t(COMMUNICATION_REFONTE.copySubject)}
+            copiedLabel={subjectCopy.copied ? t(COMMUNICATION_REFONTE.copied) : null}
+            disabled={!subject.trim()}
+          />
+        </div>
         <input
           id="stage-mail-subject"
           type="text"
@@ -362,7 +512,15 @@ function TemplateTab({
       </div>
 
       <div>
-        <FieldLabel htmlFor="stage-mail-body">{t(COMMUNICATION_REFONTE.modalBodyLabel)}</FieldLabel>
+        <div className="flex items-baseline justify-between gap-2">
+          <FieldLabel htmlFor="stage-mail-body">{t(COMMUNICATION_REFONTE.modalBodyLabel)}</FieldLabel>
+          <CopyButton
+            onCopy={() => bodyCopy.copy(body)}
+            label={t(COMMUNICATION_REFONTE.copyBody)}
+            copiedLabel={bodyCopy.copied ? t(COMMUNICATION_REFONTE.copied) : null}
+            disabled={!body.trim()}
+          />
+        </div>
         <textarea
           id="stage-mail-body"
           value={body}
@@ -474,6 +632,13 @@ export default function StageEmailModal({
     clubId,
   });
 
+  // Liste COMPLÈTE des destinataires via rsa_resolve_audience (fallback manuel).
+  const fullList = useFullAudience({
+    open,
+    audienceType: template?.audienceType,
+    audienceFilter,
+  });
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState(null);
@@ -538,6 +703,18 @@ export default function StageEmailModal({
     }
   }, [audienceFilter, clubId, template, subject, body, lang, t, onClose]);
 
+  // Bandeau de réassurance « l'envoi ne part qu'après confirmation » affiché en
+  // tête de chaque onglet de la modale.
+  const previewNote = (
+    <p
+      className="rounded-[4px] px-3 py-2 text-[11.5px] mb-3 flex items-center gap-1.5"
+      style={{ background: '#eff1f6', border: `1px solid ${CREAM2}`, color: INK }}
+    >
+      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: NAVY }} aria-hidden />
+      {t(COMMUNICATION_REFONTE.modalPreviewNote)}
+    </p>
+  );
+
   const tabs = useMemo(() => [
     {
       id: 'audience',
@@ -545,7 +722,8 @@ export default function StageEmailModal({
       render: () => (
         <>
           {sendResult && <Toast {...sendResult} onClose={() => setSendResult(null)} />}
-          <AudienceTab preview={preview} template={template} t={t} />
+          {previewNote}
+          <AudienceTab preview={preview} fullList={fullList} template={template} t={t} />
         </>
       ),
     },
@@ -555,6 +733,7 @@ export default function StageEmailModal({
       render: () => (
         <>
           {sendResult && <Toast {...sendResult} onClose={() => setSendResult(null)} />}
+          {previewNote}
           <TemplateTab
             lang={lang}
             setLang={setLang}
@@ -574,11 +753,12 @@ export default function StageEmailModal({
       render: () => (
         <>
           {sendResult && <Toast {...sendResult} onClose={() => setSendResult(null)} />}
+          {previewNote}
           <DryRunTab subject={subject} body={body} lang={lang} t={t} />
         </>
       ),
     },
-  ], [t, preview, template, sendResult, lang, subject, body, onResetTemplate]);
+  ], [t, preview, fullList, template, sendResult, lang, subject, body, onResetTemplate, previewNote]);
 
   const sendCtaLabel = count > 0
     ? fill(t(COMMUNICATION_REFONTE.modalSendCta), { n: count })
@@ -609,7 +789,12 @@ export default function StageEmailModal({
     </button>
   );
 
-  const eyebrow = fill(t(COMMUNICATION_REFONTE.modalEyebrow), { stage: stageLabel });
+  // Eyebrow = « {stage} · APERÇU AVANT ENVOI ». La mention preview rappelle que
+  // la modale est un aperçu, pas un envoi.
+  const eyebrow = [
+    fill(t(COMMUNICATION_REFONTE.modalEyebrow), { stage: stageLabel }),
+    t(COMMUNICATION_REFONTE.modalEyebrowPreview),
+  ].filter(Boolean).join(' · ');
   const title = template ? resolveLang(template.titleDict || {}, lang) || subject : '';
 
   return (

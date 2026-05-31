@@ -99,3 +99,39 @@ export async function previewAudience({ clubId = null, audienceType, audienceFil
     dryRun: true,
   });
 }
+
+/**
+ * Résout la LISTE COMPLÈTE des destinataires d'une audience via la RPC
+ * `rsa_resolve_audience` (exécutable par l'admin authentifié, RLS-safe).
+ *
+ * Contrairement au dry-run de l'edge function (qui ne renvoie qu'un échantillon
+ * de 3 emails), cette RPC renvoie l'intégralité des destinataires. Utilisé par
+ * la modale d'envoi pour le fallback manuel (« copier tous les emails »).
+ *
+ * @param {object} args
+ * @param {string} args.audienceType                  — même valeur que pour sendBulk
+ * @param {Record<string, any>} [args.audienceFilter={}]
+ * @returns {Promise<
+ *   | { ok: true, emails: string[], recipients: { email: string, full_name: string|null }[] }
+ *   | { ok: false, error: string }
+ * >}
+ */
+export async function resolveAudienceList({ audienceType, audienceFilter = {} }) {
+  if (!audienceType) return { ok: false, error: 'missing_audience_type' };
+  try {
+    const { data, error } = await supabase.rpc('rsa_resolve_audience', {
+      p_audience_type: audienceType,
+      p_audience_filter: audienceFilter || {},
+    });
+    if (error) {
+      return { ok: false, error: error.message || 'resolve_failed' };
+    }
+    const rows = Array.isArray(data) ? data : [];
+    const recipients = rows
+      .filter((r) => r && r.email)
+      .map((r) => ({ email: String(r.email), full_name: r.full_name ?? null }));
+    return { ok: true, emails: recipients.map((r) => r.email), recipients };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}

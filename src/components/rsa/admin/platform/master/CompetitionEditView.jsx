@@ -33,8 +33,7 @@ import ClubsTab from './competition-tabs/ClubsTab';
 import RulesTab from './competition-tabs/RulesTab';
 import PrizesTab from './competition-tabs/PrizesTab';
 import FormulairesTab from './competition-tabs/FormulairesTab';
-import CommunicationTab from './competition-tabs/CommunicationTab';
-import CommunicationTabRefonte from './competition-tabs/CommunicationTabRefonte';
+import CommunicationSplit from './competition-tabs/CommunicationSplit';
 import RolesTab from './competition-tabs/RolesTab';
 import SessionsTab from './competition-tabs/SessionsTab';
 import DeleteCompetitionModal from './DeleteCompetitionModal';
@@ -183,23 +182,16 @@ export default function CompetitionEditView({ editionId, onClose }) {
     {
       id: 'comm',
       label: t(COMP.tabCommunication),
+      // Split en 2 sous-onglets : « Emailing » (CommunicationTabRefonte, modèles
+      // par étape) et « URL & palmarès public » (CommunicationTab legacy). Cf.
+      // docs/design/mockups/communication-split.html.
       render: () => (
-        <>
-          {/* Refonte UX par étape du funnel (B-comm-refonte) — au-dessus du
-              CommunicationTab legacy qui pilote uniquement le palmarès public.
-              On garde le legacy tant que public_results_enabled n'a pas migré
-              dans un module dédié. */}
-          <CommunicationTabRefonte
-            editionId={editionId}
-            competition={pilotageCompetition}
-          />
-          <div
-            className="mt-6 pt-5"
-            style={{ borderTop: `1px solid ${CREAM2}` }}
-          >
-            <CommunicationTab values={values} onPatch={patch} />
-          </div>
-        </>
+        <CommunicationSplit
+          editionId={editionId}
+          competition={pilotageCompetition}
+          values={values}
+          onPatch={patch}
+        />
       ),
     },
     {
