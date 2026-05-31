@@ -11,7 +11,7 @@ export const FORMULAIRES = {
     de: 'Benutzerdefinierte Formulare',
   },
   sectionTitle: {
-    fr: 'Champs custom par compétition',
+    fr: 'Champs personnalisés par compétition',
     en: 'Custom fields per competition',
     de: 'Custom-Felder pro Wettbewerb',
   },
@@ -45,12 +45,12 @@ export const FORMULAIRES = {
   // Builder list ------------------------------------------------------------
   // {count} = nb champs custom dans la liste.
   listHeading: {
-    fr: '{count} champs custom',
+    fr: '{count} champs personnalisés',
     en: '{count} custom fields',
     de: '{count} Custom-Felder',
   },
   listHeadingOne: {
-    fr: '1 champ custom',
+    fr: '1 champ personnalisé',
     en: '1 custom field',
     de: '1 Custom-Feld',
   },
@@ -75,12 +75,12 @@ export const FORMULAIRES = {
     de: 'Löschen',
   },
   deleteConfirm: {
-    fr: 'Supprimer ce champ custom ? Les réponses déjà collectées resteront en base mais ne seront plus collectées.',
+    fr: 'Supprimer ce champ personnalisé ? Les réponses déjà collectées resteront en base mais ne seront plus collectées.',
     en: 'Delete this custom field? Existing responses will remain in the database but new ones will no longer be collected.',
     de: 'Dieses Custom-Feld löschen? Bereits erfasste Antworten bleiben in der Datenbank, neue werden nicht mehr erhoben.',
   },
   emptyState: {
-    fr: 'Aucun champ custom — le formulaire utilise uniquement le squelette obligatoire.',
+    fr: 'Aucun champ personnalisé — le formulaire utilise uniquement le squelette obligatoire.',
     en: 'No custom fields yet — the form uses only the mandatory skeleton.',
     de: 'Noch keine Custom-Felder — das Formular verwendet nur das Pflichtgerüst.',
   },
@@ -144,14 +144,14 @@ export const CUSTOM_FIELD_MODAL = {
     de: 'Feld bearbeiten',
   },
   titleNew: {
-    fr: 'Configurer un champ custom',
+    fr: 'Configurer un champ personnalisé',
     en: 'Configure a custom field',
-    de: 'Custom-Feld konfigurieren',
+    de: 'Benutzerdefiniertes Feld konfigurieren',
   },
   titleEdit: {
-    fr: 'Configurer un champ custom',
+    fr: 'Configurer un champ personnalisé',
     en: 'Configure a custom field',
-    de: 'Custom-Feld konfigurieren',
+    de: 'Benutzerdefiniertes Feld konfigurieren',
   },
   // Tabs --------------------------------------------------------------------
   tabIdentity: {
@@ -173,6 +173,22 @@ export const CUSTOM_FIELD_MODAL = {
     fr: 'Validation',
     en: 'Validation',
     de: 'Validierung',
+  },
+  // Intros d'onglets (bloc explicatif en tête de chaque onglet de la modale).
+  introIdentity: {
+    fr: 'L’identité du champ : son intitulé, son type de saisie, s’il est obligatoire et sa position. L’intitulé (FR/EN/DE) est ce que verra la personne dans le formulaire de la compétition (candidature startup ou jury). La clé technique sert uniquement au stockage — jamais affichée.',
+    en: 'The field’s identity: its label, input type, whether it’s required, and its position. The label (FR/EN/DE) is what the person sees in the competition form (startup application or jury). The technical key is for storage only — never shown.',
+    de: 'Die Identität des Felds: Bezeichnung, Eingabetyp, Pflichtangabe und Position. Die Bezeichnung (FR/EN/DE) sieht die Person im Wettbewerbsformular (Startup-Bewerbung oder Jury). Der technische Schlüssel dient nur der Speicherung — nie sichtbar.',
+  },
+  introHelpers: {
+    fr: 'Les textes d’accompagnement (optionnels) qui guident la saisie. Le placeholder est l’exemple grisé affiché à l’intérieur du champ vide ; l’aide est la phrase affichée juste sous le champ. Les deux apparaissent dans le formulaire de la compétition.',
+    en: 'Optional guidance texts that help filling. The placeholder is the greyed example shown inside the empty field; the help text is the line shown just below the field. Both appear in the competition form.',
+    de: 'Optionale Hilfetexte zur Unterstützung der Eingabe. Der Platzhalter ist das ausgegraute Beispiel im leeren Feld; der Hilfetext erscheint direkt unter dem Feld. Beide erscheinen im Wettbewerbsformular.',
+  },
+  introValidation: {
+    fr: 'Les règles de contrôle appliquées à l’envoi du formulaire (longueurs, bornes, format, taille de fichier, dates — selon le type du champ). La personne ne pourra pas soumettre tant que sa réponse ne respecte pas ces règles. Champs laissés vides = aucune contrainte.',
+    en: 'The validation rules enforced when the form is submitted (lengths, bounds, format, file size, dates — depending on the field type). The person cannot submit until their answer satisfies these rules. Fields left empty = no constraint.',
+    de: 'Die beim Absenden geprüften Regeln (Längen, Grenzen, Format, Dateigröße, Daten — je nach Feldtyp). Das Formular kann erst gesendet werden, wenn die Antwort diese Regeln erfüllt. Leere Felder = keine Einschränkung.',
   },
   // Identity tab fields -----------------------------------------------------
   fieldKey: {

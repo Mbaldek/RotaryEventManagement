@@ -257,6 +257,7 @@ export default function CustomFieldEditorModal({
   function renderIdentity() {
     return (
       <div className="space-y-5">
+        <SectionNote>{t(CUSTOM_FIELD_MODAL.introIdentity)}</SectionNote>
         {error && (
           <p
             className="text-[12.5px] px-3 py-2 rounded-[4px]"
@@ -334,6 +335,7 @@ export default function CustomFieldEditorModal({
   function renderHelpers() {
     return (
       <div className="space-y-5">
+        <SectionNote>{t(CUSTOM_FIELD_MODAL.introHelpers)}</SectionNote>
         <div>
           <FieldLabel>{t(CUSTOM_FIELD_MODAL.fieldPlaceholder)}</FieldLabel>
           <TriRow
@@ -611,9 +613,7 @@ export default function CustomFieldEditorModal({
     }
     return (
       <div className="space-y-4">
-        <p className="text-[12.5px]" style={{ color: MUTED }}>
-          {t(CUSTOM_FIELD_MODAL.validationSectionIntro)}
-        </p>
+        <SectionNote>{t(CUSTOM_FIELD_MODAL.introValidation)}</SectionNote>
         {content}
       </div>
     );
