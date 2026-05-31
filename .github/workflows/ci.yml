@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node 20
         uses: actions/setup-node@v4
@@ -94,7 +94,7 @@ jobs:
   #   timeout-minutes: 20
   #   needs: build-and-lint
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v6
   #     - uses: actions/setup-node@v4
   #       with:
   #         node-version: '20'
