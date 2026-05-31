@@ -1,6 +1,13 @@
 # Blueprint — Refonte v2 de la page `/Concours`
 
-> **Statut** : draft d'architecture (à valider avant exécution).
+> ⚠️ **SUPERSEDED (2026-05-31).** Cette direction (`H-Ambient` logo respirant +
+> couleur + emoji par session + grille de cards) a été **exécutée puis rejetée**
+> (faux logo, selector de compétition, « cards partout », smell IA). Direction
+> active = éditorial chronologique « La Saison » :
+> [`concours-saison-redesign.md`](./concours-saison-redesign.md). Ce fichier est
+> conservé pour l'historique uniquement.
+
+> **Statut** : ~~draft d'architecture~~ → **abandonné**.
 > **Auteur** : sprint design 2026-05-29 (Rotary Startup Award, V2.5+).
 > **Scope** : `src/pages/Concours.jsx` et son arbre `src/components/rsa/concours-dashboard/*`, RPC `rsa_concours_edition_overview` / `rsa_concours_session_detail`.
 > **Hors scope** : pages admin (RsaAdmin), funnel de candidature, jury hub legacy `RsaJuryHub.jsx` (qui reste tel quel jusqu'à V3).

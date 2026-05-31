@@ -57,7 +57,7 @@ Score Anti-template **/5** : 1 = clone visuel de la page voisine, 5 = signature
 | 7 | `JuryCandidate` | Funnel jury | 4 | 4 | Stepper 4 étapes OK | low |
 | 8 | `Selection` | Queue comité | 4 | 4 | FiltersBar + Queue + Drawer propre | low |
 | 9 | `Admin` | Router shell | **5** | n/a | Routeur, pas un écran propre | — |
-| 10 | `Concours` | Vitrine RSA | 3 | 3 | Délègue à `ConcoursHero`/`ClubSection` — auditer sous-composants | mid |
+| 10 | `Concours` | Vitrine RSA | 3 | 3 | `H-Ambient` exécuté puis **rejeté** (faux logo, selector, cards). Refonte « La Saison » validée 2026-05-31 → [`blueprints/concours-saison-redesign.md`](../blueprints/concours-saison-redesign.md) | en cours |
 | 11 | `Marketplace` | Catalogue extensions | 3 | 2 | Cards d'extension toutes égales (pas de featured) | mid |
 | 12 | `MonDossier` | Dashboard perso | 3 | 3 | Page shell OK ; auditer `CandidatureFunnel`/`Tracking` | mid |
 | 13 | `StartupUpload` | Funnel | **2** | 2 | Inline hex partout, deux option-cards symétriques, color-scheme session inline | high |
@@ -204,7 +204,8 @@ Concours à 3/5 (délègue), Marketplace à 3/5.
 funnel "découvrir le programme" — actuellement, séquences trop similaires.
 
 **Pistes de variation** (point de départ — cf. blueprint §3.1 pour le détail) :
-- `Concours` — un hero "ambient" autour du logo qui respire.
+- `Concours` — `H-Ambient` rejeté (faux logo, selector, cards) ; refonte
+  éditoriale chronologique « La Saison » (frise = nav, sessions dans l'ordre).
 - `Candidater` — un compteur d'étape (`01 / 03`) pour assumer le funnel.
 - `DevenirJury` — une barre gold verticale gauche, voix institutionnelle.
 - `Resultats` — un voile éditorial au mount + giant year, registre cérémonial.

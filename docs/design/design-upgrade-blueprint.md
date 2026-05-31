@@ -478,19 +478,34 @@ C-Single-Primary + M-Gold-Sweep.
 
 ---
 
-### 4.13 `Concours.jsx`
+### 4.13 `Concours.jsx` — divergence assumée (validé 2026-05-31)
 
-🎯 H-Ambient + S-Date-Stamp + L-Mosaic + E-Hairline-Card + C-Single-Primary +
-M-Editorial-Veil.
+⚠️ **`H-Ambient` abandonné.** Exécuté une fois (logo Rotary redessiné + halo +
+couleur + emoji par session), rejeté : faux logo, selector, « cards partout »,
+smell IA. Direction retenue = **éditorial chronologique « La Saison »** (le
+catalogue autorise l'off-catalog, §16.2). Spec :
+[`blueprints/concours-saison-redesign.md`](../blueprints/concours-saison-redesign.md).
+
+🎯 Hero éditorial + ligne de stats (off-catalog, pas `H-Ambient`) + S-Gold-Rule /
+jalons mois + **liste chronologique éditoriale** (off-catalog, pas `L-Mosaic` ni
+`L-Card-Grid`) + E-Editorial-Letter + C-Single-Primary + M-Editorial-Veil.
 
 🧱 Build.
-- Audit `ConcoursHero` — s'il est déjà H-Ambient OK ; sinon refit.
-- ClubSection L-Mosaic : 1 session featured (la prochaine) + grid des autres.
+- `ConcoursHero` : eyebrow + serif title + filet gold + intro + ligne de stats
+  texte. **Pas** de logo, **pas** de selector édition, **pas** de KPI cards.
+- `SeasonProgram` (remplace `ClubSection`) : sessions **dans l'ordre du temps**,
+  club en méta, chapitrage par mois (repli si ≤ 1 mois).
+- `SessionRow` (remplace `SessionCard`) : ligne éditoriale hairline, filet gauche
+  couleur muted thème, **sans emoji**.
+- `ConcoursTimeline` : frise borderless **sticky = nav d'ancrage + scroll-spy**.
 
-❌ (à confirmer après audit sub-composants).
+❌ Remove. `RotaryAmbientMark` (faux logo), halo breathe, `<select>` édition,
+grille de `SessionCard`, emojis content-marker, gradient finale + trophée shimmer.
 
 ✓ Acceptance.
-- 1 session featured ≠ autres visuellement.
+- 0 faux logo / 0 selector / 0 grille de cards. Sessions chronologiques.
+- Frise sticky cliquable (scroll-spy). Couleur muted en accent, sans emoji.
+- Session LIVE dominante ; finale = focal éditorial sans gradient.
 
 ---
 
