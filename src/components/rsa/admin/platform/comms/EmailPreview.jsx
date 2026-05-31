@@ -35,9 +35,11 @@ function esc(value) {
 
 // ─── Markdown light parser ──────────────────────────────────────────────────
 // Supporte :
-//   **gras** → <strong>
-//   *italique* → <em>
-//   [texte](https://url) → <a> (urls https/http/mailto uniquement)
+//   ## Titre (ligne) → titre de section serif navy + filet or
+//   **gras** → <strong> navy   ·   *italique* → <em>
+//   [texte](https://url) → <a> ; [Label](url) SEUL sur sa ligne → bouton CTA navy
+//   --- (ligne) → séparateur hairline
+//   > texte → encart à filet or (rappel / échéance)
 //   - listes (ligne) → <ul><li>
 //   double saut de ligne → nouveau <p>
 //
@@ -55,9 +57,9 @@ function inlineToHtml(line) {
     const safe = URL_RE.test(trimmed) ? trimmed : '#';
     return `<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer" style="color:${NAVY}; text-decoration:underline;">${esc(txt)}</a>`;
   });
-  // 3) **gras** → <strong> (greedy minimal, doit être appliqué AVANT *italique*
-  // car ** est un sous-cas de * en regex naïf).
-  out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // 3) **gras** → <strong> navy (emphase). Appliqué AVANT *italique* car ** est
+  // un sous-cas de * en regex naïf.
+  out = out.replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${NAVY};">$1</strong>`);
   // 4) *italique*
   out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   return out;
@@ -74,6 +76,34 @@ export function markdownToHtml(markdown) {
     if (!block) continue;
 
     const lines = block.split('\n');
+
+    // Titre de section : "## Titre" (sur sa ligne) → serif navy + filet or.
+    const headingMatch = lines.length === 1 && block.match(/^#{1,6}\s+(.*)$/);
+    if (headingMatch) {
+      html.push(`<h2 style="margin:4px 0 6px 0; font-family:'Playfair Display', Georgia, 'Times New Roman', serif; font-weight:500; font-size:19px; line-height:1.3; color:${NAVY};">${inlineToHtml(headingMatch[1])}</h2>`);
+      html.push(`<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;"><tr><td height="2" bgcolor="${GOLD}" style="background-color:${GOLD}; line-height:2px; font-size:0; width:30px;">&nbsp;</td></tr></table>`);
+      continue;
+    }
+    // Séparateur : "---" (ou ___ / ***) → hairline.
+    if (/^(-{3,}|_{3,}|\*{3,})$/.test(block)) {
+      html.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 20px 0;"><tr><td height="1" bgcolor="${CREAM2}" style="background-color:${CREAM2}; line-height:1px; font-size:0;">&nbsp;</td></tr></table>`);
+      continue;
+    }
+    // Bouton CTA : un lien SEUL sur sa ligne "[Label](url)" → bouton bulletproof navy.
+    const ctaMatch = lines.length === 1 && block.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (ctaMatch) {
+      const rawUrl = String(ctaMatch[2]).trim();
+      const safe = URL_RE.test(rawUrl) ? rawUrl : '#';
+      html.push(`<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:6px auto 20px auto;"><tr><td align="center" bgcolor="${NAVY}" style="background-color:${NAVY}; border-radius:4px;"><a href="${esc(safe)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; padding:13px 26px; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size:14px; font-weight:500; color:#ffffff; text-decoration:none; border-radius:4px;">${esc(ctaMatch[1])} &rarr;</a></td></tr></table>`);
+      continue;
+    }
+    // Encart : toutes les lignes commencent par "> " (rappel, échéance) → filet or.
+    if (lines.every((l) => /^>\s?/.test(l))) {
+      const inner = lines.map((l) => inlineToHtml(l.replace(/^>\s?/, ''))).join('<br/>');
+      html.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px 0;"><tr><td style="padding:13px 16px; background-color:${CREAM}; border-left:3px solid ${GOLD}; font-family:'Playfair Display', Georgia, 'Times New Roman', serif; font-style:italic; font-size:15px; line-height:1.6; color:${NAVY};">${inner}</td></tr></table>`);
+      continue;
+    }
+
     // Détection liste : toutes les lignes commencent par "- " (ou "* ")
     const isList = lines.every((l) => /^\s*[-*]\s+/.test(l));
     if (isList) {
