@@ -16,7 +16,7 @@
 //   de partager le lien et de rebondir entre les vues sans relogger.
 
 import React, { useEffect, useMemo, lazy, Suspense } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import {
   PageShell,
@@ -341,6 +341,40 @@ export default function Admin() {
           {t(UI.pageSubtitle)}
         </p>
       </header>
+
+      {/* Espaces opérationnels — accès direct aux modules qui vivent HORS du
+          cockpit (revue des candidatures = /Selection ; notation = /Jury). La
+          TopNav admin n'expose qu'un lien « Administration » (computePrimaryNav),
+          et les status-strips du cockpit sont en lecture seule : sans ce bandeau,
+          ces modules n'étaient atteignables que par URL. */}
+      <nav
+        aria-label={t(UI.opsLabel)}
+        className="mb-6 pb-4 flex flex-wrap items-center gap-x-5 gap-y-2"
+        style={{ borderBottom: `1px solid ${CREAM2}` }}
+      >
+        <span
+          className="uppercase text-[10.5px] tracking-[0.18em] font-medium"
+          style={{ color: MUTED }}
+        >
+          {t(UI.opsLabel)}
+        </span>
+        <Link
+          to="/Selection"
+          className={`inline-flex items-center gap-1.5 text-[13.5px] rounded-[2px] underline decoration-1 underline-offset-[3px] ${FOCUS_RING_CLASS}`}
+          style={{ color: NAVY, textDecorationColor: GOLD }}
+        >
+          <span aria-hidden style={{ color: GOLD }}>→</span>
+          {t(UI.opsSelection)}
+        </Link>
+        <Link
+          to="/Jury"
+          className={`inline-flex items-center gap-1.5 text-[13.5px] rounded-[2px] underline decoration-1 underline-offset-[3px] ${FOCUS_RING_CLASS}`}
+          style={{ color: NAVY, textDecorationColor: GOLD }}
+        >
+          <span aria-hidden style={{ color: GOLD }}>→</span>
+          {t(UI.opsJury)}
+        </Link>
+      </nav>
 
       {/* V3 — Persona preview banner. Sticky-ish (mb-5 sous le header), visible
           uniquement si master_admin et scope != master. Cliquer "Retour à

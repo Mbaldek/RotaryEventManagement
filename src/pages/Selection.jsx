@@ -96,6 +96,7 @@ export default function Selection() {
     isComite,
     isAdmin,
     isMasterAdmin,
+    isCompetitionAdmin,
     clubMemberships,
     loading: authLoading,
   } = usePlatformAuth();
@@ -116,6 +117,16 @@ export default function Selection() {
   const canSeeAllClubs = isMasterAdmin || isAdmin;
   const isClubScoped = !canSeeAllClubs && myComiteClubIds.length > 0;
 
+  // Qui peut accéder à l'Espace Sélection : les rôles ops historiques (comité,
+  // admin legacy) ET les personas de la hiérarchie V2/V3 que la page sait déjà
+  // scoper — master_admin (GroupedQueue globale), competition_admin (filtre par
+  // édition), club_admin (file scopée club). Sans cet élargissement, un de ces
+  // admins « purs » tombait sur « Accès refusé » alors que le bandeau /Admin
+  // l'y envoie. La vraie frontière d'autorisation reste serveur (RLS + RPC).
+  const hasClubAdminRole = (clubMemberships || []).some((m) => m.role === 'club_admin');
+  const canAccessSelection =
+    isComite || isAdmin || isMasterAdmin || isCompetitionAdmin || hasClubAdminRole;
+
   // Liste des clubs (pour résoudre les noms dans la GroupedQueue master/admin).
   const { data: allClubs = [] } = useQuery({
     queryKey: ['rsa', 'selection', 'clubs'],
@@ -131,7 +142,7 @@ export default function Selection() {
     queryKey: ['rsa', 'selection', 'active-edition'],
     queryFn: () => Edition.active(),
     staleTime: 5 * 60 * 1000,
-    enabled: isAuthenticated && (isComite || isAdmin),
+    enabled: isAuthenticated && canAccessSelection,
   });
 
   const [editionId, setEditionId] = useState(null);
@@ -229,7 +240,7 @@ export default function Selection() {
   }
   if (!isAuthenticated) return <Navigate to="/Login" replace />;
 
-  if (!(isComite || isAdmin)) {
+  if (!canAccessSelection) {
     return (
       <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered minHeight="50vh">

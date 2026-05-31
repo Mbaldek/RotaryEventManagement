@@ -46,6 +46,11 @@ export const UI = {
   roles:        { fr: 'Rôles',                en: 'Roles',                  de: 'Rollen' },
   edition:      { fr: 'Édition',              en: 'Edition',                de: 'Ausgabe' },
   session:      { fr: 'Session',              en: 'Session',                de: 'Session' },
+  // Bandeau « Espaces opérationnels » (Admin.jsx) — accès direct aux modules
+  // hors-cockpit (revue des candidatures, jury), sinon atteignables seulement par URL.
+  opsLabel:     { fr: 'Espaces opérationnels', en: 'Operational areas',      de: 'Operative Bereiche' },
+  opsSelection: { fr: 'Candidatures & Sélection', en: 'Applications & Selection', de: 'Bewerbungen & Auswahl' },
+  opsJury:      { fr: 'Jury',                  en: 'Jury',                   de: 'Jury' },
   // V2 multi-club scope selector (Admin.jsx)
   viewLabel:    { fr: 'Vue',                  en: 'View',                   de: 'Ansicht' },
   scopeMaster:  {

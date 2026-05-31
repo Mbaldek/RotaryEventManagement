@@ -60,7 +60,26 @@ function Spinner({ size = 6, label }) {
 }
 
 export default function Jury() {
-  const { isAuthenticated, isJury, isAdmin, loading: authLoading, authUser } = usePlatformAuth();
+  const {
+    isAuthenticated,
+    isJury,
+    isAdmin,
+    isMasterAdmin,
+    isCompetitionAdmin,
+    clubMemberships,
+    loading: authLoading,
+    authUser,
+  } = usePlatformAuth();
+
+  // Accès au Jury : juré ou admin legacy historiquement ; on admet aussi les
+  // personas hiérarchie V2/V3 (master / competition / club admin) pour que le
+  // bandeau /Admin ne mène pas à « Accès refusé ». Le master_admin reçoit en
+  // plus les affordances admin du workspace (isAdminEffective). Frontière réelle
+  // = serveur (RLS + RPC). Cf. fix jumeau dans Selection.jsx.
+  const hasClubAdminRole = (clubMemberships || []).some((m) => m.role === 'club_admin');
+  const canAccessJury =
+    isJury || isAdmin || isMasterAdmin || isCompetitionAdmin || hasClubAdminRole;
+  const isAdminEffective = isAdmin || isMasterAdmin;
   const { t } = useLang();
 
   const [selectedSessionId, setSelectedSessionId] = useState(null);
@@ -81,7 +100,7 @@ export default function Jury() {
   }
   if (!isAuthenticated) return <Navigate to="/Login" replace />;
 
-  if (!(isJury || isAdmin)) {
+  if (!canAccessJury) {
     return (
       <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered minHeight="50vh">
@@ -109,7 +128,7 @@ export default function Jury() {
     <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
       <JuryWorkspace
         authUserId={authUser?.id}
-        isAdmin={isAdmin}
+        isAdmin={isAdminEffective}
         selectedSessionId={selectedSessionId}
         onSelectSession={setSelectedSessionId}
       />
