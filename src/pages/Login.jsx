@@ -22,10 +22,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Navigate, useLocation } from 'react-router-dom';
-import { PageShell, MagicLinkLogin, PlatformFooter, RotaryWheel } from '@/components/design';
+import { Navigate, useLocation, Link } from 'react-router-dom';
+import { PageShell, MagicLinkLogin, PlatformFooter, RotaryWheel, FOCUS_RING_CLASS } from '@/components/design';
 import ForceLogoutLink from '@/components/design/auth/ForceLogoutLink';
-import { GOLD, NAVY, SERIF, EASE } from '@/components/design/tokens';
+import LiveCompetitionPill from '@/components/rsa/candidature/LiveCompetitionPill';
+import { GOLD, NAVY, MUTED, SERIF, EASE } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { computeLandingRoute, parseLoginQuery } from '@/lib/platform/postLoginRoute';
@@ -276,6 +277,12 @@ export default function Login() {
     en: 'Rotary logo',
     de: 'Rotary-Logo',
   });
+  // Liens publics (wayfinding) — termes métier validés : « Candidater une startup »
+  // et « Inscription juré ». Toujours génériques (→ /Candidater et /DevenirJury qui
+  // portent la désambiguïsation multi-compétition), donc insensibles au nombre
+  // d'éditions ouvertes.
+  const linkApply = t({ fr: 'Candidater une startup', en: 'Apply as a startup', de: 'Als Startup bewerben' });
+  const linkJury = t({ fr: 'Inscription juré', en: 'Register as a juror', de: 'Als Jurymitglied anmelden' });
 
   return (
     <PageShell footer={<PlatformFooter />}>
@@ -294,7 +301,7 @@ export default function Login() {
             spin
             duration={50}
             title={logoAlt}
-            className="mb-6 drop-shadow-[0_8px_20px_rgba(15,31,61,0.18)]"
+            className="mb-6 mx-auto drop-shadow-[0_8px_20px_rgba(15,31,61,0.18)]"
             style={{
               width: 'clamp(96px, 14vw, 140px)',
               height: 'auto',
@@ -302,7 +309,7 @@ export default function Login() {
             }}
           />
           <p
-            className="italic mb-10"
+            className="italic mb-8 text-center"
             style={{
               fontFamily: SERIF,
               color: '#3a3a52',
@@ -312,12 +319,40 @@ export default function Login() {
           >
             {tagline}
           </p>
+          {/* Statut « live » data-driven — masqué si rien d'ouvert / requête en
+              échec. Aligné sur la largeur de la carte de sign-in. */}
+          <LiveCompetitionPill className="max-w-[420px] mx-auto mb-8" />
           <MagicLinkLogin
             redirectPath={redirectPath}
             intent={query.intent}
             editionId={query.edition}
             clubId={query.club}
           />
+          {/* Wayfinding public — pour qui atterrit sur /Login mais veut en fait
+              candidater ou s'inscrire au jury. Liens génériques. */}
+          <nav
+            className="max-w-[420px] mx-auto mt-6 pt-5 text-center"
+            style={{ borderTop: `1px solid ${GOLD}33` }}
+            aria-label={t({ fr: 'Pages publiques', en: 'Public pages', de: 'Öffentliche Seiten' })}
+          >
+            <p className="text-[12px]" style={{ color: MUTED }}>
+              <Link
+                to="/Candidater"
+                className={`font-medium underline underline-offset-4 rounded-[3px] px-0.5 ${FOCUS_RING_CLASS}`}
+                style={{ color: NAVY }}
+              >
+                {linkApply}
+              </Link>
+              <span className="mx-2" aria-hidden style={{ color: GOLD }}>·</span>
+              <Link
+                to="/DevenirJury"
+                className={`font-medium underline underline-offset-4 rounded-[3px] px-0.5 ${FOCUS_RING_CLASS}`}
+                style={{ color: NAVY }}
+              >
+                {linkJury}
+              </Link>
+            </p>
+          </nav>
         </motion.div>
       </div>
     </PageShell>

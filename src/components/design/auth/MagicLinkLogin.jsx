@@ -35,7 +35,11 @@ import TextInput from "@/components/design/form/TextInput";
 import ForceLogoutLink from "@/components/design/auth/ForceLogoutLink";
 
 const DEFAULT_T = {
-  eyebrow: { fr: "Espace candidats & jury", en: "Applicants & jury area", de: "Bewerber- und Jury-Bereich" },
+  // Porte UNIQUE : startup / jury / comité / admin entrent tous ici. Eyebrow
+  // neutre (« Espace membres ») plutôt qu'une liste de rôles qui exclurait les
+  // organisateurs/admins. L'override contextuel candidat/jury reste actif pour
+  // les liens d'invitation (cf. contextEyebrow).
+  eyebrow: { fr: "Espace membres", en: "Member area", de: "Mitgliederbereich" },
   title: { fr: "Connexion", en: "Sign in", de: "Anmeldung" },
   subtitle: {
     fr: "Recevez un lien de connexion par email. Pas de mot de passe.",
