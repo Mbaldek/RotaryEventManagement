@@ -64,17 +64,23 @@
   - ✅ **`save-jury-profile` NEUTRALISÉ** (le critique) : était `verify_jwt:false` + insert public NON borné dans la PII `jury_profiles`, orphelin (aucun appelant). Redéployé en **410 Gone + verify_jwt:true** (v3, 2026-05-31). Vecteur fermé.
   - `send-bulk` / `send-transactional` : auth solide + `esc()` HTML exemplaire (pas de XSS). Seul gap = pas de borne de longueur (DoS-soft par un **admin authentifié** → risque réel faible). **Backlog** : patches de bornage prêts (subject/body_html ≤300/100K ; data fields ≤2K) — à appliquer lors d'une fenêtre de redéploiement testée. Non fait (risque redéploiement live > gain).
 - **P1.3 — Rate-limit funnels publics** ✅ **FAIT.** Disparité confirmée (candidat = 3/email/24h ; jury = aucun). Ajout d'un rate-limit `3 candidatures / email / 24h` à `rsa_apply_jury` (migration `harden_rsa_apply_jury_rate_limit`, compteur sur `jury_applications`, parité ERRCODE 22023).
-- **P1.4 — Observabilité** : cf. `observability-edge-functions.md`. Logs structurés + alerting sur pics `forbidden`/`rate_limited`.
-- **P1.5 — Backup/restore** : `api/cron/backup-rsa.js` existe (service_role). Confirmer le cron Vercel actif + `CRON_SECRET` + procédure de restore documentée.
+- **P1.4 — Observabilité** : ⏸️ **INFRA (Mathieu)** — l'alerting (Logflare/Discord sur pics `forbidden`/`rate_limited`) dépend de services externes à brancher hors-repo. Les edge functions logguent déjà (`console.warn` sur les chemins sensibles). cf. `observability-edge-functions.md`.
+- **P1.5 — Backup/restore** : cron `api/cron/backup-rsa.js` déclaré dans `vercel.json` (quotidien 1h). **Procédure de restore** : §4bis ci-dessous. ⚠️ **Gap noté** : le backup écrase UN SEUL fichier JSON dans le bucket `backups` (pas de rotation) → un état corrompu sauvegardé écrase le bon. Reco : timestamp/rotation des fichiers de backup. Activation cron = `CRON_SECRET` côté Vercel (Mathieu).
+
+### 4bis · Procédure de restore (DR)
+1. **Primaire — Supabase PITR** (si plan Pro) : Dashboard → Database → Backups → Point-in-time recovery. Couvre toute la base, granularité fine. À privilégier.
+2. **Secondaire — export cron** : télécharger le JSON depuis le bucket Storage `backups` (service_role), puis ré-insérer table par table (`RSA_TABLES` de `backup-rsa.js`). Dépanne si PITR indispo, mais = dernier snapshot 1h, sans rotation.
+3. **Test de restore** : à exécuter 1×/trimestre sur un projet/branche staging (jamais tester un restore en prod).
 
 ---
 
 ## 4 · P2 — Maturité
 
-- Headers de sécurité (CSP, X-Frame-Options, HSTS) sur Vercel pour `app.rotary-startup.org` (SPA — moins de surface XSS que du SSR user-generated, mais à poser via `vercel.json`).
-- Pentest RLS automatisé (pgTAP) en CI (le workflow `ci.yml` a des placeholders Playwright + service_role).
-- SCA dépendances (Dependabot/`npm audit` bloquant en CI).
-- Scrub PII Sentry (`beforeSend`) — vérifier `lib/observability/sentry.js`.
+- ✅ **Headers sécurité Vercel** : CSP + X-Frame-Options + nosniff + Referrer-Policy + Permissions-Policy déjà en place ; **HSTS ajouté** 2026-05-31 (`vercel.json`).
+- ✅ **SCA dépendances** : `.github/dependabot.yml` ajouté (npm + github-actions, hebdo, PRs à reviewer).
+- ✅ **Scrub PII Sentry** : `sendDefaultPii:false` + `beforeSend`/`shouldDropEvent` en place ; attache délibérément `{id,email}` (choix RGPD documenté) — **intended**.
+- 🟡 **pgTAP RLS** : `supabase/tests/rls.sql` créé (invariants RLS + régression anon-revoke + search_path). **Reste** : brancher dans `ci.yml` (placeholders service_role déjà prévus) — secrets CI = Mathieu.
+- 🟡 **`npm audit` bloquant en CI** : à ajouter au workflow (complément Dependabot).
 
 ---
 
@@ -108,12 +114,16 @@ admin_clear_all_chats
 - [~] RLS lunch : NE PAS TOUCHER (app lunch pointe probablement ce projet)
 - [~] RLS legacy 2026 : risque accepté, laissé ouvert (décision Mathieu 2026-05-31)
 - [x] P1.1 RLS no-policy : audité intentionnel + REVOKE hygiène pending_applications_log
-- [x] P1.2 save-jury-profile neutralisé (410 + verify_jwt) ; send-bulk/transactional bornes = backlog
+- [x] P1.2 save-jury-profile neutralisé (410 + verify_jwt)
+- [x] P1.2 bornes send-bulk + send-transactional (patché en source → prochain déploiement edge)
 - [x] P1.3 rate-limit jury (`harden_rsa_apply_jury_rate_limit`)
-- [ ] Confirmer rate-limit `rsa_apply_jury`
-- [ ] Vérifier validation inputs `send-bulk`/`send-transactional`/`save-jury-profile`
-- [ ] Headers Vercel (CSP/HSTS) sur app.rotary-startup.org
-- [ ] Supprimer le `HARDENING-PLAN.md` Torool égaré du repo
+- [x] P2 HSTS ajouté (`vercel.json`) ; CSP + autres headers déjà présents
+- [x] P2 Dependabot SCA (`.github/dependabot.yml`)
+- [x] P2 tests RLS pgTAP (`supabase/tests/rls.sql`) — assertions validées
+- [x] P2 Sentry PII : déjà en place (intended)
+- [x] P1.5 procédure de restore documentée (§4bis)
+- [ ] INFRA Mathieu : activer cron (`CRON_SECRET`), brancher pgTAP+`npm audit` dans ci.yml, alerting P1.4, rotation backups
+- [ ] Optionnel : supprimer le `HARDENING-PLAN.md` Torool égaré (dashboard/git ; MCP ne supprime pas)
 
 ---
 
