@@ -15,7 +15,7 @@
 //   un retour 1-clic au scope Master. Le scope est persisté en URL pour permettre
 //   de partager le lien et de rebondir entre les vues sans relogger.
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, lazy, Suspense } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import {
@@ -35,10 +35,6 @@ import {
 } from '@/components/design';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
-import AdminShell from '@/components/rsa/admin/platform/AdminShell';
-import MasterCockpit from '@/components/rsa/admin/platform/master/MasterCockpit';
-import ClubCockpit from '@/components/rsa/admin/platform/club/ClubCockpit';
-import CompetitionAdminCockpit from '@/components/rsa/admin/platform/master/CompetitionAdminCockpit';
 import {
   useAllCompetitions,
   useAllClubs,
@@ -46,6 +42,15 @@ import {
 } from '@/components/rsa/admin/platform/master/useMaster';
 import useHierarchyScope from '@/components/rsa/admin/platform/useHierarchyScope';
 import { UI } from '@/components/rsa/admin/platform/i18n';
+
+// V3 perf — les 4 cockpits sont lazy-loadés : Admin n'en rend qu'UN selon le
+// scope/persona, donc un club_admin ne télécharge que ClubCockpit (et plus le
+// MasterCockpit + CompetitionAdminCockpit). Split le chunk Admin ~1 MB en
+// chunks à la demande. Suspense fallback = Spinner (cf. {body} plus bas).
+const AdminShell = lazy(() => import('@/components/rsa/admin/platform/AdminShell'));
+const MasterCockpit = lazy(() => import('@/components/rsa/admin/platform/master/MasterCockpit'));
+const ClubCockpit = lazy(() => import('@/components/rsa/admin/platform/club/ClubCockpit'));
+const CompetitionAdminCockpit = lazy(() => import('@/components/rsa/admin/platform/master/CompetitionAdminCockpit'));
 
 function Centered({ children, minHeight = '40vh' }) {
   return (
@@ -437,7 +442,9 @@ export default function Admin() {
         )
       )}
 
-      {body}
+      <Suspense fallback={<Centered minHeight="40vh"><Spinner /></Centered>}>
+        {body}
+      </Suspense>
     </PageShell>
   );
 }
