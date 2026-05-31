@@ -59,9 +59,11 @@
 
 ## 3 · P1 — Avant croissance
 
-- **P1.1 — RLS enabled sans policy** (`app_config`, `chat_messages`, `pending_applications_log`) : INFO. `app_config`/`pending_applications_log` = deny-all server-only, probablement intentionnel → confirmer. `chat_messages` : si le chat lunch lit via accès direct (pas RPC), deny-all le casserait → confirmer le chemin d'accès.
-- **P1.2 — Validation inputs edge functions** : `invite-user` valide déjà (email regex, role enum, message ≤400c). Vérifier `send-bulk` / `send-transactional` / `save-jury-profile` (bornes taille, échappement HTML — `invite-user` `esc()` est bon). Ajouter des bornes là où absent.
-- **P1.3 — Rate-limit funnels publics** : `rsa_apply_jury` / `rsa_create_pending_application` — confirmer qu'un rate-limit (par IP/email) existe (le funnel candidat a un "3 drafts/24h/email" documenté ; vérifier le jury).
+- **P1.1 — RLS enabled sans policy** ✅ **AUDITÉ — intentionnel, aucun fix.** Les 3 (`app_config`, `chat_messages`, `pending_applications_log`) sont deny-all VOULU : tout accès passe par RPC SECURITY DEFINER (chat via wrapper `lib/db/lunch.js` → 6 RPC ; pending via `rsa_create_pending_application`), zéro lecture client directe (vérifié grep). Fait : `REVOKE ALL ON pending_applications_log FROM anon, authenticated` (hygiène, grants inertes retirés).
+- **P1.2 — Validation inputs edge functions** :
+  - ✅ **`save-jury-profile` NEUTRALISÉ** (le critique) : était `verify_jwt:false` + insert public NON borné dans la PII `jury_profiles`, orphelin (aucun appelant). Redéployé en **410 Gone + verify_jwt:true** (v3, 2026-05-31). Vecteur fermé.
+  - `send-bulk` / `send-transactional` : auth solide + `esc()` HTML exemplaire (pas de XSS). Seul gap = pas de borne de longueur (DoS-soft par un **admin authentifié** → risque réel faible). **Backlog** : patches de bornage prêts (subject/body_html ≤300/100K ; data fields ≤2K) — à appliquer lors d'une fenêtre de redéploiement testée. Non fait (risque redéploiement live > gain).
+- **P1.3 — Rate-limit funnels publics** ✅ **FAIT.** Disparité confirmée (candidat = 3/email/24h ; jury = aucun). Ajout d'un rate-limit `3 candidatures / email / 24h` à `rsa_apply_jury` (migration `harden_rsa_apply_jury_rate_limit`, compteur sur `jury_applications`, parité ERRCODE 22023).
 - **P1.4 — Observabilité** : cf. `observability-edge-functions.md`. Logs structurés + alerting sur pics `forbidden`/`rate_limited`.
 - **P1.5 — Backup/restore** : `api/cron/backup-rsa.js` existe (service_role). Confirmer le cron Vercel actif + `CRON_SECRET` + procédure de restore documentée.
 
@@ -105,6 +107,9 @@ admin_clear_all_chats
 - [x] Revoke anon batch §5 — 43 RPC (`harden_revoke_anon_execute_admin_rpcs`)
 - [~] RLS lunch : NE PAS TOUCHER (app lunch pointe probablement ce projet)
 - [~] RLS legacy 2026 : risque accepté, laissé ouvert (décision Mathieu 2026-05-31)
+- [x] P1.1 RLS no-policy : audité intentionnel + REVOKE hygiène pending_applications_log
+- [x] P1.2 save-jury-profile neutralisé (410 + verify_jwt) ; send-bulk/transactional bornes = backlog
+- [x] P1.3 rate-limit jury (`harden_rsa_apply_jury_rate_limit`)
 - [ ] Confirmer rate-limit `rsa_apply_jury`
 - [ ] Vérifier validation inputs `send-bulk`/`send-transactional`/`save-jury-profile`
 - [ ] Headers Vercel (CSP/HSTS) sur app.rotary-startup.org
