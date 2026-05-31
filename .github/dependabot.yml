@@ -1,0 +1,20 @@
+# Dependabot — SCA (P2 hardening). Surveille les vulns + maj de deps.
+# Les PRs sont à reviewer/merger manuellement (pas d'auto-merge).
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "security"]
+    groups:
+      # Regroupe les maj mineures/patch en une PR pour réduire le bruit.
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["ci", "dependencies"]
