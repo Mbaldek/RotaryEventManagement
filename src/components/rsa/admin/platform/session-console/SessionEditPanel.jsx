@@ -13,7 +13,6 @@ import React, { useMemo, useState } from 'react';
 import { Loader2, Pencil, Trash2, AlertTriangle, Radio, Lock, CheckCircle2, RotateCcw } from 'lucide-react';
 import { CREAM2, NAVY, GOLD, MUTED, INK, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
-import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import {
   useUpdateSession, useDeleteSession,

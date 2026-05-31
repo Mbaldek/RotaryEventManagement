@@ -16,8 +16,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Mail, FileText, CheckCircle2, Clock, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { CREAM2, NAVY, GOLD, MUTED, INK, SERIF, TINT_ADMIN } from '@/components/design/tokens';
-import { DANGER } from '@/components/design/tokens.app';
+import { CREAM2, NAVY, GOLD, MUTED, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { sendBulk } from '@/lib/platform/bulk';
 

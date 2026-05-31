@@ -12,7 +12,7 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft, ExternalLink, Clock } from 'lucide-react';
-import { CREAM2, NAVY, GOLD, MUTED, INK, SERIF, TINT_ADMIN } from '@/components/design/tokens';
+import { CREAM2, NAVY, MUTED, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { StatusPill } from '@/components/design';

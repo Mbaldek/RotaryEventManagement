@@ -8,12 +8,12 @@
 // Réutilise l'infra Email Studio (send-bulk + rsa_resolve_audience). Aucune infra
 // nouvelle. Suivi minimal (cf. blueprint §12.4).
 
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Send, Eye, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { CREAM2, NAVY, GOLD, MUTED, INK, SERIF, TINT_ADMIN } from '@/components/design/tokens';
+import { CREAM2, NAVY, GOLD, MUTED, TINT_ADMIN } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
 import { sendBulk, resolveAudienceList } from '@/lib/platform/bulk';
 
