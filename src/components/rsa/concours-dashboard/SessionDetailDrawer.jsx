@@ -23,7 +23,7 @@ import ConcoursStatusPill from './ConcoursStatusPill';
 import { UI, formatSessionDate } from './i18n';
 import { computeCountdown } from '@/components/rsa/jury/constants';
 import { useSessionDetail } from './useConcours';
-import { getSessionPalette, getSessionEmoji } from './sessionTheme';
+import { getSessionPalette } from './sessionTheme';
 import { supabase } from '@/lib/supabase';
 
 function storageUrl(path) {
@@ -378,7 +378,6 @@ export default function SessionDetailDrawer({ sessionId, onClose }) {
   const palette = session
     ? getSessionPalette({ ...session, config }, 0)
     : { primary: NAVY, light: CREAM, border: CREAM2 };
-  const emoji = session ? getSessionEmoji(session) : null;
   const juryPackUrl = storageUrl(config?.jury_pack_path);
 
   // Winner derived from final_ranking (only when published — gated by RPC v2).
@@ -422,25 +421,21 @@ export default function SessionDetailDrawer({ sessionId, onClose }) {
               style={{ background: palette.primary }}
             />
             <div
-              className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 backdrop-blur-sm"
-              style={{
-                background: `${palette.light}f0`,
-                borderBottom: `1px solid ${palette.border}`,
-              }}
+              className="sticky top-0 z-10 flex items-center justify-between px-5 py-3"
+              style={{ background: 'white', borderBottom: `1px solid ${CREAM2}` }}
             >
               <div
-                className="uppercase text-[10px] tracking-[0.18em] font-semibold flex items-center gap-1.5"
+                className="uppercase text-[10px] tracking-[0.18em] font-semibold"
                 style={{ color: palette.primary }}
               >
-                {emoji && <span aria-hidden style={{ fontSize: 12 }}>{emoji}</span>}
                 {t(UI.drawerSection)}
               </div>
               <button
                 type="button"
                 onClick={onClose}
                 aria-label={t(UI.drawerClose)}
-                className="p-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] hover:bg-white/60"
-                style={{ color: palette.primary }}
+                className="p-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] hover:bg-[#faf7f2]"
+                style={{ color: NAVY }}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -464,10 +459,9 @@ export default function SessionDetailDrawer({ sessionId, onClose }) {
                   <div className="mb-5">
                     {session.theme && (
                       <div
-                        className="uppercase text-[10.5px] tracking-[0.16em] font-semibold mb-1.5 flex items-center gap-1.5"
+                        className="uppercase text-[10.5px] tracking-[0.16em] font-semibold mb-1.5"
                         style={{ color: palette.primary }}
                       >
-                        {emoji && <span aria-hidden style={{ fontSize: 13 }}>{emoji}</span>}
                         {session.theme}
                       </div>
                     )}
