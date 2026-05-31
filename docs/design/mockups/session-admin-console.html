@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup — Session Admin Console</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
+  :root{
+    --navy:#0f1f3d; --gold:#c9a84c; --gold-text:#8a6f1f; --cream:#faf7f2; --cream2:#e8e3d9;
+    --ink:#3a3a52; --muted:#9090a8; --danger:#a23b2d; --warning:#9a6400; --success:#1d6b4f;
+    --tint:#f5f2ec; --tint-admin:#f3ede5; --hair:#e8e3d9; --gold-soft:#fdf6e8;
+    --tint-blue:#eff1f6; --tint-sage:#ecf1e5; --tint-danger:#f6e7e3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);padding:26px 18px 80px}
+  .serif{font-family:'Playfair Display',serif}
+  .wrap{max-width:980px;margin:0 auto}
+
+  /* page meta (mockup chrome, hors app) */
+  .meta{margin-bottom:20px}
+  .meta .eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+  .meta .eyebrow .rule{height:1px;width:30px;background:var(--gold)}
+  .meta .eyebrow span{color:var(--gold-text);text-transform:uppercase;letter-spacing:.18em;font-size:10px;font-weight:600}
+  .meta h1{font-size:23px;font-weight:500;color:var(--navy)}
+  .meta .sub{color:var(--muted);font-size:12.5px;margin-top:5px;line-height:1.55}
+  .demobar{display:flex;gap:10px;align-items:center;margin-top:14px;padding:10px 12px;border:1px dashed var(--cream2);border-radius:5px;background:#fff}
+  .demobar .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+  .seg{display:inline-flex;border:1px solid var(--hair);border-radius:20px;overflow:hidden}
+  .seg button{border:0;background:#fff;color:var(--muted);font-family:inherit;font-size:12px;padding:6px 14px;cursor:pointer}
+  .seg button.on{background:var(--navy);color:#fff}
+
+  /* console panel */
+  .panel{background:#fff;border:1px solid var(--hair);border-radius:6px;overflow:hidden;box-shadow:0 14px 40px rgba(15,31,61,.07)}
+
+  /* header */
+  .crumb{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--hair);background:var(--tint-admin)}
+  .crumb .path{font-size:11.5px;color:var(--muted)}
+  .crumb .path b{color:var(--navy);font-weight:500}
+  .crumb .path .sep{color:var(--gold);margin:0 6px}
+  .back{font-size:11.5px;color:var(--navy);text-decoration:none;border:1px solid var(--hair);background:#fff;border-radius:4px;padding:5px 10px}
+  .hd{padding:18px 22px 4px}
+  .hd .top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .hd h2{font-size:21px;font-weight:500;color:var(--navy)}
+  .hd .facts{font-size:12.5px;color:var(--muted);margin-top:5px;display:flex;gap:14px;flex-wrap:wrap}
+  .hd .facts a{color:var(--navy)}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--cream2);white-space:nowrap}
+  .pill.draft{background:var(--gold-soft);color:var(--gold-text)}
+  .pill.live{background:var(--tint-sage);color:var(--success)}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .lifecycle{display:flex;align-items:center;gap:10px;padding:12px 22px 16px;border-bottom:1px solid var(--hair)}
+  .lifecycle .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-right:2px}
+  .btn{font-family:inherit;cursor:pointer;border-radius:4px;font-size:12.5px;padding:7px 13px;border:1px solid var(--hair);background:#fff;color:var(--ink)}
+  .btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .btn.gold{border-color:var(--gold);color:var(--gold-text)}
+  .btn.danger{border-color:var(--danger);color:var(--danger)}
+  .btn.solid-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  /* pill tabs */
+  .tabs{display:flex;gap:4px;padding:8px 16px;background:var(--tint-admin);border-bottom:1px solid var(--hair);flex-wrap:wrap}
+  .tabs button{border:0;background:transparent;font-family:inherit;font-size:13px;color:var(--muted);cursor:pointer;padding:7px 14px;border-radius:20px}
+  .tabs button.on{background:#fff;color:var(--navy);font-weight:500;box-shadow:0 1px 0 var(--gold) inset, 0 0 0 1px var(--cream2)}
+
+  /* body */
+  .body{padding:22px}
+  .secttitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .secttitle .t{font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold-text);font-weight:600}
+
+  /* gel banner */
+  .banner{display:none;gap:10px;align-items:flex-start;background:#fbf3e2;border:1px solid #ecd9a8;border-radius:5px;padding:12px 14px;margin-bottom:18px}
+  .banner .ic{color:var(--warning);font-size:15px;line-height:1.2}
+  .banner .tx{font-size:12.5px;color:var(--ink);line-height:1.55}
+  .banner .tx b{color:var(--navy)}
+  body.is-live .banner{display:flex}
+
+  /* read grid */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 26px}
+  .kv{display:grid;grid-template-columns:96px 1fr;gap:8px;padding:9px 0;border-bottom:1px solid #f1ece3;font-size:13px}
+  .kv .k{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;align-self:center}
+  .kv .v{color:var(--navy)}
+  .kv .v.mono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--muted)}
+  body.is-live .grid2 .v{color:var(--muted)}
+
+  /* edit form */
+  .form{display:none}
+  body.editing.is-draft .form{display:block}
+  body.editing.is-draft .readview{display:none}
+  body.editing.is-draft .editbtn{display:none}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--hair);border-radius:4px;background:var(--tint);color:var(--navy)}
+  .field .hint{font-size:10.5px;color:var(--muted);margin-top:4px}
+  .field.locked input{background:#f0ece4;color:var(--muted)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stickyfoot{display:flex;gap:10px;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--hair)}
+
+  /* danger zone */
+  .danger{margin-top:22px;border:1px solid #eccfc8;border-radius:6px;background:var(--tint-danger);padding:14px 16px}
+  .danger .h{font-size:13px;color:var(--navy);font-weight:500;margin-bottom:3px}
+  .danger .d{font-size:12px;color:var(--ink);line-height:1.5;margin-bottom:10px}
+  .danger .confirm{display:none;gap:8px;align-items:center;margin-top:10px}
+  .danger.armed .confirm{display:flex}
+  .danger input{font-family:inherit;font-size:12.5px;padding:7px 10px;border:1px solid var(--hair);border-radius:4px;background:#fff;color:var(--navy);width:170px}
+  body.is-live .danger .d::after{content:" — indisponible : session non-draft.";color:var(--danger)}
+  body.is-live .danger .arm{display:none}
+  body.is-live .danger .na{display:inline}
+  .danger .na{display:none;font-size:12px;color:var(--danger)}
+
+  /* generic reused-brick note */
+  .brick{border:1px dashed var(--cream2);border-radius:6px;padding:16px;background:var(--tint);}
+  .brick .bt{font-size:12px;color:var(--gold-text);text-transform:uppercase;letter-spacing:.14em;font-weight:600;margin-bottom:6px}
+  .brick .bd{font-size:12.5px;color:var(--ink);line-height:1.6}
+  .brick code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:#fff;border:1px solid var(--hair);border-radius:3px;padding:1px 5px;color:var(--navy)}
+
+  /* mini list (jury / startups demo) */
+  .mlist{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .mrow{display:flex;align-items:center;gap:12px;border:1px solid var(--hair);border-radius:5px;padding:9px 12px;background:#fff}
+  .ava{width:28px;height:28px;border-radius:50%;background:var(--gold-soft);border:1px solid var(--cream2);color:var(--navy);font-size:11px;display:flex;align-items:center;justify-content:center}
+  .mrow .nm{font-size:13px;color:var(--navy);flex:1}
+  .mrow .mt{font-size:11.5px;color:var(--muted)}
+  .scorebar{height:6px;width:120px;border-radius:6px;background:#eee;overflow:hidden}
+  .scorebar i{display:block;height:100%;background:var(--gold)}
+
+  /* emails */
+  .aud{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .aud label{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hair);border-radius:20px;padding:7px 14px;font-size:12.5px;color:var(--navy);cursor:pointer;background:#fff}
+  .aud label.on{border-color:var(--gold);background:var(--gold-soft);color:var(--gold-text)}
+  .aud .cnt{color:var(--muted);font-size:11.5px}
+  .composer{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .preview{border:1px solid var(--hair);border-radius:6px;overflow:hidden}
+  .preview .ph{background:var(--navy);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+  .preview .wheel{width:22px;height:22px;border-radius:50%;border:2px solid var(--gold);position:relative}
+  .preview .wheel::after{content:"";position:absolute;inset:4px;border-radius:50%;border:2px solid var(--gold)}
+  .preview .pb{padding:16px;font-size:13px;color:var(--ink);line-height:1.6}
+  .preview .pb .meta2{margin-top:12px;font-size:12px;color:var(--muted)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .right{margin-top:16px;display:flex;gap:10px;justify-content:flex-end}
+
+  /* checklist chips + per-row action */
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;padding:2px 8px;border-radius:20px;border:1px solid var(--cream2);white-space:nowrap}
+  .chip.wait{background:#f3eee6;color:var(--muted)}
+  .chip.sent{background:var(--tint-blue);color:var(--navy)}
+  .chip.ok{background:var(--tint-sage);color:var(--success)}
+  .act{font-family:inherit;cursor:pointer;border:1px solid var(--hair);background:#fff;color:var(--navy);border-radius:4px;font-size:11px;padding:5px 9px}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 6px}
+  .copybtns{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 2px}
+  .copybtns .act{font-size:11.5px;padding:6px 11px}
+  .legend{font-size:11px;color:var(--muted);margin-top:8px}
+
+  .tabpane{display:none}
+  .tabpane.on{display:block}
+
+  @media(max-width:760px){.grid2,.fgrid,.composer{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="is-draft">
+<div class="wrap">
+
+  <!-- mockup chrome -->
+  <div class="meta">
+    <div class="eyebrow"><span class="rule"></span><span>Mockup · à valider</span></div>
+    <h1 class="serif">Session Admin Console</h1>
+    <p class="sub">Console unique par session — montée au bon niveau (session club → Club Cockpit, session globale / finale fédérée → Compétition).
+      Blueprint : <b>docs/blueprints/session-admin-console.md</b>. Statique, données fictives. Les onglets, le toggle draft/live et « Modifier » sont cliquables.</p>
+    <div class="demobar">
+      <span class="lab">Démo — statut</span>
+      <div class="seg" id="statusSeg">
+        <button class="on" data-st="draft">● Draft (éditable)</button>
+        <button data-st="live">◗ Live (gelée)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- console -->
+  <div class="panel">
+    <div class="crumb">
+      <div class="path"><b>Master</b><span class="sep">▸</span>Compétition 2026<span class="sep">▸</span>Rotary Paris<span class="sep">▸</span><b>Session</b></div>
+      <a class="back" href="#">← Sessions</a>
+    </div>
+
+    <div class="hd">
+      <div class="top">
+        <div style="flex:1;min-width:240px">
+          <h2 class="serif">S2 · FoodTech &amp; Impact</h2>
+          <div class="facts">
+            <span>📅 14 mars 2026</span>
+            <span>🕒 18:00 – 20:30</span>
+            <a href="#">🔗 Lien Teams</a>
+            <span>qualifying · rotary-paris</span>
+          </div>
+        </div>
+        <span class="pill draft" id="hdPill"><span class="dot"></span><span id="hdPillTx">Draft</span></span>
+      </div>
+    </div>
+
+    <div class="lifecycle">
+      <span class="lab">Cycle de vie</span>
+      <span id="lcDraft"><button class="btn primary">Passer LIVE ▸</button></span>
+      <span id="lcLive" style="display:none"><button class="btn">↩ Repasser draft</button>
+        <button class="btn gold">Verrouiller</button>
+        <button class="btn gold">Publier les résultats</button></span>
+    </div>
+
+    <!-- tabs -->
+    <div class="tabs" id="tabs">
+      <button class="on" data-tab="edit">Vue / Édition</button>
+      <button data-tab="jury">Jury</button>
+      <button data-tab="startups">Startups</button>
+      <button data-tab="live">Live</button>
+      <button data-tab="results">Résultats</button>
+      <button data-tab="emails">Emails</button>
+    </div>
+
+    <div class="body">
+
+      <!-- ============ VUE / ÉDITION ============ -->
+      <div class="tabpane on" data-pane="edit">
+        <div class="banner">
+          <div class="ic">⚠</div>
+          <div class="tx"><b>Session LIVE — paramètres gelés.</b> Repassez en draft pour éditer
+            (impossible une fois des scores enregistrés). La suppression est également bloquée.</div>
+        </div>
+
+        <div class="secttitle">
+          <span class="t">Paramètres</span>
+          <button class="btn editbtn" id="modifierBtn">✎ Modifier</button>
+        </div>
+
+        <!-- read view -->
+        <div class="readview">
+          <div class="grid2">
+            <div>
+              <div class="kv"><span class="k">Nom</span><span class="v serif">FoodTech &amp; Impact</span></div>
+              <div class="kv"><span class="k">Thème</span><span class="v">Foodtech</span></div>
+              <div class="kv"><span class="k">Type</span><span class="v">qualifying</span></div>
+              <div class="kv"><span class="k">Club</span><span class="v">rotary-paris</span></div>
+              <div class="kv"><span class="k">Notes</span><span class="v">Salle prêtée par le partenaire</span></div>
+            </div>
+            <div>
+              <div class="kv"><span class="k">Date</span><span class="v">2026-03-14</span></div>
+              <div class="kv"><span class="k">Horaire</span><span class="v">18:00 → 20:30</span></div>
+              <div class="kv"><span class="k">Position</span><span class="v">2</span></div>
+              <div class="kv"><span class="k">Lien Teams</span><span class="v mono">https://teams…/m/abc</span></div>
+              <div class="kv"><span class="k">ID</span><span class="v mono">s2_foodtech · immuable</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- edit form -->
+        <div class="form">
+          <div class="fgrid">
+            <div class="field"><label>Nom</label><input value="FoodTech & Impact"></div>
+            <div class="field"><label>Thème</label><input value="Foodtech"></div>
+            <div class="field"><label>Type</label>
+              <select><option>qualifying</option><option>finale</option></select></div>
+            <div class="field"><label>Date</label><input type="date" value="2026-03-14"></div>
+            <div class="field"><label>Horaire</label>
+              <div class="two"><input type="time" value="18:00"><input type="time" value="20:30"></div></div>
+            <div class="field"><label>Position</label><input type="number" value="2"></div>
+            <div class="field" style="grid-column:1/-1"><label>Lien Teams</label><input value="https://teams.microsoft.com/l/meetup-join/m/abc"></div>
+            <div class="field" style="grid-column:1/-1"><label>Notes</label><textarea rows="2">Salle prêtée par le partenaire</textarea></div>
+            <div class="field locked"><label>ID (immuable)</label><input value="s2_foodtech" disabled>
+              <div class="hint">Renommer = supprimer puis recréer.</div></div>
+            <div class="field locked"><label>Club (draft only)</label><input value="rotary-paris" disabled></div>
+          </div>
+          <div class="stickyfoot">
+            <button class="btn primary">Enregistrer</button>
+            <button class="btn" id="cancelBtn">Annuler</button>
+            <span style="font-size:11.5px;color:var(--muted)">→ rsa_update_session(id, patch) · draft-only</span>
+          </div>
+        </div>
+
+        <!-- danger zone -->
+        <div class="danger" id="danger">
+          <div class="h">Zone danger — supprimer la session</div>
+          <div class="d">Possible tant que la session est en <b>draft</b>, sans juré assigné ni startup affectée</div>
+          <button class="btn danger arm" id="armDelete">Supprimer…</button>
+          <span class="na">Suppression indisponible</span>
+          <div class="confirm">
+            <span style="font-size:12px;color:var(--ink)">Tapez <b>SUPPRIMER</b></span>
+            <input id="delInput" placeholder="SUPPRIMER">
+            <button class="btn solid-danger" id="delGo" disabled>Supprimer définitivement</button>
+            <button class="btn" id="delCancel">Annuler</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ JURY ============ -->
+      <div class="tabpane" data-pane="jury">
+        <div class="toolbar">
+          <span class="t" style="font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold-text);font-weight:600">Jurés de la session — checklist</span>
+          <span style="flex:1"></span>
+          <button class="act">✉ Inviter / relancer tous</button>
+          <button class="act">👁 Prévisualiser la page jury ↗</button>
+        </div>
+        <div class="mlist">
+          <div class="mrow"><span class="ava">CM</span><span class="nm serif">Claire Moreau</span>
+            <span class="chip ok">✓ confirmée</span><span class="mt">présidente</span></div>
+          <div class="mrow"><span class="ava">JD</span><span class="nm serif">Julien Dubois</span>
+            <span class="chip ok">✓ confirmé</span><button class="act">✉ Relancer</button></div>
+          <div class="mrow"><span class="ava">AS</span><span class="nm serif">Amine Saidi</span>
+            <span class="chip sent">✉ invité</span><button class="act">✉ Relancer</button></div>
+          <div class="mrow"><span class="ava">LV</span><span class="nm serif">Léa Vidal</span>
+            <span class="chip wait">⏳ non invitée</span><button class="act">✉ Inviter</button></div>
+        </div>
+        <p class="legend">Statut sur <code>platform_jury_assignments</code> (invited_at / confirmed_at). Suivi minimal, à la main — pas d'ouverture/rebond.</p>
+      </div>
+
+      <!-- ============ STARTUPS ============ -->
+      <div class="tabpane" data-pane="startups">
+        <div class="toolbar">
+          <span class="t" style="font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold-text);font-weight:600">Dossiers affectés — checklist deck</span>
+          <span style="flex:1"></span>
+          <button class="act">✉ Envoyer la confirmation deck à tous</button>
+        </div>
+        <div class="mlist">
+          <div class="mrow"><span class="ava">①</span><span class="nm serif">Greenly</span>
+            <span class="chip ok">✓ deck session chargé</span><span class="mt">deck spécifique</span><button class="act">📄 Voir deck</button></div>
+          <div class="mrow"><span class="ava">②</span><span class="nm serif">FoodLoop</span>
+            <span class="chip ok">✓ garde deck d'inscription</span><button class="act">📄 Voir deck</button></div>
+          <div class="mrow"><span class="ava">③</span><span class="nm serif">NutriScan</span>
+            <span class="chip sent">✉ instructions envoyées</span><button class="act">✉ Relancer</button></div>
+          <div class="mrow"><span class="ava">④</span><span class="nm serif">AgriBoost</span>
+            <span class="chip wait">⏳ rien envoyé</span><button class="act">✉ Envoyer la confirmation</button></div>
+        </div>
+        <p class="legend">Form individuel à token : la startup garde son deck d'inscription (1 clic) ou charge un deck spécifique session → visible par le jury. Statut sur <code>startups</code> (deck_confirmed_at / session_deck_path / deck_instructions_sent_at).</p>
+      </div>
+
+      <!-- ============ LIVE ============ -->
+      <div class="tabpane" data-pane="live">
+        <div class="brick"><div class="bt">Brique réutilisée — refacto embeddable</div>
+          <div class="bd"><code>LiveTab</code> / <code>useLiveGrid</code> montés par <code>sessionId</code> (au lieu de l'objet session du shell legacy). Dashboard de scoring temps réel.</div></div>
+        <div class="mlist">
+          <div class="mrow"><span class="ava">①</span><span class="nm serif">Greenly</span><div class="scorebar"><i style="width:82%"></i></div><span class="mt">4.1 / 5 · 4 jurés</span></div>
+          <div class="mrow"><span class="ava">②</span><span class="nm serif">FoodLoop</span><div class="scorebar"><i style="width:74%"></i></div><span class="mt">3.7 / 5 · 4 jurés</span></div>
+          <div class="mrow"><span class="ava">③</span><span class="nm serif">NutriScan</span><div class="scorebar"><i style="width:60%"></i></div><span class="mt">3.0 / 5 · 3 jurés</span></div>
+        </div>
+      </div>
+
+      <!-- ============ RÉSULTATS ============ -->
+      <div class="tabpane" data-pane="results">
+        <div class="brick"><div class="bt">Brique réutilisée — refacto embeddable</div>
+          <div class="bd"><code>ResultsTab</code> / <code>usePublishSession</code>. Classement final, publication, et lien vers les mini-résultats publics (<code>Resultats.jsx</code>).</div></div>
+        <div class="mlist">
+          <div class="mrow"><span class="ava">🥇</span><span class="nm serif">Greenly</span><span class="mt">Lauréate de session · 4.1</span></div>
+          <div class="mrow"><span class="ava">🥈</span><span class="nm serif">FoodLoop</span><span class="mt">3.7</span></div>
+        </div>
+        <div class="right"><button class="btn">Voir mini-résultats publics ↗</button><button class="btn primary">Publier les résultats</button></div>
+      </div>
+
+      <!-- ============ EMAILS ============ -->
+      <div class="tabpane" data-pane="emails">
+        <div class="brick" style="margin-bottom:16px"><div class="bt">Email Studio réutilisé</div>
+          <div class="bd">Composer pré-scopé à cette session. Audiences résolues par <code>rsa_resolve_audience</code>. Envoi via <code>send-bulk</code> (dry-run → confirm).</div></div>
+
+        <div class="secttitle"><span class="t">Audience — pré-scopée à cette session</span></div>
+        <div class="aud" id="aud">
+          <label data-a="cand"><input type="radio" name="aud">Candidats <span class="cnt">· 12</span></label>
+          <label data-a="jury"><input type="radio" name="aud">Jurés <span class="cnt">· 5</span></label>
+          <label class="on" data-a="all"><input type="radio" name="aud" checked>Les deux <span class="cnt">· session_all · 17</span></label>
+        </div>
+
+        <div class="secttitle"><span class="t">Template</span>
+          <select id="tpl" class="btn" style="padding:7px 10px">
+            <option value="info">1 · Information</option>
+            <option value="relance">2 · Relance</option>
+            <option value="rappel" selected>3 · Rappel J-3</option>
+            <option value="deck">4 · Confirmer le pitch deck</option>
+            <option value="results">5 · Résultats</option>
+          </select>
+        </div>
+
+        <div class="copybtns">
+          <button class="act">⧉ Copier l'objet</button>
+          <button class="act">⧉ Copier le corps</button>
+          <button class="act">⧉ Copier les 17 destinataires</button>
+          <span class="legend" style="margin:0 0 0 4px">repli : envoi manuel depuis Gmail / Outlook</span>
+        </div>
+
+        <div class="composer">
+          <div>
+            <div class="field" style="margin-bottom:12px"><label>Objet</label><input id="subj" value="Rappel — votre pitch le 14 mars"></div>
+            <div class="field"><label>Corps (markdown léger)</label>
+              <textarea id="bodytx" rows="8">Bonjour {{name}},
+
+Petit rappel : votre session **FoodTech & Impact** a lieu le 14 mars à 18:00.
+Lien Teams et déroulé en pièce jointe. Merci de confirmer votre présence.</textarea></div>
+          </div>
+          <div class="preview">
+            <div class="ph"><span class="wheel"></span><span class="serif" style="font-size:15px">Rotary Startup Awards</span></div>
+            <div class="pb">
+              <div id="pvbody">Bonjour Marie,<br><br>Petit rappel : votre session <b>FoodTech &amp; Impact</b> a lieu le 14 mars à 18:00. Lien Teams et déroulé en pièce jointe.</div>
+              <div class="meta2">🗓 14 mars · 18:00 → 20:30 · 🔗 Teams</div>
+            </div>
+          </div>
+        </div>
+        <div class="right">
+          <button class="btn">Aperçu envoi (dry-run)</button>
+          <button class="btn primary">Envoyer → 17 destinataires</button>
+        </div>
+
+        <div class="secttitle" style="margin-top:22px"><span class="t">Historique des envois (suivi minimal)</span></div>
+        <div class="mlist">
+          <div class="mrow"><span class="chip ok">sent</span><span class="nm">Rappel J-3</span><span class="mt">12 mars · 17 destinataires · session_all</span></div>
+          <div class="mrow"><span class="chip ok">sent</span><span class="nm">Confirmer le pitch deck</span><span class="mt">2 mars · 12 candidats</span></div>
+        </div>
+        <p class="legend">Source <code>email_sends</code> (objet, corps, liste, statut agrégé). Pas d'ouverture/rebond — assumé.</p>
+      </div>
+
+    </div><!-- /body -->
+  </div><!-- /panel -->
+</div>
+
+<script>
+  const body = document.body;
+
+  // status toggle (draft / live)
+  document.querySelectorAll('#statusSeg button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('#statusSeg button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      const live = b.dataset.st==='live';
+      body.classList.toggle('is-live', live);
+      body.classList.toggle('is-draft', !live);
+      body.classList.remove('editing'); // gel coupe l'édition
+      document.getElementById('hdPill').className = 'pill '+(live?'live':'draft');
+      document.getElementById('hdPillTx').textContent = live?'Live':'Draft';
+      document.getElementById('lcDraft').style.display = live?'none':'inline';
+      document.getElementById('lcLive').style.display = live?'inline':'none';
+      document.getElementById('danger').classList.remove('armed');
+    };
+  });
+
+  // tabs
+  document.querySelectorAll('#tabs button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      document.querySelectorAll('.tabpane').forEach(p=>p.classList.remove('on'));
+      document.querySelector('.tabpane[data-pane="'+b.dataset.tab+'"]').classList.add('on');
+    };
+  });
+
+  // edit mode
+  document.getElementById('modifierBtn').onclick=()=>{ if(body.classList.contains('is-draft')) body.classList.add('editing'); };
+  document.getElementById('cancelBtn').onclick=()=> body.classList.remove('editing');
+
+  // danger confirm
+  const danger=document.getElementById('danger');
+  document.getElementById('armDelete').onclick=()=> danger.classList.add('armed');
+  document.getElementById('delCancel').onclick=()=>{ danger.classList.remove('armed'); document.getElementById('delInput').value=''; document.getElementById('delGo').disabled=true; };
+  document.getElementById('delInput').oninput=e=>{ document.getElementById('delGo').disabled = e.target.value!=='SUPPRIMER'; };
+
+  // audience pills
+  document.querySelectorAll('#aud label').forEach(l=>{
+    l.onclick=()=>{ document.querySelectorAll('#aud label').forEach(x=>x.classList.remove('on')); l.classList.add('on'); };
+  });
+
+  // template → subject/body preview
+  const TPL={
+    info:{s:'Information — session FoodTech & Impact le 14 mars', b:'Bonjour Marie,<br><br>Votre session <b>FoodTech & Impact</b> est programmée le 14 mars à 18:00. Voici les informations pratiques.'},
+    relance:{s:'Votre dossier est incomplet', b:'Bonjour Marie,<br><br>Il manque des éléments à votre dossier pour la session du 14 mars. Merci de le compléter avant le 10 mars.'},
+    rappel:{s:'Rappel — votre pitch le 14 mars', b:'Bonjour Marie,<br><br>Petit rappel : votre session <b>FoodTech & Impact</b> a lieu le 14 mars à 18:00. Lien Teams et déroulé en pièce jointe.'},
+    deck:{s:'Confirmez votre pitch deck', b:'Bonjour Marie,<br><br>Merci de téléverser / confirmer votre pitch deck pour la session du 14 mars avant le 12 mars.'},
+    results:{s:'Résultats — session FoodTech & Impact', b:'Bonjour,<br><br>Les résultats de la session <b>FoodTech & Impact</b> sont publiés. Merci à toutes et tous pour votre participation.'}
+  };
+  document.getElementById('tpl').onchange=e=>{
+    const t=TPL[e.target.value];
+    document.getElementById('subj').value=t.s;
+    document.getElementById('pvbody').innerHTML=t.b;
+  };
+</script>
+</body>
+</html>

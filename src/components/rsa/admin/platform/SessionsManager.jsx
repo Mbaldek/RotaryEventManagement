@@ -23,6 +23,7 @@ import { useCreateSession, useResetSessionTemplate } from './useAdmin';
 // sur le scope club (clubId fourni) : depuis le Master Cockpit ou la finale,
 // la gestion du jury passe par d'autres écrans.
 import SessionJurorsList from './club/jury/SessionJurorsList';
+import SessionConsole from './session-console/SessionConsole';
 
 const EMPTY_PAYLOAD = {
   id: '',
@@ -155,6 +156,8 @@ export default function SessionsManager({
   const [showForm, setShowForm] = useState(false);
   const [payload, setPayload] = useState(() => ({ ...EMPTY_PAYLOAD, club_id: clubId || '' }));
   const [createError, setCreateError] = useState(null);
+  // Session Admin Console — id de session ouverte en console plein-panneau (null = liste).
+  const [consoleSessionId, setConsoleSessionId] = useState(null);
 
   // Si on change de club_id (navigation entre Club Cockpits), reset les défauts.
   React.useEffect(() => {
@@ -199,6 +202,21 @@ export default function SessionsManager({
     } catch (err) {
       setCreateError(err?.message || 'Error');
     }
+  }
+
+  // Console plein-panneau : remplace la liste tant qu'une session est ouverte.
+  const consoleSession = visibleSessions.find((s) => s.id === consoleSessionId) || null;
+  if (consoleSession) {
+    return (
+      <SessionConsole
+        session={consoleSession}
+        editionId={editionId}
+        clubId={clubId}
+        sessions={visibleSessions}
+        onSelectSession={onSelectSession}
+        onClose={() => setConsoleSessionId(null)}
+      />
+    );
   }
 
   return (
@@ -433,19 +451,20 @@ export default function SessionsManager({
                   <div className="flex flex-col items-end gap-2">
                     <button
                       type="button"
+                      onClick={() => setConsoleSessionId(s.id)}
+                      className="inline-flex items-center gap-1.5 text-[11.5px] px-2.5 py-1 rounded-[4px] font-medium"
+                      style={{ color: NAVY, background: 'white', border: `1px solid ${CREAM2}` }}
+                    >
+                      Ouvrir la console →
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => onSelectSession?.(s.id)}
-                      className="text-[11.5px] underline decoration-1 underline-offset-2"
-                      style={{ color: NAVY }}
+                      className="text-[11px] underline decoration-1 underline-offset-2"
+                      style={{ color: MUTED }}
                     >
                       LIVE →
                     </button>
-                    {status === 'draft' && (
-                      <ResetButton
-                        sessionId={s.id}
-                        sessionName={s.name}
-                        onReset={(sid) => resetSession.mutateAsync(sid)}
-                      />
-                    )}
                   </div>
                 </div>
                 {/* Composition jury — uniquement scope club (clubId fourni).

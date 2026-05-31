@@ -126,6 +126,29 @@ export function useResetSessionTemplate() {
   });
 }
 
+// Session Admin Console — édition draft-only d'une session (patch partiel).
+export function useUpdateSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, patch }) => RsaSession.updateWithConfig({ sessionId, patch }),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: KEYS.sessionConfig(vars.sessionId) });
+      qc.invalidateQueries({ queryKey: ['rsa', 'admin', 'sessions'], exact: false });
+    },
+  });
+}
+
+// Session Admin Console — suppression (draft + 0 juré + 0 startup).
+export function useDeleteSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId) => RsaSession.deleteSession(sessionId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rsa', 'admin', 'sessions'], exact: false });
+    },
+  });
+}
+
 export function useLockSession() {
   const qc = useQueryClient();
   return useMutation({

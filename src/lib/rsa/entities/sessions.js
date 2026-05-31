@@ -64,4 +64,31 @@ export const RsaSession = {
     const { error } = await supabase.rpc('rsa_reset_session_template', { p_session_id: sessionId });
     if (error) throw error;
   },
+
+  // Session Admin Console — édition draft-only (patch partiel) via RPC.
+  // patch : { name?, theme?, session_date?, position?, kind?, club_id?,
+  //           notes?, teams_link?, start_time?, end_time? }
+  async updateWithConfig({ sessionId, patch }) {
+    const { data, error } = await supabase.rpc('rsa_update_session', {
+      p_session_id: sessionId,
+      p_patch: patch || {},
+    });
+    if (error) throw error;
+    return Array.isArray(data) ? data[0] : data;
+  },
+
+  // Session Admin Console — suppression (draft + 0 juré + 0 startup) via RPC.
+  async deleteSession(sessionId) {
+    const { error } = await supabase.rpc('rsa_delete_session', { p_session_id: sessionId });
+    if (error) throw error;
+  },
+
+  // Session Admin Console — topologie de finale d'une compétition (master/admin only).
+  async setFinaleTopology({ editionId, topology }) {
+    const { error } = await supabase.rpc('rsa_set_finale_topology', {
+      p_edition_id: editionId,
+      p_topology: topology,
+    });
+    if (error) throw error;
+  },
 };

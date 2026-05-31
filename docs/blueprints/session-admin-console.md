@@ -1,6 +1,6 @@
 # Feature blueprint — Session Admin Console
 
-> **Status.** Architectural decision recorded (brainstorm validé) — not yet implemented.
+> **Status.** Brainstorm validé. **Couche DB livrée** (migration `20260531_rsa_session_admin_console.sql`, appliquée + vérifiée le 2026-05-31). UI en attente du mockup. Branche `feat/session-admin-console`.
 > **Owner.** Plateforme RSA (`app.rotary-startup.org`).
 > **Surfaces touchées.** `SessionsManager` (Club Cockpit), `SessionsTab`
 > (Compétition/Master), `LiveTab`, `ResultsTab`, `EmailComposer` / `AudienceSelector`,
@@ -53,7 +53,7 @@ et multi-club. Plus combler les 2 vrais trous : **édition** et **emails scopés
 
 ---
 
-## 3. Modèle data — migration `2026XXXX_rsa_session_admin_console.sql`
+## 3. Modèle data — migration `20260531_rsa_session_admin_console.sql` ✅ appliquée
 
 ### 3.1 Topologie de finale (sur `editions`)
 
@@ -121,15 +121,17 @@ de [`20260529_rsa_v2_extend_rpcs.sql`](../../supabase/migrations/20260529_rsa_v2
 - `master_admin` / `competition_admin` **only** (pas de club_admin — c'est une
   décision de compétition). Écrit `editions.finale_topology`. Valide l'enum.
 
-### 4.4 Extension `rsa_resolve_audience(p_type, p_filter)` — MODIFIÉ (pas de nouvelle RPC)
+### 4.4 `rsa_resolve_audience(p_type, p_filter)` — 1 seul type ajouté (pas de nouvelle RPC)
 
-Nouveaux `audience_type`, `p_filter = { "session_id": "<id>" }` :
+**Découverte à l'implémentation** : `session_candidates` et `session_jurys`
+**existaient déjà** (M9 Email Studio). Seul **`session_all`** a été ajouté.
+`p_filter = { "session_id": "<id>" }` :
 
-| Type | Résout |
-| --- | --- |
-| `session_candidates` | `startups` où `session_id = X` (les pitcheurs) |
-| `session_jury` | jurés assignés à `X` (`platform_jury_assignments`) |
-| `session_all` | union des deux |
+| Type | État | Résout |
+| --- | --- | --- |
+| `session_candidates` | existant | `startups` où `session_id = X` (les pitcheurs) |
+| `session_jurys` | existant | jurés assignés à `X` (`platform_jury_assignments`) |
+| `session_all` | **ajouté** | union des deux |
 
 Reste sous la garde de rôle existante de la RPC (vérifie le `club_id` de la session
 pour l'appelant). Alimente l'`AudienceSelector` de la console.
@@ -157,11 +159,11 @@ SessionConsole({ sessionId, scope, clubId, editionId })
 | Onglet | Contenu | Réutilise |
 | --- | --- | --- |
 | **Vue / Édition** | Récap + form édition draft-only (`rsa_update_session`) ; bouton **Supprimer** (3-step typed-confirm §6.5 → `rsa_delete_session`) ; contrôles cycle de vie | `useSetSessionLive/Draft`, `useLockSession`, `usePublishSession` |
-| **Jury** | Composition par session | `SessionJurorsList` (déjà session+club scoped) |
-| **Startups** | Dossiers affectés + affectation | `useLiveStartupsForSession` + briques sélection |
+| **Jury** | Composition + **checklist par juré** (invité ? confirmé ? pack envoyé ?) avec action email par ligne — cf. §12 | `SessionJurorsList` + suivi `platform_jury_assignments` |
+| **Startups** | Dossiers affectés + **checklist par startup** (instructions deck envoyées ? deck confirmé/chargé ?) avec action email par ligne — cf. §12 | `useLiveStartupsForSession` + suivi deck (§12) |
 | **Live** | Dashboard scoring realtime | `LiveTab` / `useLiveGrid` *(refacto §5.2)* |
 | **Résultats** | Publication + lien mini-résultats publics | `ResultsTab` / `usePublishSession` *(refacto §5.2)* |
-| **Emails** | Composer pré-scopé session | `EmailComposer` + `AudienceSelector` (audiences `session_*`) |
+| **Emails** | Composer pré-scopé session + **« copier tout »** (objet/corps/destinataires) + historique | `EmailComposer` + `AudienceSelector` (audiences `session_*`) + `SendHistory` |
 
 L'onglet **Édition** suit le `Field` contract (§4.1) ; le form est **désactivé +
 bandeau explicatif** (§7.2 banner) quand `status <> 'draft'` (gel).
@@ -276,4 +278,56 @@ detail (`D-K`, base de l'onglet Vue) · §6.5 3-step typed-confirm (suppression)
   au form suffit en v1).
 - **Risque refacto** `LiveTab`/`ResultsTab` : vérifier qu'aucun autre call-site que
   `AdminShell` ne dépend de la signature `session`-object avant de basculer sur `sessionId`.
-```
+- **Tracking délivrabilité par destinataire** (ouvertures / rebonds via webhooks Resend)
+  — **explicitement hors-scope** (décision produit : « c'est pas du marketing »). Le suivi
+  reste au statut métier + à la main (cf. §12). Pas de webhook, pas de table par destinataire.
+
+---
+
+## 12. Addendum — parité RSA Admin par session (validé 2026-05-31)
+
+Demande explicite : reproduire, **par session**, ce que l'OLD RSA Admin faisait. Tout
+existait en legacy (`RsaJuryHub`, `DecksTab`, `RsvpTab`) mais sur des tables legacy
+(`StartupConfirmation`, `jury_profiles`, `FinaleRsvp`) — **pas** sur le SSOT platform
+`startups` / `platform_jury_assignments`. On **ne ressuscite pas** les tables legacy :
+on étend le modèle platform.
+
+### 12.1 Confirmation de deck par startup (le gros morceau)
+- **Champs** (migration n°2, sur `startups`) : `session_deck_path text` (deck spécifique
+  session ; NULL = réutilise `pitch_deck_path` d'inscription), `deck_confirmed_at timestamptz`,
+  `deck_instructions_sent_at timestamptz`.
+- **Form public à token** : la startup (non loggée) reçoit un lien `/{lang}/confirm-deck?token=…`
+  → choix « je garde mon deck d'inscription » (1 clic) **ou** « je charge un deck spécifique
+  session » (upload Storage). Edge function valide le token et écrit `deck_confirmed_at` /
+  `session_deck_path`. Réutilise le pattern magic-link/token existant.
+- Le deck retenu (spécifique sinon inscription) devient **visible par le jury** (§12.3).
+
+### 12.2 Onglets Startups & Jury = checklists par personne (suivi minimal, à la main)
+- **Startups** : une ligne par dossier affecté → statut deck (⏳ instructions non envoyées /
+  ✉ envoyées / ✓ confirmé inscription / ✓ deck session chargé) + action **« Envoyer / relancer
+  la confirmation deck »** par ligne (ou en masse). Statut dérivé des champs §12.1 + `email_sends`.
+- **Jury** : une ligne par juré → `invited_at` / `confirmed_at` (colonnes ajoutées à
+  `platform_jury_assignments`) + action **« Inviter / relancer »**. 
+- **Tracking volontairement minimal** : pas d'ouverture/rebond. « Envoyé » = présent dans un
+  `email_sends` de la session ; « retour » = statut métier (deck confirmé / présence). Le reste
+  se coche/relance manuellement.
+
+### 12.3 Page jury-facing par session (façon RsaJuryHub)
+- Page **read-only** réservée aux jurés d'une session : roster des startups candidates +
+  **deck retenu** (session sinon inscription) + executive summary + infos dossier.
+- Alimentée par `startups` (session_id) + `platform_jury_assignments` (qui voit quoi).
+  Lien depuis l'onglet Jury de la console (« prévisualiser la page jury »).
+
+### 12.4 « Copier tout » dans l'onglet Emails
+- Boutons **copier l'objet**, **copier le corps** (markdown), **copier les destinataires**
+  (liste d'emails) → envoi manuel possible depuis Gmail/Outlook en repli. Calque le pattern
+  de `CommunicationSplit` (compétition) qui n'existe pas encore côté session.
+
+### 12.5 Impact build (s'ajoute à la séquence §9)
+- **Migration n°2** : champs deck sur `startups` + `invited_at`/`confirmed_at` sur
+  `platform_jury_assignments` + RPC `rsa_confirm_session_deck(token,…)` (ou edge function) +
+  `rsa_mark_jury_invited` / `rsa_send_deck_instructions` (flags).
+- **Form public** `/confirm-deck` + edge function + bucket Storage deck-session.
+- **Checklists** Startups/Jury (UI) + **copier-tout** (UI) + **page jury-facing** (UI).
+- Cette extension ≈ **double la part UI** du blueprint initial. Tracking délivrabilité reste
+  hors-scope (§11).
