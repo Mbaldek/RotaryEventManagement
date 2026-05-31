@@ -379,7 +379,7 @@ function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, bus
 // ─── Tab principal ────────────────────────────────────────────────────────
 
 export default function JuryApplicationsTab({ clubId }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const qc = useQueryClient();
 
   const [filter, setFilter] = useState('pending');
@@ -449,16 +449,23 @@ export default function JuryApplicationsTab({ clubId }) {
 
   // ── Mutations ──────────────────────────────────────────────────────────
   const approve = useMutation({
-    mutationFn: (id) => JuryApplication.approve(id),
+    mutationFn: (id) => JuryApplication.approve(id, { lang }),
     onSuccess: (res, id) => {
       setBusyId(null);
       qc.invalidateQueries({ queryKey: ['rsa', 'jury-applications', clubId] });
-      if (res.needsAuthCreation) {
+      if (res.inviteError) {
+        // Approbation OK mais la création de compte / l'email d'accès a échoué :
+        // on garde le candidat visible et on signale l'échec d'invitation.
         setNeedsAuthBanner({ id });
-        setToast({ kind: 'ok', msg: t(JURY_TAB_UI.approveNeedsAuthTitle) });
+        setToast({ kind: 'err', msg: t(JURY_TAB_UI.approveInviteError) });
       } else {
         setNeedsAuthBanner(null);
-        setToast({ kind: 'ok', msg: t(JURY_TAB_UI.approveSuccess) });
+        setToast({
+          kind: 'ok',
+          msg: res.accountInvited
+            ? t(JURY_TAB_UI.approveInvited)
+            : t(JURY_TAB_UI.approveSuccess),
+        });
       }
     },
     onError: (err) => {

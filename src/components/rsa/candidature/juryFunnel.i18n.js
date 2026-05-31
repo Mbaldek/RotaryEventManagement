@@ -287,6 +287,16 @@ export const JURY_TAB_UI = {
     en: 'Approved! The candidate is now a club juror.',
     de: 'Genehmigt! Der/die Kandidat·in ist nun Juror·in des Clubs.',
   },
+  approveInvited: {
+    fr: 'Approuvé ! Compte créé et email d’accès envoyé au juré.',
+    en: 'Approved! Account created and access email sent to the juror.',
+    de: 'Genehmigt! Konto erstellt und Zugangs-E-Mail an das Jurymitglied gesendet.',
+  },
+  approveInviteError: {
+    fr: 'Approbation enregistrée, mais l’envoi de l’email d’accès a échoué. Réessayez ou invitez le juré via l’Email Studio.',
+    en: 'Approval saved, but sending the access email failed. Retry or invite the juror via the Email Studio.',
+    de: 'Genehmigung gespeichert, aber der Versand der Zugangs-E-Mail ist fehlgeschlagen. Erneut versuchen oder über das Email Studio einladen.',
+  },
   approveNeedsAuthTitle: {
     fr: 'Approbation enregistrée — finalisation requise',
     en: 'Approval recorded — finalisation needed',

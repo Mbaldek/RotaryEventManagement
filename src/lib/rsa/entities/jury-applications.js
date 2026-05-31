@@ -76,14 +76,38 @@ export const JuryApplication = {
     return Array.isArray(data) ? data[0] : data;
   },
 
-  // Approbation. La RPC renvoie une row { application, needs_auth_creation, user_id }.
-  // - Si needsAuthCreation = true : le candidat n'a pas encore de compte auth.users.
-  //   Le club_admin doit lui envoyer un magic-link (via l'Email Studio M9 ou
-  //   l'edge function send-jury-welcome, à venir). Une fois le candidat connecté
-  //   au moins une fois, rappeler approve() finalise membership + profile.
-  // - Sinon : le membership 'jury' et la fiche platform_jury_profiles sont créés
-  //   et l'application porte approved_user_id.
-  async approve(id) {
+  // Approbation — pipeline unifié accès + email.
+  // 1. rsa_approve_jury_application : flip status='approved' ; si le compte
+  //    auth.users existe déjà → crée le membership 'jury' + la fiche
+  //    platform_jury_profiles + approved_user_id, et renvoie needs_auth_creation=false.
+  // 2. Si needsAuthCreation=true (candidat sans compte) → l'edge `invite-user`
+  //    crée le compte auth, applique le membership 'jury' du club, génère un
+  //    magic-link et envoie l'email d'accès Élysée (Resend).
+  // 3. On rappelle l'RPC : le compte existant désormais, la fiche
+  //    platform_jury_profiles (qualite/orga/bio/photo) est peuplée.
+  // Retourne { application, needsAuthCreation, userId, accountInvited, inviteError? }.
+  async approve(id, { lang = 'fr' } = {}) {
+    const first = await this._rpcApprove(id);
+    if (!first.needsAuthCreation) {
+      return { ...first, accountInvited: false };
+    }
+    const app = first.application;
+    if (!app?.email || !app?.club_id) {
+      return { ...first, accountInvited: false, inviteError: 'missing_email_or_club' };
+    }
+    const { error: inviteErr } = await supabase.functions.invoke('invite-user', {
+      body: { email: app.email, role: 'jury', club_id: app.club_id, lang },
+    });
+    if (inviteErr) {
+      // L'approbation tient (status déjà 'approved') mais l'accès/email a échoué.
+      return { ...first, accountInvited: false, inviteError: inviteErr.message || String(inviteErr) };
+    }
+    // Compte désormais créé → re-approve peuple platform_jury_profiles + approved_user_id.
+    const second = await this._rpcApprove(id);
+    return { ...second, accountInvited: true };
+  },
+
+  async _rpcApprove(id) {
     const { data, error } = await supabase.rpc('rsa_approve_jury_application', {
       p_application_id: id,
     });
