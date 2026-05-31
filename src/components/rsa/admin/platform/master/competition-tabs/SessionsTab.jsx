@@ -13,7 +13,7 @@
 // On lit toutes les sessions de l'édition une seule fois (useSessionsAdmin)
 // puis on filtre par club côté client.
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Loader2, ChevronRight, AlertTriangle, CalendarClock, Radio,
@@ -28,6 +28,8 @@ import { useLang } from '@/lib/platform/i18n';
 import { useClubsForEdition, useCountsForEdition } from '../useMaster';
 import { useSessionsAdmin } from '../../useAdmin';
 import SessionConsole from '../../session-console/SessionConsole';
+import SessionsManager from '../../SessionsManager';
+import { supabase } from '@/lib/supabase';
 // V2.6 sessions-finale unification — la Grande Finale est rendue en tête de
 // cet onglet (une finale n'est qu'une session de plus, kind='finale'
 // + club_id=NULL pour la fédérée). Cf. docs/blueprints/sessions-finale-unification.md.
@@ -126,6 +128,17 @@ const COPY = {
     en: 'Qualifying sessions per club',
     de: 'Qualifikations-Sessions pro Club',
   },
+  modelLabel:   { fr: 'Modèle de sessions', en: 'Session model', de: 'Session-Modell' },
+  modelJoint:   { fr: 'Conjoint (niveau compétition)', en: 'Joint (competition level)', de: 'Gemeinsam (Wettbewerb)' },
+  modelPerClub: { fr: 'Par club', en: 'Per club', de: 'Pro Club' },
+  jointEyebrow: { fr: 'Parcours de sessions conjoint', en: 'Joint session track', de: 'Gemeinsamer Session-Track' },
+  jointTitle:   { fr: 'Flux unique — niveau compétition', en: 'Single flow — competition level', de: 'Einziger Ablauf — Wettbewerb' },
+  jointIntro: {
+    fr: 'Un seul parcours de sessions co-organisé : les sessions n’appartiennent à aucun club (jury, startups et emails se gèrent ici, au niveau compétition).',
+    en: 'A single co-organized session track: sessions belong to no club (jury, startups and emails are managed here, at competition level).',
+    de: 'Ein einziger ko-organisierter Session-Track: Sessions gehören keinem Club.',
+  },
+  coorg: { fr: 'Co-organisé par', en: 'Co-organized by', de: 'Ko-organisiert von' },
 };
 
 function StatusPill({ kind, label }) {
@@ -302,6 +315,19 @@ export default function SessionsTab({ editionId, competition }) {
   // Session Admin Console ouverte depuis la Compétition (scope club via session.club_id).
   const [consoleSession, setConsoleSession] = useState(null);
 
+  // Modèle de sessions de la compétition : 'joint' (flux unique, club_id NULL) ou
+  // 'per_club'. Persisté via rsa_set_session_model. Seedé depuis la prop competition.
+  const [model, setModel] = useState(competition?.session_model || 'per_club');
+  useEffect(() => {
+    if (competition?.session_model) setModel(competition.session_model);
+  }, [competition?.session_model]);
+  async function persistModel(next) {
+    setModel(next); // optimiste
+    try {
+      await supabase.rpc('rsa_set_session_model', { p_edition_id: editionId, p_model: next });
+    } catch (_e) { /* le serveur reste l'autorité ; rechargement reflète l'état réel */ }
+  }
+
   const clubs = useMemo(() => {
     const rows = clubsQ.data || [];
     return rows.map((r) => ({
@@ -374,9 +400,51 @@ export default function SessionsTab({ editionId, competition }) {
 
   return (
     <section>
-      <p className="text-[13px] mb-5" style={{ color: INK }}>
+      <p className="text-[13px] mb-4" style={{ color: INK }}>
         {t(COPY.intro)}
       </p>
+
+      {/* Switch modèle de sessions (conjoint vs par club) */}
+      {editionId && (
+        <div className="flex items-center gap-2.5 flex-wrap mb-5">
+          <span className="text-[10.5px] uppercase tracking-[0.14em]" style={{ color: MUTED }}>{t(COPY.modelLabel)}</span>
+          <div className="inline-flex rounded-full overflow-hidden" style={{ border: `1px solid ${CREAM2}` }}>
+            {['joint', 'per_club'].map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => persistModel(m)}
+                className="text-[12px] px-3 py-1.5"
+                style={model === m ? { background: NAVY, color: 'white' } : { background: 'white', color: MUTED }}
+              >
+                {m === 'joint' ? t(COPY.modelJoint) : t(COPY.modelPerClub)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Parcours conjoint : flux unique niveau compétition (sessions club_id NULL) */}
+      {model === 'joint' && editionId && (
+        <div className="mb-6" style={{ borderTop: `1px solid ${CREAM2}`, paddingTop: 18 }}>
+          <p className="uppercase tracking-[0.18em] text-[10.5px] font-medium" style={{ color: GOLD }}>{t(COPY.jointEyebrow)}</p>
+          <h3 className="text-[17px] mt-0.5" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>{t(COPY.jointTitle)}</h3>
+          <p className="text-[12.5px] mt-1.5" style={{ color: INK }}>{t(COPY.jointIntro)}</p>
+          {clubs.length > 0 && (
+            <p className="text-[11.5px] mt-1.5 mb-1" style={{ color: MUTED }}>
+              {t(COPY.coorg)} : <span style={{ color: NAVY }}>{clubs.map((c) => c.name).join(', ')}</span>
+            </p>
+          )}
+          <div className="mt-3">
+            <SessionsManager
+              editionId={editionId}
+              sessions={sessionsQ.data || []}
+              isLoading={sessionsQ.isLoading}
+              jointMode
+            />
+          </div>
+        </div>
+      )}
 
       {editionId && (
         <div className="mb-6">
@@ -401,7 +469,7 @@ export default function SessionsTab({ editionId, competition }) {
         </div>
       )}
 
-      {!isLoading && !isError && clubs.length > 0 && (
+      {model === 'per_club' && !isLoading && !isError && clubs.length > 0 && (
         <div className="mb-3" style={{ borderTop: `1px solid ${CREAM2}`, paddingTop: 18 }}>
           <p
             className="uppercase tracking-[0.18em] text-[10.5px] font-medium"
@@ -428,7 +496,7 @@ export default function SessionsTab({ editionId, competition }) {
         </p>
       )}
 
-      {!isLoading && !isError && clubs.length === 0 && (
+      {model === 'per_club' && !isLoading && !isError && clubs.length === 0 && (
         <div
           className="rounded-[4px] p-5 flex items-start gap-2.5"
           style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
@@ -440,7 +508,7 @@ export default function SessionsTab({ editionId, competition }) {
         </div>
       )}
 
-      {!isLoading && !isError && clubs.length > 0 && (
+      {model === 'per_club' && !isLoading && !isError && clubs.length > 0 && (
         <ul className="list-none m-0 p-0 flex flex-col gap-2">
           {clubs.map((c) => {
             const bucket = countsByClub.get(c.id) || {};

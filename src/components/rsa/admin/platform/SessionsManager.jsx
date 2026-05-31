@@ -148,6 +148,10 @@ export default function SessionsManager({
   // V2 multi-club : si fourni, la liste est filtrée par club_id et la création
   // injecte automatiquement ce club_id dans le payload (verrouillé dans le form).
   clubId = null,
+  // Mode conjoint (compétition session_model='joint') : sessions sans club
+  // (club_id NULL), un flux unique au niveau compétition. Masque le picker club
+  // et ne liste que les sessions club_id NULL (hors finale fédérée).
+  jointMode = false,
 }) {
   const { t } = useLang();
   const createSession = useCreateSession();
@@ -167,9 +171,11 @@ export default function SessionsManager({
   // Filtrage club-scoped : Club Cockpit ne montre QUE les sessions de son club.
   // Master Cockpit (clubId=null) montre tout. AdminShell legacy idem.
   const visibleSessions = React.useMemo(() => {
-    if (!clubId) return sessions || [];
-    return (sessions || []).filter((s) => s.club_id === clubId);
-  }, [sessions, clubId]);
+    if (clubId) return (sessions || []).filter((s) => s.club_id === clubId);
+    // Mode conjoint : uniquement les sessions sans club (hors finale fédérée).
+    if (jointMode) return (sessions || []).filter((s) => !s.club_id && s.kind !== 'finale');
+    return sessions || [];
+  }, [sessions, clubId, jointMode]);
 
   async function onCreate() {
     setCreateError(null);
@@ -345,7 +351,7 @@ export default function SessionsManager({
             </div>
             {/* Club picker (visible uniquement quand on N'est PAS dans un Club Cockpit).
                 Dans le Club Cockpit, le club_id est verrouillé via la prop clubId. */}
-            {!clubId && (
+            {!clubId && !jointMode && (
               <div className="md:col-span-2">
                 <FieldLabel htmlFor="new-club">{t(SETUP.newSessionClub)}</FieldLabel>
                 <input
