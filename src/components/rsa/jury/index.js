@@ -8,6 +8,7 @@ export { default as ResultsView } from './ResultsView';
 export { default as CoJurorsPopover } from './CoJurorsPopover';
 export { default as DocumentLinks } from './DocumentLinks';
 export { default as JuryAssignmentsAdmin } from './JuryAssignmentsAdmin';
+export { default as JuryProfileDrawer } from './JuryProfileDrawer';
 
 export {
   KEYS,
@@ -41,3 +42,13 @@ export {
   formatShortDate,
   compareSessions,
 } from './constants';
+
+export {
+  PROFILE_KEYS,
+  useJuryProfileCard,
+  useJurorPhotoUrl,
+  useJurorWishes,
+  useJurorSessionScores,
+} from './useJuryProfile';
+
+export { QUORUM_MIN, getSessionAccent, isFinaleSession } from './sessionMarker';

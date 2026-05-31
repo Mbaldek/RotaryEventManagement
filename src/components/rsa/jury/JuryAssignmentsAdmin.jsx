@@ -1,24 +1,29 @@
-// JuryAssignmentsAdmin — panneau admin-only embarqué dans la page Jury.
+// JuryAssignmentsAdmin — vue admin "Attribution des jurés" (design lift éditorial).
 //
-// Stopgap (pre-decided default #4) en attendant Module 4 : permet à un admin
-// d'assigner / retirer des jurés × sessions sans quitter la page Jury.
+// Refonte du stopgap matrice : la vue valide deux modes (toggle souligné or) —
+//   1. "Par session" : une carte par session (filet d'accent gauche, eyebrow
+//      contexte, jurés assignés + actions Détails/Retirer, pool des jurés validés
+//      non assignés via boutons "+ Nom"), bande Quorum en tête.
+//   2. "Matrice" : la matrice juré×session existante relookée (pastilles couleur
+//      en en-tête, cases √ navy, ligne totaux Playfair avec DANGER si <3).
 //
-// Source jurés : app_user_roles WHERE 'jury' ∈ roles (lecture admin only).
-// Source sessions : RsaSession.filter({ edition_id }) sur l'édition active.
+// AUCUN emoji — marqueur de session = pastille ronde getSessionAccent + filet 3px.
+// Cf. mockup validé docs/design/mockups/jury-admin-views.html.
 //
-// UI : matrice checkbox juré × session. Toggle = useAssignJuror / useUnassignJuror.
+// Source jurés : useJurorsDirectory (app_user_roles role='jury' + profiles join).
+// Source sessions : useSessionsForEdition(editionId).
+// Toggle case/bouton = useAssignJuror / useUnassignJuror.
 
 import React, { useMemo, useState } from 'react';
-import { Loader2, Settings2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, Check } from 'lucide-react';
 import {
   NAVY,
-  INK,
   MUTED,
-  GOLD,
   CREAM2,
   SERIF,
+  GOLD,
 } from '@/components/design/tokens';
-import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
+import { DANGER, TINT_DANGER, SUCCESS, GOLD_TEXT } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import {
   useAllAssignments,
@@ -28,186 +33,648 @@ import {
   useUnassignJuror,
 } from './useJury';
 import { UI } from './i18n';
-import { compareSessions } from './constants';
+import { compareSessions, formatShortDate } from './constants';
+import { getSessionAccent, isFinaleSession, QUORUM_MIN } from './sessionMarker';
+import JuryProfileDrawer from './JuryProfileDrawer';
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function initialsOf(name, email) {
+  const src = (name || email || '?').trim();
+  return (
+    src
+      .split(/[\s@.]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s) => s[0])
+      .join('')
+      .toUpperCase() || '?'
+  );
+}
+
+function shortSessionLabel(session) {
+  return session?.name || session?.theme || session?.id || '—';
+}
+
+// Pastille ronde marqueur de session (pas d'emoji).
+function Dot({ color, size = 7 }) {
+  return (
+    <span
+      className="inline-block rounded-full shrink-0"
+      style={{ width: size, height: size, background: color }}
+      aria-hidden
+    />
+  );
+}
+
+// Avatar initiales (fond navy, texte or) — photo non chargée dans la liste pour
+// rester léger ; la photo s'affiche dans le drawer.
+function Avatar({ name, email }) {
+  return (
+    <div
+      className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[11px] shrink-0"
+      style={{ background: NAVY, color: GOLD, fontWeight: 600, letterSpacing: '0.03em' }}
+      aria-hidden
+    >
+      {initialsOf(name, email)}
+    </div>
+  );
+}
+
+// ── Bande Quorum ───────────────────────────────────────────────────────────
+function QuorumStrip({ sessions, countBySession, t }) {
+  return (
+    <div
+      className="flex items-stretch rounded-[3px] overflow-hidden mb-8"
+      style={{ border: `1px solid ${CREAM2}`, background: '#fff' }}
+    >
+      {sessions.map((s, i) => {
+        const n = countBySession.get(s.id) || 0;
+        const under = n < QUORUM_MIN;
+        const accent = getSessionAccent(s);
+        const fin = isFinaleSession(s);
+        return (
+          <div
+            key={s.id}
+            className="flex-1 px-3.5 pt-4 pb-3.5"
+            style={{
+              borderLeft: i === 0 ? 'none' : `1px solid ${CREAM2}`,
+              background: fin ? '#fdfaf1' : 'transparent',
+            }}
+          >
+            <div
+              className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] mb-2 whitespace-nowrap overflow-hidden text-ellipsis"
+              style={{ color: MUTED }}
+              title={shortSessionLabel(s)}
+            >
+              <Dot color={accent} />
+              <span className="truncate">{shortSessionLabel(s)}</span>
+            </div>
+            <div
+              className="text-[27px] leading-none"
+              style={{ fontFamily: SERIF, fontWeight: 500, color: under ? DANGER : NAVY }}
+            >
+              {n}
+            </div>
+            <div
+              className="text-[10.5px] mt-1.5 tracking-[0.02em]"
+              style={{ color: under ? DANGER : SUCCESS }}
+            >
+              {under ? t(UI.quorumMissing(QUORUM_MIN - n)) : t(UI.quorumMet)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Bouton-texte action (sobre, souligné au survol) ────────────────────────
+function LinkAct({ children, onClick, danger, disabled, title }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className="text-[11.5px] tracking-[0.02em] bg-transparent border-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] rounded-[2px] disabled:opacity-50"
+      style={{
+        color: MUTED,
+        borderBottom: '1px solid transparent',
+        paddingBottom: 1,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = danger ? DANGER : NAVY;
+        e.currentTarget.style.borderBottomColor = danger ? '#e6cfc9' : CREAM2;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = MUTED;
+        e.currentTarget.style.borderBottomColor = 'transparent';
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ── Carte session (vue Par session) ────────────────────────────────────────
+function SessionCard({
+  session,
+  assignedJurors,
+  poolJurors,
+  lang,
+  t,
+  onDetails,
+  onRemove,
+  onAdd,
+  busy,
+}) {
+  const accent = getSessionAccent(session);
+  const fin = isFinaleSession(session);
+  const n = assignedJurors.length;
+  const under = n < QUORUM_MIN;
+  const dateLabel = formatShortDate(session.session_date, lang);
+  const eyebrow = fin
+    ? t(UI.contextFinale(dateLabel))
+    : t(UI.contextQualifying(dateLabel));
+  const [copied, setCopied] = useState(false);
+
+  async function copyEmails() {
+    const emails = assignedJurors.map((j) => j.email).filter(Boolean).join(', ');
+    if (!emails) return;
+    try {
+      await navigator.clipboard.writeText(emails);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* clipboard indisponible — silencieux */
+    }
+  }
+
+  return (
+    <div
+      className="relative rounded-[3px] overflow-hidden mb-3.5"
+      style={{ border: `1px solid ${CREAM2}`, background: '#fff' }}
+    >
+      <span
+        className="absolute left-0 top-0 bottom-0"
+        style={{ width: 3, background: accent }}
+        aria-hidden
+      />
+      {/* Head */}
+      <div className="flex items-start gap-4 pl-6 pr-5 pt-4 pb-3.5">
+        <div className="flex-1 min-w-0">
+          <div className="text-[9.5px] uppercase tracking-[0.16em] mb-1" style={{ color: MUTED }}>
+            {eyebrow}
+          </div>
+          <div
+            className="text-[17.5px] leading-tight"
+            style={{ fontFamily: SERIF, fontWeight: 500, color: NAVY }}
+          >
+            {shortSessionLabel(session)}
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-[12.5px]" style={{ color: NAVY }}>
+            {t(UI.jurorsCount(n))} ·{' '}
+            <span style={{ color: under ? DANGER : SUCCESS }}>
+              {under ? t(UI.quorumNotMet) : t(UI.quorumMetInline)}
+            </span>
+          </div>
+          <div className="mt-1.5">
+            <button
+              type="button"
+              onClick={copyEmails}
+              disabled={n === 0}
+              className="text-[11px] tracking-[0.04em] bg-transparent border-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] rounded-[2px] disabled:opacity-50"
+              style={{ color: GOLD_TEXT, borderBottom: '1px solid transparent', paddingBottom: 1 }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderBottomColor = GOLD; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderBottomColor = 'transparent'; }}
+            >
+              {copied ? t(UI.copyEmailsDone) : t(UI.copyEmails)}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Liste jurés assignés */}
+      <div className="pt-0.5 pb-1">
+        {assignedJurors.length === 0 ? (
+          <div
+            className="text-[12.5px] pl-6 pr-5 py-3"
+            style={{ color: MUTED, borderTop: `1px solid ${CREAM2}` }}
+          >
+            {t(UI.noJuror)}
+          </div>
+        ) : (
+          assignedJurors.map((j) => (
+            <div
+              key={j.email}
+              className="flex items-center gap-3.5 pl-6 pr-5 py-3"
+              style={{ borderTop: `1px solid ${CREAM2}` }}
+            >
+              <Avatar name={j.full_name} email={j.email} />
+              <div className="flex-1 min-w-0 flex items-baseline gap-2.5 flex-wrap">
+                <span className="text-[14px]" style={{ color: NAVY, fontWeight: 500 }}>
+                  {j.full_name || j.email}
+                </span>
+                {j.subtitle && (
+                  <span className="text-[12px]" style={{ color: MUTED }}>
+                    {j.subtitle}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-4 shrink-0">
+                <LinkAct onClick={() => onDetails(j)}>{t(UI.detailsAct)}</LinkAct>
+                <LinkAct danger disabled={busy} onClick={() => onRemove(j, session)}>
+                  {t(UI.removeAct)}
+                </LinkAct>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Pool */}
+      <div
+        className="flex flex-wrap gap-2.5 items-center pl-6 pr-5 py-3.5"
+        style={{ borderTop: `1px solid ${CREAM2}`, background: '#f5f2ec' }}
+      >
+        <span className="text-[10px] uppercase tracking-[0.14em] mr-0.5" style={{ color: MUTED }}>
+          {t(UI.poolLabel)}
+        </span>
+        {poolJurors.length === 0 ? (
+          <span className="text-[11.5px]" style={{ color: MUTED }}>
+            {t(UI.poolEmpty)}
+          </span>
+        ) : (
+          poolJurors.map((j) => (
+            <button
+              key={j.email}
+              type="button"
+              disabled={busy || !j.user_id}
+              onClick={() => onAdd(j, session)}
+              title={!j.user_id ? j.email : undefined}
+              className="text-[12px] rounded-[2px] px-3 py-1.5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] disabled:opacity-50"
+              style={{ border: `1px solid ${CREAM2}`, background: '#fff', color: NAVY }}
+              onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.borderColor = GOLD; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = CREAM2; }}
+            >
+              <span style={{ color: GOLD_TEXT, marginRight: 6 }}>+</span>
+              {j.full_name || j.email}
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Vue Matrice (relookée éditorial) ───────────────────────────────────────
+function MatrixView({ jurors, sessions, assignedIndex, countBySession, onToggle, busy, t }) {
+  return (
+    <div
+      className="rounded-[3px] overflow-auto"
+      style={{ border: `1px solid ${CREAM2}`, background: '#fff' }}
+    >
+      <table className="border-collapse w-full text-[12.5px]" style={{ minWidth: 680 }}>
+        <thead>
+          <tr>
+            <th
+              className="text-left px-2.5 py-3 text-[11px] uppercase tracking-[0.1em]"
+              style={{ background: NAVY, color: '#fff', fontWeight: 500, fontFamily: SERIF }}
+            >
+              {t(UI.jurorCol)}
+            </th>
+            {sessions.map((s) => (
+              <th
+                key={s.id}
+                className="px-2.5 py-3 text-[11px] uppercase tracking-[0.1em] whitespace-nowrap"
+                style={{ background: NAVY, color: '#fff', fontWeight: 500 }}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Dot color={getSessionAccent(s)} />
+                  {shortSessionLabel(s)}
+                </span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {jurors.map((j) => (
+            <tr key={j.email}>
+              <td
+                className="text-left px-2.5 py-3 whitespace-nowrap"
+                style={{ color: NAVY, borderBottom: `1px solid ${CREAM2}`, fontFamily: SERIF }}
+              >
+                <div style={{ fontWeight: 500 }}>{j.full_name || j.email}</div>
+                {j.full_name && (
+                  <div className="text-[11px]" style={{ color: MUTED, fontFamily: 'Inter, sans-serif' }}>
+                    {j.email}
+                  </div>
+                )}
+                {!j.user_id && (
+                  <div className="text-[10px]" style={{ color: DANGER, fontFamily: 'Inter, sans-serif' }}>
+                    {t({
+                      fr: "Jamais connecté (pas d'auth.uid())",
+                      en: 'Never signed in (no auth.uid())',
+                      de: 'Nie angemeldet (keine auth.uid())',
+                    })}
+                  </div>
+                )}
+              </td>
+              {sessions.map((s) => {
+                const checked = j.user_id ? assignedIndex.has(`${j.user_id}|${s.id}`) : false;
+                const disabled = !j.user_id || busy;
+                return (
+                  <td
+                    key={s.id}
+                    className="text-center px-2.5 py-3"
+                    style={{ borderBottom: `1px solid ${CREAM2}` }}
+                  >
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={checked}
+                      aria-label={`${j.email} ↔ ${shortSessionLabel(s)}`}
+                      disabled={disabled}
+                      onClick={() => onToggle(j, s)}
+                      className="w-[22px] h-[22px] rounded-[3px] mx-auto flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        border: checked ? `1px solid ${NAVY}` : '1px solid #d4d0e0',
+                        background: checked ? NAVY : '#fff',
+                        color: '#fff',
+                      }}
+                    >
+                      {checked && <Check className="w-3 h-3" aria-hidden />}
+                    </button>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td
+              className="text-left px-2.5 py-3"
+              style={{
+                borderTop: `2px solid ${CREAM2}`,
+                background: '#f5f2ec',
+                color: NAVY,
+                fontFamily: SERIF,
+                fontWeight: 600,
+              }}
+            >
+              {t(UI.totalRow)}
+            </td>
+            {sessions.map((s) => {
+              const n = countBySession.get(s.id) || 0;
+              const under = n < QUORUM_MIN;
+              return (
+                <td
+                  key={s.id}
+                  className="text-center px-2.5 py-3 tabular-nums"
+                  style={{
+                    borderTop: `2px solid ${CREAM2}`,
+                    background: '#f5f2ec',
+                    fontFamily: SERIF,
+                    fontWeight: 600,
+                    color: under ? DANGER : NAVY,
+                  }}
+                >
+                  {n}
+                </td>
+              );
+            })}
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+// ── Composant principal ─────────────────────────────────────────────────────
 export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
   const { t, lang } = useLang();
-  const [open, setOpen] = useState(false);
+  const [view, setView] = useState('sess'); // 'sess' | 'mx'
   const [toggleError, setToggleError] = useState(false);
+  const [drawer, setDrawer] = useState(null); // { juryUserId, email, fullName } | null
 
   const jurors = useJurorsDirectory();
-  const sessions = useSessionsForEdition(editionId);
+  const sessionsQ = useSessionsForEdition(editionId);
   const assignments = useAllAssignments();
   const assign = useAssignJuror();
   const unassign = useUnassignJuror();
 
   const sortedSessions = useMemo(() => {
-    const arr = Array.isArray(sessions.data) ? [...sessions.data] : [];
+    const arr = Array.isArray(sessionsQ.data) ? [...sessionsQ.data] : [];
     return arr.sort(compareSessions);
-  }, [sessions.data]);
+  }, [sessionsQ.data]);
 
-  // Index : Set("juryUserId|sessionId") pour O(1) lookup.
+  // Index Set("juryUserId|sessionId") pour O(1) lookup.
   const assignedIndex = useMemo(() => {
     const set = new Set();
-    for (const a of assignments.data || []) {
-      set.add(`${a.jury_user_id}|${a.session_id}`);
-    }
+    for (const a of assignments.data || []) set.add(`${a.jury_user_id}|${a.session_id}`);
     return set;
   }, [assignments.data]);
 
-  const isLoading = jurors.isLoading || sessions.isLoading || assignments.isLoading;
+  // Annuaire enrichi (subtitle = qualité·organisation est résolu côté drawer ;
+  // ici on garde email/full_name/user_id).
+  const jurorList = useMemo(() => jurors.data || [], [jurors.data]);
 
-  const handleToggle = async (juror, session) => {
-    if (!juror?.user_id) return; // juror sans profil = pas d'auth.uid() -> can't assign yet
+  // Comptes par session (jurés assignés ayant un user_id).
+  const countBySession = useMemo(() => {
+    const m = new Map();
+    for (const s of sortedSessions) m.set(s.id, 0);
+    for (const a of assignments.data || []) {
+      if (m.has(a.session_id)) m.set(a.session_id, (m.get(a.session_id) || 0) + 1);
+    }
+    return m;
+  }, [assignments.data, sortedSessions]);
+
+  // user_id -> juror, pour résoudre les assignments en objets juré.
+  const jurorByUserId = useMemo(() => {
+    const m = new Map();
+    for (const j of jurorList) if (j.user_id) m.set(j.user_id, j);
+    return m;
+  }, [jurorList]);
+
+  // Assignments par session -> liste de jurés (résolus).
+  const assignedBySession = useMemo(() => {
+    const m = new Map();
+    for (const s of sortedSessions) m.set(s.id, []);
+    for (const a of assignments.data || []) {
+      if (!m.has(a.session_id)) continue;
+      const j = jurorByUserId.get(a.jury_user_id);
+      if (j) m.get(a.session_id).push(j);
+    }
+    return m;
+  }, [assignments.data, sortedSessions, jurorByUserId]);
+
+  // sessions assignées d'un juré (pour le drawer).
+  const sessionIdsByUser = useMemo(() => {
+    const m = new Map();
+    for (const a of assignments.data || []) {
+      if (!m.has(a.jury_user_id)) m.set(a.jury_user_id, []);
+      m.get(a.jury_user_id).push(a.session_id);
+    }
+    return m;
+  }, [assignments.data]);
+
+  const busy = assign.isPending || unassign.isPending;
+
+  const isLoading = jurors.isLoading || sessionsQ.isLoading || assignments.isLoading;
+  const isError = jurors.isError || sessionsQ.isError || assignments.isError;
+
+  async function toggleAssign(juror, session, forceState) {
+    if (!juror?.user_id) return;
     const key = `${juror.user_id}|${session.id}`;
     const has = assignedIndex.has(key);
+    const shouldAssign = forceState === 'add' ? true : forceState === 'remove' ? false : !has;
     setToggleError(false);
     try {
-      if (has) {
-        await unassign.mutateAsync({ juryUserId: juror.user_id, sessionId: session.id });
-      } else {
+      if (shouldAssign && !has) {
         await assign.mutateAsync({
           juryUserId: juror.user_id,
           sessionId: session.id,
           createdBy: adminUserId ?? null,
         });
+      } else if (!shouldAssign && has) {
+        await unassign.mutateAsync({ juryUserId: juror.user_id, sessionId: session.id });
       }
     } catch {
-      // mutateAsync rejette si la RPC échoue — on surface un feedback au lieu
-      // de laisser la promesse rejetée non gérée.
       setToggleError(true);
     }
-  };
+  }
+
+  const drawerAssignedIds = drawer
+    ? sessionIdsByUser.get(drawer.juryUserId) || []
+    : [];
 
   return (
-    <section
-      className="rounded-[4px] p-4 mt-6"
-      style={{ background: '#fbf9f5', border: `1px solid ${GOLD}33` }}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c]"
-        aria-expanded={open}
-      >
-        <span className="flex items-center gap-2">
-          <Settings2 className="w-4 h-4" style={{ color: GOLD }} aria-hidden />
-          <span
-            className="text-[14px]"
-            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-          >
-            {t(UI.assignmentsTitle)}
-          </span>
+    <section className="mt-8">
+      {/* Header éditorial */}
+      <div className="flex items-center gap-3 mb-2.5">
+        <span className="h-px w-[34px]" style={{ background: GOLD }} aria-hidden />
+        <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: GOLD_TEXT }}>
+          {t(UI.eyebrow)}
         </span>
-        {open ? (
-          <ChevronUp className="w-4 h-4" style={{ color: MUTED }} aria-hidden />
-        ) : (
-          <ChevronDown className="w-4 h-4" style={{ color: MUTED }} aria-hidden />
-        )}
-      </button>
+      </div>
+      <h2 className="text-[26px] leading-tight" style={{ fontFamily: SERIF, fontWeight: 500, color: NAVY }}>
+        {t(UI.assignTitle)}
+      </h2>
+      <p className="text-[13.5px] mt-2 max-w-[560px] leading-relaxed" style={{ color: MUTED }}>
+        {t(UI.assignLead)}
+      </p>
 
-      {open && (
-        <div className="mt-3">
-          <p className="text-[12px] mb-3" style={{ color: INK }}>
-            {t(UI.assignmentsHelp)}
-          </p>
+      {/* Barre toggle */}
+      <div
+        className="flex items-end justify-between mt-7 mb-6"
+        style={{ borderBottom: `1px solid ${CREAM2}` }}
+      >
+        <div className="inline-flex gap-6" role="tablist" aria-label={t(UI.assignTitle)}>
+          {[
+            { key: 'sess', label: t(UI.viewBySession) },
+            { key: 'mx', label: t(UI.viewMatrix) },
+          ].map((tab) => {
+            const on = view === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => setView(tab.key)}
+                className="relative bg-transparent border-0 pb-3 text-[13px] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] rounded-[2px]"
+                style={{ color: on ? NAVY : MUTED, fontWeight: on ? 500 : 400 }}
+              >
+                {tab.label}
+                {on && (
+                  <span
+                    className="absolute left-0 right-0"
+                    style={{ bottom: -1, height: 2, background: GOLD }}
+                    aria-hidden
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="hidden sm:block text-[10px] uppercase tracking-[0.16em] pb-3" style={{ color: MUTED }}>
+          {t(UI.quorumHint)}
+        </div>
+      </div>
 
-          {toggleError && (
-            <div
-              className="rounded-[4px] p-2.5 mb-3 flex items-start gap-2 text-[12px]"
-              style={{ background: TINT_DANGER, color: NAVY, border: `1px solid ${DANGER}33` }}
-              role="alert"
-              aria-live="assertive"
-            >
-              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: DANGER }} aria-hidden />
-              <span>{t(UI.assignmentError)}</span>
-            </div>
-          )}
-
-          {isLoading ? (
-            <div className="flex items-center gap-2 text-[12px]" style={{ color: MUTED }}>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
-              {t({ fr: 'Chargement…', en: 'Loading…', de: 'Wird geladen…' })}
-            </div>
-          ) : (jurors.data || []).length === 0 ? (
-            <p className="text-[13px]" style={{ color: MUTED }}>
-              {t(UI.assignmentsEmpty)}
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th
-                      className="text-left text-[11px] uppercase tracking-[0.1em] py-2 pr-3"
-                      style={{ color: MUTED, borderBottom: `1px solid ${CREAM2}` }}
-                    >
-                      {t(UI.jurorCol)}
-                    </th>
-                    {sortedSessions.map((s) => (
-                      <th
-                        key={s.id}
-                        className="text-center text-[11px] uppercase tracking-[0.1em] py-2 px-2"
-                        style={{ color: MUTED, borderBottom: `1px solid ${CREAM2}` }}
-                      >
-                        {s.name || s.id}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(jurors.data || []).map((j) => (
-                    <tr key={j.email}>
-                      <td
-                        className="text-[13px] py-2 pr-3 whitespace-nowrap"
-                        style={{ color: NAVY, borderBottom: `1px solid ${CREAM2}` }}
-                      >
-                        <div style={{ fontFamily: SERIF, fontWeight: 500 }}>
-                          {j.full_name || j.email}
-                        </div>
-                        {j.full_name && (
-                          <div className="text-[11px]" style={{ color: MUTED }}>
-                            {j.email}
-                          </div>
-                        )}
-                        {!j.user_id && (
-                          <div className="text-[10px]" style={{ color: '#a23b2d' }}>
-                            {t({ fr: 'Jamais connecté (pas d\'auth.uid())',
-                                  en: 'Never signed in (no auth.uid())',
-                                  de: 'Nie angemeldet (keine auth.uid())' })}
-                          </div>
-                        )}
-                      </td>
-                      {sortedSessions.map((s) => {
-                        const checked = j.user_id
-                          ? assignedIndex.has(`${j.user_id}|${s.id}`)
-                          : false;
-                        const disabled = !j.user_id || assign.isPending || unassign.isPending;
-                        return (
-                          <td
-                            key={s.id}
-                            className="text-center py-2 px-2"
-                            style={{ borderBottom: `1px solid ${CREAM2}` }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              disabled={disabled}
-                              onChange={() => handleToggle(j, s)}
-                              aria-label={`${j.email} ↔ ${s.id}`}
-                              style={{ accentColor: NAVY }}
-                            />
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+      {/* Erreur de toggle */}
+      {toggleError && (
+        <div
+          className="rounded-[4px] p-2.5 mb-4 flex items-start gap-2 text-[12px]"
+          style={{ background: TINT_DANGER, color: NAVY, border: `1px solid ${DANGER}33` }}
+          role="alert"
+          aria-live="assertive"
+        >
+          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: DANGER }} aria-hidden />
+          <span>{t(UI.assignmentError)}</span>
         </div>
       )}
+
+      {/* États globaux */}
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-[13px]" style={{ color: MUTED }}>
+          <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+          {t(UI.drawerLoading)}
+        </div>
+      ) : isError ? (
+        <div
+          className="rounded-[4px] p-3 flex items-start gap-2 text-[13px]"
+          style={{ background: TINT_DANGER, color: NAVY, border: `1px solid ${DANGER}33` }}
+          role="alert"
+        >
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: DANGER }} aria-hidden />
+          {t(UI.loadError)}
+        </div>
+      ) : sortedSessions.length === 0 ? (
+        <p className="text-[13px]" style={{ color: MUTED }}>
+          {t(UI.noSessions)}
+        </p>
+      ) : jurorList.length === 0 ? (
+        <p className="text-[13px]" style={{ color: MUTED }}>
+          {t(UI.assignmentsEmpty)}
+        </p>
+      ) : (
+        <>
+          {/* Bande Quorum (toujours visible) */}
+          <QuorumStrip sessions={sortedSessions} countBySession={countBySession} t={t} />
+
+          {view === 'sess' ? (
+            <div>
+              {sortedSessions.map((s) => {
+                const assignedJurors = assignedBySession.get(s.id) || [];
+                const assignedUserIds = new Set(assignedJurors.map((j) => j.user_id));
+                const poolJurors = jurorList.filter((j) => !assignedUserIds.has(j.user_id));
+                return (
+                  <SessionCard
+                    key={s.id}
+                    session={s}
+                    assignedJurors={assignedJurors}
+                    poolJurors={poolJurors}
+                    lang={lang}
+                    t={t}
+                    busy={busy}
+                    onDetails={(j) =>
+                      setDrawer({ juryUserId: j.user_id, email: j.email, fullName: j.full_name })
+                    }
+                    onRemove={(j, sess) => toggleAssign(j, sess, 'remove')}
+                    onAdd={(j, sess) => toggleAssign(j, sess, 'add')}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <MatrixView
+              jurors={jurorList}
+              sessions={sortedSessions}
+              assignedIndex={assignedIndex}
+              countBySession={countBySession}
+              onToggle={(j, s) => toggleAssign(j, s)}
+              busy={busy}
+              t={t}
+            />
+          )}
+        </>
+      )}
+
+      {/* Drawer profil juré */}
+      <JuryProfileDrawer
+        open={!!drawer}
+        onClose={() => setDrawer(null)}
+        juryUserId={drawer?.juryUserId}
+        email={drawer?.email}
+        fullName={drawer?.fullName}
+        editionId={editionId}
+        sessions={sortedSessions}
+        assignedSessionIds={drawerAssignedIds}
+      />
     </section>
   );
 }
