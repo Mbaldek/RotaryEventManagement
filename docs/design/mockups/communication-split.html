@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup — Communication (split Emailing / URL + modale fallback)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&display=swap');
+  :root{
+    --navy:#0f1f3d; --gold:#c9a84c; --gold-text:#8a6f1f; --cream:#faf7f2; --cream2:#e8e3d9;
+    --ink:#3a3a52; --muted:#9090a8; --danger:#a23b2d; --warning:#9a6400; --success:#1d6b4f;
+    --tint:#f5f2ec; --hair:#e8e3d9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);padding:28px}
+  .serif{font-family:'Playfair Display',serif}
+  .wrap{max-width:920px;margin:0 auto}
+  .eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .eyebrow .rule{height:1px;width:30px;background:var(--gold)}
+  .eyebrow span{color:var(--gold-text);text-transform:uppercase;letter-spacing:.18em;font-size:10px;font-weight:600}
+  h1{font-size:24px;font-weight:500;color:var(--navy);font-family:'Playfair Display',serif}
+  .sub{color:var(--muted);font-size:13px;margin-top:6px;margin-bottom:22px}
+
+  /* sub-tabs Emailing / URL */
+  .subtabs{display:flex;gap:26px;border-bottom:1px solid var(--hair);margin-bottom:24px}
+  .subtabs button{border:0;background:transparent;padding:0 0 12px;font-family:inherit;font-size:14px;color:var(--muted);cursor:pointer;position:relative}
+  .subtabs button.on{color:var(--navy);font-weight:500}
+  .subtabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--gold)}
+
+  .stagehead{display:flex;align-items:center;gap:9px;margin:18px 0 12px}
+  .stagehead .r{height:1.5px;width:24px;background:var(--gold)}
+  .stagehead .lbl{text-transform:uppercase;letter-spacing:.16em;font-size:10px;color:var(--gold-text);font-weight:600}
+  .stagehead .nm{font-family:'Playfair Display',serif;font-size:17px;color:var(--navy)}
+
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .card{border:1px solid var(--hair);border-radius:4px;background:#fff;padding:15px 16px}
+  .card .tname{font-family:'Playfair Display',serif;font-size:15px;color:var(--navy);margin-bottom:3px}
+  .card .tprev{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+  .aud{font-size:11.5px;color:var(--ink);margin-bottom:10px}
+  .aud b{font-family:'Playfair Display',serif;font-weight:500}
+  .btn-primary{background:var(--navy);color:#fff;border:0;border-radius:3px;padding:9px 14px;font-family:inherit;font-size:12.5px;cursor:pointer}
+  .btn-ghost{border:1px solid var(--hair);background:#fff;border-radius:3px;padding:9px 12px;font-family:inherit;font-size:12px;cursor:pointer;color:var(--ink)}
+  .microcopy{font-size:10.5px;color:var(--muted);margin-top:6px;font-style:italic}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  /* URL sub-tab */
+  .urlcard{border:1px solid var(--hair);border-radius:4px;background:#fff;padding:18px 20px;margin-bottom:14px}
+  .urlcard .t{font-family:'Playfair Display',serif;font-size:16px;color:var(--navy);margin-bottom:4px}
+  .urlcard .d{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.55}
+  .urlfield{display:flex;gap:8px;align-items:center}
+  .urlfield input{flex:1;font-family:'Inter';font-size:12.5px;padding:9px 11px;border:1px solid var(--hair);border-radius:3px;background:var(--tint);color:var(--navy)}
+  .toggle-pill{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--navy)}
+  .switch{width:34px;height:19px;border-radius:20px;background:var(--success);position:relative}
+  .switch::after{content:"";position:absolute;top:2px;right:2px;width:15px;height:15px;border-radius:50%;background:#fff}
+
+  /* modal */
+  .scrim{position:fixed;inset:0;background:rgba(10,15,30,.5);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:10;overflow:auto}
+  .scrim.open{display:flex}
+  .modal{width:620px;max-width:96vw;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 24px 60px rgba(15,31,61,.25)}
+  .mh{background:var(--navy);color:#fff;padding:18px 22px;position:relative}
+  .mh .eye{font-size:9.5px;text-transform:uppercase;letter-spacing:.18em;color:var(--gold)}
+  .mh .ti{font-family:'Playfair Display',serif;font-size:18px;margin-top:3px}
+  .mh .note{font-size:11.5px;color:rgba(255,255,255,.6);margin-top:6px}
+  .mh .x{position:absolute;top:14px;right:16px;background:transparent;border:0;color:rgba(255,255,255,.7);font-size:18px;cursor:pointer}
+  .mtabs{display:flex;gap:22px;padding:0 22px;border-bottom:1px solid var(--hair)}
+  .mtabs button{border:0;background:transparent;padding:13px 0;font-family:inherit;font-size:12.5px;color:var(--muted);cursor:pointer;position:relative}
+  .mtabs button.on{color:var(--navy);font-weight:500}
+  .mtabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--gold)}
+  .mbody{padding:20px 22px;min-height:230px}
+  .seclbl{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:8px}
+  .count{font-family:'Playfair Display',serif;font-size:26px;color:var(--navy)}
+  .emaillist{margin-top:12px;border:1px solid var(--hair);border-radius:4px;max-height:160px;overflow:auto;background:var(--tint)}
+  .emaillist div{font-size:12px;padding:6px 12px;border-top:1px solid var(--hair);color:var(--ink);font-family:ui-monospace,monospace}
+  .emaillist div:first-child{border-top:0}
+  .fieldwrap{margin-bottom:16px}
+  .fieldwrap textarea,.fieldwrap input{width:100%;font-family:inherit;font-size:13px;padding:9px 11px;border:1px solid var(--hair);border-radius:3px;color:var(--navy)}
+  .fieldwrap textarea{min-height:90px;resize:vertical}
+  .copybtn{font-size:11px;color:var(--gold-text);background:transparent;border:0;cursor:pointer;border-bottom:1px solid transparent;padding:0 0 1px}
+  .copybtn:hover{border-bottom-color:var(--gold)}
+  .lblrow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .mfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 22px;border-top:1px solid var(--hair);background:var(--tint)}
+  .fallback{font-size:11px;color:var(--warning);background:#fdf6e8;border:1px solid #e8d090;border-radius:4px;padding:8px 11px;margin-top:14px;line-height:1.5}
+  .note-block{font-size:12px;color:var(--ink);background:#fdf6e8;border:1px solid var(--cream2);border-radius:4px;padding:10px 13px;margin:8px 0 18px;line-height:1.55}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow"><span class="rule"></span><span>Rotary Startup Award 2027 · Communication</span></div>
+  <h1 class="serif">Communication</h1>
+  <p class="sub">Mockup — split en 2 sous-onglets + modale d'envoi avec fallback manuel complet.</p>
+
+  <div class="subtabs">
+    <button class="on" id="st-mail" onclick="sub('mail')">✉ Emailing</button>
+    <button id="st-url" onclick="sub('url')">🔗 URL & palmarès public</button>
+  </div>
+
+  <!-- EMAILING -->
+  <div id="view-mail">
+    <div class="note-block"><b>Emailing</b> — les modèles d'emails par étape du concours. Chaque carte ouvre un <b>aperçu</b> avant tout envoi : tu vois les destinataires, tu édites le sujet/corps, tu prévisualises, et <b>rien ne part tant que tu n'as pas confirmé</b>.</div>
+
+    <div class="stagehead"><span class="r"></span><span class="lbl">Étape 1 · Candidatures</span></div>
+    <div class="cards">
+      <div class="card">
+        <div class="tname">Confirmation de candidature</div>
+        <div class="tprev">Email envoyé au candidat dès la soumission de son dossier…</div>
+        <div class="aud">Audience : <b>42</b> destinataires</div>
+        <div class="row">
+          <button class="btn-primary" onclick="openModal()">Prévisualiser &amp; envoyer →</button>
+          <button class="btn-ghost">Dupliquer</button>
+        </div>
+        <div class="microcopy">Ouvre l'aperçu — aucun email n'est envoyé sans confirmation.</div>
+      </div>
+      <div class="card">
+        <div class="tname">Relance dossier incomplet</div>
+        <div class="tprev">Rappel aux candidats dont le dossier est encore en brouillon…</div>
+        <div class="aud">Audience : <b>11</b> destinataires</div>
+        <div class="row">
+          <button class="btn-primary" onclick="openModal()">Prévisualiser &amp; envoyer →</button>
+          <button class="btn-ghost">Dupliquer</button>
+        </div>
+        <div class="microcopy">Ouvre l'aperçu — aucun email n'est envoyé sans confirmation.</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:18px">+ Outils avancés (Email Studio) · Historique d'envois — inchangés, sous les étapes.</p>
+  </div>
+
+  <!-- URL -->
+  <div id="view-url" style="display:none">
+    <div class="note-block"><b>URL &amp; palmarès public</b> — la page publique des résultats de cette compétition : activation, lien à partager, et options d'affichage. (Anciennement en bas de la section, sans titre clair.)</div>
+    <div class="urlcard">
+      <div class="t">Palmarès public</div>
+      <div class="d">Quand activé, la page des résultats est accessible publiquement à l'URL ci-dessous (lauréats, finalistes, parcours des sessions).</div>
+      <div class="toggle-pill"><span class="switch"></span> Palmarès public <b>activé</b></div>
+    </div>
+    <div class="urlcard">
+      <div class="t">Lien public</div>
+      <div class="d">À partager (newsletter, réseaux, partenaires). Lecture seule, sans authentification.</div>
+      <div class="urlfield">
+        <input value="https://app.rotary-startup.org/Resultats?edition=2027" readonly />
+        <button class="btn-ghost">Copier le lien</button>
+        <button class="btn-ghost">Ouvrir ↗</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE D'ENVOI -->
+<div class="scrim" id="scrim" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mh">
+      <button class="x" onclick="closeModal()">✕</button>
+      <div class="eye">Étape 1 · Candidatures · APERÇU AVANT ENVOI</div>
+      <div class="ti serif">Confirmation de candidature</div>
+      <div class="note">Vérifie les destinataires et le contenu. L'envoi ne part qu'après confirmation explicite en bas.</div>
+    </div>
+    <div class="mtabs">
+      <button class="on" id="mt-dest" onclick="mtab('dest')">Destinataires</button>
+      <button id="mt-mod" onclick="mtab('mod')">Modèle</button>
+      <button id="mt-prev" onclick="mtab('prev')">Aperçu HTML</button>
+    </div>
+
+    <div class="mbody" id="mb-dest">
+      <div class="lblrow">
+        <span class="seclbl">Destinataires · <span style="color:var(--success)">42</span></span>
+        <button class="copybtn" onclick="alert('42 emails copiés')">⧉ Copier les 42 emails</button>
+      </div>
+      <div class="emaillist">
+        <div>claire.dubois@example.com</div>
+        <div>marc.lefevre@example.com</div>
+        <div>sophie.martin@example.com</div>
+        <div>anna.schmidt@example.com</div>
+        <div>lukas.weber@example.com</div>
+        <div>… (37 autres — liste complète, scrollable)</div>
+      </div>
+      <div class="fallback"><b>Fallback manuel</b> — si l'envoi automatique (Resend) échoue, copie ici les emails + le sujet + le corps (onglet Modèle) et envoie depuis ta messagerie. Tout est copiable.</div>
+    </div>
+
+    <div class="mbody" id="mb-mod" style="display:none">
+      <div class="fieldwrap">
+        <div class="lblrow"><span class="seclbl">Sujet</span><button class="copybtn" onclick="alert('Sujet copié')">⧉ Copier le sujet</button></div>
+        <input value="Votre candidature au Rotary Startup Award 2027 est bien reçue" />
+      </div>
+      <div class="fieldwrap">
+        <div class="lblrow"><span class="seclbl">Corps de l'email</span><button class="copybtn" onclick="alert('Corps copié')">⧉ Copier le corps</button></div>
+        <textarea>Bonjour,
+
+Nous confirmons la bonne réception de votre candidature…</textarea>
+      </div>
+      <p style="font-size:11px;color:var(--muted)">Langue : FR · EN · DE — éditable par langue.</p>
+    </div>
+
+    <div class="mbody" id="mb-prev" style="display:none">
+      <p style="font-size:12.5px;color:var(--muted)">Rendu HTML bulletproof de l'email (inchangé).</p>
+    </div>
+
+    <div class="mfoot">
+      <span style="font-size:11px;color:var(--muted)">Dry-run OK · 42 destinataires</span>
+      <button class="btn-primary" style="background:var(--success)" onclick="alert('Envoi confirmé (mockup)')">Confirmer l'envoi des 42 emails</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function sub(v){
+    document.getElementById('view-mail').style.display = v==='mail'?'block':'none';
+    document.getElementById('view-url').style.display = v==='url'?'block':'none';
+    document.getElementById('st-mail').classList.toggle('on', v==='mail');
+    document.getElementById('st-url').classList.toggle('on', v==='url');
+  }
+  function openModal(){document.getElementById('scrim').classList.add('open');}
+  function closeModal(){document.getElementById('scrim').classList.remove('open');}
+  function mtab(v){
+    for(const k of ['dest','mod','prev']){
+      document.getElementById('mb-'+k).style.display = k===v?'block':'none';
+      document.getElementById('mt-'+k).classList.toggle('on', k===v);
+    }
+  }
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+</script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup — Vues admin jury · RSA (design lift)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+  :root{
+    --navy:#0f1f3d; --gold:#c9a84c; --gold-text:#8a6f1f; --cream:#faf7f2; --cream2:#e8e3d9;
+    --ink:#3a3a52; --muted:#9090a8; --danger:#a23b2d; --warning:#9a6400; --success:#1d6b4f;
+    --tint:#f5f2ec; --hair:#e8e3d9;
+    /* palette session DÉSATURÉE — accent only, jamais en fond plein */
+    --s-food:#6f7a4a; --s-social:#8a5a6a; --s-tech:#5a5283; --s-health:#43688a; --s-green:#46785f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+  .serif{font-family:'Playfair Display',serif}
+  .eyebrow-txt{text-transform:uppercase;letter-spacing:.16em;font-size:10px;font-weight:500;color:var(--muted)}
+
+  /* top nav */
+  .nav{background:var(--navy);border-bottom:1px solid rgba(201,168,76,.18);position:sticky;top:0;z-index:5}
+  .nav-in{max-width:1080px;margin:0 auto;height:60px;display:flex;align-items:center;gap:13px;padding:0 28px}
+  .r{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#a07828);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+  .nav-title{color:#fff;font-size:14.5px;font-weight:500;letter-spacing:.01em}
+  .nav-sub{color:rgba(255,255,255,.42);font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-top:1px}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 90px}
+
+  /* header */
+  .eyebrow{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+  .eyebrow .rule{height:1px;width:34px;background:var(--gold)}
+  .eyebrow span{color:var(--gold-text);text-transform:uppercase;letter-spacing:.2em;font-size:10px;font-weight:600}
+  h1.title{font-size:30px;font-weight:500;color:var(--navy);line-height:1.15;letter-spacing:-.01em}
+  .lead{color:var(--muted);font-size:13.5px;margin-top:8px;max-width:560px;line-height:1.6}
+
+  .bar{display:flex;align-items:flex-end;justify-content:space-between;margin:30px 0 26px;border-bottom:1px solid var(--hair);padding-bottom:0}
+  .toggle{display:inline-flex;gap:26px}
+  .toggle button{border:0;background:transparent;padding:0 0 13px;font-family:inherit;font-size:13px;color:var(--muted);cursor:pointer;letter-spacing:.02em;position:relative}
+  .toggle button.on{color:var(--navy);font-weight:500}
+  .toggle button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--gold)}
+
+  /* QUORUM strip — sobre, chiffres serif, pastilles, pas de tuiles colorées */
+  .quorum{display:flex;align-items:stretch;border:1px solid var(--hair);border-radius:3px;background:#fff;margin-bottom:34px;overflow:hidden}
+  .qcell{flex:1;padding:16px 14px 14px;border-left:1px solid var(--hair);position:relative}
+  .qcell:first-child{border-left:0}
+  .qcell .qlbl{display:flex;align-items:center;gap:7px;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:9px;white-space:nowrap}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--muted)}
+  .qcell .qn{font-family:'Playfair Display',serif;font-size:27px;font-weight:500;color:var(--navy);line-height:1}
+  .qcell .qst{font-size:10.5px;margin-top:6px;color:var(--success);letter-spacing:.02em}
+  .qcell.under .qst{color:var(--danger)}
+  .qcell.under .qn{color:var(--danger)}
+  .qcell.fin{background:#fdfaf1}
+
+  /* session cards — filet d'accent à gauche, pas de fond plein, nom en serif */
+  .scard{position:relative;border:1px solid var(--hair);border-radius:3px;background:#fff;margin-bottom:14px;overflow:hidden}
+  .scard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--muted))}
+  .shead{display:flex;align-items:flex-start;gap:16px;padding:18px 22px 16px 24px}
+  .shead .stitle{flex:1;min-width:0}
+  .shead .seye{font-size:9.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);margin-bottom:4px}
+  .shead .sname{font-family:'Playfair Display',serif;font-size:17.5px;font-weight:500;color:var(--navy);line-height:1.25}
+  .shead .smeta{text-align:right;flex-shrink:0}
+  .shead .scount{font-size:12.5px;color:var(--navy)}
+  .shead .scount .qm{color:var(--success)}
+  .shead .scount.under .qm{color:var(--danger)}
+  .linkbtn{display:inline-block;margin-top:7px;font-size:11px;letter-spacing:.04em;color:var(--gold-text);cursor:pointer;border:0;background:transparent;font-family:inherit;border-bottom:1px solid transparent;padding-bottom:1px}
+  .linkbtn:hover{border-bottom-color:var(--gold)}
+
+  .jlist{padding:2px 0 4px}
+  .jrow{display:flex;align-items:center;gap:14px;padding:11px 22px 11px 24px;border-top:1px solid var(--hair)}
+  .av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;letter-spacing:.03em;background:var(--navy);color:var(--gold);object-fit:cover}
+  .jmeta{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .jname{font-size:14px;color:var(--navy);font-weight:500}
+  .jq{font-size:12px;color:var(--muted)}
+  .jact{display:flex;gap:18px;align-items:center;flex-shrink:0}
+  .act{font-size:11.5px;color:var(--muted);cursor:pointer;border:0;background:transparent;font-family:inherit;letter-spacing:.02em;border-bottom:1px solid transparent;padding-bottom:1px;transition:color .15s}
+  .act:hover{color:var(--navy);border-bottom-color:var(--hair)}
+  .act.danger:hover{color:var(--danger);border-bottom-color:#e6cfc9}
+
+  .pool{display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:13px 22px 16px 24px;border-top:1px solid var(--hair);background:var(--tint)}
+  .pool .pl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-right:3px}
+  .addb{font-size:12px;border:1px solid var(--hair);background:#fff;border-radius:2px;padding:5px 12px;cursor:pointer;font-family:inherit;color:var(--navy);letter-spacing:.01em;transition:border-color .15s}
+  .addb::before{content:"+";color:var(--gold-text);margin-right:6px}
+  .addb:hover{border-color:var(--gold)}
+
+  /* matrix */
+  .mxwrap{display:none;border:1px solid var(--hair);border-radius:3px;overflow:auto;background:#fff}
+  table{border-collapse:collapse;min-width:680px;width:100%;font-size:12.5px}
+  thead th{background:var(--navy);color:#fff;font-weight:500;letter-spacing:.04em}
+  th,td{padding:13px 10px;text-align:center;border-bottom:1px solid var(--hair)}
+  th.j,td.j{text-align:left;font-family:'Playfair Display',serif}
+  thead th{font-family:'Inter',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+  .mdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .chk{width:22px;height:22px;border-radius:3px;border:1px solid #d4d0e0;margin:0 auto;cursor:pointer}
+  .chk.on{background:var(--navy);border-color:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px}
+  .tot{font-weight:600;color:var(--navy);font-family:'Playfair Display',serif}
+  .tot.under{color:var(--danger)}
+  tfoot td{border-top:2px solid var(--hair);background:var(--tint)}
+
+  .note{max-width:1080px;margin:0 auto;padding:18px 28px;font-size:12px;color:var(--muted);background:#fff;border-top:1px solid var(--hair)}
+  .note b{color:var(--navy);font-weight:500}
+
+  /* drawer */
+  .scrim{position:fixed;inset:0;background:rgba(10,15,30,.5);backdrop-filter:blur(2px);display:none;z-index:10}
+  .scrim.open{display:block}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:392px;max-width:92vw;background:#fff;box-shadow:-14px 0 44px rgba(15,31,61,.18);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);z-index:11;overflow-y:auto}
+  .drawer.open{transform:translateX(0)}
+  .dh{background:var(--navy);color:#fff;padding:26px 24px 22px;position:relative}
+  .dclose{position:absolute;top:16px;right:16px;background:transparent;border:0;color:rgba(255,255,255,.65);font-size:18px;cursor:pointer;line-height:1}
+  .dh .photo{width:66px;height:66px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);margin-bottom:13px;display:block}
+  .dh .avbig{width:66px;height:66px;font-size:21px;margin-bottom:13px}
+  .dh .dn{font-family:'Playfair Display',serif;font-size:20px;font-weight:500;letter-spacing:.01em}
+  .dh .dq{font-size:12.5px;color:rgba(255,255,255,.68);margin-top:3px}
+  .dh .de{font-size:12px;color:var(--gold);margin-top:8px;letter-spacing:.01em}
+  .dbody{padding:24px}
+  .sec{margin-bottom:22px}
+  .sec .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);margin-bottom:11px}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;padding:5px 11px;border-radius:2px;margin:0 6px 6px 0;border:1px solid var(--hair);color:var(--navy)}
+  .statusdot{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--navy)}
+  .statusdot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--success)}
+  .bio{font-size:13px;line-height:1.65;color:var(--ink)}
+  /* scores par session */
+  .scorerow{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--hair)}
+  .scorerow:first-of-type{border-top:0}
+  .scorerow .sn{flex:1;font-size:12.5px;color:var(--navy);min-width:0}
+  .scorerow .sv{font-family:'Playfair Display',serif;font-size:16px;color:var(--navy);font-weight:500}
+  .scorerow .sv small{font-family:'Inter',sans-serif;font-weight:400;color:var(--muted);font-size:11px}
+  .scorerow .prog{font-size:10.5px;letter-spacing:.04em;color:var(--muted);min-width:78px;text-align:right}
+  .scorerow .prog.done{color:var(--success)}
+  .scorerow .prog.live{color:var(--warning)}
+  .dfoot{display:flex;gap:10px;padding:4px 24px 26px}
+  .btn-primary{flex:1;background:var(--navy);color:#fff;border:0;border-radius:2px;padding:12px;font-family:inherit;font-size:13px;cursor:pointer;letter-spacing:.02em}
+  .btn-ghost{border:1px solid var(--hair);background:#fff;border-radius:2px;padding:12px 18px;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+</style>
+</head>
+<body>
+  <div class="nav"><div class="nav-in"><div class="r">R</div><div><div class="nav-title serif">Rotary Startup Award</div><div class="nav-sub">Administration · Jurés</div></div></div></div>
+
+  <div class="wrap">
+    <div class="eyebrow"><span class="rule"></span><span>Édition 2027 · Paris–Berlin</span></div>
+    <h1 class="title serif">Attribution des jurés</h1>
+    <p class="lead">Affectez les jurés validés aux sessions du concours. Un quorum de trois jurés par session est recommandé.</p>
+
+    <div class="bar">
+      <div class="toggle">
+        <button class="on" id="t-sess" onclick="setView('sess')">Par session</button>
+        <button id="t-mx" onclick="setView('mx')">Matrice</button>
+      </div>
+      <div class="eyebrow-txt" style="padding-bottom:13px">Quorum recommandé · 3 jurés / session</div>
+    </div>
+
+    <!-- QUORUM strip -->
+    <div class="quorum">
+      <div class="qcell"><div class="qlbl"><span class="dot" style="background:var(--s-food)"></span>Foodtech</div><div class="qn">4</div><div class="qst">Quorum atteint</div></div>
+      <div class="qcell under"><div class="qlbl"><span class="dot" style="background:var(--s-social)"></span>Social</div><div class="qn">2</div><div class="qst">1 manquant</div></div>
+      <div class="qcell"><div class="qlbl"><span class="dot" style="background:var(--s-tech)"></span>Tech</div><div class="qn">3</div><div class="qst">Quorum atteint</div></div>
+      <div class="qcell under"><div class="qlbl"><span class="dot" style="background:var(--s-health)"></span>Health</div><div class="qn">1</div><div class="qst">2 manquants</div></div>
+      <div class="qcell"><div class="qlbl"><span class="dot" style="background:var(--s-green)"></span>Greentech</div><div class="qn">3</div><div class="qst">Quorum atteint</div></div>
+      <div class="qcell fin"><div class="qlbl"><span class="dot" style="background:var(--gold)"></span>Finale</div><div class="qn">5</div><div class="qst">Quorum atteint</div></div>
+    </div>
+
+    <!-- PER SESSION VIEW -->
+    <div id="view-sess">
+      <!-- Tech -->
+      <div class="scard" style="--accent:var(--s-tech)">
+        <div class="shead">
+          <div class="stitle"><div class="seye">Session qualificative · 12 mai 2027 · visio</div><div class="sname">Tech, AI, Fintech &amp; Mobilité</div></div>
+          <div class="smeta"><div class="scount">3 jurés · <span class="qm">quorum atteint</span></div><button class="linkbtn">Copier les emails</button></div>
+        </div>
+        <div class="jlist">
+          <div class="jrow"><div class="av">CD</div><div class="jmeta"><span class="jname">Claire Dubois</span><span class="jq">Investisseur · Partech</span></div><div class="jact"><button class="act" onclick="openDrawer()">Détails</button><button class="act danger">Retirer</button></div></div>
+          <div class="jrow"><div class="av">ML</div><div class="jmeta"><span class="jname">Marc Lefèvre</span><span class="jq">Expert · BNP Paribas</span></div><div class="jact"><button class="act" onclick="openDrawer()">Détails</button><button class="act danger">Retirer</button></div></div>
+          <div class="jrow"><div class="av">AS</div><div class="jmeta"><span class="jname">Anna Schmidt</span><span class="jq">Corporate · Siemens</span></div><div class="jact"><button class="act" onclick="openDrawer()">Détails</button><button class="act danger">Retirer</button></div></div>
+        </div>
+        <div class="pool"><span class="pl">Depuis le pool</span><button class="addb">Sophie Martin</button><button class="addb">Lukas Weber</button></div>
+      </div>
+
+      <!-- Health (under quorum) -->
+      <div class="scard" style="--accent:var(--s-health)">
+        <div class="shead">
+          <div class="stitle"><div class="seye">Session qualificative · 18 mai 2027 · visio</div><div class="sname">Healthtech &amp; Biotech</div></div>
+          <div class="smeta"><div class="scount under">1 juré · <span class="qm">quorum non atteint (3)</span></div><button class="linkbtn">Copier les emails</button></div>
+        </div>
+        <div class="jlist">
+          <div class="jrow"><div class="av">SM</div><div class="jmeta"><span class="jname">Sophie Martin</span><span class="jq">Entrepreneur · Doctolib</span></div><div class="jact"><button class="act" onclick="openDrawer()">Détails</button><button class="act danger">Retirer</button></div></div>
+        </div>
+        <div class="pool"><span class="pl">Depuis le pool</span><button class="addb">Claire Dubois</button><button class="addb">Marc Lefèvre</button><button class="addb">Anna Schmidt</button></div>
+      </div>
+
+      <!-- Finale -->
+      <div class="scard" style="--accent:var(--gold)">
+        <div class="shead">
+          <div class="stitle"><div class="seye">Grande finale · 25 mai 2027 · présentiel · Paris</div><div class="sname">Grande Finale</div></div>
+          <div class="smeta"><div class="scount">5 jurés · <span class="qm">quorum atteint</span></div><button class="linkbtn">Copier les emails</button></div>
+        </div>
+        <div class="jlist">
+          <div class="jrow"><div class="av">CD</div><div class="jmeta"><span class="jname">Claire Dubois</span><span class="jq">Investisseur · Partech</span></div><div class="jact"><button class="act" onclick="openDrawer()">Détails</button><button class="act danger">Retirer</button></div></div>
+          <div class="jrow"><div class="av">AS</div><div class="jmeta"><span class="jname">Anna Schmidt</span><span class="jq">Corporate · Siemens</span></div><div class="jact"><button class="act" onclick="openDrawer()">Détails</button><button class="act danger">Retirer</button></div></div>
+          <div class="jrow"><div class="av">LW</div><div class="jmeta"><span class="jname">Lukas Weber</span><span class="jq">Investisseur · Earlybird</span></div><div class="jact"><button class="act" onclick="openDrawer()">Détails</button><button class="act danger">Retirer</button></div></div>
+        </div>
+        <div class="pool"><span class="pl">Depuis le pool</span><button class="addb">Marc Lefèvre</button><button class="addb">Sophie Martin</button></div>
+      </div>
+    </div>
+
+    <!-- MATRIX VIEW -->
+    <div class="mxwrap" id="view-mx">
+      <table>
+        <thead><tr>
+          <th class="j">Juré</th>
+          <th><span class="mdot" style="background:var(--s-food)"></span>Food</th>
+          <th><span class="mdot" style="background:var(--s-social)"></span>Social</th>
+          <th><span class="mdot" style="background:var(--s-tech)"></span>Tech</th>
+          <th><span class="mdot" style="background:var(--s-health)"></span>Health</th>
+          <th><span class="mdot" style="background:var(--s-green)"></span>Green</th>
+          <th><span class="mdot" style="background:var(--gold)"></span>Finale</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="j">Claire Dubois</td><td><div class="chk"></div></td><td><div class="chk"></div></td><td><div class="chk on">✓</div></td><td><div class="chk on">✓</div></td><td><div class="chk"></div></td><td><div class="chk on">✓</div></td></tr>
+          <tr><td class="j">Marc Lefèvre</td><td><div class="chk on">✓</div></td><td><div class="chk on">✓</div></td><td><div class="chk on">✓</div></td><td><div class="chk"></div></td><td><div class="chk"></div></td><td><div class="chk"></div></td></tr>
+          <tr><td class="j">Sophie Martin</td><td><div class="chk"></div></td><td><div class="chk"></div></td><td><div class="chk"></div></td><td><div class="chk on">✓</div></td><td><div class="chk on">✓</div></td><td><div class="chk"></div></td></tr>
+          <tr><td class="j">Anna Schmidt</td><td><div class="chk on">✓</div></td><td><div class="chk"></div></td><td><div class="chk on">✓</div></td><td><div class="chk"></div></td><td><div class="chk on">✓</div></td><td><div class="chk on">✓</div></td></tr>
+        </tbody>
+        <tfoot><tr><td class="j tot">Total</td><td class="tot">4</td><td class="tot under">2</td><td class="tot">3</td><td class="tot under">1</td><td class="tot">3</td><td class="tot">5</td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="note"><b>Mockup non fonctionnel</b> — clic sur <b>Détails</b> = fiche profil · toggle <b>Par session / Matrice</b>. Données dummy (édition 2027). Design lift éditorial : aucun emoji, accents de session désaturés, chiffres en Playfair.</div>
+
+  <!-- DRAWER -->
+  <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+  <aside class="drawer" id="drawer">
+    <div class="dh">
+      <button class="dclose" onclick="closeDrawer()">✕</button>
+      <img class="photo" src="https://i.pravatar.cc/132?img=47" alt="Claire Dubois"
+           onerror="this.outerHTML='&lt;div class=\'av avbig\'&gt;CD&lt;/div&gt;'" />
+      <div class="dn">Claire Dubois</div>
+      <div class="dq">Investisseur · Partech</div>
+      <div class="de">claire.dubois@example.com</div>
+    </div>
+    <div class="dbody">
+      <div class="sec"><div class="lbl">Statut</div><div class="statusdot">Validée — jurée du club</div></div>
+      <div class="sec"><div class="lbl">Sessions souhaitées</div>
+        <span class="pill"><span class="dot" style="background:var(--s-tech)"></span>Tech</span>
+        <span class="pill"><span class="dot" style="background:var(--s-health)"></span>Health</span>
+        <span class="pill"><span class="dot" style="background:var(--gold)"></span>Finale</span>
+      </div>
+      <div class="sec"><div class="lbl">Sessions assignées</div>
+        <span class="pill"><span class="dot" style="background:var(--s-tech)"></span>Tech</span>
+        <span class="pill"><span class="dot" style="background:var(--s-health)"></span>Health</span>
+        <span class="pill"><span class="dot" style="background:var(--gold)"></span>Finale</span>
+      </div>
+      <div class="sec"><div class="lbl">Scores par session</div>
+        <div class="scorerow"><span class="sn"><span class="dot" style="background:var(--s-tech);display:inline-block;margin-right:8px"></span>Tech, AI, Fintech &amp; Mobilité</span><span class="sv">3,8<small> /5</small></span><span class="prog done">4/4 notées</span></div>
+        <div class="scorerow"><span class="sn"><span class="dot" style="background:var(--s-health);display:inline-block;margin-right:8px"></span>Healthtech &amp; Biotech</span><span class="sv">4,1<small> /5</small></span><span class="prog live">2/5 · en cours</span></div>
+        <div class="scorerow"><span class="sn"><span class="dot" style="background:var(--gold);display:inline-block;margin-right:8px"></span>Grande Finale</span><span class="sv">—</span><span class="prog">pas ouverte</span></div>
+      </div>
+      <div class="sec"><div class="lbl">Bio</div><div class="bio">Investisseuse early-stage, douze ans en capital-risque deeptech.</div></div>
+    </div>
+    <div class="dfoot">
+      <button class="btn-primary">Envoyer un email</button>
+      <button class="btn-ghost" onclick="closeDrawer()">Fermer</button>
+    </div>
+  </aside>
+
+<script>
+  function setView(v){
+    document.getElementById('view-sess').style.display = v==='sess'?'block':'none';
+    document.getElementById('view-mx').style.display   = v==='mx'?'block':'none';
+    document.getElementById('t-sess').classList.toggle('on', v==='sess');
+    document.getElementById('t-mx').classList.toggle('on', v==='mx');
+  }
+  function openDrawer(){document.getElementById('scrim').classList.add('open');document.getElementById('drawer').classList.add('open');}
+  function closeDrawer(){document.getElementById('scrim').classList.remove('open');document.getElementById('drawer').classList.remove('open');}
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+</script>
+</body>
+</html>
