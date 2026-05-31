@@ -24,7 +24,10 @@ import {
   GOLD,
 } from '@/components/design/tokens';
 import { DANGER, TINT_DANGER, SUCCESS, GOLD_TEXT } from '@/components/design/tokens.app';
+import { useQuery } from '@tanstack/react-query';
 import { useLang } from '@/lib/platform/i18n';
+import { JuryProfile } from '@/lib/rsa/entities';
+import { JURY_QUALITES } from '@/components/rsa/candidature/juryFunnel.i18n';
 import {
   useAllAssignments,
   useJurorsDirectory,
@@ -36,6 +39,13 @@ import { UI } from './i18n';
 import { compareSessions, formatShortDate } from './constants';
 import { getSessionAccent, isFinaleSession, QUORUM_MIN } from './sessionMarker';
 import JuryProfileDrawer from './JuryProfileDrawer';
+
+// qualité (enum) -> label trilingue (miroir du résolveur du drawer).
+function qualiteLabel(value, t) {
+  if (!value) return '';
+  const q = JURY_QUALITES.find((x) => x.value === value);
+  return q ? t(q.label) : value;
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function initialsOf(name, email) {
@@ -458,9 +468,35 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
     return set;
   }, [assignments.data]);
 
-  // Annuaire enrichi (subtitle = qualité·organisation est résolu côté drawer ;
-  // ici on garde email/full_name/user_id).
-  const jurorList = useMemo(() => jurors.data || [], [jurors.data]);
+  // Annuaire brut (email/full_name/user_id) puis enrichi du profil juré.
+  const rawJurors = useMemo(() => jurors.data || [], [jurors.data]);
+  const jurorUserIds = useMemo(
+    () => rawJurors.map((j) => j.user_id).filter(Boolean),
+    [rawJurors],
+  );
+  // Profils (qualité/organisation) pour peupler le sous-titre des lignes juré.
+  const profilesQ = useQuery({
+    queryKey: ['rsa', 'jury', 'directory-profiles', ...jurorUserIds.slice().sort()],
+    queryFn: () => JuryProfile.forIds(jurorUserIds),
+    enabled: jurorUserIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+  const profileByUserId = useMemo(() => {
+    const m = new Map();
+    for (const p of profilesQ.data || []) m.set(p.user_id, p);
+    return m;
+  }, [profilesQ.data]);
+  // subtitle = « qualité · organisation » (le drawer affiche le profil complet).
+  const jurorList = useMemo(
+    () =>
+      rawJurors.map((j) => {
+        const p = j.user_id ? profileByUserId.get(j.user_id) : null;
+        if (!p) return j;
+        const sub = [qualiteLabel(p.qualite, t), p.organisation].filter(Boolean).join(' · ');
+        return sub ? { ...j, subtitle: sub } : j;
+      }),
+    [rawJurors, profileByUserId, t],
+  );
 
   // Comptes par session (jurés assignés ayant un user_id).
   const countBySession = useMemo(() => {
