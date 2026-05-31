@@ -210,6 +210,32 @@ export const UI = {
                       de: 'Keine Session für diese Ausgabe.' },
   totalRow:         { fr: 'Total',              en: 'Total',              de: 'Gesamt' },
 
+  // ── Allocation par session (blueprint jury-session-allocation) ──────────────
+  // Groupes de lignes (matrice & vue par session)
+  rowGroupCandidates: { fr: 'Candidats de cette compétition',
+                        en: 'Applicants for this competition',
+                        de: 'Bewerber dieser Ausgabe' },
+  rowGroupOthers:     { fr: 'Autres jurés',
+                        en: 'Other jurors',
+                        de: 'Weitere Juroren' },
+  // Pool d'ajout scindé (vue par session)
+  poolRequested:    { fr: 'Ont demandé cette session',
+                      en: 'Requested this session',
+                      de: 'Diese Session angefragt' },
+  poolOthers:       { fr: 'Autres jurés',
+                      en: 'Other jurors',
+                      de: 'Weitere Juroren' },
+  // Marqueur « demandé » (pastille or) + légende
+  requestedDot:     { fr: 'Demandé par le juré',
+                      en: 'Requested by the juror',
+                      de: 'Vom Juror angefragt' },
+  legendAssigned:   { fr: 'affecté',  en: 'assigned',  de: 'zugewiesen' },
+  legendRequested:  { fr: 'demandé',  en: 'requested', de: 'angefragt' },
+  // État vide scopé compétition
+  noCandidates:     { fr: 'Aucun candidat ni juré affecté pour cette compétition.',
+                      en: 'No applicant or assigned juror for this competition yet.',
+                      de: 'Noch kein Bewerber oder zugewiesener Juror für diese Ausgabe.' },
+
   // ── Drawer profil juré ──────────────────────────────────────────────────────
   drawerStatusLabel:  { fr: 'Statut', en: 'Status', de: 'Status' },
   drawerValidated:    { fr: 'Validé — juré du club',

@@ -35,6 +35,7 @@ import {
   useAssignJuror,
   useUnassignJuror,
 } from './useJury';
+import { useEditionJuryApplications } from './useJuryProfile';
 import { UI } from './i18n';
 import { compareSessions, formatShortDate } from './constants';
 import { getSessionAccent, isFinaleSession, QUORUM_MIN } from './sessionMarker';
@@ -170,7 +171,8 @@ function LinkAct({ children, onClick, danger, disabled, title }) {
 function SessionCard({
   session,
   assignedJurors,
-  poolJurors,
+  poolRequested,
+  poolOthers,
   lang,
   t,
   onDetails,
@@ -199,6 +201,26 @@ function SessionCard({
       /* clipboard indisponible — silencieux */
     }
   }
+
+  // Bouton « + Nom » du pool. requested = le juré a demandé cette session
+  // (bordure or + pastille), sinon ajout libre (override owner).
+  const poolBtn = (j, requested) => (
+    <button
+      key={j.user_id || j.email}
+      type="button"
+      disabled={busy || !j.user_id}
+      onClick={() => onAdd(j, session)}
+      title={!j.user_id ? j.email : requested ? t(UI.requestedDot) : undefined}
+      className="inline-flex items-center text-[12px] rounded-[2px] px-3 py-1.5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] disabled:opacity-50"
+      style={{ border: `1px solid ${requested ? GOLD : CREAM2}`, background: '#fff', color: NAVY }}
+      onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.borderColor = GOLD; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = requested ? GOLD : CREAM2; }}
+    >
+      <span style={{ color: GOLD_TEXT, marginRight: 6 }}>+</span>
+      {j.full_name || j.email}
+      {requested && <span style={{ marginLeft: 6 }}><Dot color={GOLD} size={6} /></span>}
+    </button>
+  );
 
   return (
     <div
@@ -284,35 +306,34 @@ function SessionCard({
         )}
       </div>
 
-      {/* Pool */}
+      {/* Pool — scindé : ont demandé cette session / autres jurés */}
       <div
-        className="flex flex-wrap gap-2.5 items-center pl-6 pr-5 py-3.5"
+        className="pl-6 pr-5 py-3.5 space-y-2.5"
         style={{ borderTop: `1px solid ${CREAM2}`, background: '#f5f2ec' }}
       >
-        <span className="text-[10px] uppercase tracking-[0.14em] mr-0.5" style={{ color: MUTED }}>
-          {t(UI.poolLabel)}
-        </span>
-        {poolJurors.length === 0 ? (
+        {poolRequested.length === 0 && poolOthers.length === 0 ? (
           <span className="text-[11.5px]" style={{ color: MUTED }}>
             {t(UI.poolEmpty)}
           </span>
         ) : (
-          poolJurors.map((j) => (
-            <button
-              key={j.email}
-              type="button"
-              disabled={busy || !j.user_id}
-              onClick={() => onAdd(j, session)}
-              title={!j.user_id ? j.email : undefined}
-              className="text-[12px] rounded-[2px] px-3 py-1.5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] disabled:opacity-50"
-              style={{ border: `1px solid ${CREAM2}`, background: '#fff', color: NAVY }}
-              onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.borderColor = GOLD; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = CREAM2; }}
-            >
-              <span style={{ color: GOLD_TEXT, marginRight: 6 }}>+</span>
-              {j.full_name || j.email}
-            </button>
-          ))
+          <>
+            {poolRequested.length > 0 && (
+              <div className="flex flex-wrap gap-2.5 items-center">
+                <span className="text-[10px] uppercase tracking-[0.14em] mr-0.5" style={{ color: GOLD_TEXT }}>
+                  {t(UI.poolRequested)}
+                </span>
+                {poolRequested.map((j) => poolBtn(j, true))}
+              </div>
+            )}
+            {poolOthers.length > 0 && (
+              <div className="flex flex-wrap gap-2.5 items-center">
+                <span className="text-[10px] uppercase tracking-[0.14em] mr-0.5" style={{ color: MUTED }}>
+                  {t(UI.poolOthers)}
+                </span>
+                {poolOthers.map((j) => poolBtn(j, false))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -320,7 +341,7 @@ function SessionCard({
 }
 
 // ── Vue Matrice (relookée éditorial) ───────────────────────────────────────
-function MatrixView({ jurors, sessions, assignedIndex, countBySession, onToggle, busy, t }) {
+function MatrixView({ rowGroups, requestedIndex, sessions, assignedIndex, countBySession, onToggle, busy, t }) {
   return (
     <div
       className="rounded-[3px] overflow-auto"
@@ -350,57 +371,84 @@ function MatrixView({ jurors, sessions, assignedIndex, countBySession, onToggle,
           </tr>
         </thead>
         <tbody>
-          {jurors.map((j) => (
-            <tr key={j.email}>
-              <td
-                className="text-left px-2.5 py-3 whitespace-nowrap"
-                style={{ color: NAVY, borderBottom: `1px solid ${CREAM2}`, fontFamily: SERIF }}
-              >
-                <div style={{ fontWeight: 500 }}>{j.full_name || j.email}</div>
-                {j.full_name && (
-                  <div className="text-[11px]" style={{ color: MUTED, fontFamily: 'Inter, sans-serif' }}>
-                    {j.email}
-                  </div>
-                )}
-                {!j.user_id && (
-                  <div className="text-[10px]" style={{ color: DANGER, fontFamily: 'Inter, sans-serif' }}>
-                    {t({
-                      fr: "Jamais connecté (pas d'auth.uid())",
-                      en: 'Never signed in (no auth.uid())',
-                      de: 'Nie angemeldet (keine auth.uid())',
-                    })}
-                  </div>
-                )}
-              </td>
-              {sessions.map((s) => {
-                const checked = j.user_id ? assignedIndex.has(`${j.user_id}|${s.id}`) : false;
-                const disabled = !j.user_id || busy;
-                return (
+          {rowGroups.map((g) => (
+            <React.Fragment key={g.key}>
+              <tr>
+                <td
+                  colSpan={sessions.length + 1}
+                  className="text-left px-2.5 py-2 text-[10px] uppercase tracking-[0.14em]"
+                  style={{ background: '#f5f2ec', color: MUTED, borderBottom: `1px solid ${CREAM2}` }}
+                >
+                  {g.label}
+                </td>
+              </tr>
+              {g.jurors.map((j) => (
+                <tr key={j.user_id || j.email}>
                   <td
-                    key={s.id}
-                    className="text-center px-2.5 py-3"
-                    style={{ borderBottom: `1px solid ${CREAM2}` }}
+                    className="text-left px-2.5 py-3 whitespace-nowrap"
+                    style={{ color: NAVY, borderBottom: `1px solid ${CREAM2}`, fontFamily: SERIF }}
                   >
-                    <button
-                      type="button"
-                      role="checkbox"
-                      aria-checked={checked}
-                      aria-label={`${j.email} ↔ ${shortSessionLabel(s)}`}
-                      disabled={disabled}
-                      onClick={() => onToggle(j, s)}
-                      className="w-[22px] h-[22px] rounded-[3px] mx-auto flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{
-                        border: checked ? `1px solid ${NAVY}` : '1px solid #d4d0e0',
-                        background: checked ? NAVY : '#fff',
-                        color: '#fff',
-                      }}
-                    >
-                      {checked && <Check className="w-3 h-3" aria-hidden />}
-                    </button>
+                    <div style={{ fontWeight: 500 }}>{j.full_name || j.email}</div>
+                    {j.full_name && (
+                      <div className="text-[11px]" style={{ color: MUTED, fontFamily: 'Inter, sans-serif' }}>
+                        {j.email}
+                      </div>
+                    )}
+                    {!j.user_id && (
+                      <div className="text-[10px]" style={{ color: DANGER, fontFamily: 'Inter, sans-serif' }}>
+                        {t({
+                          fr: "Jamais connecté (pas d'auth.uid())",
+                          en: 'Never signed in (no auth.uid())',
+                          de: 'Nie angemeldet (keine auth.uid())',
+                        })}
+                      </div>
+                    )}
                   </td>
-                );
-              })}
-            </tr>
+                  {sessions.map((s) => {
+                    const checked = j.user_id ? assignedIndex.has(`${j.user_id}|${s.id}`) : false;
+                    const requested = j.user_id ? requestedIndex.has(`${j.user_id}|${s.id}`) : false;
+                    const disabled = !j.user_id || busy;
+                    return (
+                      <td
+                        key={s.id}
+                        className="text-center px-2.5 py-3"
+                        style={{ borderBottom: `1px solid ${CREAM2}` }}
+                      >
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={checked}
+                          aria-label={`${j.email} ↔ ${shortSessionLabel(s)}${requested && !checked ? ` · ${t(UI.requestedDot)}` : ''}`}
+                          title={requested && !checked ? t(UI.requestedDot) : undefined}
+                          disabled={disabled}
+                          onClick={() => onToggle(j, s)}
+                          className="w-[22px] h-[22px] rounded-[3px] mx-auto flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] disabled:opacity-40 disabled:cursor-not-allowed"
+                          style={{
+                            border: checked
+                              ? `1px solid ${NAVY}`
+                              : requested
+                              ? `1px solid ${GOLD}`
+                              : '1px solid #d4d0e0',
+                            background: checked ? NAVY : '#fff',
+                            color: '#fff',
+                          }}
+                        >
+                          {checked ? (
+                            <Check className="w-3 h-3" aria-hidden />
+                          ) : requested ? (
+                            <span
+                              className="rounded-full"
+                              style={{ width: 7, height: 7, background: GOLD }}
+                              aria-hidden
+                            />
+                          ) : null}
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </React.Fragment>
           ))}
         </tbody>
         <tfoot>
@@ -453,6 +501,7 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
   const jurors = useJurorsDirectory();
   const sessionsQ = useSessionsForEdition(editionId);
   const assignments = useAllAssignments();
+  const editionApps = useEditionJuryApplications(editionId);
   const assign = useAssignJuror();
   const unassign = useUnassignJuror();
 
@@ -515,6 +564,78 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
     return m;
   }, [jurorList]);
 
+  // ── Scope « candidats de cette compétition » (blueprint jury-session-allocation) ──
+  // editionSessionIdSet : colonnes de la matrice.
+  // requestedIndex      : Set("uid|sid") des sessions demandées (∩ sessions de l'édition).
+  // candidateRows       : jurés ayant postulé (candidature approuvée) à cette édition.
+  // otherRows           : jurés affectés à une session de l'édition SANS candidature
+  //                       (invités directs / grandes personnalités) — jamais masqués.
+  const editionSessionIdSet = useMemo(
+    () => new Set(sortedSessions.map((s) => s.id)),
+    [sortedSessions],
+  );
+
+  const appsByUserId = editionApps.data?.byUserId || null;
+
+  const requestedIndex = useMemo(() => {
+    const set = new Set();
+    if (appsByUserId) {
+      for (const [uid, entry] of appsByUserId) {
+        for (const sid of entry.wishes) {
+          if (editionSessionIdSet.has(sid)) set.add(`${uid}|${sid}`);
+        }
+      }
+    }
+    return set;
+  }, [appsByUserId, editionSessionIdSet]);
+
+  const candidateRows = useMemo(() => {
+    if (!appsByUserId) return [];
+    const rows = [];
+    for (const [uid, entry] of appsByUserId) {
+      rows.push(
+        jurorByUserId.get(uid) || { user_id: uid, email: entry.email, full_name: entry.fullName },
+      );
+    }
+    rows.sort((a, b) =>
+      String(a.full_name || a.email || '').localeCompare(String(b.full_name || b.email || '')),
+    );
+    return rows;
+  }, [appsByUserId, jurorByUserId]);
+
+  const assignedUserIdsInEdition = useMemo(() => {
+    const set = new Set();
+    for (const a of assignments.data || []) {
+      if (editionSessionIdSet.has(a.session_id)) set.add(a.jury_user_id);
+    }
+    return set;
+  }, [assignments.data, editionSessionIdSet]);
+
+  const otherRows = useMemo(() => {
+    const rows = [];
+    for (const uid of assignedUserIdsInEdition) {
+      if (appsByUserId && appsByUserId.has(uid)) continue;
+      rows.push(jurorByUserId.get(uid) || { user_id: uid, email: uid, full_name: null });
+    }
+    rows.sort((a, b) =>
+      String(a.full_name || a.email || '').localeCompare(String(b.full_name || b.email || '')),
+    );
+    return rows;
+  }, [assignedUserIdsInEdition, appsByUserId, jurorByUserId]);
+
+  const allRows = useMemo(() => [...candidateRows, ...otherRows], [candidateRows, otherRows]);
+
+  const rowGroups = useMemo(() => {
+    const groups = [];
+    if (candidateRows.length) {
+      groups.push({ key: 'cand', label: t(UI.rowGroupCandidates), jurors: candidateRows });
+    }
+    if (otherRows.length) {
+      groups.push({ key: 'other', label: t(UI.rowGroupOthers), jurors: otherRows });
+    }
+    return groups;
+  }, [candidateRows, otherRows, t]);
+
   // Assignments par session -> liste de jurés (résolus).
   const assignedBySession = useMemo(() => {
     const m = new Map();
@@ -539,7 +660,8 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
 
   const busy = assign.isPending || unassign.isPending;
 
-  const isLoading = jurors.isLoading || sessionsQ.isLoading || assignments.isLoading;
+  const isLoading =
+    jurors.isLoading || sessionsQ.isLoading || assignments.isLoading || editionApps.isLoading;
   const isError = jurors.isError || sessionsQ.isError || assignments.isError;
 
   async function toggleAssign(juror, session, forceState) {
@@ -621,6 +743,30 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
         </div>
       </div>
 
+      {/* Légende des états de case (✓ affecté · ○ demandé) */}
+      <div className="flex items-center gap-5 mb-5 text-[11px]" style={{ color: MUTED }}>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="w-[15px] h-[15px] rounded-[3px] inline-flex items-center justify-center"
+            style={{ background: NAVY }}
+            aria-hidden
+          >
+            <Check className="w-2.5 h-2.5" style={{ color: '#fff' }} />
+          </span>
+          {t(UI.legendAssigned)}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="w-[15px] h-[15px] rounded-[3px] inline-flex items-center justify-center"
+            style={{ border: `1px solid ${GOLD}`, background: '#fff' }}
+            aria-hidden
+          >
+            <span className="rounded-full" style={{ width: 6, height: 6, background: GOLD }} />
+          </span>
+          {t(UI.legendRequested)}
+        </span>
+      </div>
+
       {/* Erreur de toggle */}
       {toggleError && (
         <div
@@ -653,9 +799,9 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
         <p className="text-[13px]" style={{ color: MUTED }}>
           {t(UI.noSessions)}
         </p>
-      ) : jurorList.length === 0 ? (
+      ) : allRows.length === 0 ? (
         <p className="text-[13px]" style={{ color: MUTED }}>
-          {t(UI.assignmentsEmpty)}
+          {t(UI.noCandidates)}
         </p>
       ) : (
         <>
@@ -667,13 +813,22 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
               {sortedSessions.map((s) => {
                 const assignedJurors = assignedBySession.get(s.id) || [];
                 const assignedUserIds = new Set(assignedJurors.map((j) => j.user_id));
-                const poolJurors = jurorList.filter((j) => !assignedUserIds.has(j.user_id));
+                const notAssigned = allRows.filter(
+                  (j) => j.user_id && !assignedUserIds.has(j.user_id),
+                );
+                const poolRequested = notAssigned.filter((j) =>
+                  requestedIndex.has(`${j.user_id}|${s.id}`),
+                );
+                const poolOthers = notAssigned.filter(
+                  (j) => !requestedIndex.has(`${j.user_id}|${s.id}`),
+                );
                 return (
                   <SessionCard
                     key={s.id}
                     session={s}
                     assignedJurors={assignedJurors}
-                    poolJurors={poolJurors}
+                    poolRequested={poolRequested}
+                    poolOthers={poolOthers}
                     lang={lang}
                     t={t}
                     busy={busy}
@@ -688,7 +843,8 @@ export default function JuryAssignmentsAdmin({ editionId, adminUserId }) {
             </div>
           ) : (
             <MatrixView
-              jurors={jurorList}
+              rowGroups={rowGroups}
+              requestedIndex={requestedIndex}
               sessions={sortedSessions}
               assignedIndex={assignedIndex}
               countBySession={countBySession}

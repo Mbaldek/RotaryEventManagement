@@ -95,6 +95,64 @@ export function useJurorWishes({ email, editionId }) {
   });
 }
 
+// ── Candidatures jury de TOUTE l'édition (matrice d'attribution) ────────────
+// Généralisation batchée de useJurorWishes : au lieu d'un seul juré, on remonte
+// l'ensemble des candidatures des clubs de l'édition pour peupler les « sessions
+// demandées » de chaque juré dans JuryAssignmentsAdmin.
+//
+// Renvoie deux index :
+//   - byUserId : Map<approved_user_id, { email, fullName, wishes:Set<sessionId>, status }>
+//   - byEmail  : Map<email,           { … }>
+// On retient, par personne, la candidature APPROUVÉE la plus récente (sinon la
+// plus récente tout court). `wishes` = availability_session_ids.
+//
+// Garde sécurité : listByClub appelle rsa_list_jury_applications (master_admin /
+// club_admin du club) ; un rôle non habilité reçoit [] → la matrice fonctionne
+// quand même (sans pastilles « demandé »).
+export function useEditionJuryApplications(editionId) {
+  return useQuery({
+    queryKey: ['rsa', 'jury', 'edition-applications', editionId],
+    queryFn: async () => {
+      const empty = { byUserId: new Map(), byEmail: new Map() };
+      if (!editionId) return empty;
+      const editionClubs = await EditionClub.forEdition(editionId);
+      const clubIds = Array.from(
+        new Set((editionClubs || []).map((ec) => ec.club_id).filter(Boolean)),
+      );
+      if (clubIds.length === 0) return empty;
+      const lists = await Promise.all(clubIds.map((cid) => JuryApplication.listByClub(cid, null)));
+      const all = lists.flat();
+      // Approuvées d'abord, puis plus récentes : la 1re vue par personne gagne.
+      const sorted = [...all].sort((a, b) => {
+        const aApp = a.status === 'approved' ? 0 : 1;
+        const bApp = b.status === 'approved' ? 0 : 1;
+        if (aApp !== bApp) return aApp - bApp;
+        return String(b.applied_at || '').localeCompare(String(a.applied_at || ''));
+      });
+      const byUserId = new Map();
+      const byEmail = new Map();
+      for (const app of sorted) {
+        const email = String(app.email || '').toLowerCase();
+        const entry = {
+          email,
+          fullName: app.full_name || null,
+          status: app.status,
+          wishes: new Set(
+            Array.isArray(app.availability_session_ids) ? app.availability_session_ids : [],
+          ),
+        };
+        if (email && !byEmail.has(email)) byEmail.set(email, entry);
+        if (app.approved_user_id && !byUserId.has(app.approved_user_id)) {
+          byUserId.set(app.approved_user_id, entry);
+        }
+      }
+      return { byUserId, byEmail };
+    },
+    enabled: !!editionId,
+    staleTime: 60 * 1000,
+  });
+}
+
 // ── Scores par session ──────────────────────────────────────────────────────
 // Pour CHAQUE session passée, on calcule la note du juré :
 //   - Y = nb de startups de la session (Startup.filter({ session_id })).
