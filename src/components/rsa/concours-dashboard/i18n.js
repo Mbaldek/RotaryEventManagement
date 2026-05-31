@@ -12,22 +12,14 @@ export const UI = {
     de: 'Der Award in voller Transparenz',
   },
 
-  // ── Hero H-Ambient ────────────────────────────────────────────────────────
-  heroEyebrow: { fr: 'Compétition', en: 'Competition', de: 'Wettbewerb' },
-  heroTitleLead: {
-    fr: 'Le concours en un coup d’œil',
-    en: 'The awards at a glance',
-    de: 'Der Award auf einen Blick',
-  },
-  heroTitleItalic: {
-    fr: 'Toutes les sessions, tous les clubs.',
-    en: 'Every session, every club.',
-    de: 'Alle Sessions, alle Clubs.',
-  },
+  // ── Hero éditorial (refonte « La Saison ») ───────────────────────────────────────────
+  heroEyebrow:     { fr: 'Rotary Startup Award', en: 'Rotary Startup Award', de: 'Rotary Startup Award' },
+  heroTitleLead:   { fr: 'La saison des', en: 'The season of', de: 'Die Saison der' },
+  heroTitleItalic: { fr: 'entrepreneuses', en: 'founders', de: 'Gründerinnen' },
   heroIntro: {
-    fr: 'Vue partagée à tous les jurés, comités et candidats — sessions à venir, sessions en direct, résultats publiés et finalistes désignés en temps réel.',
-    en: 'A shared view for every juror, comité member and applicant — upcoming sessions, sessions in progress, published results and designated finalists, in real time.',
-    de: 'Geteilte Übersicht für alle Jurymitglieder, Komitee-Mitglieder und Bewerber — anstehende Sessions, laufende Sessions, veröffentlichte Ergebnisse und benannte Finalisten in Echtzeit.',
+    fr: (clubs, sessions) => `${clubs} clubs, ${sessions} sessions, une grande finale.`,
+    en: (clubs, sessions) => `${clubs} clubs, ${sessions} sessions, one grand finale.`,
+    de: (clubs, sessions) => `${clubs} Clubs, ${sessions} Sitzungen, ein großes Finale.`,
   },
 
   // ── Edition selector ──────────────────────────────────────────────────────
