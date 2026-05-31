@@ -123,3 +123,21 @@
     background-color: rgba(15, 31, 61, 0.72) !important;
   }
 }
+
+/* ── Roue Rotary International — rotation continue douce ─────────────────────
+   La marque officielle (public/rotary-mark.png) tourne lentement partout où
+   elle est posée (header, loader, écrans d'auth). Durée pilotée par la variable
+   --rotary-spin-duration (header ~16s, loader ~2.4s). Respecte
+   `prefers-reduced-motion: reduce` : la roue s'immobilise pour les utilisateurs
+   qui ont réduit les animations (a11y AA, cohérent avec le press feedback).
+   ────────────────────────────────────────────────────────────────────────── */
+@keyframes rotary-spin {
+  to { transform: rotate(360deg); }
+}
+.rotary-spin {
+  animation: rotary-spin var(--rotary-spin-duration, 12s) linear infinite;
+  transform-origin: 50% 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rotary-spin { animation: none; }
+}

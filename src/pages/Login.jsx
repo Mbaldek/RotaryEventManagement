@@ -23,7 +23,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Navigate, useLocation } from 'react-router-dom';
-import { PageShell, MagicLinkLogin, PlatformFooter } from '@/components/design';
+import { PageShell, MagicLinkLogin, PlatformFooter, RotaryWheel } from '@/components/design';
 import ForceLogoutLink from '@/components/design/auth/ForceLogoutLink';
 import { GOLD, NAVY, SERIF, EASE } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
@@ -287,17 +287,19 @@ export default function Login() {
           transition={{ duration: 0.28, ease: EASE }}
           className="w-full max-w-[520px]"
         >
-          <motion.img
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/698886adec2381a5bebb878f/8eca9f2bf_rotaryinterrouecrop.png"
-            alt={logoAlt}
+          {/* Roue Rotary officielle — asset local détouré (public/rotary-mark.png),
+              même marque que le header et le loader. Rotation lente élégante,
+              stoppée sous prefers-reduced-motion (cf. .rotary-spin). */}
+          <RotaryWheel
+            spin
+            duration={50}
+            title={logoAlt}
             className="mb-6 drop-shadow-[0_8px_20px_rgba(15,31,61,0.18)]"
             style={{
               width: 'clamp(96px, 14vw, 140px)',
               height: 'auto',
               display: 'block',
             }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           />
           <p
             className="italic mb-10"

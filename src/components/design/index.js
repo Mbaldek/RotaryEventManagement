@@ -7,6 +7,9 @@
 export * from "@/components/design/tokens";
 export * from "@/components/design/tokens.app"; // DANGER / WARNING / FOCUS_RING / …
 
+// — Brand —
+export { default as RotaryWheel } from "@/components/design/RotaryWheel";
+
 // — Editorial (extracted from Index.jsx) —
 export { default as Eyebrow } from "@/components/design/Eyebrow";
 export { default as EditorialTitle } from "@/components/design/EditorialTitle";

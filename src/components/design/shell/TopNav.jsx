@@ -27,7 +27,8 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import { NAVY, GOLD, SERIF } from "@/components/design/tokens";
+import { NAVY, SERIF } from "@/components/design/tokens";
+import RotaryWheel from "@/components/design/RotaryWheel";
 import { usePlatformAuth } from "@/lib/platform/auth";
 import { useLang } from "@/lib/platform/i18n";
 import NavMenu from "@/components/design/shell/NavMenu";
@@ -87,13 +88,10 @@ export default function TopNav({
           to={homeTo}
           className="flex items-center gap-2.5 min-w-0 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-[#0f1f3d] rounded-[4px]"
         >
-          <span
-            className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-            style={{ background: `linear-gradient(135deg,${GOLD},#a07828)`, color: NAVY }}
-            aria-hidden
-          >
-            R
-          </span>
+          {/* Marque officielle Rotary International — roue or qui tourne lentement
+              (le geste qu'on connaît déjà sur le Login). Décorative : le wordmark
+              adjacent porte déjà le nom. */}
+          <RotaryWheel size={32} spin duration={18} decorative />
           <span className="min-w-0">
             <span
               className="block text-[13px] font-semibold text-white truncate"

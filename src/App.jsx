@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Loader2 } from 'lucide-react';
+import RotaryWheel from '@/components/design/RotaryWheel';
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -12,7 +12,7 @@ import PageNotFound from './lib/PageNotFound';
 import { LanguageProvider } from '@/lib/platform/i18n';
 import { PlatformAuthProvider } from '@/lib/platform/auth';
 import ErrorBoundary from '@/lib/ErrorBoundary';
-import { CREAM2, INK, GOLD } from '@/components/design/tokens';
+import { CREAM2, INK } from '@/components/design/tokens';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -20,14 +20,16 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout
   ? <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
-// V3 Vague 4 — Loader doré centré pendant le download d'un chunk lazy.
+// V3 Vague 4 — Loader centré pendant le download d'un chunk lazy.
+// La roue Rotary remplace le spinner générique : même marque que le header et le
+// Login, qui tourne un peu plus vite ici pour lire comme un loader.
 const RouteFallback = () => (
   <div
     className="fixed inset-0 flex items-center justify-center"
     role="status"
     aria-label="Chargement de la page"
   >
-    <Loader2 className="h-8 w-8 animate-spin" style={{ color: GOLD }} />
+    <RotaryWheel size={56} spin duration={2.4} decorative />
   </div>
 );
 
