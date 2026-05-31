@@ -1,9 +1,15 @@
 // EligibilityPreview — panneau d'éligibilité informatif, NON bloquant (blueprint §5).
 //
-// Recalcule à la volée via evaluateEligibility (fonction pure, pas d'appel réseau).
-// Affiche le verdict (eligible/flagged/excluded) en bannière teintée + une puce par
-// échec (chip warning pour 'exclu', chip info pour 'flag'). N'empêche JAMAIS la
-// soumission. `onlyRules` permet de filtrer pour un affichage inline par étape.
+// Recalcule à la volée via evaluateEligibility (fonction pure). Affiche le verdict
+// (eligible/flagged/excluded) en bannière teintée + une puce par échec (chip warning
+// pour 'exclu', chip info pour 'flag'). N'empêche JAMAIS la soumission. `onlyRules`
+// permet de filtrer pour un affichage inline par étape.
+//
+// Règles EFFECTIVES (blueprint §4) : la preview évalue contre compétition ⊕ override
+// du club choisi. Tant qu'aucun club n'est sélectionné (startup.club_id vide), seules
+// les règles compétition s'appliquent ; dès qu'un club est choisi, on fusionne son
+// override (edition_clubs.eligibility_rules) via mergeEligibilityRules. Le merge ne
+// touche RIEN si le club n'a pas d'override (monoclub / sparse vide).
 
 import React, { useMemo } from 'react';
 import { Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
@@ -11,7 +17,8 @@ import { NAVY, INK, MUTED, SERIF } from '@/components/design';
 import { TINT_SAGE } from '@/components/design/tokens';
 import { TINT_WARNING, TINT_DANGER, WARNING, DANGER, SUCCESS } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
-import { evaluateEligibility } from '@/lib/rsa/eligibility';
+import { evaluateEligibility, mergeEligibilityRules } from '@/lib/rsa/eligibility';
+import { useClubRuleOverride } from './useCandidature';
 import { RULE_LABELS, VERDICT_COPY, ELIGIBILITY_TITLE, FLAG_CHIP, EXCLU_CHIP } from './i18n';
 
 const VERDICT_TONE = {
@@ -40,10 +47,26 @@ function Chip({ behavior, label, detail }) {
   );
 }
 
-export default function EligibilityPreview({ startup, rules, onlyRules, compact = false, className = '' }) {
+export default function EligibilityPreview({ startup, rules, editionId, onlyRules, compact = false, className = '' }) {
   const { t } = useLang();
 
-  const result = useMemo(() => evaluateEligibility(startup || {}, rules), [startup, rules]);
+  // Club choisi par le candidat (StepClub persiste startups.club_id). Avant le
+  // choix → null → aucun override fetché (hook désactivé via enabled).
+  // L'édition vient du prop si fourni, sinon de la ligne startups (edition_id),
+  // de sorte que la preview reste autonome dans chaque étape du funnel.
+  const resolvedEditionId = editionId || startup?.edition_id || null;
+  const clubId = startup?.club_id || null;
+  const { data: clubOverride } = useClubRuleOverride(resolvedEditionId, clubId);
+
+  // Règles effectives = compétition ⊕ override club. On NE fusionne que s'il y a
+  // réellement un override : sinon on laisse `rules` tel quel (préserve le repli
+  // `undefined` -> DEFAULT_RULES_2026 d'evaluateEligibility).
+  const effectiveRules = useMemo(() => {
+    if (!clubOverride || Object.keys(clubOverride).length === 0) return rules;
+    return mergeEligibilityRules(rules, clubOverride);
+  }, [rules, clubOverride]);
+
+  const result = useMemo(() => evaluateEligibility(startup || {}, effectiveRules), [startup, effectiveRules]);
 
   const failed = onlyRules
     ? result.failed.filter((c) => onlyRules.includes(c.rule))

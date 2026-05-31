@@ -40,6 +40,9 @@ import EmailStudio from '@/components/rsa/admin/platform/comms/EmailStudio';
 import CommunicatePanel from '@/components/rsa/communicate/CommunicatePanel';
 // V2.5 — Module Prix
 import PrizesList from '@/components/rsa/prizes/PrizesList';
+// V2.5 héritage — prix de la compétition en lecture seule, au-dessus des prix
+// du club (multiclub uniquement). Cf. blueprint club-inheritance-rules-prizes §6.
+import CompetitionPrizesReadonly from '@/components/rsa/prizes/CompetitionPrizesReadonly';
 // V3.0 Vague 3 — Analytics real-time (Feature F)
 import AnalyticsPanel from '@/components/rsa/analytics/AnalyticsPanel';
 import { useClub, useClubEditions, useClubSessions } from './useClub';
@@ -313,7 +316,12 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
                 <ClubRulesTab edition={edition} clubId={clubId} />
               )}
               {tab === 'prizes' && (
-                <PrizesList editionId={editionId} clubId={clubId} scope="club" />
+                <>
+                  {edition?.model === 'multiclub' && (
+                    <CompetitionPrizesReadonly editionId={editionId} />
+                  )}
+                  <PrizesList editionId={editionId} clubId={clubId} scope="club" />
+                </>
               )}
               {tab === 'comms' && (
                 <>

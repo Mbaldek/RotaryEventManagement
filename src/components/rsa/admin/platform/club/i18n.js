@@ -88,6 +88,7 @@ export const CLUB_TEAM = {
 };
 
 export const CLUB_RULES = {
+  // Intro — mode monoclub (édition pleine, comportement legacy inchangé).
   intro: {
     fr: 'Ces règles d’éligibilité s’appliquent UNIQUEMENT aux candidatures de votre club. Elles supplantent les règles globales définies par le master admin pour la compétition.',
     en: 'These eligibility rules apply ONLY to applications submitted to your club. They override the global rules set by the master admin for this competition.',
@@ -100,6 +101,53 @@ export const CLUB_RULES = {
   },
   invalidJson:  { fr: 'JSON invalide.',             en: 'Invalid JSON.',        de: 'Ungültiges JSON.' },
   saved:        { fr: 'Règles enregistrées.',       en: 'Rules saved.',         de: 'Regeln gespeichert.' },
+
+  // ── Mode héritage (compétition multiclub) ──────────────────────────────────
+  // Bandeau d'en-tête : équité inter-clubs.
+  inheritEyebrow: { fr: 'Hérite de', en: 'Inherits from', de: 'Erbt von' },
+  inheritBanner: {
+    fr: 'Les règles d’éligibilité sont fixées au niveau de la compétition et votre club en hérite. Vous pouvez surcharger un critère, mais limitez les écarts : une compétition multiclub reste plus juste quand tous les clubs partagent les mêmes critères.',
+    en: 'Eligibility rules are set at competition level and your club inherits them. You may override a criterion, but keep divergences to a minimum: a multi-club competition stays fairer when every club shares the same criteria.',
+    de: 'Die Teilnahmeregeln werden auf Wettbewerbsebene festgelegt und Ihr Club erbt sie. Sie können ein Kriterium überschreiben, halten Sie Abweichungen jedoch gering: Ein Mehrclub-Wettbewerb bleibt fairer, wenn alle Clubs dieselben Kriterien teilen.',
+  },
+
+  // Actions par critère.
+  override:  { fr: 'Surcharger',  en: 'Override',  de: 'Überschreiben' },
+  restore:   { fr: 'Rétablir',    en: 'Restore',   de: 'Zurücksetzen' },
+  disable:   { fr: 'Désactiver',  en: 'Disable',   de: 'Deaktivieren' },
+
+  // Badges d'état par critère.
+  badgeInherited:   { fr: 'Hérité',                 en: 'Inherited',          de: 'Geerbt' },
+  badgeOverridden:  { fr: 'Surchargé',              en: 'Overridden',         de: 'Überschrieben' },
+  badgeClubDisabled:{ fr: 'Désactivé par le club',  en: 'Disabled by club',   de: 'Vom Club deaktiviert' },
+
+  // Rappel de la valeur héritée.
+  competitionValue: { fr: 'Valeur de la compétition', en: 'Competition value', de: 'Wert des Wettbewerbs' },
+  competitionOff:   { fr: 'non appliqué',           en: 'not applied',        de: 'nicht angewendet' },
+
+  // Avertissement au moment de surcharger.
+  overrideWarning: {
+    fr: 'Ce critère ne suivra plus les mises à jour de la compétition.',
+    en: 'This criterion will no longer follow competition updates.',
+    de: 'Dieses Kriterium folgt nicht mehr den Aktualisierungen des Wettbewerbs.',
+  },
+
+  // Compteur de divergence (plural-aware ; suffixe concaténé au nombre).
+  divergentNone: {
+    fr: 'Aucun critère ne diverge de la compétition.',
+    en: 'No criterion diverges from the competition.',
+    de: 'Kein Kriterium weicht vom Wettbewerb ab.',
+  },
+  divergentSuffixOne: {
+    fr: 'critère diverge de la compétition',
+    en: 'criterion diverges from the competition',
+    de: 'Kriterium weicht vom Wettbewerb ab',
+  },
+  divergentSuffixMany: {
+    fr: 'critères divergent de la compétition',
+    en: 'criteria diverge from the competition',
+    de: 'Kriterien weichen vom Wettbewerb ab',
+  },
 };
 
 // Roles disponibles dans la TeamTab (parallèle à ROLE_OPTIONS du legacy).

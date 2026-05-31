@@ -14,6 +14,7 @@ export {
   KEYS,
   useActiveEdition,
   useEdition,
+  useClubRuleOverride,
   useEditionClubRules,
   useMyDossier,
   useCreateDraft,

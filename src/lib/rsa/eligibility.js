@@ -85,6 +85,32 @@ function isActive(rule) {
 }
 
 /**
+ * Merge des règles d'éligibilité compétition → club (héritage PAR CRITÈRE).
+ *
+ * Chaque critère est une clé top-level autonome dans le JSON eligibility_rules
+ * (cf. catalog.js / DEFAULT_RULES_2026). L'héritage se fait donc par MERGE SHALLOW :
+ *   - clé absente de `overrides`   → critère hérité de la compétition
+ *   - clé présente                 → le critère ENTIER est remplacé (pas de merge profond)
+ *   - clé = { behavior: 'off' }    → le club DÉSACTIVE un critère hérité (assouplit)
+ *
+ * Équivaut exactement à l'opérateur jsonb `||` côté SQL (rsa_submit_dossier) :
+ * la droite l'emporte sur la gauche, clé par clé. Garde-fou : toute entrée
+ * non-objet est traitée comme {} (monoclub / pas d'override → compétition pure).
+ * Ne mute aucun argument.
+ *
+ * @param {object} competition - editions.eligibility_rules (SSOT compétition)
+ * @param {object} [overrides] - edition_clubs.eligibility_rules (override SPARSE du club)
+ * @returns {object} règles effectives à passer à evaluateEligibility
+ */
+export function mergeEligibilityRules(competition, overrides) {
+  const comp = competition && typeof competition === 'object' && !Array.isArray(competition)
+    ? competition : {};
+  const ov = overrides && typeof overrides === 'object' && !Array.isArray(overrides)
+    ? overrides : {};
+  return { ...comp, ...ov };
+}
+
+/**
  * Évalue un dossier contre les règles d'une édition.
  * @param {object} startup - ligne `startups` (country, creation_date, last_revenue,
  *   amount_raised, founders_majority, registration_number, pitch_deck_path, exec_summary_path…)

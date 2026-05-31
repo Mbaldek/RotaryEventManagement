@@ -8,6 +8,7 @@
 import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Edition, EditionClub, Startup } from '@/lib/rsa/entities';
+import { mergeEligibilityRules } from '@/lib/rsa/eligibility';
 import { rulesFromEdition } from './validation';
 
 export const KEYS = {
@@ -35,19 +36,27 @@ export function useEdition(editionId) {
   });
 }
 
-// Chantier 2 — Règles d'éligibilité effectives pour un couple (édition, club).
-// Merge des règles globales d'édition (rulesFromEdition) + override per-club
-// (edition_clubs.eligibility_rules). Les clés du per-club écrasent les
-// correspondantes des règles globales. Si pas de club, on retombe sur les règles
-// globales seules.
-export function useEditionClubRules(editionId, clubId) {
-  const editionQ = useEdition(editionId);
-  const clubRulesQ = useQuery({
+// Override d'éligibilité PROPRE au club (sparse) pour un couple (édition, club).
+// Lecture directe de edition_clubs.eligibility_rules — ne contient QUE les
+// critères que le club surcharge (ou désactive via { behavior: 'off' }).
+// null/{} si pas de club choisi ou pas d'override. Cf. blueprint §2/§4.
+export function useClubRuleOverride(editionId, clubId) {
+  return useQuery({
     queryKey: ['rsa', 'edition-club-rules', editionId, clubId],
     queryFn: () => EditionClub.rulesForClub(editionId, clubId),
     enabled: !!editionId && !!clubId,
     staleTime: 5 * 60 * 1000,
   });
+}
+
+// Chantier 2 — Règles d'éligibilité EFFECTIVES pour un couple (édition, club).
+// effective = règles compétition (rulesFromEdition) ⊕ override per-club
+// (edition_clubs.eligibility_rules), via le helper canonique mergeEligibilityRules
+// (merge SHALLOW par critère, twin exact de l'opérateur jsonb `||` côté SQL).
+// Avant le choix d'un club → règles compétition seules.
+export function useEditionClubRules(editionId, clubId) {
+  const editionQ = useEdition(editionId);
+  const clubRulesQ = useClubRuleOverride(editionId, clubId);
   const data = React.useMemo(() => {
     const base = rulesFromEdition(editionQ.data) || {};
     const override = clubRulesQ.data || {};
@@ -60,7 +69,7 @@ export function useEditionClubRules(editionId, clubId) {
     ) {
       return undefined;
     }
-    return { ...base, ...override };
+    return mergeEligibilityRules(base, override);
   }, [editionQ.data, clubRulesQ.data]);
   return {
     data,
