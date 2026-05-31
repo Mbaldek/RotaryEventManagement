@@ -32,7 +32,11 @@ export default function FinaleSection({ edition, finaleSession, finalists, total
     edition?.finale_rsvp_enabled || edition?.status === 'finale' || edition?.status === 'sessions';
 
   return (
-    <section className="mt-16 pt-12" style={{ borderTop: `2px solid ${CREAM2}` }}>
+    <section
+      id={finaleSession ? `session-${finaleSession.id}` : undefined}
+      className="mt-16 pt-12"
+      style={{ borderTop: `2px solid ${CREAM2}` }}
+    >
       <Eyebrow>{t(UI.finaleEyebrow)}{edition?.year ? ` · ${edition.year}` : ''}</Eyebrow>
       <h2 className="text-[28px] md:text-[36px] font-normal leading-tight" style={{ fontFamily: SERIF, color: NAVY }}>
         {t(UI.finaleTitle)}

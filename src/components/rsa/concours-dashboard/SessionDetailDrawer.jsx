@@ -1,7 +1,7 @@
 // SessionDetailDrawer v2 — drawer enrichi avec QR scoring + lauréat + photos jurés.
 //
 // Refonte v3 — la legacy version était une liste sèche. Le drawer v2 :
-//   - HEADER coloré avec la palette thématique (light tint background + emoji)
+//   - HEADER neutre blanc + fine barre couleur thématique en haut (sans emoji)
 //   - LIVE → QR code vers /RsaScore?s=… + lien copy + aide juré
 //   - PUBLISHED → lauréat banner gradient gold + classement final compact
 //   - Always → liste startups avec deck/exec download buttons
