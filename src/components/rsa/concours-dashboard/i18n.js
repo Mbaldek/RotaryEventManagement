@@ -38,6 +38,12 @@ export const UI = {
     de: 'Noch kein Wettbewerb veröffentlicht.',
   },
 
+  // ── Stats line (saison) ──────────────────────────────────────────────────
+  statClubs:     { fr: 'clubs', en: 'clubs', de: 'Clubs' },
+  statSessions:  { fr: 'sessions', en: 'sessions', de: 'Sitzungen' },
+  statFinalists: { fr: 'finalistes', en: 'finalists', de: 'Finalistinnen' },
+  statNext:      { fr: 'prochaine', en: 'next', de: 'nächste' },
+
   // ── KPI bar ───────────────────────────────────────────────────────────────
   kpiSessionsDone: {
     fr: 'Sessions terminées',
@@ -52,6 +58,14 @@ export const UI = {
   kpiNext: { fr: 'Prochaine session', en: 'Next session', de: 'Nächste Session' },
   kpiClubs: { fr: 'Clubs participants', en: 'Participating clubs', de: 'Teilnehmende Clubs' },
   none: { fr: '—', en: '—', de: '—' },
+
+  // ── Programme (saison) ───────────────────────────────────────────────────
+  programOpener: { fr: 'La saison, dans l’ordre', en: 'The season, in order', de: 'Die Saison, der Reihe nach' },
+  monthSessions: {
+    fr: (n) => `${n} session${n > 1 ? 's' : ''}`,
+    en: (n) => `${n} session${n > 1 ? 's' : ''}`,
+    de: (n) => `${n} Sitzung${n === 1 ? '' : 'en'}`,
+  },
 
   // ── Timeline ──────────────────────────────────────────────────────────────
   timelineEyebrow: { fr: 'Calendrier', en: 'Calendar', de: 'Kalender' },
@@ -125,6 +139,12 @@ export const UI = {
     de: 'Finalist noch zu bestimmen',
   },
   cardWinner: { fr: 'Lauréat', en: 'Winner', de: 'Gewinner' },
+
+  // ── Session row (saison) ─────────────────────────────────────────────────
+  rowFollowLive:  { fr: 'Suivre le scoring', en: 'Follow scoring', de: 'Bewertung verfolgen' },
+  rowOpen:        { fr: 'Détail', en: 'Details', de: 'Details' },
+  rowScoringLive: { fr: 'scoring en cours', en: 'scoring in progress', de: 'Bewertung läuft' },
+  rowLaureate:    { fr: 'Lauréate', en: 'Winner', de: 'Siegerin' },
 
   // ── Status pills ──────────────────────────────────────────────────────────
   statusDraft: { fr: 'À venir', en: 'Upcoming', de: 'Bevorstehend' },
