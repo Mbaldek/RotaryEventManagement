@@ -221,6 +221,17 @@ Deno.serve(async (req: Request) => {
   if (!body_html) {
     return jsonResponse(400, { ok: false, error: "missing_body_html" });
   }
+  // Bornes de longueur (anti-DoS soft / bloat email_sends). body_html n'est PAS
+  // échappé — composer HTML admin volontaire ; seul le bornage est requis.
+  if (subject.length > 300) {
+    return jsonResponse(400, { ok: false, error: "subject_too_long" });
+  }
+  if (body_html.length > 100_000) {
+    return jsonResponse(400, { ok: false, error: "body_html_too_long" });
+  }
+  if (JSON.stringify(audience_filter).length > 8_000) {
+    return jsonResponse(400, { ok: false, error: "audience_filter_too_large" });
+  }
 
   // ── validate caller ──
   const { data: userData, error: userErr } = await supabase.auth.getUser();

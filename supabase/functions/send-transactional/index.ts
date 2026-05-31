@@ -806,6 +806,17 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(400, { ok: false, error: "invalid_recipient_email" });
   }
   const data = (payload.data && typeof payload.data === "object") ? payload.data as Record<string, unknown> : {};
+  // Bornes de longueur (défense en profondeur ; l'échappement HTML est déjà fait
+  // partout via esc()). Évite un HTML d'email surdimensionné.
+  for (const [k, v] of Object.entries(data)) {
+    if (typeof v === "string" && v.length > 2_000) {
+      return jsonResponse(400, { ok: false, error: `field_too_long:${k}` });
+    }
+  }
+  if (Array.isArray((data as { startups?: unknown }).startups)
+      && ((data as { startups: unknown[] }).startups).length > 100) {
+    return jsonResponse(400, { ok: false, error: "too_many_startups" });
+  }
 
   // ── validate caller ──
   const { data: userData, error: userErr } = await supabase.auth.getUser();
