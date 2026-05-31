@@ -41,7 +41,7 @@
 
 **Action.** `REVOKE EXECUTE ... FROM anon` sur les RPC clairement admin/staff (liste §5). **GARDER anon** sur : les RPC publiques (`rsa_apply_jury`, `rsa_create_pending_application`, `rsa_claim_pending_application`, `rsa_concours_edition_overview`, `rsa_concours_session_detail`), les prédicats RLS (`is_*`, `has_platform_role`, `my_*`, `owns_*`, `auth_current_email`, `rsa_can_score`, `rsa_is_assigned`) qui doivent rester appelables par le contexte d'évaluation des policies sur les tables lisibles en anon, et le chat lunch (`*_table_msg`, `*_dm`).
 
-**Statut.** ⏸️ **À valider par Mathieu avant exécution** (revoke = réversible, mais risque de casser un flux public si un call-site anon existe). Vérif call-sites recommandée avant.
+**Statut.** ✅ **FAIT** (migration `harden_revoke_anon_execute_admin_rpcs`, 2026-05-31). `REVOKE EXECUTE FROM PUBLIC, anon` sur les 43 RPC de §5 ; `authenticated` + `service_role` conservés (vérifié : edge functions + admins intacts). Call-sites publics vérifiés sans impact (`rsa_list_clubs` reste anon pour le picker funnel).
 
 ### P0.2 — Tighten les RLS `USING(true)` porteuses de PII
 
@@ -51,7 +51,7 @@
 - **Legacy 2026** : édition close → soit restreindre la lecture à `is_master_admin()`/staff, soit confirmer "accepté" (données d'une édition close, faible sensibilité). `jury_profiles.photo_base64` reste le point le plus sensible.
 - **Lunch** : l'app a été extraite (R1) mais les tables vivent encore dans ce projet. **Ne PAS toucher sans confirmer** que l'app lunch ne casse pas (son modèle RLS peut être volontairement ouvert). 
 
-**Statut.** ⏸️ **À valider** (dépend de : 2026 vraiment archivé ? lunch encore branché sur ce projet ?).
+**Statut.** ⏸️ **Lunch : NE PAS TOUCHER** — vérifié 2026-05-31 : l'app lunch extraite (`rotary-event-lunch/`) lit sa config via env (pas de ref en dur), et les tables lunch vivent dans ce projet → l'app pointe très probablement encore ici. Risque de casser les déjeuners en prod. **Legacy 2026** (`jury_profiles` PII…) : décision en attente (tightening staff-only si 2026 archivé).
 
 ---
 
@@ -100,8 +100,9 @@ admin_clear_all_chats
 ## 6 · Checklist exécution
 
 - [x] search_path pinné sur 8 fonctions (`harden_function_search_path`)
-- [ ] Revoke anon batch (§5) — **attente validation**
-- [ ] RLS legacy/lunch — **attente décision** (2026 archivé ? lunch branché ?)
+- [x] Revoke anon batch §5 — 43 RPC (`harden_revoke_anon_execute_admin_rpcs`)
+- [~] RLS lunch : NE PAS TOUCHER (app lunch pointe probablement ce projet)
+- [ ] RLS legacy 2026 (`jury_profiles` PII…) — **attente décision** (2026 archivé ?)
 - [ ] Confirmer rate-limit `rsa_apply_jury`
 - [ ] Vérifier validation inputs `send-bulk`/`send-transactional`/`save-jury-profile`
 - [ ] Headers Vercel (CSP/HSTS) sur app.rotary-startup.org
