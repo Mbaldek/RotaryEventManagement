@@ -51,7 +51,9 @@
 - **Legacy 2026** : édition close → soit restreindre la lecture à `is_master_admin()`/staff, soit confirmer "accepté" (données d'une édition close, faible sensibilité). `jury_profiles.photo_base64` reste le point le plus sensible.
 - **Lunch** : l'app a été extraite (R1) mais les tables vivent encore dans ce projet. **Ne PAS toucher sans confirmer** que l'app lunch ne casse pas (son modèle RLS peut être volontairement ouvert). 
 
-**Statut.** ⏸️ **Lunch : NE PAS TOUCHER** — vérifié 2026-05-31 : l'app lunch extraite (`rotary-event-lunch/`) lit sa config via env (pas de ref en dur), et les tables lunch vivent dans ce projet → l'app pointe très probablement encore ici. Risque de casser les déjeuners en prod. **Legacy 2026** (`jury_profiles` PII…) : décision en attente (tightening staff-only si 2026 archivé).
+**Statut.** ✅ **DÉCIDÉ (2026-05-31) — RISQUE ACCEPTÉ, on laisse ouvert.**
+- **Lunch** : NE PAS TOUCHER — l'app lunch extraite (`rotary-event-lunch/`) lit sa config via env et les tables lunch vivent dans ce projet → elle pointe très probablement encore ici ; tightening risquerait de casser les déjeuners en prod.
+- **Legacy 2026** (`jury_profiles` PII, `jury_scores`…) : laissé ouvert sur décision de Mathieu — édition close, données 2026 jugées peu sensibles, et on garde les vues legacy (`RsaJuryView` « EN DIRECT »…) fonctionnelles en anon. Expo PII jurés 2026 = **risque accepté, documenté**.
 
 ---
 
@@ -102,7 +104,7 @@ admin_clear_all_chats
 - [x] search_path pinné sur 8 fonctions (`harden_function_search_path`)
 - [x] Revoke anon batch §5 — 43 RPC (`harden_revoke_anon_execute_admin_rpcs`)
 - [~] RLS lunch : NE PAS TOUCHER (app lunch pointe probablement ce projet)
-- [ ] RLS legacy 2026 (`jury_profiles` PII…) — **attente décision** (2026 archivé ?)
+- [~] RLS legacy 2026 : risque accepté, laissé ouvert (décision Mathieu 2026-05-31)
 - [ ] Confirmer rate-limit `rsa_apply_jury`
 - [ ] Vérifier validation inputs `send-bulk`/`send-transactional`/`save-jury-profile`
 - [ ] Headers Vercel (CSP/HSTS) sur app.rotary-startup.org
