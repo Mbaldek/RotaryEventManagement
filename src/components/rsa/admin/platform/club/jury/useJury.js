@@ -38,7 +38,7 @@ export function useSessionJurors(sessionId) {
       if (!sessionId) return [];
       const { data: assigns, error } = await supabase
         .from('platform_jury_assignments')
-        .select('jury_user_id, session_id, role, created_by, created_at')
+        .select('jury_user_id, session_id, role, created_by, created_at, invited_at, confirmed_at')
         .eq('session_id', sessionId);
       if (error) throw error;
       const rows = assigns || [];
@@ -138,6 +138,41 @@ export function useRemoveJuror(sessionId) {
       const { error } = await supabase.rpc('rsa_remove_juror', {
         p_session_id:    sessionId,
         p_jury_user_id:  juryUserId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SESSION_JURY_KEYS.forSession(sessionId) });
+    },
+  });
+}
+
+// ── Mutation : marquer des jurés "invités" (suivi console) ────────────────────
+export function useMarkJuryInvited(sessionId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ juryUserIds }) => {
+      const { error } = await supabase.rpc('rsa_mark_jury_invited', {
+        p_session_id: sessionId,
+        p_jury_user_ids: juryUserIds,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SESSION_JURY_KEYS.forSession(sessionId) });
+    },
+  });
+}
+
+// ── Mutation : (dé)marquer un juré "confirmé" (suivi console, à la main) ───────
+export function useSetJuryConfirmed(sessionId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ juryUserId, confirmed }) => {
+      const { error } = await supabase.rpc('rsa_set_jury_confirmed', {
+        p_session_id: sessionId,
+        p_jury_user_id: juryUserId,
+        p_confirmed: !!confirmed,
       });
       if (error) throw error;
     },

@@ -20,9 +20,11 @@ import __Layout from './Layout.jsx';
 const Admin = lazy(() => import('./pages/Admin'));
 const Candidater = lazy(() => import('./pages/Candidater'));
 const Concours = lazy(() => import('./pages/Concours'));
+const ConfirmDeck = lazy(() => import('./pages/ConfirmDeck'));
 const DevenirJury = lazy(() => import('./pages/DevenirJury'));
 const Jury = lazy(() => import('./pages/Jury'));
 const JuryCandidate = lazy(() => import('./pages/JuryCandidate'));
+const JurySession = lazy(() => import('./pages/JurySession'));
 const Login = lazy(() => import('./pages/Login'));
 const MonDossier = lazy(() => import('./pages/MonDossier'));
 const Resultats = lazy(() => import('./pages/Resultats'));
@@ -48,9 +50,11 @@ export const PAGES = {
     "Admin": Admin,
     "Candidater": Candidater,
     "Concours": Concours,
+    "ConfirmDeck": ConfirmDeck,
     "DevenirJury": DevenirJury,
     "Jury": Jury,
     "JuryCandidate": JuryCandidate,
+    "JurySession": JurySession,
     "Login": Login,
     "MonDossier": MonDossier,
     "Resultats": Resultats,

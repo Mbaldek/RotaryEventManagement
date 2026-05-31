@@ -27,6 +27,7 @@ import { StatusPill as JuryStatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { useClubsForEdition, useCountsForEdition } from '../useMaster';
 import { useSessionsAdmin } from '../../useAdmin';
+import SessionConsole from '../../session-console/SessionConsole';
 // V2.6 sessions-finale unification — la Grande Finale est rendue en tête de
 // cet onglet (une finale n'est qu'une session de plus, kind='finale'
 // + club_id=NULL pour la fédérée). Cf. docs/blueprints/sessions-finale-unification.md.
@@ -146,13 +147,17 @@ function StatusPill({ kind, label }) {
   );
 }
 
-function SessionRow({ session, t }) {
+function SessionRow({ session, t, onOpen }) {
   const status = session.config?.status || 'draft';
   const kindLabel = session.kind === 'finale' ? t(COPY.kindFinale) : t(COPY.kindQualifying);
   return (
     <li
-      className="rounded-[4px] px-3 py-2 flex items-start gap-3 flex-wrap"
+      className={onOpen ? `rounded-[4px] px-3 py-2 flex items-start gap-3 flex-wrap cursor-pointer ${FOCUS_RING_CLASS}` : 'rounded-[4px] px-3 py-2 flex items-start gap-3 flex-wrap'}
       style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      onClick={onOpen}
+      role={onOpen ? 'button' : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      onKeyDown={onOpen ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } } : undefined}
     >
       <span
         className="inline-flex items-center justify-center w-7 h-7 rounded-full text-[11px] tabular-nums shrink-0"
@@ -191,7 +196,7 @@ function SessionRow({ session, t }) {
   );
 }
 
-function ClubRow({ club, sessions, totals, isLoadingSessions, expanded, onToggle, onOpenCockpit, t }) {
+function ClubRow({ club, sessions, totals, isLoadingSessions, expanded, onToggle, onOpenCockpit, onOpenSession, t }) {
   const { total, draft, live, published } = totals;
   const panelId = `sessions-panel-${club.id}`;
   return (
@@ -264,7 +269,7 @@ function ClubRow({ club, sessions, totals, isLoadingSessions, expanded, onToggle
           {!isLoadingSessions && sessions.length > 0 && (
             <ul className="list-none m-0 p-0 flex flex-col gap-2 mt-3">
               {sessions.map((s) => (
-                <SessionRow key={s.id} session={s} t={t} />
+                <SessionRow key={s.id} session={s} t={t} onOpen={onOpenSession ? () => onOpenSession(s) : undefined} />
               ))}
             </ul>
           )}
@@ -294,6 +299,8 @@ export default function SessionsTab({ editionId, competition }) {
   const sessionsQ = useSessionsAdmin(editionId);
 
   const [expandedClub, setExpandedClub] = useState(null);
+  // Session Admin Console ouverte depuis la Compétition (scope club via session.club_id).
+  const [consoleSession, setConsoleSession] = useState(null);
 
   const clubs = useMemo(() => {
     const rows = clubsQ.data || [];
@@ -350,6 +357,20 @@ export default function SessionsTab({ editionId, competition }) {
   // pré-remplir l'identifiant de la session finale). Fallback safe si la prop
   // competition n'est pas passée (ancien call site).
   const competitionForFinale = competition || { id: editionId };
+
+  // Console plein-panneau ouverte depuis la Compétition (scope club de la session).
+  if (consoleSession) {
+    return (
+      <SessionConsole
+        session={consoleSession}
+        editionId={editionId}
+        edition={competition}
+        clubId={consoleSession.club_id || null}
+        sessions={sessionsByClub.get(consoleSession.club_id) || []}
+        onClose={() => setConsoleSession(null)}
+      />
+    );
+  }
 
   return (
     <section>
@@ -438,6 +459,7 @@ export default function SessionsTab({ editionId, competition }) {
                 expanded={expanded}
                 onToggle={() => setExpandedClub(expanded ? null : c.id)}
                 onOpenCockpit={() => gotoClubCockpit(c.id)}
+                onOpenSession={setConsoleSession}
                 t={t}
               />
             );

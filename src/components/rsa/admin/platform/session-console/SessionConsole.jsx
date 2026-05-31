@@ -18,7 +18,9 @@ import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import SessionEditPanel from './SessionEditPanel';
-import SessionJurorsList from '../club/jury/SessionJurorsList';
+import SessionJuryPanel from './SessionJuryPanel';
+import SessionStartupsPanel from './SessionStartupsPanel';
+import SessionEmailsPanel from './SessionEmailsPanel';
 import ClubLiveTab from '../club/tabs/LiveTab';
 import ClubResultsTab from '../club/tabs/ResultsTab';
 import LegacyLiveTab from '../tabs/LiveTab';
@@ -132,11 +134,11 @@ export default function SessionConsole({
 
         {tab === 'jury' && (
           clubId
-            ? <SessionJurorsList sessionId={session.id} clubId={clubId} />
+            ? <SessionJuryPanel session={session} clubId={clubId} />
             : <Placeholder text={t(COPY.juryFed)} />
         )}
 
-        {tab === 'startups' && <Placeholder text={t(COPY.soon)} />}
+        {tab === 'startups' && <SessionStartupsPanel session={session} clubId={clubId} />}
 
         {tab === 'live' && (
           clubId
@@ -150,7 +152,7 @@ export default function SessionConsole({
             : <LegacyResultsTab edition={ed} session={session} sessions={sessions} onSelectSession={onSelectSession} />
         )}
 
-        {tab === 'emails' && <Placeholder text={t(COPY.soon)} />}
+        {tab === 'emails' && <SessionEmailsPanel session={session} clubId={clubId} />}
       </div>
     </section>
   );
