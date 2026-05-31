@@ -144,8 +144,11 @@ export default function JuryProfileDrawer({
 
   const displayName = fullName || email;
   const qLabel = qualiteLabel(profile.data?.qualite, t);
+  const roleTitle = profile.data?.role_title;
   const org = profile.data?.organisation;
-  const subline = [qLabel, org].filter(Boolean).join(' · ');
+  // Le métier réel (fonction + organisation) prime ; fallback sur la qualité
+  // pour les fiches anciennes sans role_title.
+  const subline = [roleTitle || qLabel, org].filter(Boolean).join(' · ');
   const photoUrl = photo.data;
   const initials = initialsOf(fullName, email);
   const isLoading = profile.isLoading;
@@ -227,6 +230,17 @@ export default function JuryProfileDrawer({
           {email && (
             <div className="text-[12px] mt-2" style={{ color: GOLD }}>
               {email}
+            </div>
+          )}
+          {/* Qualité reléguée au rang de tag secondaire quand la fonction réelle est connue. */}
+          {roleTitle && qLabel && (
+            <div className="mt-2">
+              <span
+                className="inline-block text-[9.5px] uppercase tracking-[0.14em] px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.72)' }}
+              >
+                {qLabel}
+              </span>
             </div>
           )}
         </div>

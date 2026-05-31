@@ -36,8 +36,8 @@ Cause racine : la migration `20260601120000_jury_applications.sql` (qui ajoutait
 ### Existe déjà (live, vérifié via MCP)
 - `sessions(id, edition_id, club_id?, name, theme, session_date, position, kind)` — `kind ∈ {qualifying, finale}`.
 - `editions(... has_finale, finale_config jsonb, model, status, finale_date ...)`.
-- `jury_applications(id, club_id NOT NULL, edition_id?, email, full_name, qualite NOT NULL CHECK, organisation, bio, photo_path, preferred_themes[], availability_session_ids[], status, applied_at, reviewed_by/at, reviewer_note, approved_user_id, approval_email_sent_at, custom_data)`.
-- `platform_jury_profiles(user_id PK, qualite, organisation, photo_path, bio, auth_linked_at, ...)`.
+- `jury_applications(id, club_id NOT NULL, edition_id?, email, full_name, qualite NOT NULL CHECK, organisation, role_title, bio, photo_path, preferred_themes[], availability_session_ids[], status, applied_at, reviewed_by/at, reviewer_note, approved_user_id, approval_email_sent_at, custom_data)`.
+- `platform_jury_profiles(user_id PK, qualite, organisation, role_title, photo_path, bio, auth_linked_at, ...)`.
 - RPCs : `rsa_apply_jury(...)`, `rsa_approve_jury_application(id)`, `rsa_reject_jury_application(id, note)`, `rsa_list_jury_applications(club_id, status)`.
 
 ### Migrations à appliquer (via MCP Supabase, projet `uaoucznptxmvhhytapso`)
@@ -107,3 +107,14 @@ Les anciennes candidatures = data de test. **Purger** `jury_applications` + doss
 - **Divergence DB↔migrations** : appliquer les migrations sur live avec prudence (vérifier l'état réel avant chaque ALTER ; la migration `20260601120000` est un piège, ne pas l'exécuter).
 - **Anti-doublon** : changer `(club_id,email)` → `(edition_id,email)` peut entrer en conflit avec des lignes existantes → purge dummy (§7) d'abord.
 - **Renversement module3** : bien re-câbler le grant de rôle `jury` à l'approbation (le scoring module3 lit `app_user_roles[role='jury']`).
+
+## 11. Addendum 2026-05-31 — Métier réel + reframe « jury de la compétition »
+
+Retour Mathieu sur la page `/DevenirJury` (3 points). Tous livrés ; migration `20260531_rsa_jury_role_title.sql` appliquée via MCP (projet `uaoucznptxmvhhytapso`).
+
+1. **Le métier réel devient l'info prioritaire.** Nouvelle colonne **`role_title`** (Fonction/Titre, ex. « Directrice des investissements ») sur `jury_applications` **et** `platform_jury_profiles` (nullable ; obligation côté funnel). Étape Identité réordonnée : `full_name`, `email`, **groupe « Votre métier » → `role_title` (requis) + `organisation` (désormais requise)**, puis `qualite` (conservée mais reléguée en classificateur secondaire, toujours requise — décision Mathieu « garder, secondaire, requis »).
+   - RPC : `rsa_apply_jury` **+`p_role_title`** (DROP+CREATE, l'arité passe 10→11 ; rate-limit + lock serveur préservés). `rsa_approve_jury_application` reporte `role_title` dans `platform_jury_profiles`. `rsa_create_jury_profile` **+`p_role_title`** (DROP+CREATE 5→6) pour la saisie admin directe.
+2. **Présentation = présentation, pas justification.** Le ton de l'étape bio est reformulé : le juré **se présente pour partage aux startups** qu'il évaluera — ce n'est **pas** un dossier de sélection à destination des organisateurs. Copie FR/EN/DE mise à jour (`step2Subtitle`, `bio` → « Présentation », `bioHelp`, `photoHelp`). Bio reste facultative.
+3. **Jury de la COMPÉTITION, pas du club.** Le juré rejoint le jury de l'édition (déjà scopé ainsi en base : `edition_clubs` + `sessions(club_id, edition_id)` + finale unique → 2 clubs peuvent co-organiser une compétition avec sessions+jury communs). Il **déclare simplement son club de rattachement** (champ `club_id` inchangé, toujours requis). Copie reformulée (`step3Subtitle`, `club` → « Votre club Rotary », `clubHint`, `errClubRequired`). **Jurés externes (non-Rotariens) = exception** saisie directement par l'admin (`AddJurorModal` / `rsa_create_jury_profile`), hors funnel — d'où club requis sans échappatoire.
+
+**Propagation affichage** (le métier réel surface partout) : `JuryProfileDrawer` (subline `role_title · organisation`, qualité en tag secondaire), `JuryApplicationsTab` (carte de revue : métier en tête, qualité en secondaire), `AddJurorModal` (champ Fonction/Titre en modes create+invite, label pool picker), `useClubJuryPool` (select +`role_title`). i18n : `jury-funnel/i18n.js`, `master/i18n/session-jury.js` (`formRoleTitle`).

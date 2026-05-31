@@ -98,6 +98,7 @@ export default function AddJurorModal({ sessionId, clubId, onClose }) {
   const [pickedRole, setPickedRole] = useState('regular');
 
   // Modes 2 + 3 — fields communs
+  const [roleTitle, setRoleTitle] = useState('');
   const [qualite, setQualite] = useState('');
   const [organisation, setOrganisation] = useState('');
   const [bio, setBio] = useState('');
@@ -120,7 +121,7 @@ export default function AddJurorModal({ sessionId, clubId, onClose }) {
       value: p.user_id,
       label: [
         p.full_name || p.email || p.user_id?.slice(0, 8),
-        p.qualite ? '· ' + p.qualite : null,
+        p.role_title ? '· ' + p.role_title : (p.qualite ? '· ' + p.qualite : null),
         p.organisation ? '· ' + p.organisation : null,
       ].filter(Boolean).join(' '),
     }));
@@ -171,6 +172,7 @@ export default function AddJurorModal({ sessionId, clubId, onClose }) {
       const newUserId = await createProfile.mutateAsync({
         qualite: qualite.trim(),
         organisation: organisation.trim(),
+        roleTitle: roleTitle.trim(),
         bio: bio.trim(),
         photoPath,
         roleHint: 'special',
@@ -204,6 +206,7 @@ export default function AddJurorModal({ sessionId, clubId, onClose }) {
       const newUserId = await createProfile.mutateAsync({
         qualite: qualite.trim(),
         organisation: organisation.trim(),
+        roleTitle: roleTitle.trim(),
         bio: fullBio,
         photoPath,
         roleHint: 'special',
@@ -372,6 +375,17 @@ export default function AddJurorModal({ sessionId, clubId, onClose }) {
           {/* ── Mode 2 : create external juror ────────────────────────────── */}
           {mode === 'create' && (
             <div className="space-y-3">
+              <Field label={t(SESSION_JURY.formRoleTitle)}>
+                {({ id, describedBy }) => (
+                  <TextInput
+                    id={id}
+                    aria-describedby={describedBy}
+                    value={roleTitle}
+                    onChange={(e) => setRoleTitle(e.target.value)}
+                    disabled={busy}
+                  />
+                )}
+              </Field>
               <Field label={t(SESSION_JURY.formQualite)} required>
                 {({ id, describedBy }) => (
                   <TextInput
@@ -462,6 +476,17 @@ export default function AddJurorModal({ sessionId, clubId, onClose }) {
                   )}
                 </Field>
               </div>
+              <Field label={t(SESSION_JURY.formRoleTitle)}>
+                {({ id, describedBy }) => (
+                  <TextInput
+                    id={id}
+                    aria-describedby={describedBy}
+                    value={roleTitle}
+                    onChange={(e) => setRoleTitle(e.target.value)}
+                    disabled={busy}
+                  />
+                )}
+              </Field>
               <Field label={t(SESSION_JURY.formQualite)} required>
                 {({ id, describedBy }) => (
                   <TextInput

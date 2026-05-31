@@ -261,17 +261,21 @@ function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, bus
             </h3>
             <StatusPillLocal status={app.status} t={t} />
           </div>
-          <p className="text-[12.5px] mt-0.5" style={{ color: INK }}>
+          {/* Métier réel : fonction + organisation en premier. */}
+          {(app.role_title || app.organisation) && (
+            <p className="text-[12.5px] mt-0.5 font-medium" style={{ color: NAVY }}>
+              {[app.role_title, app.organisation].filter(Boolean).join(' · ')}
+            </p>
+          )}
+          <p className="text-[12px] mt-0.5" style={{ color: INK }}>
             <Mail className="w-3 h-3 inline mr-1" />
             <a href={`mailto:${app.email}`} className="underline decoration-1 underline-offset-2" style={{ color: NAVY }}>
               {app.email}
             </a>
-            <span className="mx-2" style={{ color: MUTED }}>·</span>
-            {qualiteLabel(app.qualite, t)}
-            {app.organisation && (
+            {app.qualite && (
               <>
                 <span className="mx-2" style={{ color: MUTED }}>·</span>
-                {app.organisation}
+                <span style={{ color: MUTED }}>{qualiteLabel(app.qualite, t)}</span>
               </>
             )}
           </p>

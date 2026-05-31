@@ -86,7 +86,7 @@ export function useClubJuryPool(clubId) {
       if (ids.length > 0) {
         const { data: profiles, error: pe } = await supabase
           .from('platform_jury_profiles')
-          .select('user_id, qualite, organisation, photo_path, auth_linked_at')
+          .select('user_id, qualite, organisation, role_title, photo_path, auth_linked_at')
           .in('user_id', ids);
         if (pe) throw pe;
         profilesById = new Map((profiles || []).map((p) => [p.user_id, p]));
@@ -99,6 +99,7 @@ export function useClubJuryPool(clubId) {
           full_name:      j.full_name || null,
           qualite:        p.qualite || null,
           organisation:   p.organisation || null,
+          role_title:     p.role_title || null,
           photo_path:     p.photo_path || null,
           auth_linked_at: p.auth_linked_at || null,
         };
@@ -151,10 +152,11 @@ export function useRemoveJuror(sessionId) {
 // l'attacher effectivement à la session.
 export function useCreateJuryProfile() {
   return useMutation({
-    mutationFn: async ({ qualite, organisation, bio, photoPath, roleHint = 'special' }) => {
+    mutationFn: async ({ qualite, organisation, roleTitle, bio, photoPath, roleHint = 'special' }) => {
       const { data, error } = await supabase.rpc('rsa_create_jury_profile', {
         p_qualite:      qualite || null,
         p_organisation: organisation || null,
+        p_role_title:   roleTitle || null,
         p_bio:          bio || null,
         p_photo_path:   photoPath || null,
         p_role_hint:    roleHint || 'special',

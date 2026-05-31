@@ -86,9 +86,9 @@ export const JF = {
   // ── Step 1 — Identité ──────────────────────────────────────────────────────
   step1Title: { fr: 'Votre identité', en: 'About you', de: 'Über Sie' },
   step1Subtitle: {
-    fr: 'Renseignez les informations qui permettront au club de prendre contact.',
-    en: 'Provide the details the club will use to reach out.',
-    de: 'Geben Sie die Daten an, die der Club zur Kontaktaufnahme benötigt.',
+    fr: 'On veut surtout savoir ce que vous faites : votre fonction et votre organisation comptent avant tout.',
+    en: 'What matters most is what you actually do — your role and your organisation come first.',
+    de: 'Uns interessiert vor allem, was Sie tun: Ihre Funktion und Ihre Organisation zählen am meisten.',
   },
   fullName: { fr: 'Nom complet', en: 'Full name', de: 'Vollständiger Name' },
   fullNamePlaceholder: { fr: 'Prénom Nom', en: 'First Last', de: 'Vorname Nachname' },
@@ -98,62 +98,77 @@ export const JF = {
     en: 'Used as your sign-in id; a magic-link will be sent if approved.',
     de: 'Wird als Anmeldekennung verwendet; bei Genehmigung erhalten Sie einen Magic-Link.',
   },
-  qualite: { fr: 'Qualité', en: 'Profile', de: 'Profil' },
-  qualiteHelp: {
-    fr: 'Sélectionnez la qualité qui décrit le mieux votre rôle.',
-    en: 'Pick the profile that best describes your role.',
-    de: 'Wählen Sie das Profil, das Ihre Rolle am besten beschreibt.',
+  // Groupe « métier réel » — fonction + organisation, l'info prioritaire.
+  metierGroup: { fr: 'Votre métier', en: 'Your profession', de: 'Ihr Beruf' },
+  roleTitle: { fr: 'Fonction / Titre', en: 'Role / Title', de: 'Funktion / Titel' },
+  roleTitleHelp: {
+    fr: 'Votre intitulé de poste réel.',
+    en: 'Your actual job title.',
+    de: 'Ihre tatsächliche Position.',
   },
-  qualitePlaceholder: { fr: 'Choisissez…', en: 'Pick one…', de: 'Auswählen…' },
-  organisation: { fr: 'Organisation', en: 'Organisation', de: 'Organisation' },
+  roleTitlePlaceholder: {
+    fr: 'ex. Directrice des investissements',
+    en: 'e.g. Head of Investments',
+    de: 'z. B. Leiterin Investments',
+  },
+  organisation: { fr: 'Organisation / entreprise', en: 'Organisation / company', de: 'Organisation / Unternehmen' },
   organisationHelp: {
-    fr: 'Fonds, entreprise, cabinet… (facultatif).',
-    en: 'Fund, company, firm… (optional).',
-    de: 'Fonds, Unternehmen, Kanzlei… (optional).',
+    fr: 'L’entité où vous exercez.',
+    en: 'The entity where you work.',
+    de: 'Die Einrichtung, in der Sie tätig sind.',
   },
   organisationPlaceholder: {
-    fr: 'Fonds, entreprise, cabinet…',
-    en: 'Fund, company, firm…',
-    de: 'Fonds, Unternehmen, Kanzlei…',
+    fr: 'ex. Bpifrance',
+    en: 'e.g. Bpifrance',
+    de: 'z. B. Bpifrance',
   },
+  qualite: { fr: 'Qualité', en: 'Profile', de: 'Profil' },
+  qualiteHelp: {
+    fr: 'Catégorie pour le classement interne du comité.',
+    en: 'Category for the committee’s internal grouping.',
+    de: 'Kategorie für die interne Einordnung des Komitees.',
+  },
+  qualitePlaceholder: { fr: 'Choisissez…', en: 'Pick one…', de: 'Auswählen…' },
 
   // ── Step 2 — Présentation ──────────────────────────────────────────────────
   step2Title: { fr: 'Votre présentation', en: 'Your introduction', de: 'Ihre Vorstellung' },
   step2Subtitle: {
-    fr: 'Quelques lignes pour permettre au club de comprendre votre apport au jury.',
-    en: 'A few lines so the club understands what you bring to the jury.',
-    de: 'Ein paar Zeilen, damit der Club Ihren Beitrag zur Jury einschätzen kann.',
+    fr: 'Présentez-vous librement. Ce texte est partagé aux startups que vous évaluerez — ce n’est pas un dossier de sélection, simplement votre présentation.',
+    en: 'Introduce yourself freely. This text is shared with the startups you’ll evaluate — it’s not a selection file, just your introduction.',
+    de: 'Stellen Sie sich frei vor. Dieser Text wird den Startups gezeigt, die Sie bewerten — es ist keine Bewerbung, sondern einfach Ihre Vorstellung.',
   },
-  bio: { fr: 'Bio courte', en: 'Short bio', de: 'Kurz-Bio' },
+  bio: { fr: 'Présentation', en: 'Introduction', de: 'Vorstellung' },
   bioHelp: {
-    fr: 'Parcours, expertises, motivation. 1000 caractères max.',
-    en: 'Background, expertise, motivation. 1000 characters max.',
-    de: 'Werdegang, Expertise, Motivation. Max. 1000 Zeichen.',
+    fr: 'Parcours, expertise, ce que vous aimez transmettre. Les candidats le liront. 1000 caractères max.',
+    en: 'Background, expertise, what you enjoy sharing. Candidates will read it. 1000 characters max.',
+    de: 'Werdegang, Expertise, was Sie gern weitergeben. Die Kandidaten lesen es. Max. 1000 Zeichen.',
   },
   bioPlaceholder: {
-    fr: 'Parcours, expertises, motivation…',
-    en: 'Background, expertise, motivation…',
-    de: 'Werdegang, Expertise, Motivation…',
+    fr: 'Parcours, expertise, ce que vous aimez transmettre…',
+    en: 'Background, expertise, what you enjoy sharing…',
+    de: 'Werdegang, Expertise, was Sie gern weitergeben…',
   },
   photo: { fr: 'Photo', en: 'Photo', de: 'Foto' },
   photoHelp: {
-    fr: 'Une photo professionnelle pour les supports de présentation (JPG/PNG, 5 Mo max).',
-    en: 'A professional photo for the session presentation materials (JPG/PNG, 5 MB max).',
-    de: 'Ein professionelles Foto für die Präsentationsunterlagen (JPG/PNG, max. 5 MB).',
+    fr: 'Une photo professionnelle pour que les candidats vous identifient (JPG/PNG, 5 Mo max).',
+    en: 'A professional photo so candidates can recognise you (JPG/PNG, 5 MB max).',
+    de: 'Ein professionelles Foto, damit die Kandidaten Sie erkennen (JPG/PNG, max. 5 MB).',
   },
 
   // ── Step 3 — Club (obligatoire) ────────────────────────────────────────────
+  // Le juré rejoint le jury de la COMPÉTITION, pas d'un club : il déclare
+  // simplement son club organisateur de rattachement.
   step3Title: { fr: 'Votre club', en: 'Your club', de: 'Ihr Club' },
   step3Subtitle: {
-    fr: 'Choisissez le club Rotary dont vous souhaitez rejoindre le jury pour cette compétition.',
-    en: 'Pick the Rotary club whose jury you want to join for this competition.',
-    de: 'Wählen Sie den Rotary-Club, dessen Jury Sie für diesen Wettbewerb beitreten möchten.',
+    fr: 'Vous rejoignez le jury de la compétition, pas d’un club. Une compétition peut être co-organisée par plusieurs clubs — indiquez simplement celui dont vous faites partie.',
+    en: 'You’re joining the jury of the competition, not of a club. A competition can be co-organised by several clubs — just tell us which one you belong to.',
+    de: 'Sie treten der Jury des Wettbewerbs bei, nicht der eines Clubs. Ein Wettbewerb kann von mehreren Clubs gemeinsam organisiert werden — geben Sie einfach an, zu welchem Sie gehören.',
   },
-  club: { fr: 'Club hôte', en: 'Host club', de: 'Gastgebender Club' },
+  club: { fr: 'Votre club Rotary', en: 'Your Rotary club', de: 'Ihr Rotary-Club' },
   clubHint: {
-    fr: 'Choisissez le club de votre pays ou le plus proche de vous.',
-    en: 'Choose the club in your country or the one nearest to you.',
-    de: 'Wählen Sie den Club in Ihrem Land oder den nächstgelegenen.',
+    fr: 'Le club organisateur dont vous êtes membre (ou qui vous a invité). Sessions et jury sont communs à la compétition.',
+    en: 'The organising club you belong to (or that invited you). Sessions and jury are shared across the competition.',
+    de: 'Der organisierende Club, dem Sie angehören (oder der Sie eingeladen hat). Sessions und Jury sind im Wettbewerb gemeinsam.',
   },
   clubPlaceholder: { fr: 'Choisissez un club…', en: 'Pick a club…', de: 'Club wählen…' },
   clubNone: {
@@ -162,9 +177,9 @@ export const JF = {
     de: 'Diesem Wettbewerb ist noch kein Club zugeordnet.',
   },
   errClubRequired: {
-    fr: 'Sélectionnez un club hôte pour continuer.',
-    en: 'Select a host club to continue.',
-    de: 'Wählen Sie einen gastgebenden Club, um fortzufahren.',
+    fr: 'Indiquez votre club pour continuer.',
+    en: 'Select your club to continue.',
+    de: 'Wählen Sie Ihren Club, um fortzufahren.',
   },
 
   // ── Step 4 — Disponibilités (cartes session + finale) ──────────────────────
@@ -221,6 +236,16 @@ export const JF = {
     de: 'Der Name muss mindestens 2 Zeichen lang sein.',
   },
   errQualite: { fr: 'Sélectionnez une qualité.', en: 'Pick a profile.', de: 'Wählen Sie ein Profil.' },
+  errRoleTitleRequired: {
+    fr: 'Indiquez votre fonction / titre.',
+    en: 'Enter your role / title.',
+    de: 'Geben Sie Ihre Funktion / Ihren Titel an.',
+  },
+  errOrgRequired: {
+    fr: 'Indiquez votre organisation / entreprise.',
+    en: 'Enter your organisation / company.',
+    de: 'Geben Sie Ihre Organisation / Ihr Unternehmen an.',
+  },
   errBioLong: { fr: 'La bio dépasse 1000 caractères.', en: 'Bio exceeds 1000 characters.', de: 'Die Bio überschreitet 1000 Zeichen.' },
   errMissing: {
     fr: 'Des champs requis sont manquants. Complétez-les pour confirmer.',

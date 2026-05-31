@@ -70,6 +70,8 @@ function validateStep(stepId, draft) {
     else if (draft.fullName.trim().length < 2) errs.fullName = 'errNameShort';
     if (isBlank(draft.email)) errs.email = 'errRequired';
     else if (!EMAIL_RE.test(String(draft.email).trim())) errs.email = 'errEmail';
+    if (isBlank(draft.roleTitle)) errs.roleTitle = 'errRoleTitleRequired';
+    if (isBlank(draft.organisation)) errs.organisation = 'errOrgRequired';
     if (isBlank(draft.qualite)) errs.qualite = 'errQualite';
   } else if (stepId === 'presentation') {
     if (typeof draft.bio === 'string' && draft.bio.length > 1000) errs.bio = 'errBioLong';
@@ -243,6 +245,42 @@ function StepIdentite({ draft, errors, onField }) {
           )}
         </Field>
 
+        {/* Groupe « métier réel » — fonction + organisation, l'info prioritaire. */}
+        <div className="flex items-center gap-2.5 pt-1" aria-hidden>
+          <span className="uppercase text-[10px] tracking-[0.16em] font-medium" style={{ color: GOLD }}>
+            {t(JF.metierGroup)}
+          </span>
+          <span className="flex-1 h-px" style={{ background: CREAM2 }} />
+        </div>
+
+        <Field label={t(JF.roleTitle)} required helper={t(JF.roleTitleHelp)} error={errors.roleTitle ? t(JF[errors.roleTitle]) : undefined}>
+          {({ id, describedBy, invalid }) => (
+            <TextInput
+              id={id}
+              aria-describedby={describedBy}
+              invalid={invalid}
+              value={draft.roleTitle ?? ''}
+              onChange={(e) => onField('roleTitle', e.target.value)}
+              placeholder={t(JF.roleTitlePlaceholder)}
+              autoComplete="organization-title"
+            />
+          )}
+        </Field>
+
+        <Field label={t(JF.organisation)} required helper={t(JF.organisationHelp)} error={errors.organisation ? t(JF[errors.organisation]) : undefined}>
+          {({ id, describedBy, invalid }) => (
+            <TextInput
+              id={id}
+              aria-describedby={describedBy}
+              invalid={invalid}
+              value={draft.organisation ?? ''}
+              onChange={(e) => onField('organisation', e.target.value)}
+              placeholder={t(JF.organisationPlaceholder)}
+              autoComplete="organization"
+            />
+          )}
+        </Field>
+
         <Field label={t(JF.qualite)} required helper={t(JF.qualiteHelp)} error={errors.qualite ? t(JF[errors.qualite]) : undefined}>
           {({ id, describedBy, invalid }) => (
             <Select
@@ -253,18 +291,6 @@ function StepIdentite({ draft, errors, onField }) {
               onChange={(e) => onField('qualite', e.target.value)}
               placeholder={t(JF.qualitePlaceholder)}
               options={JF_QUALITES.map((q) => ({ value: q.value, label: t(q.label) }))}
-            />
-          )}
-        </Field>
-
-        <Field label={t(JF.organisation)} helper={t(JF.organisationHelp)}>
-          {({ id }) => (
-            <TextInput
-              id={id}
-              value={draft.organisation ?? ''}
-              onChange={(e) => onField('organisation', e.target.value)}
-              placeholder={t(JF.organisationPlaceholder)}
-              autoComplete="organization"
             />
           )}
         </Field>
@@ -591,8 +617,9 @@ function StepReview({ draft, sessions, clubs, onEditStep, onSubmit, submitting, 
         <ul className="space-y-1">
           <li><strong style={{ color: NAVY }}>{t(JF.fullName)} : </strong>{draft.fullName || <em style={{ color: MUTED }}>{t(JF.notProvided)}</em>}</li>
           <li><strong style={{ color: NAVY }}>{t(JF.email)} : </strong>{draft.email || <em style={{ color: MUTED }}>{t(JF.notProvided)}</em>}</li>
-          <li><strong style={{ color: NAVY }}>{t(JF.qualite)} : </strong>{qualiteLabel ? t(qualiteLabel) : <em style={{ color: MUTED }}>{t(JF.notProvided)}</em>}</li>
+          <li><strong style={{ color: NAVY }}>{t(JF.roleTitle)} : </strong>{draft.roleTitle || <em style={{ color: MUTED }}>{t(JF.notProvided)}</em>}</li>
           <li><strong style={{ color: NAVY }}>{t(JF.organisation)} : </strong>{draft.organisation || <em style={{ color: MUTED }}>{t(JF.notProvided)}</em>}</li>
+          <li><strong style={{ color: NAVY }}>{t(JF.qualite)} : </strong>{qualiteLabel ? t(qualiteLabel) : <em style={{ color: MUTED }}>{t(JF.notProvided)}</em>}</li>
         </ul>
       </ReviewBlock>
 
@@ -760,8 +787,9 @@ export default function JuryFunnel() {
   const [draft, setDraft] = useState({
     fullName: '',
     email: '',
-    qualite: '',
+    roleTitle: '',
     organisation: '',
+    qualite: '',
     bio: '',
     photo: null, // { path, name, size }
     clubId: clubParam || '',
@@ -825,6 +853,7 @@ export default function JuryFunnel() {
         fullName: draft.fullName,
         qualite: draft.qualite,
         organisation: draft.organisation || null,
+        roleTitle: draft.roleTitle || null,
         bio: draft.bio || null,
         photoPath: draft.photo?.path || null,
         preferredThemes: [],
@@ -870,7 +899,7 @@ export default function JuryFunnel() {
             <p className="uppercase text-[10px] tracking-[0.16em] font-medium mb-2.5" style={{ color: GOLD }}>{t(JF.thanksRecap)}</p>
             <p className="text-[14px] mb-1" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>{draft.fullName}</p>
             <p className="text-[12.5px] mb-3" style={{ color: MUTED }}>
-              {[draft.qualite ? t(JF_QUALITES.find((q) => q.value === draft.qualite)?.label || { fr: '', en: '', de: '' }) : '', draft.organisation].filter(Boolean).join(' · ')}
+              {[draft.roleTitle, draft.organisation].filter(Boolean).join(' · ')}
             </p>
             <SessionPills sessionIds={draft.availabilitySessionIds || []} sessions={sessions} />
           </div>
