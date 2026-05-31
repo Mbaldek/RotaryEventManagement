@@ -324,6 +324,11 @@ function PhotoDropzone({ value, onChange, t }) {
     setError(null);
     setUploading(true);
     setProgress(0);
+    // Aperçu instantané : object-URL local (le bucket jury-photos est privé, pas
+    // d'URL publique). Conservé dans le draft pour survivre à la navigation entre
+    // étapes ; l'ancien n'est révoqué qu'une fois le remplacement réussi, pour ne
+    // pas casser l'aperçu courant si l'upload échoue.
+    const previewUrl = URL.createObjectURL(file);
     try {
       const random = Math.random().toString(36).slice(2, 10);
       const path = `incoming/${Date.now()}_${random}_${safeFilename(file.name)}`;
@@ -332,17 +337,19 @@ function PhotoDropzone({ value, onChange, t }) {
         .upload(path, file, { upsert: false, contentType: file.type || 'application/octet-stream' });
       if (upErr) throw upErr;
       setProgress(100);
-      onChange({ path, name: file.name, size: file.size });
+      if (value?.previewUrl) URL.revokeObjectURL(value.previewUrl);
+      onChange({ path, name: file.name, size: file.size, previewUrl });
     } catch (e) {
-
+      URL.revokeObjectURL(previewUrl);
       console.error('[JuryFunnel] photo upload failed', e);
       setError(t(JF.dzErrUpload));
     } finally {
       setUploading(false);
     }
-  }, [onChange, t]);
+  }, [onChange, t, value]);
 
   const handleRemove = useCallback(() => {
+    if (value?.previewUrl) URL.revokeObjectURL(value.previewUrl);
     if (value?.path) {
       supabase.storage.from(PHOTO_BUCKET).remove([value.path]).catch(() => {});
     }
@@ -353,7 +360,7 @@ function PhotoDropzone({ value, onChange, t }) {
     <Dropzone
       accept={PHOTO_ACCEPT}
       maxSizeMb={5}
-      value={value ? { name: value.name, size: value.size } : null}
+      value={value ? { name: value.name, size: value.size, url: value.previewUrl } : null}
       onFile={handleFile}
       onRemove={value ? handleRemove : undefined}
       onError={(code) => setError(code === 'size' ? t(JF.dzErrSize) : t(JF.dzErrFormat))}

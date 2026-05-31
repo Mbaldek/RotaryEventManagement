@@ -151,7 +151,16 @@ export default function Dropzone({
           </div>
         ) : fileName ? (
           <div className="flex flex-col items-center gap-1.5">
-            <FileUp className="w-6 h-6" style={{ color: GOLD }} aria-hidden />
+            {value?.url ? (
+              <img
+                src={value.url}
+                alt=""
+                className="w-20 h-20 rounded object-cover"
+                style={{ border: `1px solid ${CREAM2}` }}
+              />
+            ) : (
+              <FileUp className="w-6 h-6" style={{ color: GOLD }} aria-hidden />
+            )}
             <div className="text-[14px] font-medium break-all" style={{ color: NAVY }}>
               {fileName}
             </div>

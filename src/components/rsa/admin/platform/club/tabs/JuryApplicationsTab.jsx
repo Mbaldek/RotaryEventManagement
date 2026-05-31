@@ -401,6 +401,25 @@ export default function JuryApplicationsTab({ clubId }) {
   });
   const apps = appsQ.data || [];
 
+  // Realtime — un nouveau dépôt (ou un approve/reject) doit apparaître sans
+  // refresh manuel. On invalide le scope ['rsa','jury-applications',clubId] :
+  // seule la liste du filtre actif re-fetch (les sous-queries photos/sessions
+  // ont un clubId en 4e position, donc non matchées par ce préfixe). La
+  // diffusion est déjà bornée au club par la RLS ja_select + le filtre serveur.
+  // Pré-requis DB : 20260605_jury_applications_realtime.sql (publication + FULL).
+  useEffect(() => {
+    if (!clubId) return undefined;
+    const channel = supabase
+      .channel(`jury_applications_${clubId}_${Math.random().toString(36).slice(2)}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'jury_applications', filter: `club_id=eq.${clubId}` },
+        () => qc.invalidateQueries({ queryKey: ['rsa', 'jury-applications', clubId] }),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [clubId, qc]);
+
   // Photos : signed URLs pour chaque photo_path présent. Régénérées à chaque
   // refetch (TTL court côté Storage).
   const photoPaths = useMemo(
