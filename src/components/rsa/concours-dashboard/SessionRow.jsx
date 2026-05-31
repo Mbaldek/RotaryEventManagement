@@ -55,12 +55,14 @@ export default function SessionRow({ session, index, isNext, jurorsCount, startu
       </span>
 
       <div className="min-w-0">
-        {session.theme && (
+        {(session.theme || (isNext && !isLive)) && (
           <div className="uppercase text-[10px] tracking-[0.16em] font-semibold mb-1"
-            style={{ color: palette.primary }}>
+            style={{ color: session.theme ? palette.primary : GOLD }}>
             {session.theme}
             {isNext && !isLive && (
-              <span style={{ color: GOLD }}> · {t({ fr: 'PROCHAINE', en: 'NEXT', de: 'NÄCHSTE' })}</span>
+              <span style={{ color: GOLD }}>
+                {session.theme ? ' · ' : ''}{t({ fr: 'PROCHAINE', en: 'NEXT', de: 'NÄCHSTE' })}
+              </span>
             )}
           </div>
         )}
