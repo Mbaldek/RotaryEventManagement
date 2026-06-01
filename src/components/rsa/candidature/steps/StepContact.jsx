@@ -1,6 +1,6 @@
 // Étape 1 — Contact. Qui contacter et comment (blueprint §2.1).
 import React from 'react';
-import { Field, TextInput } from '@/components/design';
+import { Field, TextInput, Select } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { STEPS, FIELDS, UI } from '../i18n';
 import StepShell from './StepShell';
@@ -93,6 +93,23 @@ export default function StepContact({ value, onChange, errors = {}, disabled = f
               const norm = normalizeUrl(e.target.value);
               if (norm !== (v.website ?? '')) onChange?.('website', norm);
             }}
+          />
+        )}
+      </Field>
+
+      <Field label={t(FIELDS.preferred_lang.label)} helper={t(FIELDS.preferred_lang.help)}>
+        {({ id, describedBy }) => (
+          <Select
+            id={id}
+            aria-describedby={describedBy}
+            disabled={disabled}
+            value={v.preferred_lang ?? 'fr'}
+            onChange={set('preferred_lang')}
+            options={[
+              { value: 'fr', label: 'Français' },
+              { value: 'en', label: 'English' },
+              { value: 'de', label: 'Deutsch' },
+            ]}
           />
         )}
       </Field>

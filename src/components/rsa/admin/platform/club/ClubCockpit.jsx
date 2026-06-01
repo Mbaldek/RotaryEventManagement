@@ -28,6 +28,8 @@ import { CLUB_TABS, CLUB_UI } from './i18n';
 import { CLUB_MODES, resolveClubMode, tabsForMode, modeForTab, firstTabOf, reconcileTab } from '@/lib/rsa/club-cockpit/modes';
 import PilotageOverview from './tabs/PilotageOverview';
 import SessionShell from './session/SessionShell';
+import RunningOrderEditor from './session/RunningOrderEditor';
+import DeckGenerator from './session/DeckGenerator';
 import ClubStatusStrip from './ClubStatusStrip';
 import ClubSetupTab from './tabs/SetupTab';
 import ClubLiveTab from './tabs/LiveTab';
@@ -66,6 +68,7 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
   const tab = params.get('tab') || 'setup';
   const editionId = params.get('edition') || null;
   const sessionId = params.get('session') || null;
+  const panel = params.get('panel') || null;
 
   // V3 hiérarchie — quand le ClubCockpit est monté depuis ?scope=club:{eid}/{cid},
   // Admin.jsx nous passe `editionId` en prop. On l'écrit dans ?edition= au mount
@@ -91,17 +94,25 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
     p.set('mode', nextMode);
     p.set('tab', firstTabOf(nextMode));
     p.delete('session');
+    p.delete('panel');
     setParams(p, { replace: true });
   };
   const setEdition = (next) => {
     const p = new URLSearchParams(params);
     if (next) p.set('edition', next); else p.delete('edition');
     p.delete('session'); // reset session quand on change d'édition
+    p.delete('panel');
     setParams(p, { replace: true });
   };
   const setSession = (next) => {
     const p = new URLSearchParams(params);
     if (next) p.set('session', next); else p.delete('session');
+    p.delete('panel'); // changer/quitter une session ne doit jamais laisser un panel orphelin
+    setParams(p, { replace: true });
+  };
+  const setPanel = (next) => {
+    const p = new URLSearchParams(params);
+    if (next) p.set('panel', next); else p.delete('panel');
     setParams(p, { replace: true });
   };
 
@@ -347,12 +358,19 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
                   onSelectSession={setSession}
                 />
               )}
-              {activeTab === 'pilotage' && sessionId && (
+              {activeTab === 'pilotage' && sessionId && panel === 'order' && (
+                <RunningOrderEditor session={selectedSession} onBack={() => setPanel(null)} />
+              )}
+              {activeTab === 'pilotage' && sessionId && panel === 'deck' && (
+                <DeckGenerator session={selectedSession} onBack={() => setPanel(null)} />
+              )}
+              {activeTab === 'pilotage' && sessionId && panel !== 'order' && panel !== 'deck' && (
                 <SessionShell
                   session={selectedSession}
                   edition={edition}
                   clubId={clubId}
                   onBack={() => setSession(null)}
+                  onOpenPanel={setPanel}
                   onDeepLink={(nextTab) => {
                     const p = new URLSearchParams(params);
                     p.set('tab', nextTab);

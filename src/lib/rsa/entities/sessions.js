@@ -64,4 +64,14 @@ export const RsaSession = {
     const { error } = await supabase.rpc('rsa_reset_session_template', { p_session_id: sessionId });
     if (error) throw error;
   },
+
+  // Écrit l'ordre de passage des startups de la session (RPC SECURITY DEFINER).
+  // orderedIds : tableau d'uuid startups, dans l'ordre de passage voulu.
+  async setRunningOrder(sessionId, orderedIds) {
+    const { error } = await supabase.rpc('rsa_set_session_running_order', {
+      p_session_id: sessionId,
+      p_ordered_ids: orderedIds,
+    });
+    if (error) throw error;
+  },
 };

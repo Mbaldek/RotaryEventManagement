@@ -98,6 +98,12 @@ export const JF = {
     en: 'Used as your sign-in id; a magic-link will be sent if approved.',
     de: 'Wird als Anmeldekennung verwendet; bei Genehmigung erhalten Sie einen Magic-Link.',
   },
+  preferredLangLabel: { fr: 'Langue de communication', en: 'Communication language', de: 'Kommunikationssprache' },
+  preferredLangHelp: {
+    fr: 'Langue dans laquelle nous vous écrirons (emails, espace juré).',
+    en: 'The language we’ll use to write to you (emails, jury area).',
+    de: 'Sprache, in der wir Ihnen schreiben (E-Mails, Jury-Bereich).',
+  },
   // Groupe « métier réel » — fonction + organisation, l'info prioritaire.
   metierGroup: { fr: 'Votre métier', en: 'Your profession', de: 'Ihr Beruf' },
   roleTitle: { fr: 'Fonction / Titre', en: 'Role / Title', de: 'Funktion / Titel' },

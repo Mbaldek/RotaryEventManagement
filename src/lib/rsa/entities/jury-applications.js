@@ -37,6 +37,7 @@ export const JuryApplication = {
     photoPath = null,
     preferredThemes = [],
     availabilitySessionIds = [],
+    preferredLang = 'fr',
   }) {
     const { data, error } = await supabase.rpc('rsa_apply_jury', {
       p_club_id: clubId,
@@ -50,6 +51,7 @@ export const JuryApplication = {
       p_photo_path: photoPath,
       p_preferred_themes: Array.isArray(preferredThemes) ? preferredThemes : [],
       p_availability_session_ids: Array.isArray(availabilitySessionIds) ? availabilitySessionIds : [],
+      p_preferred_lang: preferredLang || 'fr',
     });
     if (error) throw error;
     return Array.isArray(data) ? data[0] : data;

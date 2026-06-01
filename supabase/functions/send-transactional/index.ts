@@ -21,15 +21,18 @@
 //   3. Maps email `type` -> required role set. Refuses with 403 if the caller
 //      lacks the required role.
 //
-//   selection_decision   -> admin OR comite (comité is the canonical sender)
-//   jury_assignment      -> admin only
-//   session_published    -> admin only
-//   results_published    -> admin only
+//   selection_decision    -> admin OR comite (comité is the canonical sender)
+//   jury_assignment       -> admin only
+//   session_published     -> admin only
+//   results_published     -> admin only
+//   session_running_order -> admin OR master_admin (platform roles via
+//                            rsa_my_roles) OR club_admin of data.club_id
+//                            (club-scoped, resolved via my_club_memberships)
 //
 // Body shape
 // ─────────────────────────────────────────────────────────────────────────────
 //   {
-//     type: 'selection_decision' | 'jury_assignment' | 'session_published' | 'results_published',
+//     type: 'selection_decision' | 'jury_assignment' | 'session_published' | 'results_published' | 'session_running_order',
 //     recipient_email: string,
 //     recipient_name?: string,
 //     lang: 'fr' | 'en' | 'de',
@@ -57,7 +60,8 @@ type EmailType =
   | "selection_decision"
   | "jury_assignment"
   | "session_published"
-  | "results_published";
+  | "results_published"
+  | "session_running_order";
 
 interface Payload {
   type: EmailType;
@@ -73,6 +77,12 @@ const ROLE_REQUIREMENTS: Record<EmailType, string[]> = {
   jury_assignment: ["admin"],
   session_published: ["admin"],
   results_published: ["admin"],
+  // Club logistics email. `admin`/`master_admin` are platform roles returned by
+  // rsa_my_roles. `club_admin` is a club-scoped membership role that rsa_my_roles
+  // does NOT return — it is authorized separately in the authz block via
+  // my_club_memberships against data.club_id (parity with send-bulk, mirrors the
+  // rsa_set_session_running_order SQL guard). Listed here to document intent.
+  session_running_order: ["admin", "master_admin", "club_admin"],
 };
 
 // ─── Brand tokens (mirror src/components/design/tokens.js) ───────────────────
@@ -120,7 +130,8 @@ function isEmailType(v: unknown): v is EmailType {
     v === "selection_decision" ||
     v === "jury_assignment" ||
     v === "session_published" ||
-    v === "results_published"
+    v === "results_published" ||
+    v === "session_running_order"
   );
 }
 
@@ -559,6 +570,81 @@ function copyResultsPublished(lang: Lang, data: Record<string, unknown>): Omit<C
   };
 }
 
+// ── session_running_order ──
+// data: { running_order (ordinal string "3e"/"3rd"/"3."),
+//         estimated_time ("HH:MM"), session_name, session_date?, club_id? }
+//   club_id is consumed only by the authz layer (club_admin check) — never rendered.
+function copySessionRunningOrder(lang: Lang, data: Record<string, unknown>): Omit<Copy, "greeting" | "signOff" | "signature"> {
+  const session = esc(data.session_name);
+  const order = esc(data.running_order);
+  const time = esc(data.estimated_time);
+  const hasDate = typeof data.session_date === "string" && data.session_date.trim() !== "";
+  const sessionDate = esc(data.session_date);
+
+  if (lang === "fr") {
+    const subject = `Votre passage — ${session}`;
+    const datePhrase = hasDate ? ` du <strong>${sessionDate}</strong>` : "";
+    const paragraphs: string[] = [];
+    paragraphs.push(
+      `Voici les modalités de votre passage lors de la session à venir.`,
+    );
+    paragraphs.push(
+      `Pour la session <strong>${session}</strong>${datePhrase}, vous passez en <strong>${order}</strong> position, à environ <strong>${time}</strong>.`,
+    );
+    paragraphs.push(
+      `Merci d'arriver 15 minutes avant l'horaire estimé.`,
+    );
+    return {
+      subject,
+      eyebrow: "Ordre de passage",
+      paragraphs: () => paragraphs,
+      ctaLabel: "Accéder à mon dossier",
+      ctaHref: `${APP_URL}/MonDossier`,
+    };
+  }
+  if (lang === "en") {
+    const subject = `Your pitch slot — ${session}`;
+    const datePhrase = hasDate ? ` on <strong>${sessionDate}</strong>` : "";
+    const paragraphs: string[] = [];
+    paragraphs.push(
+      `Here are the practical details for your upcoming pitch.`,
+    );
+    paragraphs.push(
+      `For session <strong>${session}</strong>${datePhrase}, you pitch <strong>${order}</strong>, at approximately <strong>${time}</strong>.`,
+    );
+    paragraphs.push(
+      `Please arrive 15 minutes before your estimated time.`,
+    );
+    return {
+      subject,
+      eyebrow: "Pitch order",
+      paragraphs: () => paragraphs,
+      ctaLabel: "Open my application",
+      ctaHref: `${APP_URL}/MonDossier`,
+    };
+  }
+  // de
+  const subject = `Ihr Pitch-Slot — ${session}`;
+  const datePhrase = hasDate ? ` am <strong>${sessionDate}</strong>` : "";
+  const paragraphs: string[] = [];
+  paragraphs.push(
+    `Hier sind die praktischen Details zu Ihrem bevorstehenden Pitch.`,
+  );
+  paragraphs.push(
+    `Für die Sitzung <strong>${session}</strong>${datePhrase} pitchen Sie als <strong>${order}</strong>, gegen <strong>${time}</strong>.`,
+  );
+  paragraphs.push(
+    `Bitte erscheinen Sie 15 Minuten vor Ihrer geschätzten Zeit.`,
+  );
+  return {
+    subject,
+    eyebrow: "Pitch-Reihenfolge",
+    paragraphs: () => paragraphs,
+    ctaLabel: "Mein Dossier öffnen",
+    ctaHref: `${APP_URL}/MonDossier`,
+  };
+}
+
 function resolveCopy(type: EmailType, lang: Lang, data: Record<string, unknown>): Copy {
   let base: Omit<Copy, "greeting" | "signOff" | "signature">;
   switch (type) {
@@ -573,6 +659,9 @@ function resolveCopy(type: EmailType, lang: Lang, data: Record<string, unknown>)
       break;
     case "results_published":
       base = copyResultsPublished(lang, data);
+      break;
+    case "session_running_order":
+      base = copySessionRunningOrder(lang, data);
       break;
   }
   return {
@@ -831,7 +920,25 @@ Deno.serve(async (req: Request) => {
   }
   const roles = Array.isArray(rolesData) ? rolesData.map((r) => String(r).toLowerCase()) : [];
   const required = ROLE_REQUIREMENTS[payload.type];
-  const allowed = required.some((r) => roles.includes(r));
+  let allowed = required.some((r) => roles.includes(r));
+
+  // session_running_order : un club_admin du club de la session est autorisé
+  // (parité avec send-bulk ; rsa_my_roles ne renvoie pas les rôles club-scoped).
+  if (!allowed && payload.type === "session_running_order") {
+    const clubId = (payload.data as Record<string, unknown> | undefined)?.club_id;
+    if (typeof clubId === "string" && clubId) {
+      const { data: cmRows, error: cmErr } = await supabase.rpc("my_club_memberships");
+      if (cmErr) {
+        return jsonResponse(500, { ok: false, error: `club_memberships_lookup_failed:${cmErr.message}` });
+      }
+      if (Array.isArray(cmRows) && cmRows.some(
+        (m: { club_id: string; role: string }) => m.club_id === clubId && m.role === "club_admin",
+      )) {
+        allowed = true;
+      }
+    }
+  }
+
   if (!allowed) {
     return jsonResponse(403, {
       ok: false,

@@ -245,6 +245,22 @@ function StepIdentite({ draft, errors, onField }) {
           )}
         </Field>
 
+        <Field label={t(JF.preferredLangLabel)} helper={t(JF.preferredLangHelp)}>
+          {({ id, describedBy }) => (
+            <Select
+              id={id}
+              aria-describedby={describedBy}
+              value={draft.preferred_lang ?? 'fr'}
+              onChange={(e) => onField('preferred_lang', e.target.value)}
+              options={[
+                { value: 'fr', label: 'Français' },
+                { value: 'en', label: 'English' },
+                { value: 'de', label: 'Deutsch' },
+              ]}
+            />
+          )}
+        </Field>
+
         {/* Groupe « métier réel » — fonction + organisation, l'info prioritaire. */}
         <div className="flex items-center gap-2.5 pt-1" aria-hidden>
           <span className="uppercase text-[10px] tracking-[0.16em] font-medium" style={{ color: GOLD }}>
@@ -790,6 +806,7 @@ export default function JuryFunnel() {
     roleTitle: '',
     organisation: '',
     qualite: '',
+    preferred_lang: 'fr',
     bio: '',
     photo: null, // { path, name, size }
     clubId: clubParam || '',
@@ -858,6 +875,7 @@ export default function JuryFunnel() {
         photoPath: draft.photo?.path || null,
         preferredThemes: [],
         availabilitySessionIds: draft.availabilitySessionIds || [],
+        preferredLang: draft.preferred_lang || 'fr',
       });
       setConfirmed(true);
       if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
