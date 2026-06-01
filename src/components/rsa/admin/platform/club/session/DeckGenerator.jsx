@@ -73,7 +73,7 @@ export default function DeckGenerator({ session, onBack }) {
       <p className="text-[12.5px] mb-4" style={{ color: INK }}>{t(SESSION_PANELS.deckIntro)}</p>
 
       <p className="text-[12px] mb-4" style={{ color: MUTED }}>
-        {t(SESSION_PANELS.orderReadonly)} — {startups.filter((s) => s.pitch_order != null).length} startup(s).
+        {t(SESSION_PANELS.orderReadonly)} — {t(SESSION_PANELS.orderedCount)(startups.filter((s) => s.pitch_order != null).length, startups.length)}
       </p>
 
       <label className="block text-[12px] mb-3" style={{ color: INK }}>
