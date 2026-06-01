@@ -221,7 +221,7 @@ export default function CandidatureFunnel({
   if (step === 'contact') {
     stepNode = <StepContact value={draft} onChange={handleField} errors={errsFor('contact')} disabled={readOnly} />;
   } else if (step === 'company') {
-    stepNode = <StepCompany value={draft} onChange={handleField} errors={errsFor('company')} rules={rules} disabled={readOnly} />;
+    stepNode = <StepCompany value={draft} onChange={handleField} errors={errsFor('company')} rules={rules} editionId={edition?.id} disabled={readOnly} />;
   } else if (step === 'project') {
     stepNode = <StepProject value={draft} onChange={handleField} errors={errsFor('project')} disabled={readOnly} />;
   } else if (step === 'finance') {
@@ -331,6 +331,7 @@ export default function CandidatureFunnel({
         submitting={submitting}
         closeDate={closeDate}
         disabled={readOnly}
+        editionId={edition?.id}
       />
     );
   }

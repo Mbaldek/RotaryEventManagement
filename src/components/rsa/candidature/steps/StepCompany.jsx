@@ -9,11 +9,29 @@ import { STEPS, FIELDS, UI } from '../i18n';
 import StepShell from './StepShell';
 import EligibilityPreview from '../EligibilityPreview';
 import { validateField, isOtherCountry } from '../validation';
+import { useEditionIncubators } from '@/components/rsa/hooks/useIncubators';
 
-export default function StepCompany({ value, onChange, errors = {}, rules, disabled = false }) {
+export default function StepCompany({ value, onChange, errors = {}, rules, disabled = false, editionId }) {
   const { t } = useLang();
   const v = value || {};
   const err = (field) => (errors[field] ? t(UI[errors[field]]) : undefined);
+
+  const { data: incubatorList = [], isLoading: incubatorsLoading } = useEditionIncubators(editionId);
+  const incubatorOptions = [
+    ...incubatorList.map((inc) => ({ value: inc.id, label: inc.name })),
+    { value: '__other__', label: t(UI.incubatorOther) },
+  ];
+  const incubatorSelectValue = v?.incubator_id ?? (v?.incubator_other != null ? '__other__' : '');
+  const onIncubatorSelect = (e) => {
+    const next = e.target.value;
+    if (next === '__other__') {
+      onChange?.('incubator_id', null);
+      onChange?.('incubator_other', v?.incubator_other ?? '');
+    } else {
+      onChange?.('incubator_id', next || null);
+      onChange?.('incubator_other', null);
+    }
+  };
 
   // Sélecteur pays : FR / DE / Autre. "Autre" => champ texte libre pour le code/pays.
   // R-H4 : on N'écrit JAMAIS le marqueur '__other__' dans le state remonté au parent
@@ -90,6 +108,39 @@ export default function StepCompany({ value, onChange, errors = {}, rules, disab
                 onChange?.('country', next.trim() === '' ? null : next);
               }}
               placeholder={t({ fr: 'Pays', en: 'Country', de: 'Land' })}
+            />
+          )}
+        </Field>
+      )}
+
+      <Field label={t(FIELDS.incubator.label)} helper={t(FIELDS.incubator.help)}>
+        {({ id, describedBy, invalid }) => (
+          <Select
+            id={id}
+            aria-describedby={describedBy}
+            invalid={invalid}
+            disabled={disabled || incubatorsLoading}
+            value={incubatorSelectValue}
+            onChange={onIncubatorSelect}
+            placeholder={t(UI.incubatorPlaceholder)}
+            options={incubatorOptions}
+          />
+        )}
+      </Field>
+
+      {incubatorSelectValue === '__other__' && (
+        <Field label={t(UI.incubatorOtherLabel)}>
+          {({ id, describedBy }) => (
+            <TextInput
+              id={id}
+              aria-describedby={describedBy}
+              disabled={disabled}
+              value={v?.incubator_other ?? ''}
+              onChange={(e) => {
+                const next = e.target.value;
+                onChange?.('incubator_other', next.trim() === '' ? '' : next);
+              }}
+              placeholder={t({ fr: 'Nom de la structure…', en: 'Structure name…', de: 'Name der Struktur…' })}
             />
           )}
         </Field>

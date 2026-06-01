@@ -45,6 +45,9 @@ const SAVE_DRAFT_FIELDS = new Set([
   // V3 Vague 2 C — opt-in palmarès public.
   'champion_photo_optin',
   'champion_photo_path',
+  // Incubateur d'origine (sourcing, optionnel).
+  'incubator_id',
+  'incubator_other',
 ]);
 
 // Liste blanche des colonnes filtrables côté staff pour `pageForStaff`. Tout autre

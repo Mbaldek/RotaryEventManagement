@@ -21,6 +21,7 @@ export const DOSSIERS_BUCKET = 'dossiers';
 // Public read activé côté Supabase ; écriture scopée owner/staff par policies
 // storage.objects (cf. supabase/migrations/20260601_rsa_v3_public_palmares.sql).
 export const CHAMPIONS_BUCKET = 'champions';
+export const COMM_ASSETS_BUCKET = 'comm-assets'; // public : assets diffusés aux incubateurs
 export const CHAMPION_PHOTO_MAX_SIZE = 8 * 1024 * 1024; // 8 Mo
 export const CHAMPION_PHOTO_EXTS = ['jpg', 'jpeg', 'png', 'webp'];
 export const CHAMPION_PHOTO_ACCEPT = '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp';
@@ -228,4 +229,37 @@ export function championPhotoPublicUrl(path) {
   if (!path) return null;
   const { data } = supabase.storage.from(CHAMPIONS_BUCKET).getPublicUrl(path);
   return data?.publicUrl || null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V3 Incubateurs — Comm assets (bucket public 'comm-assets')
+// ─────────────────────────────────────────────────────────────────────────────
+// Assets du communication pack diffusés aux incubateurs partenaires d'une édition
+// (logos, visuels, templates). Bucket public (lecture anonyme) ; écriture scopée
+// master_admin / competition_admin par policies storage.objects.
+// Chemin : editions/{editionId}/comm/{kind}/{timestamp}_{safeName}
+
+export function buildCommAssetPath({ editionId, kind, fileName }) {
+  return `editions/${editionId}/comm/${kind}/${Date.now()}_${safeFilename(fileName)}`;
+}
+
+export async function uploadCommAsset({ editionId, kind, file }) {
+  const path = buildCommAssetPath({ editionId, kind, fileName: file.name });
+  const { error } = await supabase.storage
+    .from(COMM_ASSETS_BUCKET)
+    .upload(path, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
+  if (error) throw error;
+  return path;
+}
+
+export function commAssetPublicUrl(path) {
+  if (!path) return null;
+  const { data } = supabase.storage.from(COMM_ASSETS_BUCKET).getPublicUrl(path);
+  return data?.publicUrl || null;
+}
+
+export async function removeCommAsset(path) {
+  if (!path) return;
+  const { error } = await supabase.storage.from(COMM_ASSETS_BUCKET).remove([path]);
+  if (error) throw error;
 }

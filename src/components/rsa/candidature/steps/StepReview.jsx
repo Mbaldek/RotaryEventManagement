@@ -7,6 +7,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Pencil, AlertTriangle } from 'lucide-react';
+import { useEditionIncubators } from '@/components/rsa/hooks/useIncubators';
 import { NAVY, INK, GOLD, MUTED, CREAM2, SERIF } from '@/components/design';
 import { TINT_WARNING, WARNING } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
@@ -109,7 +110,7 @@ function ConfirmModal({ open, excluded, closeDate, onConfirm, onCancel, submitti
   );
 }
 
-export default function StepReview({ value, onEdit, rules, onSubmit, submitting = false, closeDate, disabled = false }) {
+export default function StepReview({ value, onEdit, rules, onSubmit, submitting = false, closeDate, disabled = false, editionId }) {
   const { t, lang } = useLang();
   const v = value || {};
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -133,6 +134,17 @@ export default function StepReview({ value, onEdit, rules, onSubmit, submitting 
     const found = clubs.find((c) => c.id === v.club_id);
     return found?.name || v.club_id;
   }, [clubs, v.club_id]);
+
+  // Résout le nom lisible de l'incubateur déclaré (recap).
+  const { data: incubatorList = [] } = useEditionIncubators(editionId);
+  const incubatorLabel = useMemo(() => {
+    if (v.incubator_id) {
+      const found = incubatorList.find((inc) => inc.id === v.incubator_id);
+      return found?.name || v.incubator_id;
+    }
+    if (v.incubator_other) return v.incubator_other;
+    return null;
+  }, [incubatorList, v.incubator_id, v.incubator_other]);
 
   const sectorLabel = (id) => {
     const o = SECTOR_OPTIONS.find((s) => s.value === id);
@@ -174,6 +186,7 @@ export default function StepReview({ value, onEdit, rules, onSubmit, submitting 
         <Row label={t(FIELDS.founders_majority.label)}>{yesNo(v.founders_majority)}</Row>
         <Row label={t(FIELDS.partner_institution.label)}>{v.partner_institution}</Row>
         <Row label={t(FIELDS.rotary_club.label)}>{v.rotary_club}</Row>
+        <Row label={t(FIELDS.incubator.label)}>{incubatorLabel}</Row>
       </Section>
 
       {/* Section Projet */}

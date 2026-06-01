@@ -265,6 +265,9 @@ export function validateField(field, value, _startup) {
       // signature historique), on reste en mode optionnel : la coupure dure se fait
       // au niveau du Submit via requiredMissing(rules) qui voit la config réelle.
       return null;
+    case 'incubator_id':
+    case 'incubator_other':
+      return null; // sourcing : toujours optionnel
     default:
       return null;
   }
