@@ -283,10 +283,19 @@ export default function Score() {
             <input
               type="text"
               inputMode="numeric"
-              autoComplete="one-time-code"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              name="rsa-access"
               value={pinInput}
-              onChange={(e) => { setPinInput(e.target.value.replace(/[^0-9]/g, '').slice(0, 6)); setAuthError(false); }}
-              maxLength={6}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                setPinInput(v);
+                setAuthError(false);
+                // PIN = 4 chiffres → auto-validation dès le 4ᵉ (pas besoin de cliquer).
+                if (v.length === 4 && !verifying) verify(v);
+              }}
+              maxLength={4}
               autoFocus
               aria-label={t(T.pinTitle)}
               className="w-full text-center text-[28px] tracking-[0.5em] tabular-nums rounded-[4px] px-3 py-3 outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#c9a84c]"
