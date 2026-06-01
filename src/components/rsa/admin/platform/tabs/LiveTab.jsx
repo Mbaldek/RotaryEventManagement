@@ -25,6 +25,7 @@ import { useLang } from '@/lib/platform/i18n';
 import { CRITERIA, weightedScore, resolveSessionWeights } from '@/lib/rsa/constants';
 import { UI, LIVE } from '../i18n';
 import ScoreCell from '../ScoreCell';
+import SessionScoringAccess from '../club/session/SessionScoringAccess';
 import {
   useNameKeyedLiveGrid,
   useLockSession,
@@ -295,8 +296,12 @@ export default function LiveTab({ edition, session }) {
         </div>
       </section>
 
+      {/* Accès scoring juré (lien + PIN à envoyer) + poids des critères — surface
+          opérationnelle : l'admin atterrit ici en ouvrant une session. */}
+      <SessionScoringAccess sessionId={session.id} />
+
       {/* Helper line + loading */}
-      <p className="text-[11.5px] mb-3" style={{ color: MUTED }}>{t(LIVE.partialsHint)}</p>
+      <p className="text-[11.5px] mt-4 mb-3" style={{ color: MUTED }}>{t(LIVE.partialsHint)}</p>
 
       {grid.isLoading && (
         <div className="py-8 flex justify-center">
