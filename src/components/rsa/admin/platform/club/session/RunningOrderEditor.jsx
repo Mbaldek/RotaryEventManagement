@@ -22,8 +22,8 @@ export default function RunningOrderEditor({ session, onBack }) {
   const [savedFlag, setSavedFlag] = useState(false);
 
   useEffect(() => {
-    if (startupsQ.data) setOrder(startupsQ.data);
-  }, [startupsQ.data]);
+    if (startupsQ.data && order.length === 0) setOrder(startupsQ.data);
+  }, [startupsQ.data, order.length]);
 
   const move = (idx, dir) => {
     setSavedFlag(false);
