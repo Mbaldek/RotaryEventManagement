@@ -20,6 +20,8 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { JuryApplication } from '@/lib/rsa/entities';
+import { splitSessionJurors } from '@/lib/rsa/club-cockpit/sessionJurors';
 
 export const SESSION_JURY_KEYS = {
   forSession: (sessionId) => ['rsa', 'session-jury', 'list', sessionId],
@@ -174,4 +176,46 @@ export function isJurorRemovalBlockedByScores(err) {
   if (err.code === '23503') return true;
   const msg = String(err.message || err.details || '').toLowerCase();
   return msg.includes('23503') || msg.includes('already') && msg.includes('score');
+}
+
+// ── Roster d'une session depuis jury_applications (Lot A, sans compte) ────────
+export function useSessionJurorRoster(sessionId) {
+  return useQuery({
+    queryKey: ['rsa', 'session-jury', 'roster', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return { assigned: [], pending: [] };
+      const rows = await JuryApplication.listForSession(sessionId);
+      return splitSessionJurors(rows);
+    },
+    enabled: !!sessionId,
+    staleTime: 15 * 1000,
+  });
+}
+
+const rosterKey = (sessionId) => ['rsa', 'session-jury', 'roster', sessionId];
+
+export function useApproveJuror(sessionId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (applicationId) => JuryApplication.approve(applicationId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: rosterKey(sessionId) }),
+  });
+}
+
+export function useAddManualJuror(sessionId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fullName, qualite, email }) =>
+      JuryApplication.addManualJuror({ sessionId, fullName, qualite, email }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: rosterKey(sessionId) }),
+  });
+}
+
+export function useRemoveJurorFromSession(sessionId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (applicationId) =>
+      JuryApplication.removeFromSession({ applicationId, sessionId }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: rosterKey(sessionId) }),
+  });
 }
