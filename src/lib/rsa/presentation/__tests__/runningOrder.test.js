@@ -40,3 +40,26 @@ test('ordinal FR/EN/DE', () => {
 test('slugify : minuscule, tirets, ascii', () => {
   assert.equal(slugify('Session 5 — Greentech & Co'), 'session-5-greentech-co');
 });
+
+test('estimatedPitchTime : order non-numérique → null', () => {
+  assert.equal(estimatedPitchTime('18:00', undefined), null);
+  assert.equal(estimatedPitchTime('18:00', NaN), null);
+});
+
+test('estimatedPitchTime : order <= 0 clampé à 1 (heure de début)', () => {
+  assert.equal(estimatedPitchTime('18:00', 0), '18:00');
+  assert.equal(estimatedPitchTime('18:00', -3), '18:00');
+});
+
+test('ordinal EN teens 11/12/13 → th', () => {
+  assert.equal(ordinal(11, 'en'), '11th');
+  assert.equal(ordinal(12, 'en'), '12th');
+  assert.equal(ordinal(13, 'en'), '13th');
+  assert.equal(ordinal(21, 'en'), '21st');
+});
+
+test('slugify : null / vide / tout-ponctuation → "session"', () => {
+  assert.equal(slugify(null), 'session');
+  assert.equal(slugify(''), 'session');
+  assert.equal(slugify('---'), 'session');
+});
