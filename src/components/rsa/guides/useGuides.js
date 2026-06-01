@@ -48,3 +48,47 @@ export function useGuides(space, editionId) {
     markSeen: () => markSeen.mutate(),
   };
 }
+
+// — ADMIN —
+
+export function useGuidesAdmin(space, editionId) {
+  return useQuery({
+    queryKey: GUIDE_KEYS.admin(space, editionId),
+    queryFn: () => Guide.listAllForAdmin(space, editionId),
+    enabled: !!space,
+    staleTime: 0,
+  });
+}
+
+export function useGuideMutations(space, editionId) {
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: GUIDE_KEYS.admin(space, editionId) });
+    qc.invalidateQueries({ queryKey: GUIDE_KEYS.published(space) });
+  };
+
+  const save = useMutation({
+    // record : { id?, space, edition_id, title, body_md, is_published, sort_order }
+    mutationFn: async (record) => {
+      const payload = { ...record, updated_at: new Date().toISOString() };
+      if (record.id) {
+        const { id, ...rest } = payload;
+        return Guide.update(id, rest);
+      }
+      return Guide.create(payload);
+    },
+    onSuccess: invalidate,
+  });
+
+  const remove = useMutation({
+    mutationFn: (id) => Guide.delete(id),
+    onSuccess: invalidate,
+  });
+
+  const reorder = useMutation({
+    mutationFn: (ids) => Guide.reorder(ids),
+    onSuccess: invalidate,
+  });
+
+  return { save, remove, reorder };
+}
