@@ -77,31 +77,40 @@ function DocRow({ label, path, url, fallback, downloadLabel, compact }) {
   );
 }
 
-export default function DocumentLinks({ startup, compact = false }) {
+export default function DocumentLinks({ startup, compact = false, externalUrls }) {
   const { t } = useLang();
-  const [urls, setUrls] = useState({});
+  const [selfUrls, setSelfUrls] = useState({});
 
   const deckPath = startup?.pitch_deck_path || null;
   const execPath = startup?.exec_summary_path || null;
 
+  // Si le parent fournit des URLs déjà signées (page publique /Score, via l'edge
+  // score-docs gardée slug+PIN), on les utilise et on NE signe PAS soi-même — le
+  // client anon n'a pas accès au bucket privé `dossiers`. Sinon (espace jury
+  // authentifié), on signe à la demande comme avant.
+  const usingExternal = externalUrls !== undefined;
+
   useEffect(() => {
+    if (usingExternal) return undefined;
     let active = true;
     const paths = [deckPath, execPath].filter(Boolean);
     if (paths.length === 0) {
-      setUrls({});
+      setSelfUrls({});
       return undefined;
     }
     signedDossierUrls(paths, 300)
       .then((map) => {
-        if (active) setUrls(map || {});
+        if (active) setSelfUrls(map || {});
       })
       .catch(() => {
-        if (active) setUrls({});
+        if (active) setSelfUrls({});
       });
     return () => {
       active = false;
     };
-  }, [deckPath, execPath]);
+  }, [deckPath, execPath, usingExternal]);
+
+  const urls = usingExternal ? (externalUrls || {}) : selfUrls;
 
   return (
     <ul className="flex flex-col gap-1.5 list-none m-0 p-0">

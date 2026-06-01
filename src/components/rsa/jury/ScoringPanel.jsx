@@ -77,8 +77,11 @@ export default function ScoringPanel({
   submitError,
   // Poids des critères pour cette session (fractions {id:0..1}) ; défaut = standard.
   weights = DEFAULT_WEIGHTS,
-  // Masquer les documents du dossier (page publique anon : pas d'accès storage).
+  // Masquer les documents du dossier.
   hideDocuments = false,
+  // URLs de docs déjà signées (page publique : map {path: signedUrl} via score-docs).
+  // Quand fourni, DocumentLinks les utilise au lieu de signer lui-même (anon).
+  documentUrls,
 }) {
   const { t } = useLang();
   const isSubmitted = !!myScore;
@@ -205,9 +208,11 @@ export default function ScoringPanel({
           className="p-4 flex flex-col gap-3"
           style={{ borderTop: `1px solid ${CREAM2}` }}
         >
-          {/* Documents du dossier — signed URLs (5 min TTL). Masqués sur la page
-              publique anon (pas d'accès storage sans session). */}
-          {!hideDocuments && <DocumentLinks startup={startup} compact />}
+          {/* Documents du dossier (pré-read) — signed URLs (5 min TTL). Sur la page
+              publique, les URLs viennent de l'edge score-docs (documentUrls). */}
+          {!hideDocuments && (
+            <DocumentLinks startup={startup} compact externalUrls={documentUrls} />
+          )}
 
           {/* 6 critères — le badge % reflète les poids de la session */}
           {CRITERIA.map((c) => (
