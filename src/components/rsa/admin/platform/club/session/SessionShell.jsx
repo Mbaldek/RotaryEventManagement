@@ -38,7 +38,7 @@ function Card({ icon: Icon, title, line, action, soon, soonLabel }) {
   );
 }
 
-export default function SessionShell({ session, edition, clubId, onBack, onDeepLink }) {
+export default function SessionShell({ session, edition, clubId, onBack, onDeepLink, onOpenPanel }) {
   const { t } = useLang();
   const metricsQ = useClubSessionMetrics(edition?.id, clubId, session ? [session.id] : []);
   const m = metricsQ.data?.[session?.id];
@@ -53,6 +53,17 @@ export default function SessionShell({ session, edition, clubId, onBack, onDeepL
     <button
       type="button"
       onClick={() => onDeepLink?.(tab)}
+      className={`inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-[4px] self-start ${FOCUS_RING_CLASS}`}
+      style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: 'white' }}
+    >
+      {label} <ArrowRight className="w-3.5 h-3.5" aria-hidden />
+    </button>
+  );
+
+  const panelBtn = (label, panel) => (
+    <button
+      type="button"
+      onClick={() => onOpenPanel?.(panel)}
       className={`inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-[4px] self-start ${FOCUS_RING_CLASS}`}
       style={{ color: NAVY, border: `1px solid ${CREAM2}`, background: 'white' }}
     >
@@ -114,13 +125,13 @@ export default function SessionShell({ session, edition, clubId, onBack, onDeepL
           icon={ClipboardList}
           title={t(CLUB_SESSION_SHELL.cardPrep)}
           line={t(CLUB_SESSION_SHELL.prepHint)}
-          soon soonLabel={t(CLUB_SESSION_SHELL.soon)}
+          action={panelBtn(t(CLUB_SESSION_SHELL.cardPrep), 'order')}
         />
         <Card
           icon={Presentation}
           title={t(CLUB_SESSION_SHELL.cardPresentation)}
           line={t(CLUB_SESSION_SHELL.presentationHint)}
-          soon soonLabel={t(CLUB_SESSION_SHELL.soon)}
+          action={panelBtn(t(CLUB_SESSION_SHELL.cardPresentation), 'deck')}
         />
         <Card
           icon={BookOpen}
