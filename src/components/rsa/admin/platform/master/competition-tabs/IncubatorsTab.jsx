@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useLang } from '@/lib/platform/i18n';
 import { SectionNote, TextRow } from './fields';
 import IncubatorEditModal from './IncubatorEditModal';
@@ -24,7 +24,28 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
   const [editing, setEditing] = useState(null);
 
   const [editionFull, setEditionFull] = useState(competition || {});
-  useEffect(() => { if (editionId) Edition.get(editionId).then((e) => { if (e) setEditionFull(e); }); }, [editionId]);
+  const [config, setConfig] = useState(competition?.comm_pack_config || {});
+  const seededRef = useRef(false);
+  const saveTimer = useRef(null);
+
+  useEffect(() => {
+    if (!editionId) return;
+    Edition.get(editionId).then((e) => {
+      if (!e) return;
+      setEditionFull(e);
+      // Seed local config only once on first server load so we don't clobber
+      // any edits the user may have made before the fetch resolved.
+      if (!seededRef.current) {
+        seededRef.current = true;
+        setConfig(e.comm_pack_config || {});
+      }
+    });
+  }, [editionId]);
+
+  // Clear the debounce timer on unmount (pending write within 600 ms will be lost;
+  // that is acceptable — the alternative is an uncontrolled write after unmount).
+  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
+
   const [generating, setGenerating] = useState(false);
 
   const ordered = useMemo(() => {
@@ -73,15 +94,29 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
     persist(ids);
   };
 
-  const config = editionFull.comm_pack_config || {};
-  const patchConfig = async (partial) => {
-    const next = { ...config, ...partial };
-    const updated = await Edition.update(editionId, { comm_pack_config: next });
-    setEditionFull((prev) => ({ ...prev, comm_pack_config: updated?.comm_pack_config ?? next }));
+  // patchConfig: updates local state immediately and schedules a debounced DB write.
+  // One DB write fires 600 ms after the last edit — no write-per-keystroke.
+  const patchConfig = (partial) => {
+    setConfig((prev) => {
+      const next = { ...prev, ...partial };
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        Edition.update(editionId, { comm_pack_config: next }).catch(() => {});
+      }, 600);
+      return next;
+    });
   };
+
   const onGenerate = async () => {
     setGenerating(true);
     try {
+      // Flush any pending debounced write so the DB is current before generating.
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+      await Edition.update(editionId, { comm_pack_config: config }).catch(() => {});
+
       const { buildCommPackZip } = await import('@/lib/rsa/comm-pack/buildZip');
       const fetchAsset = async (path) => {
         const url = commAssetPublicUrl(path);
@@ -89,7 +124,8 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
         const res = await fetch(url);
         return res.ok ? res.blob() : null;
       };
-      const blob = await buildCommPackZip(editionFull, { fetchAsset });
+      // Pass the merged edition so the ZIP builder sees the latest local config.
+      const blob = await buildCommPackZip({ ...editionFull, comm_pack_config: config }, { fetchAsset });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = `${(editionFull.name || 'kit').replace(/\s+/g, '-')}-${editionFull.year || ''}-kit-com.zip`;
