@@ -1,7 +1,9 @@
 // IdentityTab — onglet « Identité » du funnel de compétition.
 //
 // Champs : id (kebab, immuable après création), name, year, model (radio
-// mono/multi), status (select EDITION_STATUSES), finalists_per_session.
+// mono/multi), finalists_per_session.
+// NB : le statut/cycle de vie (draft→open→…) vit désormais dans l'onglet
+// Pilotage (c'est du pilotage, pas une caractéristique fixe).
 //
 // Modes :
 //   * mode='create' → tous les champs éditables ; l'ID est obligatoire & validé
@@ -17,9 +19,8 @@ import { Loader2 } from 'lucide-react';
 import { useLang } from '@/lib/platform/i18n';
 import { supabase } from '@/lib/supabase';
 import { CREAM2, EASE, NAVY, MUTED, INK } from '@/components/design/tokens';
-import { EDITION_STATUSES } from '../../i18n';
 import { COMP, COMPETITION_MODELS } from '../i18n';
-import { FieldLabel, TextRow, TextareaRow, SelectRow } from './fields';
+import { FieldLabel, TextRow, TextareaRow } from './fields';
 
 // Bucket Supabase Storage existant déjà utilisé pour les photos de jury.
 // Réutilisé ici car la photo du président du jury appartient sémantiquement
@@ -141,13 +142,6 @@ export default function IdentityTab({ values = {}, onPatch, mode = 'edit', error
           type="number"
           value={values.finalists_per_session ?? 1}
           onChange={(v) => onPatch({ finalists_per_session: v === '' ? 1 : Number(v) })}
-        />
-        <SelectRow
-          id="comp-status"
-          label={t(COMP.status)}
-          value={values.status || 'draft'}
-          onChange={(v) => onPatch({ status: v })}
-          options={EDITION_STATUSES.map((s) => ({ value: s, label: s }))}
         />
       </motion.div>
 

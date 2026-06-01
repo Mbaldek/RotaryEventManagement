@@ -14,18 +14,20 @@
 // Le tab ne fait que LECTURE et navigation — toutes les actions sont déléguées
 // aux autres tabs / pages (Clubs, Roles, Cockpit club, Finale).
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  CheckCircle2, Circle, AlertTriangle, ArrowRight, Copy, ExternalLink,
-  Users, ShieldCheck, Calendar, Trophy, Link2, ClipboardCheck,
+  CheckCircle2, Circle, AlertTriangle, ArrowRight, Flag,
+  Users, ShieldCheck, Calendar, Trophy, ClipboardCheck,
 } from 'lucide-react';
 import {
   CREAM2, NAVY, INK, MUTED, GOLD, GREEN_TODAY, SERIF, TINT_ADMIN,
 } from '@/components/design/tokens';
 import { GOLD_TEXT, WARNING } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
-import { PILOTAGE } from '../i18n';
+import { EDITION_STATUSES } from '../../i18n';
+import { COMP, PILOTAGE } from '../i18n';
+import { SelectRow } from './fields';
 import usePilotageStatus from '../usePilotageStatus';
 
 // ── Helpers visuels ────────────────────────────────────────────────────────
@@ -181,142 +183,65 @@ function StatusCounterPhrase({ template, current, target, role = 'status' }) {
   );
 }
 
-// Sub-card copy-to-clipboard pour les 3 URLs publiques (step 6).
-function CopyLinkCard({ label, path, t }) {
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState(false);
-  // Base host : on prend window.location.origin côté client (SSR-safe fallback).
-  const fullUrl = (typeof window !== 'undefined' ? window.location.origin : '') + path;
+// Libellés lisibles des phases du cycle de vie (le select brut affiche les
+// codes draft/open/… ; ici on les humanise FR/EN/DE). L'ordre suit
+// EDITION_STATUSES. « open » = compétition en ligne, candidatures ouvertes.
+const STATUS_LABEL = {
+  draft:     { fr: 'Brouillon',                en: 'Draft',                de: 'Entwurf' },
+  open:      { fr: 'En ligne — candidatures',  en: 'Live — applications',  de: 'Live — Bewerbungen' },
+  selection: { fr: 'Sélection',                en: 'Selection',            de: 'Auswahl' },
+  sessions:  { fr: 'Sessions',                 en: 'Sessions',             de: 'Sessions' },
+  finale:    { fr: 'Finale',                   en: 'Finale',               de: 'Finale' },
+  closed:    { fr: 'Clôturée',                 en: 'Closed',               de: 'Abgeschlossen' },
+};
 
-  async function onCopy() {
-    try {
-      await navigator.clipboard.writeText(fullUrl);
-      setCopied(true);
-      setError(false);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setError(true);
-      setTimeout(() => setError(false), 1500);
-    }
-  }
-
+// StatusBand — pilotage du cycle de vie de la compétition (draft→open→…).
+// Vit en tête de l'onglet Pilotage : c'est l'action « passer en live ». Volon-
+// tairement SANS gate sur la complétion de la checklist — on peut lancer même
+// partiellement configuré (organisation au dernier moment assumée).
+function StatusBand({ value, onChange, t }) {
+  const current = value || 'draft';
+  const isLive = current !== 'draft' && current !== 'closed';
   return (
     <div
-      className="rounded-[4px] p-3 flex flex-col gap-2"
+      className="rounded-[4px] px-4 py-3.5 mb-5"
       style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
     >
-      <div className="flex items-center justify-between gap-2 flex-wrap">
+      <div className="flex items-center gap-2 mb-3">
+        <Flag className="w-3.5 h-3.5" style={{ color: GOLD }} aria-hidden />
         <span
-          className="text-[10.5px] uppercase tracking-[0.14em] font-medium"
+          className="uppercase text-[10px] tracking-[0.18em] font-medium"
           style={{ color: GOLD_TEXT }}
         >
-          {label}
+          {t({ fr: 'Statut de la compétition', en: 'Competition status', de: 'Status des Wettbewerbs' })}
         </span>
-        <a
-          href={path}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] rounded-[2px]"
-          style={{ color: MUTED }}
-          aria-label={`${label} — ${t({ fr: 'ouvrir dans un onglet', en: 'open in new tab', de: 'in neuem Tab öffnen' })}`}
-        >
-          <ExternalLink className="w-3 h-3" aria-hidden />
-        </a>
       </div>
-      <code
-        className="block text-[11.5px] truncate font-mono px-2 py-1.5 rounded-[2px]"
-        style={{ background: 'white', color: NAVY, border: `1px solid ${CREAM2}` }}
-        title={fullUrl}
-      >
-        {fullUrl}
-      </code>
-      <button
-        type="button"
-        onClick={onCopy}
-        className="inline-flex items-center justify-center gap-1.5 text-[11.5px] px-2.5 py-1 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#c9a84c] transition-colors"
-        style={{
-          background: copied ? '#ecf1e5' : 'white',
-          color: copied ? GREEN_TODAY : NAVY,
-          border: `1px solid ${CREAM2}`,
-        }}
-      >
-        <Copy className="w-3 h-3" aria-hidden />
-        {copied
-          ? t(PILOTAGE.step6Copied)
-          : error
-            ? t(PILOTAGE.step6CopyError)
-            : t(PILOTAGE.step6Copy)}
-      </button>
-    </div>
-  );
-}
-
-// MulticlubLinksSection — groupe les liens apply+jury par club (multi-club).
-// Chaque club a sa propre row hairline gold + 2 CopyLinkCard côte à côte.
-// Le lien public reste isolé en bas.
-function MulticlubLinksSection({ links, t }) {
-  // Group by clubId (le lien public a clubId=null → bucket "public")
-  const byClub = new Map();
-  let publicLink = null;
-  for (const l of links) {
-    if (l.kind === 'public' || l.key === 'public') {
-      publicLink = l;
-      continue;
-    }
-    if (!byClub.has(l.clubId)) byClub.set(l.clubId, { name: l.clubName, items: {} });
-    byClub.get(l.clubId).items[l.kind] = l;
-  }
-  return (
-    <div className="mt-3 flex flex-col gap-4">
-      {[...byClub.entries()].map(([clubId, { name, items }]) => (
-        <div key={clubId}>
-          <div className="flex items-center gap-2 mb-2">
-            <span
-              className="h-[1.5px]"
-              style={{ background: GOLD, width: 32 }}
-              aria-hidden
-            />
-            <span
-              className="uppercase text-[10.5px] tracking-[0.16em] font-medium"
-              style={{ color: GOLD_TEXT }}
-            >
-              {name || clubId}
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {items.apply && (
-              <CopyLinkCard
-                label={t(PILOTAGE.step6LinkApply)}
-                path={items.apply.path}
-                t={t}
-              />
-            )}
-            {items.jury && (
-              <CopyLinkCard
-                label={t(PILOTAGE.step6LinkJury)}
-                path={items.jury.path}
-                t={t}
-              />
-            )}
-          </div>
-        </div>
-      ))}
-      {publicLink && (
-        <div className="pt-2" style={{ borderTop: `1px solid ${CREAM2}` }}>
-          <CopyLinkCard
-            label={t(PILOTAGE.step6LinkPublic)}
-            path={publicLink.path}
-            t={t}
-          />
-        </div>
-      )}
+      <div className="max-w-xs">
+        <SelectRow
+          id="pilotage-status"
+          label={t(COMP.status)}
+          value={current}
+          onChange={onChange}
+          options={EDITION_STATUSES.map((s) => ({ value: s, label: t(STATUS_LABEL[s] || { fr: s, en: s, de: s }) }))}
+        />
+      </div>
+      <p className="text-[12px] mt-2.5 flex items-start gap-1.5" style={{ color: INK }}>
+        <span style={{ color: isLive ? GREEN_TODAY : MUTED }} aria-hidden>●</span>
+        <span>
+          {t({
+            fr: 'Passez en « En ligne » pour ouvrir les candidatures. Indépendant de la complétion ci-dessous — vous pouvez lancer même partiellement configuré.',
+            en: 'Switch to “Live” to open applications. Independent of the completion below — you can launch even when partially configured.',
+            de: 'Auf „Live“ stellen, um Bewerbungen zu öffnen. Unabhängig vom Fortschritt unten — Sie können auch teilweise konfiguriert starten.',
+          })}
+        </span>
+      </p>
     </div>
   );
 }
 
 // ── PilotageTab principal ──────────────────────────────────────────────────
 
-export default function PilotageTab({ competition, setActiveTab }) {
+export default function PilotageTab({ competition, setActiveTab, onPatch }) {
   const { t } = useLang();
   const [, setSearchParams] = useSearchParams();
   const status = usePilotageStatus({ competition });
@@ -354,7 +279,7 @@ export default function PilotageTab({ competition, setActiveTab }) {
   }
 
   // ── Mapping steps[] → JSX par id ─────────────────────────────────────────
-  const [s1, s2, s3, s4, s5, s6] = steps;
+  const [s1, s2, s3, s4, s5] = steps;
 
   // Labels statut
   const lblDone     = t(PILOTAGE.statusDone);
@@ -374,6 +299,13 @@ export default function PilotageTab({ competition, setActiveTab }) {
         title={t(PILOTAGE.checklistTitle)}
         hint={t(PILOTAGE.checklistIntro)}
         titleId="pilotage-section-heading"
+      />
+
+      {/* Statut / cycle de vie — l'action « passer en live » (sans gate). */}
+      <StatusBand
+        value={competition?.status}
+        onChange={(v) => onPatch?.({ status: v })}
+        t={t}
       />
 
       {/* Pulse bar : completion percent en haut, hairline + Playfair number. */}
@@ -598,35 +530,6 @@ export default function PilotageTab({ competition, setActiveTab }) {
                 </CtaButton>
               </div>
             </>
-          )}
-        </StepCard>
-
-        {/* ── Step 6 — URLs publiques à diffuser ───────────────────────────── */}
-        <StepCard
-          index={6}
-          done={s6.done}
-          icon={Link2}
-          title={t(PILOTAGE.step6Title)}
-          statusLabel={s6.done ? lblDone : lblPending}
-        >
-          <p>{t(PILOTAGE.step6Intro)}</p>
-          {s6.isMulticlub ? (
-            <MulticlubLinksSection links={s6.links} t={t} />
-          ) : (
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-              {s6.links.map((l) => (
-                <CopyLinkCard
-                  key={l.key}
-                  label={
-                    l.key === 'apply'  ? t(PILOTAGE.step6LinkApply)  :
-                    l.key === 'jury'   ? t(PILOTAGE.step6LinkJury)   :
-                                         t(PILOTAGE.step6LinkPublic)
-                  }
-                  path={l.path}
-                  t={t}
-                />
-              ))}
-            </div>
           )}
         </StepCard>
       </ol>

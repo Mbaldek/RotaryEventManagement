@@ -230,42 +230,10 @@ export default function usePilotageStatus({ competition }) {
       missingLocation: hasFinale && !finaleLocation,
     };
 
-    // Step 6 — URLs publiques (toujours "open" — pas de "done" automatique,
-    // on considère done quand step 1-5 sont done & step 2-4 ne sont pas vides)
-    const step6Done = step1.done && step2.done && step3.done && step4.done && (step5.done || step5.optional);
-
-    // Apply : 1 lien UNIQUE pour toute la compétition (la startup candidate au
-    // concours en général, l'admin route ensuite vers un club organisateur).
-    // Jury : reste club-aware (un juré rejoint le comité d'UN club précis) →
-    // en multi-club, 1 lien jury par club + 1 lien public partagé.
-    let links = [];
-    if (editionId) {
-      links.push({ key: 'apply', path: `/Candidater?edition=${editionId}`, clubName: null });
-
-      const useGenericJury = isMonoclub || attached.length <= 1;
-      if (useGenericJury) {
-        links.push({ key: 'jury', path: `/DevenirJury?edition=${editionId}`, clubName: null });
-      } else {
-        for (const row of attachedListEnriched) {
-          links.push({
-            key: `jury:${row.id}`,
-            kind: 'jury',
-            path: `/DevenirJury?edition=${editionId}&club=${encodeURIComponent(row.id)}`,
-            clubId: row.id,
-            clubName: row.name,
-          });
-        }
-      }
-
-      links.push({ key: 'public', kind: 'public', path: '/Concours', clubName: null });
-    }
-
-    const step6 = {
-      id: 'links',
-      done: step6Done,
-      isMulticlub: !isMonoclub && attached.length > 1,
-      links,
-    };
+    // NB — Les URLs publiques (Candidater/DevenirJury/Concours) ne sont plus une
+    // « étape » de mise en route : ce sont de la doc de diffusion, pas une tâche
+    // de config. Elles vivent dans l'onglet Communication ▸ « URL & palmarès
+    // public ». Retiré de la checklist le 2026-06-01.
 
     // Completion percent — moyenne pondérée des steps requis (5 ou 6 selon
     // has_finale). Step1 contribue à hauteur de son identityPercent ; les
@@ -295,7 +263,7 @@ export default function usePilotageStatus({ competition }) {
         hasFinale,
         isMonoclub,
       },
-      steps: [step1, step2, step3, step4, step5, step6],
+      steps: [step1, step2, step3, step4, step5],
     };
   }, [
     competition,

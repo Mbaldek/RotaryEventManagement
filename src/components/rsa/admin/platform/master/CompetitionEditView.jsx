@@ -137,6 +137,7 @@ export default function CompetitionEditView({ editionId, onClose }) {
         <PilotageTab
           competition={pilotageCompetition}
           setActiveTab={setActiveTab}
+          onPatch={patch}
         />
       ),
     },
