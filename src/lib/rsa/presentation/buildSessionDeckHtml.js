@@ -13,7 +13,8 @@ export function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-const stage = (id, inner) => `<section class="stage" id="${id}">${inner}</section>`;
+// innerHtml MUST be pre-escaped HTML (built with escapeHtml) — never pass raw model data.
+const stage = (id, innerHtml) => `<section class="stage" id="${id}">${innerHtml}</section>`;
 
 function lineupRows(startups) {
   return startups.map((s, i) => `
@@ -101,7 +102,7 @@ export function buildSessionDeckHtml(model) {
     stage('s-agenda', `<p class="eyebrow">AGENDA</p>${agenda.map((a) => `<p class="agenda-item">${escapeHtml(a)}</p>`).join('')}`),
     stage('s-lineup', `<p class="eyebrow">TONIGHT'S STARTUPS</p><h2 class="title">${startups.length} founders, ${startups.length} pitches.</h2><div>${lineupRows(startups)}</div>`),
     stage('s-jury', `<p class="eyebrow">THE JURY</p>${jury.map((j) => `<p class="agenda-item">${escapeHtml(j)}</p>`).join('')}`),
-    stage('s-scoring', `<p class="eyebrow">JURY SCORING</p><h2 class="title">Six criteria, one ranked score.</h2><div>${criteriaRows(criteria)}</div>`),
+    stage('s-scoring', `<p class="eyebrow">JURY SCORING</p><h2 class="title">${criteria.length} criteria, one ranked score.</h2><div>${criteriaRows(criteria)}</div>`),
     stage('s-ready', `<p class="eyebrow">READY</p><h2 class="title">Let's begin.</h2>`),
     pitchPairs(startups),
     stage('s-end', `<p class="eyebrow">THANK YOU</p><h2 class="title">${escapeHtml(m.sessionName)}</h2><p class="sub">Deliberation follows.</p>`),
