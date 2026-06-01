@@ -24,11 +24,13 @@ import { getCriterion } from '@/lib/rsa/constants';
 import { useLang } from '@/lib/platform/i18n';
 import { UI } from './i18n';
 
-export default function CriterionRating({ criterion, value, onChange, disabled }) {
+export default function CriterionRating({ criterion, value, onChange, disabled, weightPct: weightPctProp }) {
   const [open, setOpen] = useState(false);
   const { lang, t } = useLang();
   const c = getCriterion(criterion, lang);
-  const weightPct = Math.round((c.weight ?? 0) * 100);
+  // Poids dynamique : `weightPct` fourni par le parent (poids de la session) sinon
+  // le poids par défaut du critère.
+  const weightPct = weightPctProp != null ? weightPctProp : Math.round((c.weight ?? 0) * 100);
 
   return (
     <div

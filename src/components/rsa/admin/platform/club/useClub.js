@@ -247,6 +247,58 @@ export function useSessionStartups(sessionId) {
   });
 }
 
+// ── Accès scoring juré (slug + PIN) + poids des critères d'une session ──────
+// Lit sessions.score_slug/score_pin (colonnes sessions) + session_config.score_weights.
+export function useSessionAccess(sessionId) {
+  return useQuery({
+    queryKey: ['rsa', 'club', 'session-access', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return null;
+      const [sRes, cRes] = await Promise.all([
+        supabase.from('sessions').select('id, score_slug, score_pin').eq('id', sessionId).maybeSingle(),
+        supabase.from('session_config').select('score_weights').eq('session_id', sessionId).maybeSingle(),
+      ]);
+      if (sRes.error) throw sRes.error;
+      if (cRes.error) throw cRes.error;
+      return {
+        slug: sRes.data?.score_slug || null,
+        pin: sRes.data?.score_pin || null,
+        weights: cRes.data?.score_weights || null,
+      };
+    },
+    enabled: !!sessionId,
+    staleTime: 15 * 1000,
+  });
+}
+
+// Génère/régénère le couple (slug, pin) d'accès public au scoring (RPC admin).
+export function useRotateSessionAccess(sessionId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('rsa_rotate_session_access', { p_session_id: sessionId });
+      if (error) throw error;
+      return Array.isArray(data) ? data[0] : data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['rsa', 'club', 'session-access', sessionId] }),
+  });
+}
+
+// Définit les poids des 6 critères (pourcentages entiers, somme=100) via RPC admin.
+export function useSetSessionWeights(sessionId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (weightsPct) => {
+      const { error } = await supabase.rpc('rsa_set_session_weights', { p_session_id: sessionId, p_weights: weightsPct });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rsa', 'club', 'session-access', sessionId] });
+      qc.invalidateQueries({ queryKey: ['rsa', 'club', 'sessions'], exact: false });
+    },
+  });
+}
+
 // ── Écriture de l'ordre de passage (RPC) + invalidation ─────────────────────
 export function useSetRunningOrder(sessionId) {
   const qc = useQueryClient();

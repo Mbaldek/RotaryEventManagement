@@ -397,6 +397,122 @@ export function useLiveGrid(sessionId) {
   };
 }
 
+// ── Live grid NAME-KEYED (flux jury SANS COMPTE) ────────────────────────────
+// Source : jurés = jury_applications approved (RPC rsa_session_jurors, filtré) ;
+// startups = lineup en pitch_order ; scores/drafts = jury_scores / jury_score_drafts
+// (clé = jury_name::startup_name). Répare la grille pour le flux name-pick : l'ancien
+// useLiveGrid lit le modèle auth (platform_jury_*) où ce flux n'écrit jamais.
+export function useSessionApprovedJurors(sessionId) {
+  return useQuery({
+    queryKey: ['rsa', 'admin', 'nk-jurors', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return [];
+      const { data, error } = await supabase.rpc('rsa_session_jurors', { p_session_id: sessionId });
+      if (error) throw error;
+      return (data || []).filter((j) => j.status === 'approved');
+    },
+    enabled: !!sessionId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useSessionStartupsOrdered(sessionId) {
+  return useQuery({
+    queryKey: ['rsa', 'admin', 'nk-startups', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return [];
+      const { data, error } = await supabase
+        .from('startups')
+        .select('id, name, status, session_id, pitch_order')
+        .eq('session_id', sessionId)
+        .in('status', ['affecte', 'en_session', 'note', 'finaliste'])
+        .order('pitch_order', { ascending: true, nullsFirst: false })
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!sessionId,
+    staleTime: 15 * 1000,
+  });
+}
+
+// jury_scores + jury_score_drafts (name-keyed) + Realtime. Reconciliation par
+// (jury_name, startup_name) — la PK des drafts ne donne pas d'.id côté payload.
+export function useNameKeyedScores(sessionId) {
+  const [scores, setScores] = useState([]);
+  const [drafts, setDrafts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!sessionId) { setScores([]); setDrafts([]); setLoading(false); return undefined; }
+    setLoading(true);
+    setError(null);
+    (async () => {
+      try {
+        const [sRes, dRes] = await Promise.all([
+          supabase.from('jury_scores').select('*').eq('session_id', sessionId),
+          supabase.from('jury_score_drafts').select('*').eq('session_id', sessionId),
+        ]);
+        if (sRes.error) throw sRes.error;
+        if (dRes.error) throw dRes.error;
+        if (!cancelled) { setScores(sRes.data || []); setDrafts(dRes.data || []); }
+      } catch (err) {
+        if (!cancelled) setError(err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    const rand = Math.random().toString(36).slice(2);
+    const reconcile = (setter) => (payload) => {
+      const next = payload.new;
+      const old = payload.old;
+      if (payload.eventType === 'DELETE') {
+        setter((prev) => prev.filter((r) => !(r.jury_name === old?.jury_name && r.startup_name === old?.startup_name)));
+        return;
+      }
+      if (!next) return;
+      setter((prev) => {
+        const idx = prev.findIndex((r) => r.jury_name === next.jury_name && r.startup_name === next.startup_name);
+        if (idx >= 0) { const out = [...prev]; out[idx] = next; return out; }
+        return [...prev, next];
+      });
+    };
+    const scoreCh = supabase
+      .channel(`nk_scores_${sessionId}_${rand}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'jury_scores', filter: `session_id=eq.${sessionId}` }, reconcile(setScores))
+      .subscribe();
+    const draftCh = supabase
+      .channel(`nk_drafts_${sessionId}_${rand}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'jury_score_drafts', filter: `session_id=eq.${sessionId}` }, reconcile(setDrafts))
+      .subscribe();
+
+    return () => { cancelled = true; supabase.removeChannel(scoreCh); supabase.removeChannel(draftCh); };
+  }, [sessionId]);
+
+  return { scores, drafts, loading, error };
+}
+
+export function useNameKeyedLiveGrid(sessionId) {
+  const jurors = useSessionApprovedJurors(sessionId);
+  const startups = useSessionStartupsOrdered(sessionId);
+  const { scores, drafts, loading, error } = useNameKeyedScores(sessionId);
+  const isLoading = jurors.isLoading || startups.isLoading || loading;
+  const isError = jurors.isError || startups.isError || !!error;
+  return {
+    jurors: jurors.data || [],
+    startups: startups.data || [],
+    scores,
+    drafts,
+    isLoading,
+    isError,
+    error: error || jurors.error || startups.error,
+    refetch: () => { jurors.refetch(); startups.refetch(); },
+  };
+}
+
 // ── Results — lit le snapshot final_ranking + scores agrégés ───────────────
 export function useSessionResults(sessionId) {
   return useQuery({

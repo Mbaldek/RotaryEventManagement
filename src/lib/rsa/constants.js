@@ -367,15 +367,55 @@ export function getCriterion(c, lang = "en") {
 }
 
 export const SCORE_FIELDS = CRITERIA.map((c) => c.id);
+
+// Poids par défaut (fractions, somme = 1.0) — utilisés quand une session ne les
+// surcharge pas. Les 6 critères sont fixes ; SEUL le poids de chacun est un
+// paramètre de compétition/session (cf. session_config.score_weights).
+export const DEFAULT_WEIGHTS = Object.fromEntries(CRITERIA.map((c) => [c.id, c.weight]));
+
+// Poids par défaut en POURCENTAGES ENTIERS (pour préremplir l'UI de réglage).
+export const DEFAULT_WEIGHTS_PCT = Object.fromEntries(
+  CRITERIA.map((c) => [c.id, Math.round(c.weight * 100)]),
+);
+
+// L'échelle pondérée maximale reste 5 tant que les poids somment à 1.0 (= 100%).
 export const MAX_WEIGHTED = CRITERIA.reduce((sum, c) => sum + 5 * c.weight, 0); // 5.0
 
-export function weightedScore(scoreRow) {
+// Somme des pourcentages d'une map {criterionId: pct}. Sert à la validation UI.
+export function weightsSumPct(pctMap) {
+  if (!pctMap) return 0;
+  return CRITERIA.reduce((s, c) => s + (Number(pctMap[c.id]) || 0), 0);
+}
+
+// true si la map de pourcentages couvre les 6 critères (entiers 0..100) et somme à 100.
+export function isValidWeightsPct(pctMap) {
+  if (!pctMap) return false;
+  for (const c of CRITERIA) {
+    const v = pctMap[c.id];
+    if (!Number.isInteger(v) || v < 0 || v > 100) return false;
+  }
+  return weightsSumPct(pctMap) === 100;
+}
+
+// Résout les poids d'une session en fractions {criterionId: 0..1}.
+// Accepte soit une ligne session_config (lit `.score_weights`), soit directement
+// une map de pourcentages. Fallback sur les poids par défaut si absent/invalide.
+export function resolveSessionWeights(sessionConfigOrPct) {
+  const pct = sessionConfigOrPct?.score_weights ?? sessionConfigOrPct ?? null;
+  if (!isValidWeightsPct(pct)) return { ...DEFAULT_WEIGHTS };
+  return Object.fromEntries(CRITERIA.map((c) => [c.id, pct[c.id] / 100]));
+}
+
+// Note pondérée 0..5. `weights` = map {criterionId: fraction} ; défaut = DEFAULT_WEIGHTS
+// (donc les appelants legacy sans 2ᵉ argument restent inchangés).
+export function weightedScore(scoreRow, weights = DEFAULT_WEIGHTS) {
   if (!scoreRow) return null;
   let sum = 0;
   for (const c of CRITERIA) {
     const v = scoreRow[c.id];
     if (v == null) return null; // incomplete
-    sum += v * c.weight;
+    const w = weights?.[c.id];
+    sum += v * (typeof w === 'number' ? w : c.weight);
   }
   return sum; // 0..5
 }

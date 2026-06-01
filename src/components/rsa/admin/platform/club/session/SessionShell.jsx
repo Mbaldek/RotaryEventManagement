@@ -13,6 +13,7 @@ import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { CLUB_SESSION_SHELL } from '../i18n';
 import { useClubSessionMetrics } from '../useClub';
+import SessionScoringAccess from './SessionScoringAccess';
 
 function Card({ icon: Icon, title, line, action, soon, soonLabel }) {
   return (
@@ -140,6 +141,9 @@ export default function SessionShell({ session, edition, clubId, onBack, onDeepL
           soon soonLabel={t(CLUB_SESSION_SHELL.soon)}
         />
       </div>
+
+      {/* Accès scoring juré (lien + PIN) + poids des critères de la session */}
+      <SessionScoringAccess sessionId={session.id} />
 
       <div className="mt-4 flex justify-end">
         <button
