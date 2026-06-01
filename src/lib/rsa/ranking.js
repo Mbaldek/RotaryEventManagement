@@ -1,19 +1,20 @@
 // Shared ranking helper — used by ResultsTab to compute the live leaderboard
 // and by the finalist picker to read the published winner of each qualifier.
 
-import { weightedScore } from "./constants";
+import { weightedScore } from "./constants.js";
 
 // Aggregate raw scores + admin overrides into a ranked list of startups.
-//   scores:    array of jury_scores rows for one session
+//   scores:    array of jury_scores rows for one session (name-keyed)
 //   overrides: { [startup_name]: { bonus, final_rank, note } }
+//   weights:   map { criterionId: fraction } — poids de la session (défaut standard)
 // Returns rows sorted by final_rank, each shaped:
 //   { startup, avg, n, bonus, final_score, fixed_rank, note, final_rank }
 // Startups with zero scores from any juror are silently excluded (they are
 // effectively absent — no UI flag needed).
-export function buildRanking(scores, overrides = {}) {
+export function buildRanking(scores, overrides = {}, weights = undefined) {
   const byStartup = new Map();
   for (const row of scores) {
-    const w = weightedScore(row);
+    const w = weightedScore(row, weights);
     if (w == null) continue;
     if (!byStartup.has(row.startup_name)) byStartup.set(row.startup_name, []);
     byStartup.get(row.startup_name).push(w);

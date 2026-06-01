@@ -26,6 +26,7 @@ import {
   CRITERIA,
   SCORE_FIELDS,
   MAX_WEIGHTED,
+  DEFAULT_WEIGHTS,
   weightedScore,
   criteriaFilledCount,
 } from '@/lib/rsa/constants';
@@ -74,6 +75,10 @@ export default function ScoringPanel({
   readOnly,         // session locked|published OR admin reviewing someone else's score
   // Optional error to surface
   submitError,
+  // Poids des critères pour cette session (fractions {id:0..1}) ; défaut = standard.
+  weights = DEFAULT_WEIGHTS,
+  // Masquer les documents du dossier (page publique anon : pas d'accès storage).
+  hideDocuments = false,
 }) {
   const { t } = useLang();
   const isSubmitted = !!myScore;
@@ -95,7 +100,7 @@ export default function ScoringPanel({
 
   const filled = criteriaFilledCount(local);
   const total = CRITERIA.length;
-  const weighted = weightedScore(local);
+  const weighted = weightedScore(local, weights);
   const canSubmit = filled === total && !readOnly && !submitting;
 
   // Autosave débouncé (~600 ms) sur les changements de scores/comment.
@@ -200,10 +205,11 @@ export default function ScoringPanel({
           className="p-4 flex flex-col gap-3"
           style={{ borderTop: `1px solid ${CREAM2}` }}
         >
-          {/* Documents du dossier — signed URLs (5 min TTL) */}
-          <DocumentLinks startup={startup} compact />
+          {/* Documents du dossier — signed URLs (5 min TTL). Masqués sur la page
+              publique anon (pas d'accès storage sans session). */}
+          {!hideDocuments && <DocumentLinks startup={startup} compact />}
 
-          {/* 6 critères */}
+          {/* 6 critères — le badge % reflète les poids de la session */}
           {CRITERIA.map((c) => (
             <CriterionRating
               key={c.id}
@@ -211,6 +217,7 @@ export default function ScoringPanel({
               value={local?.[c.id] ?? null}
               onChange={(v) => handleField(c.id, v)}
               disabled={readOnly}
+              weightPct={Math.round((weights?.[c.id] ?? c.weight) * 100)}
             />
           ))}
 

@@ -8,6 +8,76 @@
 > par le scoring), légère `src/lib/db/rsa-legacy.js` (modèle name-keyed historique),
 > `src/components/rsa/jury/` (UI scoring déjà construite : ScoringPanel, CriterionRating).
 
+## 0. Phase scoring — LIVRÉE (2026-06-01)
+
+> Cette section reflète l'implémentation **réelle**. Elle **supersede** les sections
+> « LOT B » et « LOT C » plus bas (page publique tokenisée + tables
+> `session_jury_scores`/`_drafts`), définitivement **ANNULÉES**. Décisions Mathieu :
+> **slug + PIN**, **nouvelle page dédiée** (RsaScore legacy intact), **hub intégré au
+> ClubCockpit Pilotage**, et **poids des critères configurables par session**.
+
+**Modèle retenu (FAIS SIMPLE)** : réutiliser le store legacy **name-keyed**
+`jury_scores` / `jury_score_drafts` (clé `session_id, jury_name, startup_name`).
+`jury_name` = `jury_applications.full_name` (juré approuvé) ; `startup_name` =
+`startups.name`. **Aucune nouvelle table de scores.**
+
+**5 briques livrées :**
+- **Poids configurables** — `session_config.score_weights jsonb` (pourcentages entiers,
+  somme=100 ; `null` = défaut 20/20/20/20/10/10). Les 6 critères + ancrages restent
+  fixes (SSOT `src/lib/rsa/constants.js`). Helpers ajoutés : `DEFAULT_WEIGHTS`,
+  `DEFAULT_WEIGHTS_PCT`, `weightsSumPct`, `isValidWeightsPct`, `resolveSessionWeights`,
+  et `weightedScore(row, weights?)` (rétro-compatible). `ScoringPanel`/`CriterionRating`/
+  `ScoreCell` acceptent un poids dynamique.
+- **Accès slug + PIN** — `sessions.score_slug` (unique) + `sessions.score_pin`. RPC admin
+  `rsa_rotate_session_access(session_id)` (génère/rotère). RPC admin
+  `rsa_set_session_weights(session_id, weights)` (valide somme=100).
+- **4 RPC anon gardées slug+PIN** (grant `anon` UNIQUEMENT sur celles-ci ; `search_path`
+  figé ; helper interne `rsa_public_score_guard` non exposé) :
+  `rsa_public_score_context(slug, pin)` (meta+statut+poids+roster approved+startups
+  pitch_order), `rsa_public_my_scores(slug, pin, jury_name)` (reprise),
+  `rsa_public_save_draft(...)` + `rsa_public_submit_score(...)` (revalident slug+PIN,
+  gate `status='live'`, upsert name-keyed). `jury_score_drafts` ajoutée à
+  `supabase_realtime`.
+- **Page juré dédiée** `src/pages/Score.jsx` → route `/Score?s=<slug>` (publique, Layout
+  passthrough, 100% via RPC anon) : écran PIN → name-pick → `ScoringPanel` Élysée
+  (`hideDocuments`), bloc « Règles de notation » conservé, % = poids de session, FR/EN/DE.
+- **Grille live réparée** `src/components/rsa/admin/platform/tabs/LiveTab.jsx` : nouveau
+  hook `useNameKeyedLiveGrid` (jurés `jury_applications` approved via `rsa_session_jurors`,
+  startups `pitch_order`, scores/drafts `jury_scores`/`jury_score_drafts` name-keyed,
+  realtime), agrégats pondérés par les poids de session. L'ancien câblage lisait le modèle
+  AUTH `platform_jury_*` (jamais alimenté par ce flux → grille vide).
+- **Hub Pilotage** `…/club/session/SessionScoringAccess.jsx` monté dans `SessionShell` :
+  bloc « Accès scoring » (lien `/Score?s=` + PIN + copier + régénérer) + réglage des poids
+  (somme=100 live, save).
+
+- **Classement / publish name-keyed** — `rsa_publish_session` rebranché : le CTE de
+  classement agrège `jury_scores` (name-keyed) avec les **poids de session**, `startup_id`
+  résolu par join `startup_name → startups` (projection finaliste + finale_membership +
+  audit inchangés). `ResultsTab` plateforme : preview via `buildRanking(scores, {}, weights)`
+  + nouveau hook `useNameKeyedSessionResults`. `buildRanking` accepte un 3ᵉ arg `weights`.
+
+**Tests** : `src/lib/rsa/__tests__/scoringWeights.test.js` + `rankingWeighted.test.js`
+(`node --test`, 10/10).
+
+**Validé E2E (2026-06-01)** : flux juré public (PIN → name-pick → scoring → submit) testé
+en navigateur ; `rsa_public_score_*` + persistance `jury_scores` name-keyed OK ; PIN
+auto-validé à 4 chiffres. Côté admin, `rsa_publish_session` exécuté comme master_admin →
+`final_ranking` pondéré par les poids de session (Beta 2.65 > Gamma 2.10 > Alpha 1.40),
+projection finaliste + `platform_finale_membership` OK. Seed de test nettoyé.
+
+**Décisions produit** : PIN = **4 chiffres simple** (retenu, pas de rate-limit — barrière
+réelle = le slug). Le **lien + PIN se communiquent dans l'email pré-read / invitation Teams**
+des jurés (pas d'envoi séparé).
+
+**Prochaine brique (comms)** : injecter le lien `/Score?s=<slug>` + le PIN dans l'email
+pré-read / invitation Teams envoyé aux jurés approuvés (via Email Studio / edge
+send-transactional, cf. `project_session_presentation_generator`). Localiser le template
+d'invitation juré et y ajouter le bloc accès scoring (slug+PIN de la session).
+
+**Note** : `rsa_publish_session` agrège désormais `jury_scores` name-keyed — les sessions
+historiques notées via le modèle auth `platform_jury_scores` ne seraient plus agrégées si
+re-publiées (leur snapshot `final_ranking` existant reste intact).
+
 ## 1. Intention & principe
 
 Un **juré n'a PAS de compte** dans l'app — zéro valeur, friction UX. Un juré = **une ligne

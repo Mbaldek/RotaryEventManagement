@@ -36,10 +36,10 @@ const FINAL_STYLE = {
   border: `1px solid ${CREAM2}`,
 };
 
-export default function ScoreCell({ draft, score, onClick }) {
+export default function ScoreCell({ draft, score, onClick, weights }) {
   // Score final emporte (la grille montre le N.NN définitif quand on a un score row).
   if (score) {
-    const w = weightedScore(score);
+    const w = weightedScore(score, weights);
     return (
       <button
         type="button"

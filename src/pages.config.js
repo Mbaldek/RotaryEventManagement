@@ -28,6 +28,7 @@ const Login = lazy(() => import('./pages/Login'));
 const MonDossier = lazy(() => import('./pages/MonDossier'));
 const Resultats = lazy(() => import('./pages/Resultats'));
 const RsaAdmin = lazy(() => import('./pages/RsaAdmin'));
+const Score = lazy(() => import('./pages/Score'));
 const Selection = lazy(() => import('./pages/Selection'));
 const Welcome = lazy(() => import('./pages/Welcome'));
 
@@ -57,6 +58,7 @@ export const PAGES = {
     "MonDossier": MonDossier,
     "Resultats": Resultats,
     "RsaAdmin": RsaAdmin,
+    "Score": Score,
     "RsaDashboard": RsaDashboard,
     "RsaFinaleResults": RsaFinaleResults,
     "RsaFinaleRsvp": RsaFinaleRsvp,

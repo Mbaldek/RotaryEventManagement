@@ -14,9 +14,10 @@ import { Loader2, Rocket, Download } from 'lucide-react';
 import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
-import { weightedScore } from '@/lib/rsa/constants';
+import { resolveSessionWeights } from '@/lib/rsa/constants';
+import { buildRanking } from '@/lib/rsa/ranking';
 import { UI, RESULTS, LIVE } from '../i18n';
-import { exportCsv, useLockSession, usePublishSession, useSessionResults } from '../useAdmin';
+import { exportCsv, useLockSession, usePublishSession, useNameKeyedSessionResults } from '../useAdmin';
 
 function ConfirmModal({ title, body, onConfirm, onCancel, busy, typedWord }) {
   const { t } = useLang();
@@ -63,27 +64,6 @@ function ConfirmModal({ title, body, onConfirm, onCancel, busy, typedWord }) {
   );
 }
 
-// Build a preview ranking from raw platform_jury_scores rows (twin du SQL rsa_publish_session).
-function buildPreviewRanking(scores) {
-  const byStartup = new Map();
-  for (const s of scores) {
-    const w = weightedScore(s);
-    if (w == null) continue;
-    if (!byStartup.has(s.startup_id)) byStartup.set(s.startup_id, []);
-    byStartup.get(s.startup_id).push(w);
-  }
-  const rows = [];
-  for (const [startup_id, ws] of byStartup.entries()) {
-    rows.push({
-      startup_id,
-      avg: ws.reduce((a, b) => a + b, 0) / ws.length,
-      n: ws.length,
-    });
-  }
-  rows.sort((a, b) => (b.avg - a.avg));
-  return rows.map((r, idx) => ({ ...r, final_rank: idx + 1 }));
-}
-
 // Resolves a startup label from the published ranking shape (may carry .startup or
 // .startup_name) or from the preview shape (we have only id, so we fall back to id).
 function startupLabel(row, startupsById) {
@@ -95,7 +75,7 @@ function startupLabel(row, startupsById) {
 
 export default function ResultsTab({ edition, session, sessions, onSelectSession }) {
   const { t } = useLang();
-  const results = useSessionResults(session?.id);
+  const results = useNameKeyedSessionResults(session?.id);
   const lock = useLockSession();
   const publish = usePublishSession();
   const [confirmPublish, setConfirmPublish] = useState(false);
@@ -109,8 +89,15 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
   const cfg = results.data?.config || null;
   const scores = results.data?.scores || [];
   const status = cfg?.status || 'draft';
+  const weights = useMemo(() => resolveSessionWeights(cfg), [cfg]);
 
-  const previewRanking = useMemo(() => buildPreviewRanking(scores), [scores]);
+  // Preview = même logique que le snapshot publié (RPC) : moyenne pondérée par les
+  // poids de session, sans overrides (parité preview/published). buildRanking lit
+  // jury_scores name-keyed (startup_name) → les noms sont présents dès le preview.
+  const previewRanking = useMemo(
+    () => buildRanking(scores, {}, weights),
+    [scores, weights],
+  );
 
   async function doPublish() {
     setConfirmPublish(false);
