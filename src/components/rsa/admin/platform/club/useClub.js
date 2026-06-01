@@ -226,3 +226,34 @@ export function useClubSessionMetrics(editionId, clubId, sessionIds) {
     staleTime: 30 * 1000,
   });
 }
+
+// ── Startups d'une session, ordonnées par pitch_order (nulls en dernier) ─────
+export function useSessionStartups(sessionId) {
+  return useQuery({
+    queryKey: ['rsa', 'club', 'session-startups', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return [];
+      const { data, error } = await supabase
+        .from('startups')
+        .select('id, name, contact_person, email, preferred_lang, pitch_order, session_id')
+        .eq('session_id', sessionId)
+        .order('pitch_order', { ascending: true, nullsFirst: false })
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!sessionId,
+    staleTime: 15 * 1000,
+  });
+}
+
+// ── Écriture de l'ordre de passage (RPC) + invalidation ─────────────────────
+export function useSetRunningOrder(sessionId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (orderedIds) => RsaSession.setRunningOrder(sessionId, orderedIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rsa', 'club', 'session-startups', sessionId] });
+    },
+  });
+}
