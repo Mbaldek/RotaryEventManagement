@@ -210,7 +210,7 @@ function RejectModal({ open, onClose, onConfirm, busy }) {
 
 // ─── Carte candidature ────────────────────────────────────────────────────
 
-function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, busyId, needsAuthBanner }) {
+function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, busyId }) {
   const { t, lang } = useLang();
   const dateFmt = (iso) => {
     if (!iso) return '';
@@ -230,7 +230,6 @@ function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, bus
 
   const isPending = app.status === 'pending';
   const isBusy = busyId === app.id;
-  const showNeedsAuthBanner = needsAuthBanner?.id === app.id;
 
   return (
     <article
@@ -337,21 +336,6 @@ function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, bus
         </p>
       )}
 
-      {showNeedsAuthBanner && (
-        <div
-          className="mt-3 p-3 rounded-[4px]"
-          style={{ background: '#fdf6e8', border: `1px solid ${GOLD}` }}
-        >
-          <p className="text-[12.5px] font-medium mb-1" style={{ color: NAVY }}>
-            {t(JURY_TAB_UI.approveNeedsAuthTitle)}
-          </p>
-          <p className="text-[12px] mb-2" style={{ color: INK }}>
-            {t(JURY_TAB_UI.approveNeedsAuthBody)}
-          </p>
-          <CopyButton value={app.email} t={t} />
-        </div>
-      )}
-
       {isPending && (
         <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: `1px solid ${CREAM2}` }}>
           <button
@@ -383,14 +367,13 @@ function ApplicationCard({ app, sessionsById, photoUrl, onApprove, onReject, bus
 // ─── Tab principal ────────────────────────────────────────────────────────
 
 export default function JuryApplicationsTab({ clubId }) {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   const qc = useQueryClient();
 
   const [filter, setFilter] = useState('pending');
   const [toast, setToast] = useState(null); // { kind: 'ok'|'err', msg }
   const [rejectModalFor, setRejectModalFor] = useState(null);
   const [busyId, setBusyId] = useState(null);
-  const [needsAuthBanner, setNeedsAuthBanner] = useState(null);
 
   // Liste des candidatures (RPC restrict club_admin/master_admin).
   const appsQ = useQuery({
@@ -453,29 +436,13 @@ export default function JuryApplicationsTab({ clubId }) {
 
   // ── Mutations ──────────────────────────────────────────────────────────
   const approve = useMutation({
-    mutationFn: (id) => JuryApplication.approve(id, { lang }),
-    onSuccess: (res, id) => {
+    mutationFn: (id) => JuryApplication.approve(id),
+    onSuccess: () => {
       setBusyId(null);
       qc.invalidateQueries({ queryKey: ['rsa', 'jury-applications', clubId] });
-      if (res.inviteError) {
-        // Approbation OK mais la création de compte / l'email d'accès a échoué :
-        // on garde le candidat visible et on signale l'échec d'invitation.
-        setNeedsAuthBanner({ id });
-        setToast({ kind: 'err', msg: t(JURY_TAB_UI.approveInviteError) });
-      } else {
-        setNeedsAuthBanner(null);
-        setToast({
-          kind: 'ok',
-          msg: res.accountInvited
-            ? t(JURY_TAB_UI.approveInvited)
-            : t(JURY_TAB_UI.approveSuccess),
-        });
-      }
+      setToast({ kind: 'ok', msg: t(JURY_TAB_UI.approveSuccess) });
     },
-    onError: (err) => {
-      setBusyId(null);
-      setToast({ kind: 'err', msg: err?.message || 'Error' });
-    },
+    onError: (err) => { setBusyId(null); setToast({ kind: 'err', msg: err?.message || 'Error' }); },
   });
   const reject = useMutation({
     mutationFn: ({ id, note }) => JuryApplication.reject(id, note),
@@ -618,7 +585,6 @@ export default function JuryApplicationsTab({ clubId }) {
               onApprove={handleApprove}
               onReject={handleOpenReject}
               busyId={busyId}
-              needsAuthBanner={needsAuthBanner}
             />
           ))}
         </div>
