@@ -6,7 +6,8 @@
 // labels génériques (UI.save/cancel/loading…) : on les importe quand nécessaire.
 
 export const CLUB_TABS = {
-  setup:              { fr: 'Configuration',     en: 'Setup',          de: 'Konfiguration' },
+  setup:              { fr: 'Sessions',          en: 'Sessions',       de: 'Sessions' },
+  pilotage:           { fr: "Vue d'ensemble",    en: 'Overview',       de: 'Übersicht' },
   live:               { fr: 'En direct',         en: 'Live',           de: 'Live' },
   results:            { fr: 'Résultats',         en: 'Results',        de: 'Ergebnisse' },
   team:               { fr: 'Équipe',            en: 'Team',           de: 'Team' },
@@ -32,6 +33,9 @@ export const CLUB_UI = {
   edition:      { fr: 'Compétition',           en: 'Competition',           de: 'Wettbewerb' },
   pickEdition:  { fr: 'Choisissez une compétition', en: 'Pick a competition', de: 'Wählen Sie einen Wettbewerb' },
   session:      { fr: 'Session',               en: 'Session',               de: 'Session' },
+  modeLabel:     { fr: 'Mode',                 en: 'Mode',                  de: 'Modus' },
+  modePrep:      { fr: 'Préparation',          en: 'Preparation',           de: 'Vorbereitung' },
+  modePilotage:  { fr: 'Pilotage',             en: 'Pilotage',              de: 'Steuerung' },
 
   // Module status strip (per-club)
   stripSessions:   { fr: 'sessions',           en: 'sessions',              de: 'Sessions' },
@@ -105,10 +109,6 @@ export const CLUB_RULES = {
 // Roles disponibles dans la TeamTab (parallèle à ROLE_OPTIONS du legacy).
 export const CLUB_ROLE_OPTIONS = ['club_admin', 'comite', 'jury'];
 
-// Note 2026-05-29 — équipe D "kill extensions" : retrait des onglets 'extensions'
-// et 'marketplace' (archi droppée intégralement, plus de tab catalogue/install).
-export const TAB_IDS = ['setup', 'live', 'results', 'team', 'jury_applications', 'rules', 'prizes', 'analytics', 'comms'];
-
 // ── Other clubs section (Club Cockpit / Setup tab) ───────────────────────────
 // Bloc lecture seule pour qu'un club_admin sache qui sont les autres clubs
 // participants à la même compétition multiclub.
@@ -148,4 +148,42 @@ export const CLUB_OTHERS = {
   metaFinalists:    { fr: 'finalistes',   en: 'finalists',    de: 'Finalisten' },
   contactNoName:    { fr: 'Contact club', en: 'Club contact', de: 'Club-Kontakt' },
   noContact:        { fr: 'Pas de contact public', en: 'No public contact', de: 'Kein öffentlicher Kontakt' },
+};
+
+// ── Pilotage (mode suivi) ────────────────────────────────────────────────────
+export const CLUB_PILOTAGE = {
+  eyebrow:       { fr: 'Pilotage',                      en: 'Pilotage',             de: 'Steuerung' },
+  title:         { fr: "Vue d'ensemble des sessions",   en: 'Sessions overview',    de: 'Sessions-Übersicht' },
+  sessionsHead:  { fr: 'Sessions',                      en: 'Sessions',             de: 'Sessions' },
+  empty:         { fr: 'Aucune session pour cette compétition.', en: 'No sessions for this competition.', de: 'Keine Sessions für diesen Wettbewerb.' },
+  open:          { fr: 'Ouvrir',                        en: 'Open',                 de: 'Öffnen' },
+  startupsUnit:  { fr: 'startups',                      en: 'startups',             de: 'Startups' },
+  jurorsUnit:    { fr: 'jurés',                         en: 'jurors',               de: 'Juroren' },
+  kpiSessions:   { fr: 'Sessions',                      en: 'Sessions',             de: 'Sessions' },
+  kpiLive:       { fr: 'En direct',                     en: 'Live',                 de: 'Live' },
+  kpiDraft:      { fr: 'Brouillon',                     en: 'Draft',                de: 'Entwurf' },
+  kpiPublished:  { fr: 'Publiées',                      en: 'Published',            de: 'Veröffentlicht' },
+  kpiStartups:   { fr: 'Startups',                      en: 'Startups',             de: 'Startups' },
+  kpiJurors:     { fr: 'Jurés assignés',                en: 'Assigned jurors',      de: 'Zugewiesene Juroren' },
+  kpiCandidates: { fr: 'Candidatures',                  en: 'Applications',         de: 'Bewerbungen' },
+};
+
+// ── Coquille session (socle de la session console #3) ────────────────────────
+export const CLUB_SESSION_SHELL = {
+  back:           { fr: 'Retour au pilotage',  en: 'Back to pilotage',  de: 'Zurück zur Steuerung' },
+  soon:           { fr: 'Bientôt',             en: 'Soon',              de: 'Bald' },
+  cardStartups:   { fr: 'Startups',            en: 'Startups',          de: 'Startups' },
+  cardJury:       { fr: 'Jury',                en: 'Jury',              de: 'Jury' },
+  cardScoring:    { fr: 'Scoring live',        en: 'Live scoring',      de: 'Live-Scoring' },
+  cardPrep:       { fr: 'Préparation',         en: 'Preparation',       de: 'Vorbereitung' },
+  cardPresentation:{ fr: 'Présentation',       en: 'Presentation',      de: 'Präsentation' },
+  cardPreread:    { fr: 'Pré-read decks',      en: 'Pre-read decks',    de: 'Pre-Read-Decks' },
+  jurorsAssigned: { fr: 'jurés assignés',      en: 'assigned jurors',   de: 'zugewiesene Juroren' },
+  startupsInPlay: { fr: 'en lice',             en: 'in play',           de: 'im Rennen' },
+  viewJury:       { fr: 'Voir équipe jury',    en: 'View jury team',    de: 'Jury-Team ansehen' },
+  openLive:       { fr: 'Ouvrir En direct',    en: 'Open Live',         de: 'Live öffnen' },
+  sessionResults: { fr: 'Résultats de la session', en: 'Session results', de: 'Session-Ergebnisse' },
+  prepHint:       { fr: 'checklist de préparation', en: 'preparation checklist', de: 'Vorbereitungs-Checkliste' },
+  presentationHint:{ fr: 'builder mode live',  en: 'live builder',      de: 'Live-Builder' },
+  prereadHint:    { fr: 'pack consolidé jury', en: 'consolidated jury pack', de: 'konsolidiertes Jury-Paket' },
 };
