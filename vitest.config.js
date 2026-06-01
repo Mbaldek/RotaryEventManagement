@@ -7,6 +7,8 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.js'],
+    // Restreint à nos tests de logique pure : évite de ramasser les tests legacy
+    // node:test/TAP de src/lib/platform/__tests__/ (incompatibles vitest).
+    include: ['src/lib/rsa/**/*.test.js'],
   },
 });
