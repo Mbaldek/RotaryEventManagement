@@ -2,12 +2,14 @@
 // Lit l'ordre de passage en SEULE LECTURE (réglé en Préparation). Cf. blueprint §6.
 
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, Download } from 'lucide-react';
-import { NAVY, INK, MUTED, CREAM2, SERIF } from '@/components/design/tokens';
+import { ArrowLeft, Download, Mail } from 'lucide-react';
+import { NAVY, INK, MUTED, CREAM2, SERIF, GOLD } from '@/components/design/tokens';
 import { FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { buildSessionDeckHtml } from '@/lib/rsa/presentation/buildSessionDeckHtml';
 import { slugify } from '@/lib/rsa/presentation/runningOrder';
+import { buildRunningOrderSends } from '@/lib/rsa/presentation/runningOrderEmails';
+import { sendTransactional } from '@/lib/platform/transactional';
 import { useSessionStartups } from '../useClub';
 import { SESSION_PANELS } from './sessionPanels.i18n';
 
@@ -30,6 +32,10 @@ export default function DeckGenerator({ session, onBack }) {
   const [specialPrize, setSpecialPrize] = useState('');
   const [agenda, setAgenda] = useState('Welcome\nPitches\nDeliberation\nResults');
   const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
+
+  // État d'envoi des emails d'ordre de passage. feedback : { kind, text }.
+  const [sending, setSending] = useState(false);
+  const [feedback, setFeedback] = useState(null);
 
   const cfg = session?.config || {};
   const model = useMemo(() => ({
@@ -57,6 +63,47 @@ export default function DeckGenerator({ session, onBack }) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  // Envoi des emails d'ordre de passage : un email par startup ordonnée, dans la
+  // langue du destinataire. data.club_id (porté par buildRunningOrderSends depuis
+  // session.club_id) est requis côté edge function pour l'autz club_admin.
+  const sendRunningOrderEmails = async () => {
+    setFeedback(null);
+    let sends;
+    try {
+      sends = buildRunningOrderSends(session, startups);
+    } catch (err) {
+      if (err?.message === 'running_order_incomplete') {
+        setFeedback({ kind: 'error', text: t(SESSION_PANELS.roEmailIncomplete)(err.missingCount) });
+      } else {
+        setFeedback({ kind: 'error', text: String(err?.message || err) });
+      }
+      return;
+    }
+    if (sends.length === 0) {
+      setFeedback({ kind: 'error', text: t(SESSION_PANELS.roEmailNone) });
+      return;
+    }
+    setSending(true);
+    let ok = 0;
+    // Séquentiel : respecte le rate-limit Resend (pas de rafale parallèle).
+    for (const p of sends) {
+      const res = await sendTransactional({
+        type: 'session_running_order',
+        recipient_email: p.recipientEmail,
+        recipient_name: p.recipientName,
+        lang: p.lang,
+        data: p.data,
+      });
+      if (res?.ok) ok += 1;
+    }
+    setSending(false);
+    if (ok === sends.length) {
+      setFeedback({ kind: 'success', text: t(SESSION_PANELS.roEmailSuccess)(ok) });
+    } else {
+      setFeedback({ kind: 'error', text: t(SESSION_PANELS.roEmailPartial)(ok, sends.length) });
+    }
   };
 
   return (
@@ -113,6 +160,28 @@ export default function DeckGenerator({ session, onBack }) {
         style={{ background: NAVY, color: 'white' }}>
         <Download className="w-3.5 h-3.5" aria-hidden /> {t(SESSION_PANELS.download)}
       </button>
+
+      {/* Emails d'ordre de passage — bloc dédié, session-scoped */}
+      <div className="mt-8 pt-6" style={{ borderTop: `1px solid ${CREAM2}` }}>
+        <h3 className="text-[16px] mb-1" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
+          {t(SESSION_PANELS.roEmailTitle)}
+        </h3>
+        <p className="text-[12px] mb-3" style={{ color: INK }}>{t(SESSION_PANELS.roEmailIntro)}</p>
+
+        <button type="button" onClick={sendRunningOrderEmails} disabled={sending}
+          className={`inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] disabled:opacity-60 disabled:cursor-not-allowed ${FOCUS_RING_CLASS}`}
+          style={{ border: `1px solid ${NAVY}`, color: NAVY, background: 'white' }}>
+          <Mail className="w-3.5 h-3.5" aria-hidden style={{ color: GOLD }} />
+          {sending ? t(SESSION_PANELS.roEmailSending) : t(SESSION_PANELS.roEmailSend)}
+        </button>
+
+        {feedback && (
+          <p role="status" aria-live="polite" className="mt-3 text-[12px]"
+            style={{ color: feedback.kind === 'success' ? NAVY : '#9a3a3a' }}>
+            {feedback.text}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

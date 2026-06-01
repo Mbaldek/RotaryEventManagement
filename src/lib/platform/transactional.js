@@ -16,6 +16,7 @@ const ALLOWED_TYPES = new Set([
   'jury_assignment',
   'session_published',
   'results_published',
+  'session_running_order',
 ]);
 
 const ALLOWED_LANGS = new Set(['fr', 'en', 'de']);
@@ -24,7 +25,7 @@ const ALLOWED_LANGS = new Set(['fr', 'en', 'de']);
  * Envoie un email transactionnel brandé Élysée via l'edge function.
  *
  * @param {object} args
- * @param {('selection_decision'|'jury_assignment'|'session_published'|'results_published')} args.type
+ * @param {('selection_decision'|'jury_assignment'|'session_published'|'results_published'|'session_running_order')} args.type
  * @param {string} args.recipient_email
  * @param {string} [args.recipient_name]
  * @param {('fr'|'en'|'de')} [args.lang='fr']

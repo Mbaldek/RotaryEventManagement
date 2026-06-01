@@ -42,4 +42,42 @@ export const SESSION_PANELS = {
     de: (n, total) => `${n} / ${total} Startup(s) sortiert${n < total ? ' — die übrigen erscheinen nicht im Deck.' : '.'}`,
   },
   download: { fr: 'Télécharger le deck', en: 'Download deck', de: 'Deck herunterladen' },
+
+  // Emails d'ordre de passage (un par startup, langue du destinataire)
+  roEmailTitle: {
+    fr: 'Emails d’ordre de passage',
+    en: 'Running-order emails',
+    de: 'E-Mails zur Reihenfolge',
+  },
+  roEmailIntro: {
+    fr: 'Envoie à chaque startup ordonnée son rang et son horaire estimé, dans sa langue.',
+    en: 'Sends each ordered startup its rank and estimated time, in its own language.',
+    de: 'Sendet jedem sortierten Startup Rang und geschätzte Zeit in seiner Sprache.',
+  },
+  roEmailSend: {
+    fr: 'Envoyer les emails',
+    en: 'Send the emails',
+    de: 'E-Mails senden',
+  },
+  roEmailSending: { fr: 'Envoi en cours…', en: 'Sending…', de: 'Wird gesendet…' },
+  roEmailIncomplete: {
+    fr: (n) => `Ordre incomplet : ${n} startup(s) sans rang. Réglez l’ordre de passage en Préparation d’abord.`,
+    en: (n) => `Order incomplete: ${n} startup(s) without a rank. Set the running order in Preparation first.`,
+    de: (n) => `Reihenfolge unvollständig: ${n} Startup(s) ohne Rang. Legen Sie zuerst die Reihenfolge in der Vorbereitung fest.`,
+  },
+  roEmailSuccess: {
+    fr: (n) => `${n} email(s) envoyé(s).`,
+    en: (n) => `${n} email(s) sent.`,
+    de: (n) => `${n} E-Mail(s) gesendet.`,
+  },
+  roEmailPartial: {
+    fr: (ok, total) => `${ok}/${total} email(s) envoyé(s) — ${total - ok} en échec.`,
+    en: (ok, total) => `${ok}/${total} email(s) sent — ${total - ok} failed.`,
+    de: (ok, total) => `${ok}/${total} E-Mail(s) gesendet — ${total - ok} fehlgeschlagen.`,
+  },
+  roEmailNone: {
+    fr: 'Aucune startup avec une adresse email à notifier.',
+    en: 'No startup with an email address to notify.',
+    de: 'Kein Startup mit E-Mail-Adresse zu benachrichtigen.',
+  },
 };
