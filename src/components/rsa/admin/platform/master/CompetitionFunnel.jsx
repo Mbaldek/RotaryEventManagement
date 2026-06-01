@@ -31,9 +31,10 @@ import ClubsTab from './competition-tabs/ClubsTab';
 import RulesTab from './competition-tabs/RulesTab';
 import PrizesTab from './competition-tabs/PrizesTab';
 import CommunicationTab from './competition-tabs/CommunicationTab';
+import IncubatorsTab from './competition-tabs/IncubatorsTab';
 import { SectionNote } from './competition-tabs/fields';
 
-const TAB_ORDER = ['identity', 'calendar', 'clubs', 'rules', 'prizes', 'comm'];
+const TAB_ORDER = ['identity', 'calendar', 'clubs', 'rules', 'prizes', 'comm', 'incubators'];
 
 export default function CompetitionFunnel({ open, onClose, onCreated }) {
   const { t } = useLang();
@@ -224,6 +225,12 @@ export default function CompetitionFunnel({ open, onClose, onCreated }) {
       label: t(COMP.tabCommunication),
       disabled: !isCreated,
       render: () => <CommunicationTab values={values} onPatch={patch} />,
+    },
+    {
+      id: 'incubators',
+      label: t({ fr: 'Incubateurs', en: 'Incubators', de: 'Inkubatoren' }),
+      disabled: !isCreated,
+      render: () => <IncubatorsTab competition={competitionRef} mode={isCreated ? 'edit' : 'create'} />,
     },
   ]), [t, isCreated, values, patch, identityErrors, canCreate, create.isPending, createError, competitionRef, handleCreate]);
 
