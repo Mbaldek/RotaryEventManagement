@@ -88,6 +88,14 @@ export const FIELDS = {
   rotary_club: {
     label: { fr: 'Club Rotary parrain', en: 'Sponsoring Rotary club', de: 'Patenschaftsclub (Rotary)' },
   },
+  incubator: {
+    label: { fr: 'Incubateur / structure d’accompagnement', en: 'Incubator / support structure', de: 'Inkubator / Förderstruktur' },
+    help: {
+      fr: 'D’où vous vient l’information sur ce concours ? (facultatif)',
+      en: 'Where did you hear about this competition? (optional)',
+      de: 'Woher kennen Sie diesen Wettbewerb? (optional)',
+    },
+  },
 
   // Étape Club — affiliation obligatoire (blueprint §5). NB : distinct du champ
   // texte libre `rotary_club` ci-dessus ; `club_id` est la clé structurée vers
@@ -355,6 +363,11 @@ export const UI = {
   countryDE: { fr: 'Allemagne', en: 'Germany', de: 'Deutschland' },
   countryOther: { fr: 'Autre', en: 'Other', de: 'Andere' },
   countryOtherLabel: { fr: 'Précisez le pays', en: 'Specify the country', de: 'Land angeben' },
+
+  // Incubateur
+  incubatorPlaceholder: { fr: 'Sélectionnez…', en: 'Select…', de: 'Auswählen…' },
+  incubatorOther: { fr: 'Autre / aucun', en: 'Other / none', de: 'Andere / keine' },
+  incubatorOtherLabel: { fr: 'Précisez (facultatif)', en: 'Please specify (optional)', de: 'Bitte angeben (optional)' },
 
   // Erreurs de chargement
   loadError: {
