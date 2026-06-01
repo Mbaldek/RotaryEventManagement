@@ -358,6 +358,9 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
                     p.set('tab', nextTab);
                     const nm = modeForTab(nextTab);
                     if (nm) p.set('mode', nm);
+                    // live/results restent en pilotage et gardent la session ; un saut
+                    // hors pilotage (ex. team→prep) lâche la session (contexte pilotage).
+                    if (nm && nm !== CLUB_MODES.PILOTAGE) p.delete('session');
                     setParams(p, { replace: true });
                   }}
                 />

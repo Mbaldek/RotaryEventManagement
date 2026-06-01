@@ -141,9 +141,8 @@ export default function PilotageOverview({ edition, clubId, sessions, isSessions
           <KpiRow label={t(CLUB_PILOTAGE.kpiLive)} value={counts.live} accent={GOLD} />
           <KpiRow label={t(CLUB_PILOTAGE.kpiDraft)} value={counts.draft} />
           <KpiRow label={t(CLUB_PILOTAGE.kpiPublished)} value={counts.published} />
-          <KpiRow label={t(CLUB_PILOTAGE.kpiStartups)} value={num(totalStartups)} />
-          <KpiRow label={t(CLUB_PILOTAGE.kpiJurors)} value={num(uniqueJurors)} />
           <KpiRow label={t(CLUB_PILOTAGE.kpiCandidates)} value={num(totalStartups)} />
+          <KpiRow label={t(CLUB_PILOTAGE.kpiJurors)} value={num(uniqueJurors)} />
         </div>
       </aside>
     </div>
