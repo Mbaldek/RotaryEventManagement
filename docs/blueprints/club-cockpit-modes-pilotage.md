@@ -60,9 +60,9 @@ Landing du mode Pilotage. Layout 2 colonnes (réutilise les patterns d'`Overview
 - **Header `GoldRuleSection`** : eyebrow « Pilotage » + titre Playfair « Vue d'ensemble des sessions » + phrase de pouls (« 1 session en direct · 2 à venir · N startups en lice »).
 - **Colonne gauche — Timeline des sessions** : une ligne par session (ordonnée par `position`), pattern L-Numbered-Hairline :
   - pastille position · nom + `kind` · `StatusPill(status, kind='jury')`
-  - `session_date` · `N startups` · `K jurés`
-  - **indice de progression** : `scoring x/y` si `live` (best-effort, cf. §4), sinon rien
+  - `session_date` · `N startups` · `K jurés` (compteurs `—` si indisponibles)
   - bouton **`Ouvrir →`** → `setSession(s.id)` (reste en mode Pilotage, monte la coquille).
+  - **Pas d'indice scoring/prep en Lot 1** : aucune source confirmée au scope club (cf. §4) → déférés au #3.
 - **Colonne droite — KPI rail collant** (`KpiRail`) : SESSIONS · EN DIRECT · BROUILLON · PUBLIÉES · STARTUPS · JURÉS ASSIGNÉS · CANDIDATURES.
 
 ### 3.4 Nouveau composant — `SessionShell.jsx`
@@ -97,12 +97,12 @@ Aucune migration SQL. Tout est déjà requêtable :
 | Candidatures (club) | `useClubStartupsSummary.__total__` | ✓ |
 | Jurés uniques (club) | `useClubJuryAssignmentsCount` | ✓ |
 | **Jurés / session** | `platform_jury_assignments` filtré `session_id` | ✓ |
-| **Scoring x/y / session** | `selection_reviews` (entité [selection.js](../../src/lib/rsa/entities/selection.js)) | best-effort |
+| Scoring x/y / session | `selection_reviews.assigned_session_id` = sélection comité, **pas** le scoring live ; source live-scoring non confirmée au scope club | ✗ → **Lot 2 (#3)** |
 | Prep x/y / session | *aucun modèle* | ✗ → **Lot 2 (#3)** |
 
-**Règle de dégradation :** la timeline affiche ce qui est disponible. Un compteur indisponible s'affiche `—` (jamais de fausse donnée). `scoring x/y` n'apparaît que s'il est calculable au scope club ; sinon on ne montre que le `StatusPill`. `prep x/y` est **retiré** du Lot 1.
+**Règle de dégradation :** la timeline affiche ce qui est disponible. Un compteur indisponible s'affiche `—` (jamais de fausse donnée). Les indices `scoring x/y` et `prep x/y` sont **retirés** du Lot 1 (aucune source fiable) et reviennent avec le #3.
 
-Nouveau hook agrégé `useClubSessionMetrics(editionId, clubId)` : une requête par dimension (`startups` group by `session_id`, `platform_jury_assignments` group by `session_id`), mappée en `{ [sessionId]: { startups, jurors, scoredX, scoredY } }`. Réutilise les `CLUB_KEYS` existants + une nouvelle clé `sessionMetrics(eid, cid)`.
+Nouveau hook agrégé `useClubSessionMetrics(editionId, clubId, sessionIds)` : deux requêtes (`startups` filtré `edition_id`+`club_id`+`session_id not null` ; `platform_jury_assignments` filtré `session_id in sessionIds`), mappées en `{ [sessionId]: { startups, jurors } }` par un helper **pur** `mapSessionMetrics` (testable). Réutilise les `CLUB_KEYS` existants + une nouvelle clé `sessionMetrics(eid, cid)`.
 
 ## 5. Fichiers touchés
 
