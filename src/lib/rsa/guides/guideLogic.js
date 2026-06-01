@@ -23,5 +23,6 @@ export function hasNewBadge(resolvedRows, lastSeenAt) {
   if (list.length === 0) return false;
   if (!lastSeenAt) return true;
   const seen = new Date(lastSeenAt).getTime();
-  return list.some((r) => new Date(r.updated_at).getTime() > seen);
+  // Garde : updated_at absent/invalide ⇒ on ignore (jamais de badge fantôme).
+  return list.some((r) => r.updated_at && new Date(r.updated_at).getTime() > seen);
 }

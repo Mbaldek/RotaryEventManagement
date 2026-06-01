@@ -32,12 +32,17 @@ export const Guide = {
   },
 
   // Admin : enregistre l'ordre après drag (liste d'ids ordonnée).
+  // NB : on ne touche PAS updated_at (un réordonnancement n'est pas un changement
+  // de contenu — sinon la pastille « nouveau » se rallumerait pour tous les users).
+  // Les builders PostgREST ne rejettent pas : on inspecte chaque .error et on throw.
   async reorder(ids) {
-    await Promise.all(
+    const results = await Promise.all(
       ids.map((id, idx) =>
-        supabase.from('guides').update({ sort_order: idx, updated_at: new Date().toISOString() }).eq('id', id),
+        supabase.from('guides').update({ sort_order: idx }).eq('id', id),
       ),
     );
+    const failed = results.find((r) => r.error);
+    if (failed) throw failed.error;
   },
 };
 

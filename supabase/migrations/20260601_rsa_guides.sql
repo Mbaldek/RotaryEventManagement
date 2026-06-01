@@ -26,9 +26,15 @@ create table if not exists public.guide_acks (
 );
 
 -- 2. Helper : qui peut éditer les guides (tier admin / hiérarchie V3) --------
--- SECURITY INVOKER : la lecture privilégiée des rôles est déléguée à
--- has_platform_role (lui-même DEFINER). Moindre privilège ⇒ pas d'advisor
--- "security definer function executable by authenticated".
+-- SECURITY INVOKER : la lecture privilégiée est déléguée à des helpers DEFINER.
+-- IMPORTANT : competition_admin et club_admin ne sont PAS dans app_user_roles
+-- (has_platform_role renverrait toujours false pour eux) — ils vivent dans
+-- competition_admins / club_memberships. On délègue donc à :
+--   is_master_admin()                : master_admin (DEFINER)
+--   my_competition_admin_editions()  : text[] des éditions admin_compétition (DEFINER)
+--   my_club_memberships()            : TABLE(club_id, role) du user (DEFINER)
+-- has_platform_role('admin') couvre l'admin legacy. Pas d'advisor "definer
+-- executable by authenticated" car la fonction elle-même reste INVOKER.
 create or replace function public.rsa_can_edit_guides()
 returns boolean
 language sql
@@ -37,9 +43,12 @@ security invoker
 set search_path = public
 as $$
   select public.has_platform_role('admin')
-      or public.has_platform_role('master_admin')
-      or public.has_platform_role('competition_admin')
-      or public.has_platform_role('club_admin');
+      or public.is_master_admin()
+      or coalesce(array_length(public.my_competition_admin_editions(), 1), 0) > 0
+      or exists (
+           select 1 from public.my_club_memberships() m
+            where m.role = 'club_admin'
+         );
 $$;
 revoke all on function public.rsa_can_edit_guides() from public, anon;
 grant execute on function public.rsa_can_edit_guides() to authenticated;

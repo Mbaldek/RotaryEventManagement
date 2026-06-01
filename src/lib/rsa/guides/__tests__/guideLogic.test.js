@@ -59,3 +59,8 @@ test('guide mis à jour APRÈS l\'ack → badge', () => {
   const rows = [g('a', null, 0, '2026-06-03T00:00:00Z')];
   assert.equal(hasNewBadge(rows, '2026-06-02T00:00:00Z'), true);
 });
+
+test('updated_at absent/null → ignoré (pas de badge fantôme)', () => {
+  const rows = [{ id: 'a', edition_id: null, sort_order: 0, updated_at: null, is_published: true }];
+  assert.equal(hasNewBadge(rows, '2026-06-02T00:00:00Z'), false);
+});
