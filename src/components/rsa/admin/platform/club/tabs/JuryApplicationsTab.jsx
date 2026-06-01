@@ -13,9 +13,9 @@
 // à venir). Dès que le candidat se connecte au moins une fois, le club_admin
 // rappelle approve() pour finaliser membership + profile.
 //
-// IMPORTANT : ce composant est livré au path attendu mais n'est PAS encore wiré
-// dans ClubCockpit.jsx — l'orchestrateur ajoutera l'entrée 'jury_applications'
-// dans CLUB_TABS / TAB_IDS et un import dans ClubCockpit après livraison.
+// Wiré dans ClubCockpit.jsx : 'jury_applications' fait partie des PREP_TABS
+// (cf. src/lib/rsa/club-cockpit/modes.js), labellisé dans CLUB_TABS, rendu dans
+// l'onglet du mode Préparation.
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

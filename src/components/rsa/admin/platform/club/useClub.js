@@ -24,6 +24,7 @@ import {
   EditionClub,
   RsaSession,
 } from '@/lib/rsa/entities';
+import { mapSessionMetrics } from '@/lib/rsa/club-cockpit/metrics';
 
 export const CLUB_KEYS = {
   club:               (id) => ['rsa', 'club', 'club', id],
@@ -32,6 +33,7 @@ export const CLUB_KEYS = {
   attachment:         (eid, cid) => ['rsa', 'club', 'attachment', eid, cid],
   startupsSummary:    (eid, cid) => ['rsa', 'club', 'startups-summary', eid, cid],
   juryAssignmentsForEdition: (eid, cid) => ['rsa', 'club', 'jury-assignments', eid, cid],
+  sessionMetrics:     (eid, cid) => ['rsa', 'club', 'session-metrics', eid, cid],
 };
 
 // ── Club courant (lecture publique via rsa_list_clubs + filtre côté client) ──
@@ -185,6 +187,42 @@ export function useClubJuryAssignmentsCount(editionId, clubId) {
       return { uniqueJurors: uniq.size, totalAssignments: (data || []).length };
     },
     enabled: !!editionId && !!clubId && !sessionsQ.isLoading,
+    staleTime: 30 * 1000,
+  });
+}
+
+// ── Métriques par session (timeline du Pilotage) ───────────────────────────
+// Deux requêtes club-scoped (startups affectées à une session + assignations
+// jury), mappées par le helper pur mapSessionMetrics. sessionIds vient du parent
+// (useClubSessions) pour scoper la requête jury.
+export function useClubSessionMetrics(editionId, clubId, sessionIds) {
+  // Signature stable du set de sessions : incluse dans la clé pour qu'ajouter/
+  // retirer une session (même edition/club) invalide bien le cache.
+  const sessionsSig = [...(sessionIds || [])].sort().join(',');
+  return useQuery({
+    queryKey: [...CLUB_KEYS.sessionMetrics(editionId, clubId), sessionsSig],
+    queryFn: async () => {
+      if (!editionId || !clubId || !sessionIds?.length) return {};
+      const [startupsRes, juryRes] = await Promise.all([
+        supabase
+          .from('startups')
+          .select('id, session_id')
+          .eq('edition_id', editionId)
+          .eq('club_id', clubId)
+          .not('session_id', 'is', null),
+        supabase
+          .from('platform_jury_assignments')
+          .select('jury_user_id, session_id')
+          .in('session_id', sessionIds),
+      ]);
+      if (startupsRes.error) throw startupsRes.error;
+      if (juryRes.error) throw juryRes.error;
+      return mapSessionMetrics({
+        startupRows: startupsRes.data || [],
+        juryRows: juryRes.data || [],
+      });
+    },
+    enabled: !!editionId && !!clubId && !!sessionIds?.length,
     staleTime: 30 * 1000,
   });
 }
