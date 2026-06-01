@@ -1,7 +1,7 @@
 // incubators : partenaires incubateurs opt-in par édition.
 //
-// Tables (cf. supabase/migrations/20260601_rsa_incubateurs.sql) :
-//   incubators        -> Incubator     (PK uuid, name, country, language, website)
+// Tables (cf. supabase/migrations/20260607_rsa_incubators.sql) :
+//   incubators        -> Incubator     (PK text, name, country, language, website)
 //   edition_incubators -> (edition_id, incubator_id, position)
 //
 // Incubator.listForEdition() alimente le select candidat (funnel StepIncubateur).

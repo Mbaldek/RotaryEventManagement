@@ -34,13 +34,15 @@ alter table public.editions add column if not exists comm_pack_config jsonb not 
 alter table public.incubators        enable row level security;
 alter table public.edition_incubators enable row level security;
 
--- incubators : lecture publique (alimente le select candidat) ; écriture master ou tout competition_admin
+-- incubators : lecture publique (alimente le select candidat) ; écriture master uniquement
+-- (un competition_admin de l'édition A ne doit pas pouvoir modifier/supprimer des incubateurs
+--  utilisés par d'autres éditions — la base globale est sous contrôle master_admin).
 drop policy if exists incubators_read  on public.incubators;
 drop policy if exists incubators_write on public.incubators;
 create policy incubators_read  on public.incubators for select using (true);
 create policy incubators_write on public.incubators for all
-  using  (public.is_master_admin() or exists (select 1 from public.competition_admins ca where ca.user_id = auth.uid()))
-  with check (public.is_master_admin() or exists (select 1 from public.competition_admins ca where ca.user_id = auth.uid()));
+  using  (public.is_master_admin())
+  with check (public.is_master_admin());
 
 -- edition_incubators : lecture publique ; écriture via RPC uniquement (defense-in-depth)
 drop policy if exists edition_incubators_read         on public.edition_incubators;
@@ -78,5 +80,16 @@ $$;
 -- ============ Grants ============
 revoke all on function public.rsa_set_edition_incubators(text, text[]) from public;
 grant execute on function public.rsa_set_edition_incubators(text, text[]) to authenticated;
+
+-- ============ Storage : bucket public pour les assets du pack de com ============
+insert into storage.buckets (id, name, public) values ('comm-assets', 'comm-assets', true)
+on conflict (id) do nothing;
+drop policy if exists comm_assets_read  on storage.objects;
+drop policy if exists comm_assets_write on storage.objects;
+create policy comm_assets_read on storage.objects for select
+  using (bucket_id = 'comm-assets');
+create policy comm_assets_write on storage.objects for all
+  using (bucket_id = 'comm-assets' and public.is_master_admin())
+  with check (bucket_id = 'comm-assets' and public.is_master_admin());
 
 commit;

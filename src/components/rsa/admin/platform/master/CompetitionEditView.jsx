@@ -36,6 +36,7 @@ import FormulairesTab from './competition-tabs/FormulairesTab';
 import CommunicationSplit from './competition-tabs/CommunicationSplit';
 import RolesTab from './competition-tabs/RolesTab';
 import SessionsTab from './competition-tabs/SessionsTab';
+import IncubatorsTab from './competition-tabs/IncubatorsTab';
 import DeleteCompetitionModal from './DeleteCompetitionModal';
 
 export default function CompetitionEditView({ editionId, onClose }) {
@@ -193,6 +194,11 @@ export default function CompetitionEditView({ editionId, onClose }) {
           onPatch={patch}
         />
       ),
+    },
+    {
+      id: 'incubators',
+      label: t({ fr: 'Incubateurs', en: 'Incubators', de: 'Inkubatoren' }),
+      render: () => <IncubatorsTab competition={competitionRef} mode="edit" />,
     },
     {
       id: 'roles',
