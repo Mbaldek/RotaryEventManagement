@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useLang } from '@/lib/platform/i18n';
-import { SectionNote } from './fields';
+import { SectionNote, TextRow } from './fields';
 import IncubatorEditModal from './IncubatorEditModal';
 import {
   useAllIncubators,
@@ -8,6 +8,8 @@ import {
   useSetEditionIncubators,
   useDeleteIncubator,
 } from '@/components/rsa/hooks/useIncubators';
+import { Edition } from '@/lib/rsa/entities/editions';
+import { uploadCommAsset, commAssetPublicUrl } from '@/lib/rsa/storage';
 
 export default function IncubatorsTab({ competition, mode = 'edit' }) {
   const { t } = useLang();
@@ -20,6 +22,10 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
   const del = useDeleteIncubator();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+
+  const [editionFull, setEditionFull] = useState(competition || {});
+  useEffect(() => { if (editionId) Edition.get(editionId).then((e) => { if (e) setEditionFull(e); }); }, [editionId]);
+  const [generating, setGenerating] = useState(false);
 
   const ordered = useMemo(() => {
     const optedIds = optedRaw.map((o) => o.id);
@@ -65,6 +71,31 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
     if (i < 0 || j < 0 || j >= ids.length) return;
     [ids[i], ids[j]] = [ids[j], ids[i]];
     persist(ids);
+  };
+
+  const config = editionFull.comm_pack_config || {};
+  const patchConfig = async (partial) => {
+    const next = { ...config, ...partial };
+    const updated = await Edition.update(editionId, { comm_pack_config: next });
+    setEditionFull((prev) => ({ ...prev, comm_pack_config: updated?.comm_pack_config ?? next }));
+  };
+  const onGenerate = async () => {
+    setGenerating(true);
+    try {
+      const { buildCommPackZip } = await import('@/lib/rsa/comm-pack/buildZip');
+      const fetchAsset = async (path) => {
+        const url = commAssetPublicUrl(path);
+        if (!url) return null;
+        const res = await fetch(url);
+        return res.ok ? res.blob() : null;
+      };
+      const blob = await buildCommPackZip(editionFull, { fetchAsset });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${(editionFull.name || 'kit').replace(/\s+/g, '-')}-${editionFull.year || ''}-kit-com.zip`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } finally { setGenerating(false); }
   };
 
   return (
@@ -206,11 +237,78 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
         )}
       </section>
 
+      <section className="border-t border-[#e7e1d6] pt-6">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#0a1f44]">
+          {t({ fr: 'Pack de communication', en: 'Communication pack', de: 'Kommunikationspaket' })}
+        </h3>
+
+        {['fr', 'en', 'de'].map((lng) => (
+          <div key={lng} className="mb-4">
+            <p className="mb-1 text-xs font-semibold text-[#7a7367]">{lng.toUpperCase()}</p>
+            <TextRow id={`tagline-${lng}`} label={t({ fr: 'Accroche', en: 'Tagline', de: 'Slogan' })}
+              value={config.tagline?.[lng] ?? ''}
+              onChange={(val) => patchConfig({ tagline: { ...(config.tagline || {}), [lng]: val } })} />
+            <TextRow id={`venue-${lng}`} label={t({ fr: 'Lieu cérémonie', en: 'Ceremony venue', de: 'Veranstaltungsort' })}
+              value={config.ceremony_venue?.[lng] ?? ''}
+              onChange={(val) => patchConfig({ ceremony_venue: { ...(config.ceremony_venue || {}), [lng]: val } })} />
+          </div>
+        ))}
+
+        <TextRow id="contact-name" label={t({ fr: 'Contact — nom', en: 'Contact — name', de: 'Kontakt — Name' })}
+          value={config.contact?.name ?? ''} onChange={(val) => patchConfig({ contact: { ...(config.contact || {}), name: val } })} />
+        <TextRow id="contact-phone" label={t({ fr: 'Contact — téléphone', en: 'Contact — phone', de: 'Kontakt — Telefon' })}
+          value={config.contact?.phone ?? ''} onChange={(val) => patchConfig({ contact: { ...(config.contact || {}), phone: val } })} />
+        <TextRow id="contact-email" label={t({ fr: 'Contact — email', en: 'Contact — email', de: 'Kontakt — E-Mail' })}
+          value={config.contact?.email ?? ''} onChange={(val) => patchConfig({ contact: { ...(config.contact || {}), email: val } })} />
+
+        <div className="mt-4 space-y-2">
+          <AssetUpload label={t({ fr: 'Logo', en: 'Logo', de: 'Logo' })} kind="logo" current={config.assets?.logo_path}
+            onUploaded={(path) => patchConfig({ assets: { ...(config.assets || {}), logo_path: path } })} editionId={editionId} />
+          {['fr', 'en', 'de'].map((lng) => (
+            <AssetUpload key={`reg-${lng}`} label={`Règlement ${lng.toUpperCase()}`} kind={`reglement-${lng}`}
+              current={config.assets?.reglement?.[lng]}
+              onUploaded={(path) => patchConfig({ assets: { ...(config.assets || {}), reglement: { ...(config.assets?.reglement || {}), [lng]: path } } })}
+              editionId={editionId} />
+          ))}
+          {['fr', 'en', 'de'].map((lng) => (
+            <AssetUpload key={`pos-${lng}`} label={`Affiche ${lng.toUpperCase()}`} kind={`affiche-${lng}`}
+              current={config.assets?.poster?.[lng]}
+              onUploaded={(path) => patchConfig({ assets: { ...(config.assets || {}), poster: { ...(config.assets?.poster || {}), [lng]: path } } })}
+              editionId={editionId} />
+          ))}
+        </div>
+
+        <div className="mt-6 flex items-center gap-3">
+          <button type="button" className="rounded-lg bg-[#0a1f44] px-4 py-2 text-sm text-white disabled:opacity-50"
+            disabled={generating} onClick={onGenerate}>
+            {generating ? t({ fr: 'Génération…', en: 'Generating…', de: 'Erzeugen…' }) : t({ fr: 'Générer le ZIP ⤓', en: 'Generate ZIP ⤓', de: 'ZIP erzeugen ⤓' })}
+          </button>
+        </div>
+      </section>
+
       <IncubatorEditModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         incubator={editing}
       />
+    </div>
+  );
+}
+
+function AssetUpload({ label, kind, current, onUploaded, editionId }) {
+  const [busy, setBusy] = useState(false);
+  const onFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try { const path = await uploadCommAsset({ editionId, kind, file }); onUploaded(path); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-28 text-[#7a7367]">{label}</span>
+      <input type="file" onChange={onFile} disabled={busy} />
+      {current ? <a className="text-xs text-[#0a1f44] underline" href={commAssetPublicUrl(current)} target="_blank" rel="noreferrer">✓</a> : null}
     </div>
   );
 }
