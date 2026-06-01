@@ -110,8 +110,7 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
                 >
                   <input
                     type="checkbox"
-                    checked
-                    readOnly
+                    checked={true}
                     onChange={() => toggle(id, false)}
                     aria-label={`opt-out ${inc.name}`}
                   />

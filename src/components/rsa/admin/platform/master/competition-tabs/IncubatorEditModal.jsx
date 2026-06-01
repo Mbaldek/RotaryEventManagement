@@ -10,6 +10,7 @@ export default function IncubatorEditModal({ open, onClose, incubator }) {
   const isNew = !incubator?.id;
   const save = useSaveIncubator();
   const [form, setForm] = useState({ name: '', country: '', language: '', website: '' });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     setForm({
@@ -18,6 +19,7 @@ export default function IncubatorEditModal({ open, onClose, incubator }) {
       language: incubator?.language ?? '',
       website: incubator?.website ?? '',
     });
+    setError(null);
   }, [incubator, open]);
 
   if (!open) return null;
@@ -31,8 +33,18 @@ export default function IncubatorEditModal({ open, onClose, incubator }) {
     };
     if (!patch.name) return;
     const id = isNew ? slugify(patch.name) : incubator.id;
-    await save.mutateAsync({ id, patch, isNew });
-    onClose();
+    setError(null);
+    try {
+      await save.mutateAsync({ id, patch, isNew });
+      onClose();
+    } catch (e) {
+      // PK collision (slug already used) or RLS denial
+      setError(
+        /duplicate|already exists|23505/i.test(e?.message || '')
+          ? t({ fr: 'Un incubateur avec ce nom existe déjà.', en: 'An incubator with this name already exists.', de: 'Ein Inkubator mit diesem Namen existiert bereits.' })
+          : t({ fr: 'Échec de l’enregistrement.', en: 'Save failed.', de: 'Speichern fehlgeschlagen.' }),
+      );
+    }
   };
 
   return (
@@ -88,6 +100,7 @@ export default function IncubatorEditModal({ open, onClose, incubator }) {
             placeholder="https://"
           />
         </div>
+        {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
         <div className="mt-6 flex justify-end gap-2">
           <button type="button" className="px-4 py-2 text-sm" onClick={onClose}>
             {t({ fr: 'Annuler', en: 'Cancel', de: 'Abbrechen' })}
