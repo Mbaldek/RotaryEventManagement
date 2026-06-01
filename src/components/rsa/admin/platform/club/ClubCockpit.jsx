@@ -24,7 +24,10 @@ import { GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE, TINT_ADMIN } from '@/compo
 import { DANGER, FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import CockpitTabs from '@/components/design/shell/CockpitTabs';
 import { useLang } from '@/lib/platform/i18n';
-import { CLUB_TABS, CLUB_UI, TAB_IDS } from './i18n';
+import { CLUB_TABS, CLUB_UI } from './i18n';
+import { CLUB_MODES, resolveClubMode, tabsForMode, modeForTab, firstTabOf, reconcileTab } from '@/lib/rsa/club-cockpit/modes';
+import PilotageOverview from './tabs/PilotageOverview';
+import SessionShell from './session/SessionShell';
 import ClubStatusStrip from './ClubStatusStrip';
 import ClubSetupTab from './tabs/SetupTab';
 import ClubLiveTab from './tabs/LiveTab';
@@ -60,9 +63,7 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
   const [params, setParams] = useSearchParams();
 
   // ── URL state (deep-link friendly, mirror AdminShell shape) ─────────────
-  const tab = (params.get('tab') && TAB_IDS.includes(params.get('tab')))
-    ? params.get('tab')
-    : 'setup';
+  const tab = params.get('tab') || 'setup';
   const editionId = params.get('edition') || null;
   const sessionId = params.get('session') || null;
 
@@ -83,6 +84,13 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
   const setTab = (next) => {
     const p = new URLSearchParams(params);
     p.set('tab', next);
+    setParams(p, { replace: true });
+  };
+  const setMode = (nextMode) => {
+    const p = new URLSearchParams(params);
+    p.set('mode', nextMode);
+    p.set('tab', firstTabOf(nextMode));
+    p.delete('session');
     setParams(p, { replace: true });
   };
   const setEdition = (next) => {
@@ -120,6 +128,12 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
     [editions, editionId],
   );
 
+  // Mode (Préparation/Pilotage) : ?mode= prime, sinon défaut selon edition.status.
+  const mode = resolveClubMode(params.get('mode'), edition);
+  const modeTabs = tabsForMode(mode);
+  // L'onglet courant doit appartenir au mode ; sinon on retombe sur le 1er du mode.
+  const activeTab = reconcileTab(tab, mode);
+
   // Sessions du club pour l'édition courante (filtrées serveur+client).
   const sessionsQ = useClubSessions(editionId, clubId);
   const sessions = sessionsQ.data || [];
@@ -129,16 +143,16 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
     [sessions, sessionId],
   );
 
-  // Bootstrap session : si on est sur LIVE/RESULTS sans session, prend la 1re.
+  // Bootstrap session : sur LIVE/RESULTS sans session, prend la 1re.
   useEffect(() => {
     if (sessionId || !sessions.length) return;
-    if (tab === 'live' || tab === 'results') {
+    if (activeTab === 'live' || activeTab === 'results') {
       const p = new URLSearchParams(params);
       p.set('session', sessions[0].id);
       setParams(p, { replace: true });
     }
-     
-  }, [sessionId, sessions.length, tab]);
+
+  }, [sessionId, sessions.length, activeTab]);
 
   // ── Header club ──────────────────────────────────────────────────────────
   const club = clubQ.data;
@@ -199,6 +213,39 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
 
       <ClubStatusStrip edition={edition} clubId={clubId} sessions={sessions} />
 
+      {/* Mode switch — axe de premier niveau : Préparation (config) / Pilotage (suivi). */}
+      <div
+        className="inline-flex items-center gap-1 p-1 rounded-[6px] mb-4"
+        role="tablist"
+        aria-label={t(CLUB_UI.modeLabel)}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+      >
+        {[
+          { id: CLUB_MODES.PREP, label: t(CLUB_UI.modePrep) },
+          { id: CLUB_MODES.PILOTAGE, label: t(CLUB_UI.modePilotage) },
+        ].map((mo) => {
+          const on = mode === mo.id;
+          return (
+            <button
+              key={mo.id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setMode(mo.id)}
+              className={`px-3.5 py-1.5 text-[12.5px] rounded-[4px] transition-colors ${FOCUS_RING_CLASS}`}
+              style={{
+                background: on ? 'white' : 'transparent',
+                color: on ? NAVY : MUTED,
+                fontWeight: on ? 600 : 400,
+                borderBottom: on ? `2px solid ${GOLD}` : '2px solid transparent',
+              }}
+            >
+              {mo.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filter row — pickers édition/session (vrais filtres de data, distincts des tabs nav) */}
       <div className="flex flex-wrap items-center gap-3 mb-3">
         <label className="inline-flex items-center gap-2 text-[12.5px]" style={{ color: INK }}>
@@ -221,7 +268,7 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
         </label>
 
         {/* Session picker (LIVE / RESULTS) */}
-        {(tab === 'live' || tab === 'results') && (
+        {(activeTab === 'live' || activeTab === 'results') && (
           <label className="inline-flex items-center gap-2 text-[12.5px]" style={{ color: INK }}>
             <span className="uppercase tracking-[0.14em] text-[10.5px] font-medium" style={{ color: MUTED }}>
               {t(CLUB_UI.session)}
@@ -251,8 +298,8 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
       >
         <CockpitTabs
           idPrefix="club"
-          items={TAB_IDS.map((id) => ({ id, label: t(CLUB_TABS[id]) }))}
-          active={tab}
+          items={modeTabs.map((id) => ({ id, label: t(CLUB_TABS[id]) }))}
+          active={activeTab}
           onChange={setTab}
           ariaLabel={t(CLUB_UI.eyebrow)}
         />
@@ -260,9 +307,9 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
 
       {/* Panel body — surface blanche + hairline pour se détacher du fond CREAM. */}
       <div
-        id={`club-panel-${tab}`}
+        id={`club-panel-${activeTab}`}
         role="tabpanel"
-        aria-labelledby={`club-tab-${tab}`}
+        aria-labelledby={`club-tab-${activeTab}`}
         className="rounded-[4px] p-4 md:p-6"
         style={{ background: 'white', border: `1px solid ${CREAM2}` }}
       >
@@ -276,13 +323,13 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
         {!editionsQ.isLoading && (
           <AnimatePresence mode="wait">
             <motion.div
-              key={tab}
+              key={activeTab}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.2, ease: EASE }}
             >
-              {tab === 'setup' && (
+              {activeTab === 'setup' && (
                 <ClubSetupTab
                   edition={edition}
                   clubId={clubId}
@@ -291,10 +338,34 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
                   onSelectSession={setSession}
                 />
               )}
-              {tab === 'live' && (
+              {activeTab === 'pilotage' && !sessionId && (
+                <PilotageOverview
+                  edition={edition}
+                  clubId={clubId}
+                  sessions={sessions}
+                  isSessionsLoading={sessionsQ.isLoading}
+                  onSelectSession={setSession}
+                />
+              )}
+              {activeTab === 'pilotage' && sessionId && (
+                <SessionShell
+                  session={selectedSession}
+                  edition={edition}
+                  clubId={clubId}
+                  onBack={() => setSession(null)}
+                  onDeepLink={(nextTab) => {
+                    const p = new URLSearchParams(params);
+                    p.set('tab', nextTab);
+                    const nm = modeForTab(nextTab);
+                    if (nm) p.set('mode', nm);
+                    setParams(p, { replace: true });
+                  }}
+                />
+              )}
+              {activeTab === 'live' && (
                 <ClubLiveTab edition={edition} clubId={clubId} session={selectedSession} />
               )}
-              {tab === 'results' && (
+              {activeTab === 'results' && (
                 <ClubResultsTab
                   edition={edition}
                   clubId={clubId}
@@ -303,25 +374,25 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
                   onSelectSession={setSession}
                 />
               )}
-              {tab === 'team' && (
+              {activeTab === 'team' && (
                 <ClubTeamTab clubId={clubId} />
               )}
-              {tab === 'jury_applications' && (
+              {activeTab === 'jury_applications' && (
                 <JuryApplicationsTab clubId={clubId} />
               )}
-              {tab === 'rules' && (
+              {activeTab === 'rules' && (
                 <ClubRulesTab edition={edition} clubId={clubId} />
               )}
-              {tab === 'prizes' && (
+              {activeTab === 'prizes' && (
                 <PrizesList editionId={editionId} clubId={clubId} scope="club" />
               )}
-              {tab === 'comms' && (
+              {activeTab === 'comms' && (
                 <>
                   <CommunicatePanel editionId={editionId} clubId={clubId} />
                   <EmailStudio clubId={clubId} edition={edition} />
                 </>
               )}
-              {tab === 'analytics' && (
+              {activeTab === 'analytics' && (
                 <AnalyticsPanel scope="club" editionId={editionId} clubId={clubId} />
               )}
             </motion.div>
