@@ -63,4 +63,12 @@ export const SESSION_JURY = {
     en: 'Awaiting sign-in',
     de: 'Wartet auf Anmeldung',
   },
+  groupAssigned:   { fr: 'Affectés', en: 'Assigned', de: 'Zugewiesen' },
+  groupPending:    { fr: 'En attente', en: 'Pending', de: 'Ausstehend' },
+  assignedShort:   { fr: 'affecté(s)', en: 'assigned', de: 'zugewiesen' },
+  pendingShort:    { fr: 'en attente', en: 'pending', de: 'ausstehend' },
+  approve:         { fr: 'Approuver', en: 'Approve', de: 'Genehmigen' },
+  formFullName:    { fr: 'Nom complet', en: 'Full name', de: 'Vollständiger Name' },
+  errNameRequired: { fr: 'Nom requis (2 caractères min).', en: 'Name required (2 chars min).', de: 'Name erforderlich (min. 2 Zeichen).' },
+  optional:        { fr: 'optionnel', en: 'optional', de: 'optional' },
 };
