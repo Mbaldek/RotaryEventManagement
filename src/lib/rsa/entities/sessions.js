@@ -60,6 +60,11 @@ export const RsaSession = {
     const { error } = await supabase.rpc('rsa_set_session_draft', { p_session_id: sessionId });
     if (error) throw error;
   },
+  // Rouvre une session verrouillée (locked → live) — symétrique de lock.
+  async unlock(sessionId) {
+    const { error } = await supabase.rpc('rsa_unlock_session', { p_session_id: sessionId });
+    if (error) throw error;
+  },
   async resetTemplate(sessionId) {
     const { error } = await supabase.rpc('rsa_reset_session_template', { p_session_id: sessionId });
     if (error) throw error;

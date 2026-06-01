@@ -355,7 +355,16 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
                   clubId={clubId}
                   sessions={sessions}
                   isSessionsLoading={sessionsQ.isLoading}
-                  onSelectSession={setSession}
+                  // « Ouvrir » → saute direct sur la grille de scoring live (onglet
+                  // En direct), pas sur la coquille de cartes. La grille existe déjà
+                  // (ClubLiveTab) ; le mode Pilotage la surface en un clic.
+                  onSelectSession={(sid) => {
+                    const p = new URLSearchParams(params);
+                    p.set('tab', 'live');
+                    p.set('session', sid);
+                    p.delete('panel');
+                    setParams(p, { replace: true });
+                  }}
                 />
               )}
               {activeTab === 'pilotage' && sessionId && panel === 'order' && (
