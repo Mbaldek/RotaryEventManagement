@@ -26,8 +26,8 @@
 //   session_published     -> admin only
 //   results_published     -> admin only
 //   session_running_order -> admin OR master_admin (platform roles via
-//                            rsa_my_roles ; club_admin is club-scoped and
-//                            mirrors the SQL guard but isn't matched here)
+//                            rsa_my_roles) OR club_admin of data.club_id
+//                            (club-scoped, resolved via my_club_memberships)
 //
 // Body shape
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,10 +78,10 @@ const ROLE_REQUIREMENTS: Record<EmailType, string[]> = {
   session_published: ["admin"],
   results_published: ["admin"],
   // Club logistics email. `admin`/`master_admin` are platform roles returned by
-  // rsa_my_roles (the only source this handler consults). `club_admin` is a
-  // club-scoped membership role (resolved elsewhere via my_club_memberships) —
-  // listed here to document intent and mirror the rsa_set_session_running_order
-  // SQL guard (admin OR master_admin OR club_admin of the session's club).
+  // rsa_my_roles. `club_admin` is a club-scoped membership role that rsa_my_roles
+  // does NOT return — it is authorized separately in the authz block via
+  // my_club_memberships against data.club_id (parity with send-bulk, mirrors the
+  // rsa_set_session_running_order SQL guard). Listed here to document intent.
   session_running_order: ["admin", "master_admin", "club_admin"],
 };
 
@@ -572,7 +572,8 @@ function copyResultsPublished(lang: Lang, data: Record<string, unknown>): Omit<C
 
 // ── session_running_order ──
 // data: { startup_name, running_order (ordinal string "3e"/"3rd"/"3."),
-//         estimated_time ("HH:MM"), session_name, session_date? }
+//         estimated_time ("HH:MM"), session_name, session_date?, club_id? }
+//   club_id is consumed only by the authz layer (club_admin check) — never rendered.
 function copySessionRunningOrder(lang: Lang, data: Record<string, unknown>): Omit<Copy, "greeting" | "signOff" | "signature"> {
   const session = esc(data.session_name);
   const order = esc(data.running_order);
@@ -920,7 +921,22 @@ Deno.serve(async (req: Request) => {
   }
   const roles = Array.isArray(rolesData) ? rolesData.map((r) => String(r).toLowerCase()) : [];
   const required = ROLE_REQUIREMENTS[payload.type];
-  const allowed = required.some((r) => roles.includes(r));
+  let allowed = required.some((r) => roles.includes(r));
+
+  // session_running_order : un club_admin du club de la session est autorisé
+  // (parité avec send-bulk ; rsa_my_roles ne renvoie pas les rôles club-scoped).
+  if (!allowed && payload.type === "session_running_order") {
+    const clubId = (payload.data as Record<string, unknown> | undefined)?.club_id;
+    if (typeof clubId === "string" && clubId) {
+      const { data: cmRows } = await supabase.rpc("my_club_memberships");
+      if (Array.isArray(cmRows) && cmRows.some(
+        (m: { club_id: string; role: string }) => m.club_id === clubId && m.role === "club_admin",
+      )) {
+        allowed = true;
+      }
+    }
+  }
+
   if (!allowed) {
     return jsonResponse(403, {
       ok: false,
