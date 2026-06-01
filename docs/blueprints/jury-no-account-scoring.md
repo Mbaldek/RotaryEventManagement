@@ -69,10 +69,13 @@ projection finaliste + `platform_finale_membership` OK. Seed de test nettoyé.
 réelle = le slug). Le **lien + PIN se communiquent dans l'email pré-read / invitation Teams**
 des jurés (pas d'envoi séparé).
 
-**Prochaine brique (comms)** : injecter le lien `/Score?s=<slug>` + le PIN dans l'email
-pré-read / invitation Teams envoyé aux jurés approuvés (via Email Studio / edge
-send-transactional, cf. `project_session_presentation_generator`). Localiser le template
-d'invitation juré et y ajouter le bloc accès scoring (slug+PIN de la session).
+**Comms — LIVRÉE** : nouvel email transactionnel `jury_scoring_invite` (edge
+`send-transactional` v6, FR/EN/DE) contenant le lien `/Score?s=<slug>` (construit
+serveur avec APP_URL) + le PIN + le lien Teams (si `session_config.teams_link`).
+Déclenché depuis `SessionScoringAccess` (bouton « Envoyer l'invitation aux jurés » +
+confirmation) ; destinataires = `jury_applications` **approuvés avec email** (via
+`rsa_session_jurors`), langue = `preferred_lang` de chaque juré. Autorisation : admin /
+master_admin / club_admin du club de la session. `transactional.js` ALLOWED_TYPES étendu.
 
 **Note** : `rsa_publish_session` agrège désormais `jury_scores` name-keyed — les sessions
 historiques notées via le modèle auth `platform_jury_scores` ne seraient plus agrégées si
