@@ -11,13 +11,12 @@ import EligibilityPreview from '../EligibilityPreview';
 import { validateField, isOtherCountry } from '../validation';
 import { useEditionIncubators } from '@/components/rsa/hooks/useIncubators';
 
-export default function StepCompany({ value, onChange, errors = {}, rules, disabled = false }) {
+export default function StepCompany({ value, onChange, errors = {}, rules, disabled = false, editionId }) {
   const { t } = useLang();
   const v = value || {};
   const err = (field) => (errors[field] ? t(UI[errors[field]]) : undefined);
 
-  const editionId = v?.edition_id;
-  const { data: incubatorList = [] } = useEditionIncubators(editionId);
+  const { data: incubatorList = [], isLoading: incubatorsLoading } = useEditionIncubators(editionId);
   const incubatorOptions = [
     ...incubatorList.map((inc) => ({ value: inc.id, label: inc.name })),
     { value: '__other__', label: t(UI.incubatorOther) },
@@ -120,7 +119,7 @@ export default function StepCompany({ value, onChange, errors = {}, rules, disab
             id={id}
             aria-describedby={describedBy}
             invalid={invalid}
-            disabled={disabled}
+            disabled={disabled || incubatorsLoading}
             value={incubatorSelectValue}
             onChange={onIncubatorSelect}
             placeholder={t(UI.incubatorPlaceholder)}
