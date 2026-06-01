@@ -130,6 +130,7 @@ export default function Score() {
   const [expanded, setExpanded] = useState(null);
   const [savingName, setSavingName] = useState(null);
   const [submittingName, setSubmittingName] = useState(null);
+  const [docUrls, setDocUrls] = useState({}); // pré-read : {path: signedUrl} via edge score-docs
 
   const weights = useMemo(() => resolveSessionWeights(ctx?.weights), [ctx?.weights]);
   const status = ctx?.status || 'draft';
@@ -198,6 +199,25 @@ export default function Score() {
     })();
     return () => { cancelled = true; };
   }, [juryName, ctx, pin, slug]);
+
+  // Pré-read : récupère les URLs signées des documents (deck + exec summary) de la
+  // session via l'edge score-docs (gardée slug+PIN ; le bucket est privé donc anon
+  // ne peut pas signer lui-même). Optionnel : en cas d'échec, on n'affiche pas de liens.
+  useEffect(() => {
+    if (!ctx || !slug || !pin) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('score-docs', {
+          body: { slug, pin },
+        });
+        if (!cancelled && !error && data?.ok) setDocUrls(data.urls || {});
+      } catch {
+        /* documents optionnels — pas bloquant pour le scoring */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [ctx, slug, pin]);
 
   function pickJuror(name) {
     setJuryName(name);
@@ -429,7 +449,7 @@ export default function Score() {
                     submitting={submittingName === s.name}
                     readOnly={!scoringOpen}
                     weights={weights}
-                    hideDocuments
+                    documentUrls={docUrls}
                   />
                 ))}
               </div>
