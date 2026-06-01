@@ -51,3 +51,6 @@ azure-credentials.json
 playwright-report/
 test-results/
 
+# Deck de présentation lourd (médias base64 embarqués ~10 Mo) — gardé en local
+docs/presentation/grande_finale.html
+
