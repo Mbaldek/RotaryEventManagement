@@ -130,8 +130,9 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = `${(editionFull.name || 'kit').replace(/\s+/g, '-')}-${editionFull.year || ''}-kit-com.zip`;
+      const href = a.href;
       a.click();
-      URL.revokeObjectURL(a.href);
+      setTimeout(() => URL.revokeObjectURL(href), 10000);
     } finally { setGenerating(false); }
   };
 
@@ -341,18 +342,28 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
 
 function AssetUpload({ label, kind, current, onUploaded, editionId }) {
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   const onFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
-    try { const path = await uploadCommAsset({ editionId, kind, file }); onUploaded(path); }
-    finally { setBusy(false); }
+    setFailed(false);
+    try {
+      const path = await uploadCommAsset({ editionId, kind, file });
+      onUploaded(path);
+    } catch (err) {
+      console.error('uploadCommAsset failed', err);
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className="w-28 text-[#7a7367]">{label}</span>
       <input type="file" onChange={onFile} disabled={busy} />
       {current ? <a className="text-xs text-[#0a1f44] underline" href={commAssetPublicUrl(current)} target="_blank" rel="noreferrer">✓</a> : null}
+      {failed ? <span className="text-xs text-red-700">⚠</span> : null}
     </div>
   );
 }
@@ -368,8 +379,12 @@ function SourcingTable({ editionId, allById, t }) {
       {rows.map(([id, n]) => (
         <li key={id} className="flex justify-between"><span>{allById[id]?.name || id}</span><span className="font-semibold">{n}</span></li>
       ))}
-      <li className="flex justify-between text-[#7a7367]"><span>{t({ fr: 'Autre', en: 'Other', de: 'Andere' })}</span><span>{data.other}</span></li>
-      <li className="flex justify-between text-[#7a7367]"><span>{t({ fr: 'Non renseigné', en: 'Not specified', de: 'Nicht angegeben' })}</span><span>{data.none}</span></li>
+      {data.other > 0 && (
+        <li className="flex justify-between text-[#7a7367]"><span>{t({ fr: 'Autre', en: 'Other', de: 'Andere' })}</span><span>{data.other}</span></li>
+      )}
+      {data.none > 0 && (
+        <li className="flex justify-between text-[#7a7367]"><span>{t({ fr: 'Non renseigné', en: 'Not specified', de: 'Nicht angegeben' })}</span><span>{data.none}</span></li>
+      )}
     </ul>
   );
 }
