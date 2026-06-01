@@ -89,7 +89,8 @@ export default function ResultsTab({ edition, session, sessions, onSelectSession
   const cfg = results.data?.config || null;
   const scores = results.data?.scores || [];
   const status = cfg?.status || 'draft';
-  const weights = useMemo(() => resolveSessionWeights(cfg), [cfg]);
+  // Poids = paramètre de compétition (editions.scoring_weights), pas de session.
+  const weights = useMemo(() => resolveSessionWeights(edition?.scoring_weights), [edition]);
 
   // Preview = même logique que le snapshot publié (RPC) : moyenne pondérée par les
   // poids de session, sans overrides (parité preview/published). buildRanking lit

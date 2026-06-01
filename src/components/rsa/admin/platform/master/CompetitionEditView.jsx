@@ -32,6 +32,8 @@ import CalendarTab from './competition-tabs/CalendarTab';
 import ClubsTab from './competition-tabs/ClubsTab';
 import RulesTab from './competition-tabs/RulesTab';
 import PrizesTab from './competition-tabs/PrizesTab';
+import ScoringWeightsEditor from '@/components/rsa/scoring/ScoringWeightsEditor';
+import { DEFAULT_WEIGHTS_PCT } from '@/lib/rsa/constants';
 import FormulairesTab from './competition-tabs/FormulairesTab';
 import CommunicationSplit from './competition-tabs/CommunicationSplit';
 import RolesTab from './competition-tabs/RolesTab';
@@ -92,6 +94,8 @@ export default function CompetitionEditView({ editionId, onClose }) {
                                   ? competition.custom_fields_candidate : [],
       custom_fields_jury:       Array.isArray(competition.custom_fields_jury)
                                   ? competition.custom_fields_jury : [],
+      // Poids des critères de notation (niveau compétition) — édités dans l'onglet Notation.
+      scoring_weights:          competition.scoring_weights || { ...DEFAULT_WEIGHTS_PCT },
     };
   }, [competition]);
 
@@ -161,6 +165,16 @@ export default function CompetitionEditView({ editionId, onClose }) {
       id: 'rules',
       label: t(COMP.tabRules),
       render: () => <RulesTab values={values} onPatch={patch} />,
+    },
+    {
+      id: 'scoring',
+      label: t({ fr: 'Notation', en: 'Scoring', de: 'Bewertung' }),
+      render: () => (
+        <ScoringWeightsEditor
+          value={values.scoring_weights}
+          onChange={(w) => patch({ scoring_weights: w })}
+        />
+      ),
     },
     {
       id: 'prizes',
