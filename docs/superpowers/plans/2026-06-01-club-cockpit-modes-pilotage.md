@@ -225,8 +225,10 @@ test('entrées par défaut tolérantes : startups ET jurors initialisés', () =>
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npx vitest run src/lib/rsa/club-cockpit/metrics.test.js`
+Run: `node --test src/lib/rsa/club-cockpit/metrics.test.js`
 Expected: FAIL — `Cannot find module './metrics.js'`.
+
+> **Test runner note :** ce repo lance ses tests de logique pure via `node --test` (style `node:test`, cf. `src/lib/rsa/guides/__tests__/guideLogic.test.js`). `npm test`/vitest est INCOMPATIBLE avec ces fichiers (« No test suite found ») et est déjà rouge dessus — ne PAS l'utiliser pour vérifier ces modules.
 
 - [ ] **Step 3: Write minimal implementation**
 
@@ -268,8 +270,8 @@ export function mapSessionMetrics({ startupRows = [], juryRows = [] }) {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npx vitest run src/lib/rsa/club-cockpit/metrics.test.js`
-Expected: PASS (5 tests).
+Run: `node --test src/lib/rsa/club-cockpit/metrics.test.js`
+Expected: PASS (5 tests : `# pass 5 # fail 0`).
 
 - [ ] **Step 5: Commit**
 
@@ -1051,10 +1053,11 @@ git commit -m "feat(club-cockpit): axe de mode Préparation/Pilotage + montage P
 
 **Files:** aucun (vérification).
 
-- [ ] **Step 1: Lancer toute la suite de tests pure**
+- [ ] **Step 1: Lancer les tests pure du Lot 1**
 
-Run: `npm test`
-Expected: PASS — inclut `modes.test.js` (7) + `metrics.test.js` (5) + les tests rsa existants.
+Run: `node --test src/lib/rsa/club-cockpit/modes.test.js src/lib/rsa/club-cockpit/metrics.test.js`
+Expected: PASS — `modes.test.js` (8) + `metrics.test.js` (5) → `# pass 13 # fail 0`.
+(Ne PAS utiliser `npm test`/vitest : incompatible avec les fichiers `node:test`, déjà rouge sur `guideLogic.test.js`.)
 
 - [ ] **Step 2: Lint complet**
 
