@@ -45,6 +45,10 @@ export const FIELDS = {
     label: { fr: 'Site web', en: 'Website', de: 'Webseite' },
     help: { fr: 'https:// ajouté automatiquement.', en: 'https:// added automatically.', de: 'https:// wird automatisch ergänzt.' },
   },
+  preferred_lang: {
+    label: { fr: 'Langue de communication', en: 'Communication language', de: 'Kommunikationssprache' },
+    help: { fr: 'Langue de nos emails (convocations, résultats).', en: 'Language of our emails (invitations, results).', de: 'Sprache unserer E-Mails (Einladungen, Ergebnisse).' },
+  },
 
   // Step 2 — Société
   country: {

@@ -21,6 +21,8 @@ const SAVE_DRAFT_FIELDS = new Set([
   'email',
   'phone',
   'website',
+  // Langue de communication (emails : convocations, résultats). CHECK in ('fr','en','de').
+  'preferred_lang',
   'country',
   'creation_date',
   'registration_number',
