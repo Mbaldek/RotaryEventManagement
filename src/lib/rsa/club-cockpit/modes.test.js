@@ -2,8 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CLUB_MODES, PREP_TABS, PILOTAGE_TABS,
-  resolveClubMode, tabsForMode, modeForTab, firstTabOf, reconcileTab,
+  isClubMode, resolveClubMode, tabsForMode, modeForTab, firstTabOf, reconcileTab,
 } from './modes.js';
+
+test('isClubMode reconnaît les modes valides uniquement', () => {
+  assert.ok(isClubMode(CLUB_MODES.PREP));
+  assert.ok(isClubMode(CLUB_MODES.PILOTAGE));
+  assert.ok(!isClubMode('garbage'));
+  assert.ok(!isClubMode(null));
+});
 
 test('arrays couvrent les 9 onglets existants + pilotage, sans doublon', () => {
   const all = [...PREP_TABS, ...PILOTAGE_TABS];

@@ -22,6 +22,8 @@ export function resolveClubMode(urlMode, edition) {
   return edition?.status === 'open' ? CLUB_MODES.PILOTAGE : CLUB_MODES.PREP;
 }
 
+// Fallback sur PREP_TABS pour toute valeur non-PILOTAGE (y compris null/undefined).
+// Les appelants passent toujours un mode produit par resolveClubMode().
 export function tabsForMode(mode) {
   return mode === CLUB_MODES.PILOTAGE ? PILOTAGE_TABS : PREP_TABS;
 }
