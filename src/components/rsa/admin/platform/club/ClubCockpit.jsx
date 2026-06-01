@@ -364,7 +364,7 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
               {activeTab === 'pilotage' && sessionId && panel === 'deck' && (
                 <DeckGenerator session={selectedSession} onBack={() => setPanel(null)} />
               )}
-              {activeTab === 'pilotage' && sessionId && !panel && (
+              {activeTab === 'pilotage' && sessionId && panel !== 'order' && panel !== 'deck' && (
                 <SessionShell
                   session={selectedSession}
                   edition={edition}
