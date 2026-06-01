@@ -196,8 +196,11 @@ export function useClubJuryAssignmentsCount(editionId, clubId) {
 // jury), mappées par le helper pur mapSessionMetrics. sessionIds vient du parent
 // (useClubSessions) pour scoper la requête jury.
 export function useClubSessionMetrics(editionId, clubId, sessionIds) {
+  // Signature stable du set de sessions : incluse dans la clé pour qu'ajouter/
+  // retirer une session (même edition/club) invalide bien le cache.
+  const sessionsSig = [...(sessionIds || [])].sort().join(',');
   return useQuery({
-    queryKey: CLUB_KEYS.sessionMetrics(editionId, clubId),
+    queryKey: [...CLUB_KEYS.sessionMetrics(editionId, clubId), sessionsSig],
     queryFn: async () => {
       if (!editionId || !clubId || !sessionIds?.length) return {};
       const [startupsRes, juryRes] = await Promise.all([
