@@ -7,6 +7,7 @@ import {
   useEditionIncubators,
   useSetEditionIncubators,
   useDeleteIncubator,
+  useSourcingStats,
 } from '@/components/rsa/hooks/useIncubators';
 import { Edition } from '@/lib/rsa/entities/editions';
 import { uploadCommAsset, commAssetPublicUrl } from '@/lib/rsa/storage';
@@ -322,6 +323,13 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
         </div>
       </section>
 
+      <section className="border-t border-[#e7e1d6] pt-6">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#0a1f44]">
+          {t({ fr: 'Provenance des candidats', en: 'Applicant sourcing', de: 'Herkunft der Bewerber' })}
+        </h3>
+        <SourcingTable editionId={editionId} allById={allById} t={t} />
+      </section>
+
       <IncubatorEditModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -346,5 +354,22 @@ function AssetUpload({ label, kind, current, onUploaded, editionId }) {
       <input type="file" onChange={onFile} disabled={busy} />
       {current ? <a className="text-xs text-[#0a1f44] underline" href={commAssetPublicUrl(current)} target="_blank" rel="noreferrer">✓</a> : null}
     </div>
+  );
+}
+
+function SourcingTable({ editionId, allById, t }) {
+  const { data } = useSourcingStats(editionId);
+  if (!data || data.total === 0) {
+    return <SectionNote>{t({ fr: 'Aucune candidature soumise pour le moment.', en: 'No submitted applications yet.', de: 'Noch keine eingereichten Bewerbungen.' })}</SectionNote>;
+  }
+  const rows = Object.entries(data.counts).sort((a, b) => b[1] - a[1]);
+  return (
+    <ul className="space-y-1 text-sm">
+      {rows.map(([id, n]) => (
+        <li key={id} className="flex justify-between"><span>{allById[id]?.name || id}</span><span className="font-semibold">{n}</span></li>
+      ))}
+      <li className="flex justify-between text-[#7a7367]"><span>{t({ fr: 'Autre', en: 'Other', de: 'Andere' })}</span><span>{data.other}</span></li>
+      <li className="flex justify-between text-[#7a7367]"><span>{t({ fr: 'Non renseigné', en: 'Not specified', de: 'Nicht angegeben' })}</span><span>{data.none}</span></li>
+    </ul>
   );
 }
