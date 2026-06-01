@@ -346,6 +346,17 @@ export default function Admin() {
         <GuideSpaceHelp space="admin" editionId={currentEditionId || null} className="shrink-0 mt-1" />
       </header>
 
+      {/* Lien admin discret vers le module CRUD des guides contextuels. */}
+      <div className="mb-6">
+        <a
+          href="/GuidesAdmin"
+          className="inline-flex items-center gap-1.5 text-[12.5px] font-medium underline outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] rounded-[3px]"
+          style={{ color: NAVY }}
+        >
+          {t({ fr: 'Gérer les guides d’aide →', en: 'Manage help guides →', de: 'Hilfe-Anleitungen verwalten →' })}
+        </a>
+      </div>
+
       {/* V3 — Persona preview banner. Sticky-ish (mb-5 sous le header), visible
           uniquement si master_admin et scope != master. Cliquer "Retour à
           Master" reset le scope (URL + body). */}
