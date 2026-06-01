@@ -42,6 +42,7 @@ import {
 } from '@/components/rsa/admin/platform/master/useMaster';
 import useHierarchyScope from '@/components/rsa/admin/platform/useHierarchyScope';
 import { UI } from '@/components/rsa/admin/platform/i18n';
+import GuideSpaceHelp from '@/components/rsa/guides/GuideSpaceHelp';
 
 // V3 perf — les 4 cockpits sont lazy-loadés : Admin n'en rend qu'UN selon le
 // scope/persona, donc un club_admin ne télécharge que ClubCockpit (et plus le
@@ -334,12 +335,15 @@ export default function Admin() {
       {/* V3 hiérarchie — breadcrumb Master ▸ Compétition ▸ Club. Rendu vide
           (donc invisible) en scope 'master' / 'legacy' / 'none'. */}
       <HierarchyBreadcrumb items={hierarchy.breadcrumbItems} />
-      <header className="mb-8 md:mb-10">
-        <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
-        <EditorialTitle lead={t(UI.pageTitle)} size="md" />
-        <p className="mt-3 text-[14px] md:text-[15px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.65 }}>
-          {t(UI.pageSubtitle)}
-        </p>
+      <header className="mb-8 md:mb-10 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
+          <EditorialTitle lead={t(UI.pageTitle)} size="md" />
+          <p className="mt-3 text-[14px] md:text-[15px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.65 }}>
+            {t(UI.pageSubtitle)}
+          </p>
+        </div>
+        <GuideSpaceHelp space="admin" editionId={currentEditionId || null} className="shrink-0 mt-1" />
       </header>
 
       {/* V3 — Persona preview banner. Sticky-ish (mb-5 sous le header), visible

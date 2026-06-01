@@ -4,6 +4,7 @@ import React from 'react';
 import { Eyebrow, EditorialTitle } from '@/components/design';
 import { NAVY, GOLD, INK, MUTED } from '@/components/design/tokens';
 import { useLang } from '@/lib/platform/i18n';
+import GuideSpaceHelp from '@/components/rsa/guides/GuideSpaceHelp';
 import { UI } from './i18n';
 
 function Stat({ value, label, accent }) {
@@ -24,6 +25,9 @@ export default function ConcoursHero({ edition, kpis }) {
 
   return (
     <section className="mb-10 md:mb-12">
+      <div className="flex justify-end mb-2">
+        <GuideSpaceHelp space="concours" editionId={edition?.id || null} />
+      </div>
       <Eyebrow>
         {t(UI.heroEyebrow)}{edition?.year ? ` · ${t({ fr: 'Édition', en: 'Edition', de: 'Ausgabe' })} ${edition.year}` : ''}
       </Eyebrow>
