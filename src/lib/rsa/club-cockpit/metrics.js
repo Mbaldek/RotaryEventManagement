@@ -19,6 +19,7 @@ export function mapSessionMetrics({ startupRows = [], juryRows = [] }) {
   const seen = {};
   for (const r of juryRows) {
     if (!r.session_id) continue;
+    if (!r.jury_user_id) continue; // pas de juré fantôme (undefined compterait pour 1)
     ensure(r.session_id); // garantit l'entrée même si 0 startup
     if (!seen[r.session_id]) seen[r.session_id] = new Set();
     seen[r.session_id].add(r.jury_user_id);

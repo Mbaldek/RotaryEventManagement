@@ -50,3 +50,11 @@ test('entrées par défaut tolérantes : startups ET jurors initialisés', () =>
   assert.equal(out.s1.jurors, 0);
   assert.equal(out.s2.startups, 0);
 });
+
+test('ignore les lignes sans jury_user_id (pas de juré fantôme)', () => {
+  const out = mapSessionMetrics({
+    startupRows: [],
+    juryRows: [{ jury_user_id: null, session_id: 's1' }],
+  });
+  assert.deepEqual(out, {});
+});
