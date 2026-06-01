@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { GripVertical, Pencil, Trash2, Plus } from 'lucide-react';
-import { NAVY, GOLD, MUTED, CREAM, CREAM2 } from '@/components/design/tokens';
+import { NAVY, MUTED, CREAM, CREAM2 } from '@/components/design/tokens';
 import { useLang, pickLang } from '@/lib/platform/i18n';
 import { GUIDE_SPACES, GUIDE_SPACE_LABEL } from '@/components/rsa/guides/i18n';
 import { useGuidesAdmin, useGuideMutations } from '@/components/rsa/guides/useGuides';
