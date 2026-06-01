@@ -141,3 +141,12 @@
 @media (prefers-reduced-motion: reduce) {
   .rotary-spin { animation: none; }
 }
+
+/* Lisibilité du markdown des guides (drawer). */
+.guide-prose h2 { font-size: 15px; font-weight: 600; margin: 14px 0 6px; color: #0f1f3d; }
+.guide-prose h3 { font-size: 13.5px; font-weight: 600; margin: 12px 0 4px; color: #0f1f3d; }
+.guide-prose p { margin: 0 0 10px; }
+.guide-prose ul, .guide-prose ol { margin: 0 0 10px; padding-left: 20px; }
+.guide-prose li { margin: 2px 0; }
+.guide-prose a { color: #9a6400; text-decoration: underline; }
+.guide-prose strong { font-weight: 600; color: #0f1f3d; }
