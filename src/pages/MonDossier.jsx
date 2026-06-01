@@ -48,6 +48,7 @@ import {
   rulesFromEdition,
 } from '@/components/rsa/candidature';
 import ChampionPhotoOptIn from '@/components/rsa/candidature/ChampionPhotoOptIn';
+import GuideSpaceHelp from '@/components/rsa/guides/GuideSpaceHelp';
 import { UI } from '@/components/rsa/candidature/i18n';
 import { formatDate } from '@/components/rsa/candidature/validation';
 
@@ -550,8 +551,9 @@ export default function MonDossier() {
   // (plus de club côté candidat — assigné par admin post-soumission).
   return (
     <PageShell nav footer={<PlatformFooter />}>
-      <div className="mb-5">
+      <div className="mb-5 flex items-center justify-between gap-4">
         <Eyebrow>{t(UI.eyebrow)}</Eyebrow>
+        <GuideSpaceHelp space="dossier" editionId={editionId || null} className="shrink-0" />
       </div>
       <CandidatureFunnel
         startup={dossier}

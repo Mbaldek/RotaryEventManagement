@@ -39,6 +39,7 @@ import {
   compareSessions,
 } from '@/components/rsa/jury';
 import { UI } from '@/components/rsa/jury/i18n';
+import GuideSpaceHelp from '@/components/rsa/guides/GuideSpaceHelp';
 
 function Centered({ children, minHeight = '40vh' }) {
   return (
@@ -191,6 +192,7 @@ function JuryWorkspace({ authUserId, isAdmin, selectedSessionId, onSelectSession
             {t(UI.pageSubtitle)}
           </p>
         </div>
+        <GuideSpaceHelp space="jury" editionId={adminEditionId || null} className="shrink-0 self-start" />
         {(() => {
           const sessionsCount = sessionsQ.data?.length || 0;
           // Prochaine session = la plus proche dans le futur (status != published).

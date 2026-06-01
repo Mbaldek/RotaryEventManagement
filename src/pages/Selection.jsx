@@ -45,6 +45,7 @@ import {
 import GroupedQueue from '@/components/rsa/selection/GroupedQueue';
 import { groupSelectionPages } from '@/components/rsa/selection/useSelectionQueueGrouped';
 import { UI } from '@/components/rsa/selection/i18n';
+import GuideSpaceHelp from '@/components/rsa/guides/GuideSpaceHelp';
 import { Club, Edition } from '@/lib/rsa/entities';
 import { useQuery } from '@tanstack/react-query';
 
@@ -261,20 +262,23 @@ export default function Selection() {
   return (
     <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
       {/* En-tête éditorial */}
-      <header className="mb-4 md:mb-6">
-        <Eyebrow>
-          {t(UI.eyebrow)}
-          {isClubScoped && <span> · {myComiteClubIds.join(' / ')}</span>}
-        </Eyebrow>
-        <h1
-          className="text-[28px] md:text-[32px] leading-tight mt-2 mb-2"
-          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-        >
-          {t(UI.pageTitle)}
-        </h1>
-        <p className="text-[14px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.6 }}>
-          {t(UI.pageSubtitle)}
-        </p>
+      <header className="mb-4 md:mb-6 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <Eyebrow>
+            {t(UI.eyebrow)}
+            {isClubScoped && <span> · {myComiteClubIds.join(' / ')}</span>}
+          </Eyebrow>
+          <h1
+            className="text-[28px] md:text-[32px] leading-tight mt-2 mb-2"
+            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+          >
+            {t(UI.pageTitle)}
+          </h1>
+          <p className="text-[14px] max-w-[60ch]" style={{ color: INK, lineHeight: 1.6 }}>
+            {t(UI.pageSubtitle)}
+          </p>
+        </div>
+        <GuideSpaceHelp space="selection" editionId={editionId || null} className="shrink-0 mt-1" />
       </header>
 
       {/* Refonte hiérarchie : retrait du toggle club pour master_admin / admin

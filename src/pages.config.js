@@ -21,6 +21,7 @@ const Admin = lazy(() => import('./pages/Admin'));
 const Candidater = lazy(() => import('./pages/Candidater'));
 const Concours = lazy(() => import('./pages/Concours'));
 const DevenirJury = lazy(() => import('./pages/DevenirJury'));
+const GuidesAdmin = lazy(() => import('./pages/GuidesAdmin'));
 const Jury = lazy(() => import('./pages/Jury'));
 const JuryCandidate = lazy(() => import('./pages/JuryCandidate'));
 const Login = lazy(() => import('./pages/Login'));
@@ -49,6 +50,7 @@ export const PAGES = {
     "Candidater": Candidater,
     "Concours": Concours,
     "DevenirJury": DevenirJury,
+    "GuidesAdmin": GuidesAdmin,
     "Jury": Jury,
     "JuryCandidate": JuryCandidate,
     "Login": Login,
