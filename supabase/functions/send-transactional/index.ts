@@ -571,7 +571,7 @@ function copyResultsPublished(lang: Lang, data: Record<string, unknown>): Omit<C
 }
 
 // ── session_running_order ──
-// data: { startup_name, running_order (ordinal string "3e"/"3rd"/"3."),
+// data: { running_order (ordinal string "3e"/"3rd"/"3."),
 //         estimated_time ("HH:MM"), session_name, session_date?, club_id? }
 //   club_id is consumed only by the authz layer (club_admin check) — never rendered.
 function copySessionRunningOrder(lang: Lang, data: Record<string, unknown>): Omit<Copy, "greeting" | "signOff" | "signature"> {
@@ -624,7 +624,6 @@ function copySessionRunningOrder(lang: Lang, data: Record<string, unknown>): Omi
     };
   }
   // de
-  // TODO refine DE copy
   const subject = `Ihr Pitch-Slot — ${session}`;
   const datePhrase = hasDate ? ` am <strong>${sessionDate}</strong>` : "";
   const paragraphs: string[] = [];
@@ -928,7 +927,10 @@ Deno.serve(async (req: Request) => {
   if (!allowed && payload.type === "session_running_order") {
     const clubId = (payload.data as Record<string, unknown> | undefined)?.club_id;
     if (typeof clubId === "string" && clubId) {
-      const { data: cmRows } = await supabase.rpc("my_club_memberships");
+      const { data: cmRows, error: cmErr } = await supabase.rpc("my_club_memberships");
+      if (cmErr) {
+        return jsonResponse(500, { ok: false, error: `club_memberships_lookup_failed:${cmErr.message}` });
+      }
       if (Array.isArray(cmRows) && cmRows.some(
         (m: { club_id: string; role: string }) => m.club_id === clubId && m.role === "club_admin",
       )) {
