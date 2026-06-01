@@ -5,13 +5,14 @@
 // supabase/migrations/20260530_rsa_v2_jury_funnel.sql).
 //
 // Surface :
-//   - apply()      : soumission publique (anon OK) via rsa_apply_jury
-//   - listByClub() : queue de revue côté club_admin (rsa_list_jury_applications)
-//   - reject()     : refus typé (rsa_reject_jury_application)
-//   - approve()    : approbation ; renvoie { application, needsAuthCreation, userId }
-//                    (rsa_approve_jury_application — la RPC peut signaler que la
-//                     finalisation passe par l'edge function send-jury-welcome qui
-//                     créera le compte auth.users + magic-link).
+//   - apply()             : soumission publique (anon OK) via rsa_apply_jury
+//   - listByClub()        : queue de revue côté club_admin (rsa_list_jury_applications)
+//   - reject()            : refus typé (rsa_reject_jury_application)
+//   - approve()           : flip status='approved' uniquement (rsa_approve_jury_application).
+//                           Aucun compte / email / affectation session. Renvoie la ligne.
+//   - addManualJuror()    : crée une candidature approved liée à une session (rsa_add_manual_juror)
+//   - removeFromSession() : retire l'affectation à une session (rsa_remove_juror_from_session)
+//   - listForSession()    : roster d'une session — pending + approved (rsa_session_jurors)
 //
 // Côté lecture pour le candidat lui-même : la RLS ja_select autorise la lecture par
 // email matching auth.jwt -> on peut faire un .from('jury_applications').select()
@@ -80,48 +81,42 @@ export const JuryApplication = {
     return Array.isArray(data) ? data[0] : data;
   },
 
-  // Approbation — pipeline unifié accès + email.
-  // 1. rsa_approve_jury_application : flip status='approved' ; si le compte
-  //    auth.users existe déjà → crée le membership 'jury' + la fiche
-  //    platform_jury_profiles + approved_user_id, et renvoie needs_auth_creation=false.
-  // 2. Si needsAuthCreation=true (candidat sans compte) → l'edge `invite-user`
-  //    crée le compte auth, applique le membership 'jury' du club, génère un
-  //    magic-link et envoie l'email d'accès Élysée (Resend).
-  // 3. On rappelle l'RPC : le compte existant désormais, la fiche
-  //    platform_jury_profiles (qualite/orga/bio/photo) est peuplée.
-  // Retourne { application, needsAuthCreation, userId, accountInvited, inviteError? }.
-  async approve(id, { lang = 'fr' } = {}) {
-    const first = await this._rpcApprove(id);
-    if (!first.needsAuthCreation) {
-      return { ...first, accountInvited: false };
-    }
-    const app = first.application;
-    if (!app?.email || !app?.club_id) {
-      return { ...first, accountInvited: false, inviteError: 'missing_email_or_club' };
-    }
-    const { error: inviteErr } = await supabase.functions.invoke('invite-user', {
-      body: { email: app.email, role: 'jury', club_id: app.club_id, lang },
-    });
-    if (inviteErr) {
-      // L'approbation tient (status déjà 'approved') mais l'accès/email a échoué.
-      return { ...first, accountInvited: false, inviteError: inviteErr.message || String(inviteErr) };
-    }
-    // Compte désormais créé → re-approve peuple platform_jury_profiles + approved_user_id.
-    const second = await this._rpcApprove(id);
-    return { ...second, accountInvited: true };
-  },
-
-  async _rpcApprove(id) {
+  // Approbation = flip de statut serveur (RPC). Aucun compte/email/affectation.
+  async approve(id) {
     const { data, error } = await supabase.rpc('rsa_approve_jury_application', {
       p_application_id: id,
     });
     if (error) throw error;
-    const row = Array.isArray(data) ? data[0] : data;
-    if (!row) return { application: null, needsAuthCreation: false, userId: null };
-    return {
-      application: row.application,
-      needsAuthCreation: !!row.needs_auth_creation,
-      userId: row.user_id || null,
-    };
+    return Array.isArray(data) ? data[0] : data; // la ligne jury_applications
+  },
+
+  // Ajout manuel d'un juré (candidature approved attachée à la session).
+  async addManualJuror({ sessionId, fullName, qualite = null, email = null }) {
+    const { data, error } = await supabase.rpc('rsa_add_manual_juror', {
+      p_session_id: sessionId,
+      p_full_name: fullName,
+      p_qualite: qualite,
+      p_email: email,
+    });
+    if (error) throw error;
+    return Array.isArray(data) ? data[0] : data;
+  },
+
+  // Retire le juré d'UNE session (reste approved pour ses autres sessions).
+  async removeFromSession({ applicationId, sessionId }) {
+    const { error } = await supabase.rpc('rsa_remove_juror_from_session', {
+      p_application_id: applicationId,
+      p_session_id: sessionId,
+    });
+    if (error) throw error;
+  },
+
+  // Liste les candidatures (roster) d'une session : pending + approved.
+  async listForSession(sessionId) {
+    const { data, error } = await supabase.rpc('rsa_session_jurors', {
+      p_session_id: sessionId,
+    });
+    if (error) throw error;
+    return data || [];
   },
 };
