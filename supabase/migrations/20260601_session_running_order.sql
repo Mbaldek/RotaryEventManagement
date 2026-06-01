@@ -5,7 +5,7 @@
 alter table public.startups
   add column if not exists pitch_order int;
 
-create index if not exists startups_session_pitch_order_idx
+create unique index if not exists startups_session_pitch_order_idx
   on public.startups (session_id, pitch_order)
   where pitch_order is not null;
 
@@ -38,7 +38,7 @@ declare
 begin
   -- Club de la session (pour la garde de rôle).
   select club_id into v_club_id from public.sessions where id = p_session_id;
-  if not exists (select 1 from public.sessions where id = p_session_id) then
+  if v_club_id is null and not exists (select 1 from public.sessions where id = p_session_id) then
     raise exception 'session introuvable: %', p_session_id using errcode = '22023';
   end if;
 
