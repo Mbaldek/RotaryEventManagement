@@ -299,6 +299,7 @@ export default function Login() {
               width: 'clamp(96px, 14vw, 140px)',
               height: 'auto',
               display: 'block',
+              marginInline: 'auto',
             }}
           />
           <p
