@@ -17,3 +17,4 @@ export { JuryProfile, JuryAssignment, JuryDraft, JuryScore } from './jury';
 export { Club, ClubMembership, EditionClub } from './clubs';
 export { CompetitionAdmin } from './competition-admins';
 export { JuryApplication } from './jury-applications';
+export { Guide, GuideAck } from './guides';
