@@ -31,8 +31,15 @@ le chemin utilisé.
 | Lot | Contenu | Dépend de |
 |-----|---------|-----------|
 | **A** | Jury sans compte (approbation = statut), composition session depuis `jury_applications`, 4 fixes UX | — |
-| **B** | Page scoring publique (slug+PIN, name-pick, sans login), tables scores name-keyed | A (liste des noms) |
-| **C** | Vue live / résultats admin (agrégation + classement, temps réel) | B (les scores) |
+| **B'** | **Embarquer la console legacy** `LiveTab`/`DecksTab`/`ResultsTab` dans le Pilotage ClubCockpit, rebranchée sur la session plateforme (startups en ordre de passage + roster de noms approuvés + `jury_scores` legacy name-keyed). Réutilisation, **pas de nouvelle table/token/compte**. | A (roster) |
+
+> **PIVOT 2026-06-01 (décision Mathieu « FAIS SIMPLE ») :** les Lots **B et C tokenisés**
+> (page publique slug+PIN, nouvelles tables `session_jury_scores`/`_drafts`) sont **ANNULÉS**.
+> La console event existe déjà en legacy (`/RsaAdmin` : SetupTab/DecksTab/LiveTab/ResultsTab,
+> gate par clé, scoring `jury_scores` clé par nom = sans compte). On la **réutilise** en
+> l'embarquant dans le ClubCockpit Pilotage (Lot B' ci-dessus), alimentée par les données
+> plateforme. Les sections « LOT B » et « LOT C » plus bas sont **obsolètes** (conservées
+> pour trace, non implémentées).
 
 Chaque lot = son propre plan d'implémentation (writing-plans), construit après le précédent.
 
