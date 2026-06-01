@@ -21,15 +21,18 @@
 //   3. Maps email `type` -> required role set. Refuses with 403 if the caller
 //      lacks the required role.
 //
-//   selection_decision   -> admin OR comite (comité is the canonical sender)
-//   jury_assignment      -> admin only
-//   session_published    -> admin only
-//   results_published    -> admin only
+//   selection_decision    -> admin OR comite (comité is the canonical sender)
+//   jury_assignment       -> admin only
+//   session_published     -> admin only
+//   results_published     -> admin only
+//   session_running_order -> admin OR master_admin (platform roles via
+//                            rsa_my_roles ; club_admin is club-scoped and
+//                            mirrors the SQL guard but isn't matched here)
 //
 // Body shape
 // ─────────────────────────────────────────────────────────────────────────────
 //   {
-//     type: 'selection_decision' | 'jury_assignment' | 'session_published' | 'results_published',
+//     type: 'selection_decision' | 'jury_assignment' | 'session_published' | 'results_published' | 'session_running_order',
 //     recipient_email: string,
 //     recipient_name?: string,
 //     lang: 'fr' | 'en' | 'de',
@@ -57,7 +60,8 @@ type EmailType =
   | "selection_decision"
   | "jury_assignment"
   | "session_published"
-  | "results_published";
+  | "results_published"
+  | "session_running_order";
 
 interface Payload {
   type: EmailType;
@@ -73,6 +77,12 @@ const ROLE_REQUIREMENTS: Record<EmailType, string[]> = {
   jury_assignment: ["admin"],
   session_published: ["admin"],
   results_published: ["admin"],
+  // Club logistics email. `admin`/`master_admin` are platform roles returned by
+  // rsa_my_roles (the only source this handler consults). `club_admin` is a
+  // club-scoped membership role (resolved elsewhere via my_club_memberships) —
+  // listed here to document intent and mirror the rsa_set_session_running_order
+  // SQL guard (admin OR master_admin OR club_admin of the session's club).
+  session_running_order: ["admin", "master_admin", "club_admin"],
 };
 
 // ─── Brand tokens (mirror src/components/design/tokens.js) ───────────────────
@@ -120,7 +130,8 @@ function isEmailType(v: unknown): v is EmailType {
     v === "selection_decision" ||
     v === "jury_assignment" ||
     v === "session_published" ||
-    v === "results_published"
+    v === "results_published" ||
+    v === "session_running_order"
   );
 }
 
@@ -559,6 +570,81 @@ function copyResultsPublished(lang: Lang, data: Record<string, unknown>): Omit<C
   };
 }
 
+// ── session_running_order ──
+// data: { startup_name, running_order (ordinal string "3e"/"3rd"/"3."),
+//         estimated_time ("HH:MM"), session_name, session_date? }
+function copySessionRunningOrder(lang: Lang, data: Record<string, unknown>): Omit<Copy, "greeting" | "signOff" | "signature"> {
+  const session = esc(data.session_name);
+  const order = esc(data.running_order);
+  const time = esc(data.estimated_time);
+  const hasDate = typeof data.session_date === "string" && data.session_date.trim() !== "";
+  const sessionDate = esc(data.session_date);
+
+  if (lang === "fr") {
+    const subject = `Votre passage — ${session}`;
+    const datePhrase = hasDate ? ` du <strong>${sessionDate}</strong>` : "";
+    const paragraphs: string[] = [];
+    paragraphs.push(
+      `Voici les modalités de votre passage lors de la session à venir.`,
+    );
+    paragraphs.push(
+      `Pour la session <strong>${session}</strong>${datePhrase}, vous passez en <strong>${order}</strong> position, à environ <strong>${time}</strong>.`,
+    );
+    paragraphs.push(
+      `Merci d'arriver 15 minutes avant l'horaire estimé.`,
+    );
+    return {
+      subject,
+      eyebrow: "Ordre de passage",
+      paragraphs: () => paragraphs,
+      ctaLabel: "Accéder à mon dossier",
+      ctaHref: `${APP_URL}/MonDossier`,
+    };
+  }
+  if (lang === "en") {
+    const subject = `Your pitch slot — ${session}`;
+    const datePhrase = hasDate ? ` on <strong>${sessionDate}</strong>` : "";
+    const paragraphs: string[] = [];
+    paragraphs.push(
+      `Here are the practical details for your upcoming pitch.`,
+    );
+    paragraphs.push(
+      `For session <strong>${session}</strong>${datePhrase}, you pitch <strong>${order}</strong>, at approximately <strong>${time}</strong>.`,
+    );
+    paragraphs.push(
+      `Please arrive 15 minutes before your estimated time.`,
+    );
+    return {
+      subject,
+      eyebrow: "Pitch order",
+      paragraphs: () => paragraphs,
+      ctaLabel: "Open my application",
+      ctaHref: `${APP_URL}/MonDossier`,
+    };
+  }
+  // de
+  // TODO refine DE copy
+  const subject = `Ihr Pitch-Slot — ${session}`;
+  const datePhrase = hasDate ? ` am <strong>${sessionDate}</strong>` : "";
+  const paragraphs: string[] = [];
+  paragraphs.push(
+    `Hier sind die praktischen Details zu Ihrem bevorstehenden Pitch.`,
+  );
+  paragraphs.push(
+    `Für die Sitzung <strong>${session}</strong>${datePhrase} pitchen Sie als <strong>${order}</strong>, gegen <strong>${time}</strong>.`,
+  );
+  paragraphs.push(
+    `Bitte erscheinen Sie 15 Minuten vor Ihrer geschätzten Zeit.`,
+  );
+  return {
+    subject,
+    eyebrow: "Pitch-Reihenfolge",
+    paragraphs: () => paragraphs,
+    ctaLabel: "Mein Dossier öffnen",
+    ctaHref: `${APP_URL}/MonDossier`,
+  };
+}
+
 function resolveCopy(type: EmailType, lang: Lang, data: Record<string, unknown>): Copy {
   let base: Omit<Copy, "greeting" | "signOff" | "signature">;
   switch (type) {
@@ -573,6 +659,9 @@ function resolveCopy(type: EmailType, lang: Lang, data: Record<string, unknown>)
       break;
     case "results_published":
       base = copyResultsPublished(lang, data);
+      break;
+    case "session_running_order":
+      base = copySessionRunningOrder(lang, data);
       break;
   }
   return {
