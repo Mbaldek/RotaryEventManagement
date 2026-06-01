@@ -224,39 +224,6 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
 
       <ClubStatusStrip edition={edition} clubId={clubId} sessions={sessions} />
 
-      {/* Mode switch — axe de premier niveau : Préparation (config) / Pilotage (suivi). */}
-      <div
-        className="inline-flex items-center gap-1 p-1 rounded-[6px] mb-4"
-        role="tablist"
-        aria-label={t(CLUB_UI.modeLabel)}
-        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
-      >
-        {[
-          { id: CLUB_MODES.PREP, label: t(CLUB_UI.modePrep) },
-          { id: CLUB_MODES.PILOTAGE, label: t(CLUB_UI.modePilotage) },
-        ].map((mo) => {
-          const on = mode === mo.id;
-          return (
-            <button
-              key={mo.id}
-              type="button"
-              role="tab"
-              aria-selected={on}
-              onClick={() => setMode(mo.id)}
-              className={`px-3.5 py-1.5 text-[12.5px] rounded-[4px] transition-colors ${FOCUS_RING_CLASS}`}
-              style={{
-                background: on ? 'white' : 'transparent',
-                color: on ? NAVY : MUTED,
-                fontWeight: on ? 600 : 400,
-                borderBottom: on ? `2px solid ${GOLD}` : '2px solid transparent',
-              }}
-            >
-              {mo.label}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Filter row — pickers édition/session (vrais filtres de data, distincts des tabs nav) */}
       <div className="flex flex-wrap items-center gap-3 mb-3">
         <label className="inline-flex items-center gap-2 text-[12.5px]" style={{ color: INK }}>
@@ -300,6 +267,39 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
             </select>
           </label>
         )}
+      </div>
+
+      {/* Mode switch — axe de premier niveau : Préparation (config) / Pilotage (suivi). */}
+      <div
+        className="inline-flex items-center gap-1 p-1 rounded-[6px] mb-4"
+        role="tablist"
+        aria-label={t(CLUB_UI.modeLabel)}
+        style={{ background: TINT_ADMIN, border: `1px solid ${CREAM2}` }}
+      >
+        {[
+          { id: CLUB_MODES.PREP, label: t(CLUB_UI.modePrep) },
+          { id: CLUB_MODES.PILOTAGE, label: t(CLUB_UI.modePilotage) },
+        ].map((mo) => {
+          const on = mode === mo.id;
+          return (
+            <button
+              key={mo.id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setMode(mo.id)}
+              className={`px-3.5 py-1.5 text-[12.5px] rounded-[4px] transition-colors ${FOCUS_RING_CLASS}`}
+              style={{
+                background: on ? 'white' : 'transparent',
+                color: on ? NAVY : MUTED,
+                fontWeight: on ? 600 : 400,
+                borderBottom: on ? `2px solid ${GOLD}` : '2px solid transparent',
+              }}
+            >
+              {mo.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tabs box — fond TINT_ADMIN clair, pour séparer du fond CREAM page. */}
