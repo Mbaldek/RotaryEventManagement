@@ -390,69 +390,35 @@ export default function SessionsManager({
       )}
 
       {!isLoading && visibleSessions.length > 0 && (
-        <ul className="divide-y" style={{ borderColor: CREAM2 }}>
+        <ul className="flex flex-col gap-3">
           {visibleSessions.map((s) => {
             const status = s.config?.status || 'draft';
             return (
-              <li key={s.id} className="py-3">
+              <li key={s.id} className="rounded-[6px] p-3.5" style={{ background: 'white', border: `1px solid ${CREAM2}`, boxShadow: '0 1px 2px rgba(15,31,61,0.04)' }}>
                 <div className="flex items-start gap-3 flex-wrap">
-                  <span
-                    className="inline-flex items-center justify-center w-7 h-7 rounded-full text-[11px] tabular-nums"
-                    style={{ background: '#fdf6e8', color: NAVY, border: `1px solid ${CREAM2}` }}
-                  >
-                    {s.position ?? 0}
-                  </span>
+                  <span className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[12px]"
+                    style={{ background: '#fdf6e8', color: NAVY, fontFamily: SERIF }}>{s.position ?? 0}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[14px] font-medium" style={{ color: NAVY }}>{s.name}</span>
+                      <span className="text-[13.5px] font-medium" style={{ color: NAVY }}>{s.name}</span>
                       <StatusPill status={status} kind="jury" />
-                      <span className="text-[11.5px]" style={{ color: MUTED }}>· {s.kind}</span>
-                      {s.session_date && (
-                        <span className="text-[11.5px]" style={{ color: MUTED }}>· {s.session_date}</span>
-                      )}
+                      <span className="text-[12px]" style={{ color: MUTED }}>· {s.kind}</span>
+                      {s.session_date && <span className="text-[12px]" style={{ color: MUTED }}>· {s.session_date}</span>}
                     </div>
-                    {s.theme && (
-                      <p className="text-[12px] mt-0.5" style={{ color: INK }}>{s.theme}</p>
-                    )}
-                    <p className="text-[11px] mt-0.5 font-mono" style={{ color: MUTED }}>
-                      {s.id}
-                      {s.club_id && (<span> · {s.club_id}</span>)}
-                    </p>
+                    {s.theme && <p className="text-[12px] mt-0.5" style={{ color: INK }}>{s.theme}</p>}
+                    <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>{s.id}{s.club_id && <span> · {s.club_id}</span>}</p>
                     {s.config?.teams_link && (
-                      <a
-                        href={s.config.teams_link}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-[11.5px] underline decoration-1 underline-offset-2 break-all"
-                        style={{ color: NAVY }}
-                      >
-                        {t(SETUP.teamsLinkOpen)}
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onSelectSession?.(s.id)}
-                      className="text-[11.5px] underline decoration-1 underline-offset-2"
-                      style={{ color: NAVY }}
-                    >
-                      LIVE →
-                    </button>
-                    {status === 'draft' && (
-                      <ResetButton
-                        sessionId={s.id}
-                        sessionName={s.name}
-                        onReset={(sid) => resetSession.mutateAsync(sid)}
-                      />
+                      <a href={s.config.teams_link} target="_blank" rel="noreferrer" className="text-[11.5px] underline" style={{ color: NAVY }}>{t(SETUP.teamsLinkOpen)}</a>
                     )}
                   </div>
                 </div>
-                {/* Composition jury — uniquement scope club (clubId fourni).
-                    Pour le Master Cockpit (finale), la gestion du jury passe
-                    par un autre écran (out-of-scope ici). */}
-                {clubId && (
-                  <SessionJurorsList sessionId={s.id} clubId={clubId} />
+
+                {clubId && <SessionJurorsList sessionId={s.id} clubId={clubId} />}
+
+                {status === 'draft' && (
+                  <div className="mt-2 flex justify-end">
+                    <ResetButton sessionId={s.id} sessionName={s.name} onReset={(sid) => resetSession.mutateAsync(sid)} />
+                  </div>
                 )}
               </li>
             );

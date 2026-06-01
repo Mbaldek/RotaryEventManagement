@@ -116,6 +116,18 @@ export function useSetSessionDraft() {
   });
 }
 
+export function useUnlockSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId) => RsaSession.unlock(sessionId),
+    onSuccess: (_d, sessionId) => {
+      qc.invalidateQueries({ queryKey: KEYS.sessionConfig(sessionId) });
+      qc.invalidateQueries({ queryKey: ['rsa', 'admin', 'sessions'], exact: false });
+      qc.invalidateQueries({ queryKey: ['rsa', 'admin', 'live-startups'], exact: false });
+    },
+  });
+}
+
 export function useResetSessionTemplate() {
   const qc = useQueryClient();
   return useMutation({

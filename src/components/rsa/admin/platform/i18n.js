@@ -230,6 +230,16 @@ export const LIVE = {
     en: 'Jurors will no longer be able to edit their scores. Pending dossiers move to status “scored”.',
     de: 'Die Juroren können ihre Bewertungen nicht mehr ändern. Laufende Bewerbungen wechseln in den Status „bewertet“.',
   },
+  // Lien vers la page de scoring côté juré (/Jury) — où les notes sont réellement saisies.
+  openJuryPage:     { fr: 'Page de scoring juré', en: 'Juror scoring page', de: 'Juror-Bewertungsseite' },
+  // Déverrouillage : locked → live (symétrique du lock).
+  reopenLive:       { fr: 'Rouvrir le scoring', en: 'Reopen scoring', de: 'Bewertung wieder öffnen' },
+  confirmUnlockTitle: { fr: 'Rouvrir le scoring', en: 'Reopen scoring', de: 'Bewertung wieder öffnen' },
+  confirmUnlockBody: {
+    fr: 'La session repasse en direct : les jurés pourront à nouveau modifier leurs notes. Les notes déjà saisies sont conservées.',
+    en: 'The session reopens live: jurors will be able to edit their scores again. Scores already entered are kept.',
+    de: 'Die Session wird wieder live geschaltet: Die Juroren können ihre Bewertungen erneut bearbeiten. Bereits erfasste Bewertungen bleiben erhalten.',
+  },
 
   // ── V3 Vague 2 (A.1) — "Conclure la session" : un seul acte = publish + promote
   concludeAction: {

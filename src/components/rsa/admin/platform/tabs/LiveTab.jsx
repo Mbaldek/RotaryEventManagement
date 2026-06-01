@@ -17,7 +17,7 @@
 // tabular-nums, StatusPill (kind=jury) sur le lifecycle.
 
 import React, { useMemo, useState } from 'react';
-import { Loader2, Lock, Play, Rocket, Undo2 } from 'lucide-react';
+import { Loader2, Lock, LockOpen, Play, Rocket, Undo2 } from 'lucide-react';
 import { CREAM2, NAVY, MUTED, INK, GOLD, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { DANGER } from '@/components/design/tokens.app';
 import { StatusPill } from '@/components/design';
@@ -32,6 +32,7 @@ import {
   useSessionConfig,
   useSetSessionDraft,
   useSetSessionLive,
+  useUnlockSession,
 } from '../useAdmin';
 
 function ConfirmModal({ title, body, onConfirm, onCancel, busy, typedWord, kind = 'primary' }) {
@@ -136,6 +137,7 @@ export default function LiveTab({ edition, session }) {
   const setLive  = useSetSessionLive();
   const setDraft = useSetSessionDraft();
   const lock     = useLockSession();
+  const unlock   = useUnlockSession();
   const publish  = usePublishSession();
 
   const [pending, setPending] = useState(null); // 'live' | 'draft' | 'lock' | 'publish'
@@ -213,12 +215,16 @@ export default function LiveTab({ edition, session }) {
     setPending(null);
     try { await lock.mutateAsync(session.id); } catch (e) { console.error(e); }
   }
+  async function doUnlock() {
+    setPending(null);
+    try { await unlock.mutateAsync(session.id); } catch (e) { console.error(e); }
+  }
   async function doPublish() {
     setPending(null);
     try { await publish.mutateAsync(session.id); } catch (e) { console.error(e); }
   }
 
-  const busy = setLive.isPending || setDraft.isPending || lock.isPending || publish.isPending;
+  const busy = setLive.isPending || setDraft.isPending || lock.isPending || unlock.isPending || publish.isPending;
 
   return (
     <>
@@ -279,17 +285,28 @@ export default function LiveTab({ edition, session }) {
             </>
           )}
           {status === 'locked' && (
-            <button
-              type="button"
-              onClick={() => setPending('publish')}
-              disabled={busy}
-              title={t(LIVE.concludeAction)}
-              className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-2 rounded-[4px] font-medium disabled:opacity-50 max-w-[420px] text-left leading-tight whitespace-normal"
-              style={{ background: GOLD, color: NAVY }}
-            >
-              <Rocket className="w-4 h-4 shrink-0" />
-              <span className="block">{t(LIVE.concludeAction)}</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setPending('unlock')}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] self-start"
+                style={{ color: INK, border: `1px solid ${CREAM2}`, background: TINT_ADMIN }}
+              >
+                <LockOpen className="w-3.5 h-3.5" /> {t(LIVE.reopenLive)}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPending('publish')}
+                disabled={busy}
+                title={t(LIVE.concludeAction)}
+                className="inline-flex items-center gap-1.5 text-[12.5px] px-3 py-2 rounded-[4px] font-medium disabled:opacity-50 max-w-[420px] text-left leading-tight whitespace-normal"
+                style={{ background: GOLD, color: NAVY }}
+              >
+                <Rocket className="w-4 h-4 shrink-0" />
+                <span className="block">{t(LIVE.concludeAction)}</span>
+              </button>
+            </>
           )}
         </div>
       </section>
@@ -439,6 +456,15 @@ export default function LiveTab({ edition, session }) {
           onConfirm={doLock}
           onCancel={() => setPending(null)}
           busy={lock.isPending}
+        />
+      )}
+      {pending === 'unlock' && (
+        <ConfirmModal
+          title={t(LIVE.confirmUnlockTitle)}
+          body={t(LIVE.confirmUnlockBody)}
+          onConfirm={doUnlock}
+          onCancel={() => setPending(null)}
+          busy={unlock.isPending}
         />
       )}
       {pending === 'publish' && (
