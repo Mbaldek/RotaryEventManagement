@@ -122,7 +122,7 @@ export default function PilotageOverview({ edition, clubId, sessions, isSessions
                     className={`inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-[4px] shrink-0 ${FOCUS_RING_CLASS}`}
                     style={{ background: NAVY, color: 'white' }}
                   >
-                    {t(CLUB_PILOTAGE.open)} <ArrowRight className="w-3.5 h-3.5" />
+                    {t(CLUB_PILOTAGE.open)} <ArrowRight className="w-3.5 h-3.5" aria-hidden />
                   </button>
                 </li>
               );
