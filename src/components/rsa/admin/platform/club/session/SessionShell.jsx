@@ -6,7 +6,7 @@
 // PilotageOverview dans le panel (montage in-place, pas de route séparée).
 
 import React from 'react';
-import { ArrowLeft, ArrowRight, Users, Activity, FileText, ClipboardList, Presentation, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Users, Activity, FileText, ClipboardList, Presentation, BookOpen, Trophy } from 'lucide-react';
 import { GOLD, NAVY, INK, MUTED, CREAM2, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import { StatusPill } from '@/components/design';
@@ -90,7 +90,8 @@ export default function SessionShell({ session, edition, clubId, onBack, onDeepL
         {timeRange && <span> · {timeRange}</span>}
       </p>
 
-      {/* Grille 6 cartes */}
+      {/* Grille 6 cartes. Les cartes 'soon' montrent quand même le compteur réel
+          (contexte utile) ; seul le drill-down détaillé est déféré au #3. */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card
           icon={FileText}
@@ -122,7 +123,7 @@ export default function SessionShell({ session, edition, clubId, onBack, onDeepL
           soon soonLabel={t(CLUB_SESSION_SHELL.soon)}
         />
         <Card
-          icon={FileText}
+          icon={BookOpen}
           title={t(CLUB_SESSION_SHELL.cardPreread)}
           line={t(CLUB_SESSION_SHELL.prereadHint)}
           soon soonLabel={t(CLUB_SESSION_SHELL.soon)}
