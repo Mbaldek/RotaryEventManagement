@@ -11,9 +11,11 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Copy, ExternalLink, RefreshCw, KeyRound, SlidersHorizontal, Check } from 'lucide-react';
+import { Loader2, Copy, ExternalLink, RefreshCw, KeyRound, SlidersHorizontal, Check, Mail } from 'lucide-react';
 import { GOLD, NAVY, INK, MUTED, CREAM2, SERIF, TINT_ADMIN } from '@/components/design/tokens';
 import { FOCUS_RING_CLASS } from '@/components/design/tokens.app';
+import { supabase } from '@/lib/supabase';
+import { sendTransactional } from '@/lib/platform/transactional';
 import { useLang } from '@/lib/platform/i18n';
 import {
   CRITERIA,
@@ -52,6 +54,22 @@ const TX = {
   mustSum: { fr: 'La somme doit faire 100 %.', en: 'Total must be 100%.', de: 'Summe muss 100 % sein.' },
   saveErr: { fr: 'Échec de l’enregistrement.', en: 'Save failed.', de: 'Speichern fehlgeschlagen.' },
   genErr: { fr: 'Échec de la génération.', en: 'Generation failed.', de: 'Erzeugung fehlgeschlagen.' },
+  sendInvite: { fr: 'Envoyer l’invitation aux jurés', en: 'Email invitation to jurors', de: 'Einladung an Juroren senden' },
+  sendHint: {
+    fr: 'Envoie le lien + PIN (et le lien Teams) par email aux jurés approuvés ayant une adresse.',
+    en: 'Emails the link + PIN (and Teams link) to approved jurors who have an address.',
+    de: 'Sendet Link + PIN (und Teams-Link) per E-Mail an bestätigte Juroren mit Adresse.',
+  },
+  confirmSendQ: {
+    fr: (n) => `Envoyer l’invitation à ${n} juré·e·s approuvé·e·s ?`,
+    en: (n) => `Send the invitation to ${n} approved jurors?`,
+    de: (n) => `Einladung an ${n} bestätigte Juroren senden?`,
+  },
+  confirmSend: { fr: 'Confirmer l’envoi', en: 'Confirm send', de: 'Senden bestätigen' },
+  cancel: { fr: 'Annuler', en: 'Cancel', de: 'Abbrechen' },
+  noRecipients: { fr: 'Aucun juré approuvé avec une adresse email.', en: 'No approved juror with an email address.', de: 'Kein bestätigter Juror mit E-Mail-Adresse.' },
+  sentToast: { fr: (ok, n) => `${ok}/${n} invitation(s) envoyée(s).`, en: (ok, n) => `${ok}/${n} invitation(s) sent.`, de: (ok, n) => `${ok}/${n} Einladung(en) gesendet.` },
+  sendErr: { fr: 'Échec de l’envoi.', en: 'Send failed.', de: 'Senden fehlgeschlagen.' },
 };
 
 export default function SessionScoringAccess({ sessionId }) {
@@ -64,6 +82,56 @@ export default function SessionScoringAccess({ sessionId }) {
   const slug = access?.slug || null;
   const pin = access?.pin || null;
   const scoreUrl = slug ? `${window.location.origin}/Score?s=${slug}` : '';
+
+  // Envoi de l'invitation (lien + PIN) aux jurés approuvés — outward-facing → confirmation.
+  const [sending, setSending] = useState(false);
+  const [confirmRecipients, setConfirmRecipients] = useState(null);
+
+  async function openSend() {
+    try {
+      const { data, error } = await supabase.rpc('rsa_session_jurors', { p_session_id: sessionId });
+      if (error) throw error;
+      const recipients = (data || []).filter(
+        (j) => j.status === 'approved' && typeof j.email === 'string' && j.email.includes('@'),
+      );
+      if (recipients.length === 0) { toast.error(t(TX.noRecipients)); return; }
+      setConfirmRecipients(recipients);
+    } catch {
+      toast.error(t(TX.sendErr));
+    }
+  }
+
+  async function doSend() {
+    const recipients = confirmRecipients || [];
+    setConfirmRecipients(null);
+    setSending(true);
+    try {
+      let ok = 0;
+      for (const j of recipients) {
+        const jlang = ['fr', 'en', 'de'].includes(j.preferred_lang) ? j.preferred_lang : 'fr';
+        const res = await sendTransactional({
+          type: 'jury_scoring_invite',
+          recipient_email: j.email,
+          recipient_name: j.full_name,
+          lang: jlang,
+          data: {
+            session_name: access?.session_name,
+            session_date: access?.session_date,
+            scoring_slug: slug,
+            scoring_pin: pin,
+            teams_url: access?.teams_link || undefined,
+            club_id: access?.club_id || undefined,
+          },
+        });
+        if (res?.ok) ok += 1;
+      }
+      toast.success(t(TX.sentToast)(ok, recipients.length));
+    } catch {
+      toast.error(t(TX.sendErr));
+    } finally {
+      setSending(false);
+    }
+  }
 
   // ── Poids : state local préremplie depuis le serveur (sinon défaut) ─────────
   const serverWeights = access?.weights;
@@ -165,6 +233,33 @@ export default function SessionScoringAccess({ sessionId }) {
                 {rotate.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                 {t(TX.regenerate)}
               </button>
+            </div>
+
+            {/* Envoi de l'invitation (lien + PIN + Teams) aux jurés approuvés */}
+            <div className="pt-3" style={{ borderTop: `1px solid ${CREAM2}` }}>
+              <p className="text-[11.5px] mb-2" style={{ color: MUTED }}>{t(TX.sendHint)}</p>
+              {!confirmRecipients ? (
+                <button type="button" onClick={openSend} disabled={sending}
+                  className={`inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] font-medium disabled:opacity-50 ${FOCUS_RING_CLASS}`}
+                  style={{ background: NAVY, color: 'white' }}>
+                  {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                  {t(TX.sendInvite)}
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[12.5px]" style={{ color: INK }}>{t(TX.confirmSendQ)(confirmRecipients.length)}</span>
+                  <button type="button" onClick={doSend}
+                    className={`inline-flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 rounded-[4px] font-medium ${FOCUS_RING_CLASS}`}
+                    style={{ background: GOLD, color: NAVY }}>
+                    <Mail className="w-3.5 h-3.5" /> {t(TX.confirmSend)}
+                  </button>
+                  <button type="button" onClick={() => setConfirmRecipients(null)}
+                    className={`text-[12.5px] px-2.5 py-1.5 rounded-[4px] ${FOCUS_RING_CLASS}`}
+                    style={{ color: MUTED, border: `1px solid ${CREAM2}`, background: 'white' }}>
+                    {t(TX.cancel)}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

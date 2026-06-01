@@ -17,6 +17,7 @@ const ALLOWED_TYPES = new Set([
   'session_published',
   'results_published',
   'session_running_order',
+  'jury_scoring_invite',
 ]);
 
 const ALLOWED_LANGS = new Set(['fr', 'en', 'de']);

@@ -255,8 +255,8 @@ export function useSessionAccess(sessionId) {
     queryFn: async () => {
       if (!sessionId) return null;
       const [sRes, cRes] = await Promise.all([
-        supabase.from('sessions').select('id, score_slug, score_pin').eq('id', sessionId).maybeSingle(),
-        supabase.from('session_config').select('score_weights').eq('session_id', sessionId).maybeSingle(),
+        supabase.from('sessions').select('id, score_slug, score_pin, name, session_date, club_id').eq('id', sessionId).maybeSingle(),
+        supabase.from('session_config').select('score_weights, teams_link').eq('session_id', sessionId).maybeSingle(),
       ]);
       if (sRes.error) throw sRes.error;
       if (cRes.error) throw cRes.error;
@@ -264,6 +264,10 @@ export function useSessionAccess(sessionId) {
         slug: sRes.data?.score_slug || null,
         pin: sRes.data?.score_pin || null,
         weights: cRes.data?.score_weights || null,
+        session_name: sRes.data?.name || null,
+        session_date: sRes.data?.session_date || null,
+        club_id: sRes.data?.club_id || null,
+        teams_link: cRes.data?.teams_link || null,
       };
     },
     enabled: !!sessionId,

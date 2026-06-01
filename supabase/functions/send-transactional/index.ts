@@ -61,7 +61,8 @@ type EmailType =
   | "jury_assignment"
   | "session_published"
   | "results_published"
-  | "session_running_order";
+  | "session_running_order"
+  | "jury_scoring_invite";
 
 interface Payload {
   type: EmailType;
@@ -83,6 +84,10 @@ const ROLE_REQUIREMENTS: Record<EmailType, string[]> = {
   // my_club_memberships against data.club_id (parity with send-bulk, mirrors the
   // rsa_set_session_running_order SQL guard). Listed here to document intent.
   session_running_order: ["admin", "master_admin", "club_admin"],
+  // Invitation/accès scoring envoyée aux jurés sans compte (jury_applications).
+  // Même autorisation que session_running_order : club_admin du club de la session
+  // (via data.club_id), résolu dans le bloc authz.
+  jury_scoring_invite: ["admin", "master_admin", "club_admin"],
 };
 
 // ─── Brand tokens (mirror src/components/design/tokens.js) ───────────────────
@@ -131,7 +136,8 @@ function isEmailType(v: unknown): v is EmailType {
     v === "jury_assignment" ||
     v === "session_published" ||
     v === "results_published" ||
-    v === "session_running_order"
+    v === "session_running_order" ||
+    v === "jury_scoring_invite"
   );
 }
 
@@ -645,6 +651,55 @@ function copySessionRunningOrder(lang: Lang, data: Record<string, unknown>): Omi
   };
 }
 
+// ── jury_scoring_invite ──
+// Invitation/accès scoring pour les jurés SANS COMPTE (jury_applications).
+// data: { session_name, session_date?, scoring_slug, scoring_pin?, teams_url?, pack_url?, club_id? }
+// Le lien est construit côté serveur avec APP_URL (domaine prod garanti).
+// club_id n'est consommé que par l'authz (jamais rendu).
+function copyJuryScoringInvite(lang: Lang, data: Record<string, unknown>): Omit<Copy, "greeting" | "signOff" | "signature"> {
+  const session = esc(data.session_name);
+  const sessionDate = esc(data.session_date);
+  const slug = typeof data.scoring_slug === "string" ? data.scoring_slug : "";
+  const pin = typeof data.scoring_pin === "string" ? data.scoring_pin : "";
+  const teamsUrl = typeof data.teams_url === "string" ? data.teams_url : "";
+  const packUrl = typeof data.pack_url === "string" ? data.pack_url : "";
+  const scoringUrl = slug ? `${APP_URL}/Score?s=${slug}` : APP_URL;
+  const linkA = (url: string) =>
+    `<a href="${esc(url)}" style="color:${COLORS.NAVY}; text-decoration:underline;">${esc(url)}</a>`;
+  const pinLine = (label: string) =>
+    `${label} <strong style="font-size:18px; letter-spacing:2px;">${esc(pin)}</strong>`;
+
+  if (lang === "fr") {
+    const paragraphs: string[] = [];
+    paragraphs.push(`Vous êtes membre du jury de la session <strong>${session}</strong>${sessionDate ? ` (le ${sessionDate})` : ""}.`);
+    paragraphs.push(`Le jour de la session, vous noterez chaque startup directement en ligne — <strong>aucun compte n'est nécessaire</strong>. Ouvrez le lien ci-dessous, saisissez le code, puis sélectionnez votre nom.`);
+    paragraphs.push(`Lien de notation : ${linkA(scoringUrl)}`);
+    if (pin) paragraphs.push(pinLine("Code d'accès :"));
+    if (teamsUrl) paragraphs.push(`Lien Teams de la session : ${linkA(teamsUrl)}`);
+    if (packUrl) paragraphs.push(`Pré-read (executive summaries) : ${linkA(packUrl)}`);
+    return { subject: `Votre accès au scoring — ${session || "Rotary Startup Award"}`, eyebrow: "Accès jury", paragraphs: () => paragraphs, ctaLabel: "Accéder au scoring", ctaHref: scoringUrl };
+  }
+  if (lang === "en") {
+    const paragraphs: string[] = [];
+    paragraphs.push(`You are a jury member for the <strong>${session}</strong> session${sessionDate ? ` (on ${sessionDate})` : ""}.`);
+    paragraphs.push(`On the day, you will score each startup directly online — <strong>no account required</strong>. Open the link below, enter the code, then pick your name.`);
+    paragraphs.push(`Scoring link: ${linkA(scoringUrl)}`);
+    if (pin) paragraphs.push(pinLine("Access code:"));
+    if (teamsUrl) paragraphs.push(`Session Teams link: ${linkA(teamsUrl)}`);
+    if (packUrl) paragraphs.push(`Pre-read (executive summaries): ${linkA(packUrl)}`);
+    return { subject: `Your scoring access — ${session || "Rotary Startup Award"}`, eyebrow: "Jury access", paragraphs: () => paragraphs, ctaLabel: "Open scoring", ctaHref: scoringUrl };
+  }
+  // de
+  const paragraphs: string[] = [];
+  paragraphs.push(`Sie sind Jurymitglied der Session <strong>${session}</strong>${sessionDate ? ` (am ${sessionDate})` : ""}.`);
+  paragraphs.push(`Am Tag der Session bewerten Sie jedes Startup direkt online — <strong>kein Konto erforderlich</strong>. Öffnen Sie den Link, geben Sie den Code ein und wählen Sie Ihren Namen.`);
+  paragraphs.push(`Bewertungslink: ${linkA(scoringUrl)}`);
+  if (pin) paragraphs.push(pinLine("Zugangscode:"));
+  if (teamsUrl) paragraphs.push(`Teams-Link der Session: ${linkA(teamsUrl)}`);
+  if (packUrl) paragraphs.push(`Pre-read (Executive Summaries): ${linkA(packUrl)}`);
+  return { subject: `Ihr Bewertungszugang — ${session || "Rotary Startup Award"}`, eyebrow: "Jury-Zugang", paragraphs: () => paragraphs, ctaLabel: "Zur Bewertung", ctaHref: scoringUrl };
+}
+
 function resolveCopy(type: EmailType, lang: Lang, data: Record<string, unknown>): Copy {
   let base: Omit<Copy, "greeting" | "signOff" | "signature">;
   switch (type) {
@@ -662,6 +717,9 @@ function resolveCopy(type: EmailType, lang: Lang, data: Record<string, unknown>)
       break;
     case "session_running_order":
       base = copySessionRunningOrder(lang, data);
+      break;
+    case "jury_scoring_invite":
+      base = copyJuryScoringInvite(lang, data);
       break;
   }
   return {
@@ -922,9 +980,9 @@ Deno.serve(async (req: Request) => {
   const required = ROLE_REQUIREMENTS[payload.type];
   let allowed = required.some((r) => roles.includes(r));
 
-  // session_running_order : un club_admin du club de la session est autorisé
-  // (parité avec send-bulk ; rsa_my_roles ne renvoie pas les rôles club-scoped).
-  if (!allowed && payload.type === "session_running_order") {
+  // session_running_order / jury_scoring_invite : un club_admin du club de la session
+  // est autorisé (parité send-bulk ; rsa_my_roles ne renvoie pas les rôles club-scoped).
+  if (!allowed && (payload.type === "session_running_order" || payload.type === "jury_scoring_invite")) {
     const clubId = (payload.data as Record<string, unknown> | undefined)?.club_id;
     if (typeof clubId === "string" && clubId) {
       const { data: cmRows, error: cmErr } = await supabase.rpc("my_club_memberships");
