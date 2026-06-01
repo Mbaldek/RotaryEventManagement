@@ -50,13 +50,20 @@
   bloc « Accès scoring » (lien `/Score?s=` + PIN + copier + régénérer) + réglage des poids
   (somme=100 live, save).
 
-**Tests** : `src/lib/rsa/__tests__/scoringWeights.test.js` (`node --test`, 7/7).
+- **Classement / publish name-keyed** — `rsa_publish_session` rebranché : le CTE de
+  classement agrège `jury_scores` (name-keyed) avec les **poids de session**, `startup_id`
+  résolu par join `startup_name → startups` (projection finaliste + finale_membership +
+  audit inchangés). `ResultsTab` plateforme : preview via `buildRanking(scores, {}, weights)`
+  + nouveau hook `useNameKeyedSessionResults`. `buildRanking` accepte un 3ᵉ arg `weights`.
 
-**Reste à faire (hors périmètre 4 étapes, à noter)** : `usePublishSession` /
-`ClubResultsTab` agrègent encore `platform_jury_scores` (modèle auth) → pour ce flux
-name-keyed, le **classement final / publish** doit être rebranché sur `jury_scores` via
-`buildRanking` (`src/lib/rsa/ranking.js`, déjà name-keyed `startup_name`). Le **lock/live**
-fonctionne (statut partagé dans `session_config`). Browser-test du flux complet à faire.
+**Tests** : `src/lib/rsa/__tests__/scoringWeights.test.js` + `rankingWeighted.test.js`
+(`node --test`, 10/10).
+
+**Reste à faire** : **browser-test du flux complet** (PIN → name-pick → scoring → grille
+live → lock → publish → palmarès) sur une session plateforme réelle (startups assignées +
+jurés approuvés). Note : `rsa_publish_session` agrège désormais `jury_scores` name-keyed —
+les sessions historiques notées via le modèle auth `platform_jury_scores` ne seraient plus
+agrégées si re-publiées (leur snapshot `final_ranking` existant reste intact).
 
 ## 1. Intention & principe
 

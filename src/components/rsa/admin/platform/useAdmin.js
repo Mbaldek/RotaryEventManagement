@@ -532,6 +532,29 @@ export function useSessionResults(sessionId) {
   });
 }
 
+// ── Results NAME-KEYED (flux jury sans compte) ──────────────────────────────
+// Lit session_config (statut + poids + overrides + snapshot) + jury_scores
+// (name-keyed). Le preview de classement se calcule via buildRanking(scores,
+// {}, resolveSessionWeights(config)). Le publish (RPC rsa_publish_session) agrège
+// désormais aussi jury_scores name-keyed avec les poids de session.
+export function useNameKeyedSessionResults(sessionId) {
+  return useQuery({
+    queryKey: ['rsa', 'admin', 'nk-results', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return null;
+      const [{ data: cfg, error: cfgErr }, scoresRes] = await Promise.all([
+        supabase.from('session_config').select('*').eq('session_id', sessionId).maybeSingle(),
+        supabase.from('jury_scores').select('*').eq('session_id', sessionId),
+      ]);
+      if (cfgErr) throw cfgErr;
+      if (scoresRes.error) throw scoresRes.error;
+      return { config: cfg ?? null, scores: scoresRes.data || [] };
+    },
+    enabled: !!sessionId,
+    staleTime: 5 * 1000,
+  });
+}
+
 // ── CSV export utility (used by RESULTS) ───────────────────────────────────
 function csvField(value) {
   if (value == null) return '';
