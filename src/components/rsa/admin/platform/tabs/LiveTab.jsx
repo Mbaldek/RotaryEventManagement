@@ -137,8 +137,8 @@ export default function LiveTab({ edition, session }) {
   const [detail, setDetail]   = useState(null);  // { row, jurorLabel, startupLabel }
 
   const status = config.data?.status || 'draft';
-  // Poids des critères pour cette session (fractions), défaut standard si non réglés.
-  const weights = useMemo(() => resolveSessionWeights(config.data), [config.data]);
+  // Poids des critères = paramètre de COMPÉTITION (editions.scoring_weights), pas de session.
+  const weights = useMemo(() => resolveSessionWeights(edition?.scoring_weights), [edition]);
 
   // Lookup cellule : (jury_name, startup_name) → row (score final ou brouillon)
   const scoreByKey = useMemo(() => {

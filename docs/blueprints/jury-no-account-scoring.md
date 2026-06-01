@@ -22,12 +22,17 @@
 `startups.name`. **Aucune nouvelle table de scores.**
 
 **5 briques livrées :**
-- **Poids configurables** — `session_config.score_weights jsonb` (pourcentages entiers,
-  somme=100 ; `null` = défaut 20/20/20/20/10/10). Les 6 critères + ancrages restent
-  fixes (SSOT `src/lib/rsa/constants.js`). Helpers ajoutés : `DEFAULT_WEIGHTS`,
-  `DEFAULT_WEIGHTS_PCT`, `weightsSumPct`, `isValidWeightsPct`, `resolveSessionWeights`,
-  et `weightedScore(row, weights?)` (rétro-compatible). `ScoringPanel`/`CriterionRating`/
-  `ScoreCell` acceptent un poids dynamique.
+- **Poids configurables = paramètre de COMPÉTITION** (révision 2026-06-01 : déplacé du
+  niveau session → édition). Stockés dans `editions.scoring_weights jsonb` (pct entiers,
+  somme=100 ; défaut 20/20/20/20/10/10). Édités dans **CompetitionEditView → onglet
+  « Notation »** (`ScoringWeightsEditor`, autosave via `Edition.patch`). Lus depuis
+  l'édition partout : contexte public (`rsa_public_score_context`), publish
+  (`rsa_publish_session`), grille `LiveTab` et `ResultsTab` (`resolveSessionWeights(edition.scoring_weights)`).
+  Les 6 critères + ancrages restent fixes (SSOT `src/lib/rsa/constants.js`). Helpers :
+  `DEFAULT_WEIGHTS(_PCT)`, `weightsSumPct`, `isValidWeightsPct`, `resolveSessionWeights`,
+  `weightedScore(row, weights?)`. `ScoringPanel`/`CriterionRating`/`ScoreCell` acceptent un
+  poids dynamique. ⚠️ `session_config.score_weights` + `rsa_set_session_weights` DÉPRÉCIÉS
+  (colonne laissée, RPC supprimé) — ne plus régler les poids au niveau session/live.
 - **Accès slug + PIN** — `sessions.score_slug` (unique) + `sessions.score_pin`. RPC admin
   `rsa_rotate_session_access(session_id)` (génère/rotère). RPC admin
   `rsa_set_session_weights(session_id, weights)` (valide somme=100).
@@ -46,9 +51,9 @@
   startups `pitch_order`, scores/drafts `jury_scores`/`jury_score_drafts` name-keyed,
   realtime), agrégats pondérés par les poids de session. L'ancien câblage lisait le modèle
   AUTH `platform_jury_*` (jamais alimenté par ce flux → grille vide).
-- **Hub Pilotage** `…/club/session/SessionScoringAccess.jsx` monté dans `SessionShell` :
-  bloc « Accès scoring » (lien `/Score?s=` + PIN + copier + régénérer) + réglage des poids
-  (somme=100 live, save).
+- **Hub Pilotage** `…/club/session/SessionScoringAccess.jsx` (monté dans `SessionShell` +
+  `LiveTab`) : bloc « Accès scoring » (lien `/Score?s=` + PIN + copier + régénérer +
+  « Envoyer l'invitation aux jurés »). Le réglage des poids n'est PLUS ici (→ compétition).
 
 - **Classement / publish name-keyed** — `rsa_publish_session` rebranché : le CTE de
   classement agrège `jury_scores` (name-keyed) avec les **poids de session**, `startup_id`

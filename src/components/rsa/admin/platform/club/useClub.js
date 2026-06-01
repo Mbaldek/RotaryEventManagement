@@ -256,14 +256,13 @@ export function useSessionAccess(sessionId) {
       if (!sessionId) return null;
       const [sRes, cRes] = await Promise.all([
         supabase.from('sessions').select('id, score_slug, score_pin, name, session_date, club_id').eq('id', sessionId).maybeSingle(),
-        supabase.from('session_config').select('score_weights, teams_link').eq('session_id', sessionId).maybeSingle(),
+        supabase.from('session_config').select('teams_link').eq('session_id', sessionId).maybeSingle(),
       ]);
       if (sRes.error) throw sRes.error;
       if (cRes.error) throw cRes.error;
       return {
         slug: sRes.data?.score_slug || null,
         pin: sRes.data?.score_pin || null,
-        weights: cRes.data?.score_weights || null,
         session_name: sRes.data?.name || null,
         session_date: sRes.data?.session_date || null,
         club_id: sRes.data?.club_id || null,
@@ -288,20 +287,8 @@ export function useRotateSessionAccess(sessionId) {
   });
 }
 
-// Définit les poids des 6 critères (pourcentages entiers, somme=100) via RPC admin.
-export function useSetSessionWeights(sessionId) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (weightsPct) => {
-      const { error } = await supabase.rpc('rsa_set_session_weights', { p_session_id: sessionId, p_weights: weightsPct });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['rsa', 'club', 'session-access', sessionId] });
-      qc.invalidateQueries({ queryKey: ['rsa', 'club', 'sessions'], exact: false });
-    },
-  });
-}
+// Poids des critères : paramètre de COMPÉTITION (editions.scoring_weights), édité
+// dans CompetitionEditView → onglet Notation. Plus de réglage au niveau session.
 
 // ── Écriture de l'ordre de passage (RPC) + invalidation ─────────────────────
 export function useSetRunningOrder(sessionId) {
