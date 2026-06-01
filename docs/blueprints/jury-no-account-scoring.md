@@ -59,11 +59,24 @@
 **Tests** : `src/lib/rsa/__tests__/scoringWeights.test.js` + `rankingWeighted.test.js`
 (`node --test`, 10/10).
 
-**Reste à faire** : **browser-test du flux complet** (PIN → name-pick → scoring → grille
-live → lock → publish → palmarès) sur une session plateforme réelle (startups assignées +
-jurés approuvés). Note : `rsa_publish_session` agrège désormais `jury_scores` name-keyed —
-les sessions historiques notées via le modèle auth `platform_jury_scores` ne seraient plus
-agrégées si re-publiées (leur snapshot `final_ranking` existant reste intact).
+**Validé E2E (2026-06-01)** : flux juré public (PIN → name-pick → scoring → submit) testé
+en navigateur ; `rsa_public_score_*` + persistance `jury_scores` name-keyed OK ; PIN
+auto-validé à 4 chiffres. Côté admin, `rsa_publish_session` exécuté comme master_admin →
+`final_ranking` pondéré par les poids de session (Beta 2.65 > Gamma 2.10 > Alpha 1.40),
+projection finaliste + `platform_finale_membership` OK. Seed de test nettoyé.
+
+**Décisions produit** : PIN = **4 chiffres simple** (retenu, pas de rate-limit — barrière
+réelle = le slug). Le **lien + PIN se communiquent dans l'email pré-read / invitation Teams**
+des jurés (pas d'envoi séparé).
+
+**Prochaine brique (comms)** : injecter le lien `/Score?s=<slug>` + le PIN dans l'email
+pré-read / invitation Teams envoyé aux jurés approuvés (via Email Studio / edge
+send-transactional, cf. `project_session_presentation_generator`). Localiser le template
+d'invitation juré et y ajouter le bloc accès scoring (slug+PIN de la session).
+
+**Note** : `rsa_publish_session` agrège désormais `jury_scores` name-keyed — les sessions
+historiques notées via le modèle auth `platform_jury_scores` ne seraient plus agrégées si
+re-publiées (leur snapshot `final_ranking` existant reste intact).
 
 ## 1. Intention & principe
 
