@@ -14,7 +14,6 @@ import { NAVY, INK, MUTED, GOLD, CREAM2, SERIF } from '@/components/design';
 import { Field, Textarea } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import StatusBadge from './StatusBadge';
-import ClusterSelect from './ClusterSelect';
 import { DECISIONS, DECISION_DEFAULT, formatDateTime } from './constants';
 import { DECISION_LABELS, UI } from './i18n';
 
@@ -51,7 +50,6 @@ function DecisionRadio({ value, onChange, disabled }) {
 export default function AdminOverridePanel({
   startup,
   effectiveReview,
-  sessions = [],
   onValidate,
   onOverride,
   isValidating,
@@ -70,13 +68,11 @@ export default function AdminOverridePanel({
   const [decision, setDecision] = useState(
     effectiveReview?.decision || DECISION_DEFAULT,
   );
-  const [clusterId, setClusterId] = useState(effectiveReview?.assigned_session_id || null);
   const [rationale, setRationale] = useState(effectiveReview?.rationale || '');
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     setDecision(effectiveReview?.decision || DECISION_DEFAULT);
-    setClusterId(effectiveReview?.assigned_session_id || null);
     setRationale(effectiveReview?.rationale || '');
     setErrors({});
     setShowOverride(false);
@@ -90,7 +86,6 @@ export default function AdminOverridePanel({
   const handleOverride = (e) => {
     e?.preventDefault?.();
     const next = {};
-    if (decision === 'eligible' && !clusterId) next.cluster = t(UI.errEligibleNeedsCluster);
     if (['rejete', 'liste_attente'].includes(decision) && !rationale?.trim()) {
       next.rationale = t(UI.errRationale);
     }
@@ -100,7 +95,7 @@ export default function AdminOverridePanel({
     onOverride?.({
       startupId: startup.id,
       decision,
-      assignedSessionId: decision === 'eligible' ? clusterId : null,
+      assignedSessionId: null,
       rationale: rationale?.trim() || null,
       overridesReviewId: effectiveReview?.id || null,
     });
@@ -211,25 +206,6 @@ export default function AdminOverridePanel({
 
           <Field label={t(UI.decisionField)} required>
             {() => <DecisionRadio value={decision} onChange={setDecision} disabled={isOverriding} />}
-          </Field>
-
-          <Field
-            label={t(UI.clusterField)}
-            required={decision === 'eligible'}
-            error={errors.cluster}
-          >
-            {({ id, invalid }) => (
-              <ClusterSelect
-                id={id}
-                value={clusterId}
-                onChange={setClusterId}
-                sessions={sessions}
-                startup={startup}
-                allowEmpty={decision !== 'eligible'}
-                disabled={isOverriding || decision !== 'eligible'}
-                invalid={invalid}
-              />
-            )}
           </Field>
 
           <Field
