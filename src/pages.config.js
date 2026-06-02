@@ -18,6 +18,7 @@ import { lazy } from 'react';
 import __Layout from './Layout.jsx';
 
 const Admin = lazy(() => import('./pages/Admin'));
+const Allocation = lazy(() => import('./pages/Allocation'));
 const Candidater = lazy(() => import('./pages/Candidater'));
 const Concours = lazy(() => import('./pages/Concours'));
 const DevenirJury = lazy(() => import('./pages/DevenirJury'));
@@ -48,6 +49,7 @@ const StartupUpload = lazy(() => import('./pages/legacy/StartupUpload'));
 
 export const PAGES = {
     "Admin": Admin,
+    "Allocation": Allocation,
     "Candidater": Candidater,
     "Concours": Concours,
     "DevenirJury": DevenirJury,
