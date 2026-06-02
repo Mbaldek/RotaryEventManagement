@@ -33,7 +33,7 @@ export function groupAllocatedByCluster(allocated = [], clusters = []) {
 }
 
 // Diacritics block produit par NFD (U+0300..U+036F).
-const DIACRITICS_RE = /[̀-ͯ]/g;
+const DIACRITICS_RE = /[\u0300-\u036F]/g;
 
 // Génère un id text de session : `${editionId}_${slug}` (a-z0-9_), sans accents.
 export function slugSessionId(editionId, name) {
