@@ -85,6 +85,12 @@ export default function CompetitionShell({ editionId }) {
       meta: candMeta,
     },
     {
+      key: 'allocation',
+      to: `/Allocation?edition=${encodeURIComponent(editionId)}`,
+      title: t({ fr: 'Allocation des éligibles', en: 'Allocate eligible startups', de: 'Zuteilung der Geeigneten' }),
+      hint: t({ fr: 'Construire les clusters, répartir les éligibles', en: 'Build clusters, distribute eligible startups', de: 'Cluster bauen, Geeignete verteilen' }),
+    },
+    {
       key: 'jury',
       to: `/Jury?edition=${encodeURIComponent(editionId)}`,
       title: t({ fr: 'Jury & notation', en: 'Jury & scoring', de: 'Jury & Bewertung' }),
