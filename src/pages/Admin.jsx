@@ -116,6 +116,12 @@ export default function Admin() {
     p.delete('subview');
     p.delete('id');
     p.delete('tab');
+    // Nav-flux (Lot 1) : on quitte aussi l'état coquille pour repartir propre.
+    p.delete('competition');
+    p.delete('phase');
+    p.delete('screen');
+    p.delete('club');
+    p.delete('legacyNav');
     setParams(p, { replace: true });
   };
 
