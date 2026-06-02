@@ -1,7 +1,7 @@
 // DecisionPanel — the comité form. Embedded in the DossierDrawer below the dossier
-// detail. Renders a 4-option radio (a_examiner / eligible / liste_attente / rejete),
-// the ClusterSelect (required for eligible), and a Textarea rationale (required for
-// rejete / liste_attente). Submits via useUpsertReview.
+// detail. Renders a 4-option radio (a_examiner / eligible / liste_attente / rejete)
+// and a Textarea rationale (required for rejete / liste_attente). Submits via useUpsertReview.
+// Cluster allocation is handled separately in the cockpit (allocation screen).
 //
 // Disabled when the effective decision is is_final=true (admin lock).
 
@@ -14,8 +14,6 @@ import { useLang } from '@/lib/platform/i18n';
 import { usePlatformAuth } from '@/lib/platform/auth';
 import { DECISIONS, DECISION_DEFAULT, formatDateTime } from './constants';
 import { DECISION_LABELS, UI } from './i18n';
-import ClusterSelect from './ClusterSelect';
-
 function DecisionRadio({ value, onChange, disabled }) {
   const { t } = useLang();
   return (
@@ -50,7 +48,6 @@ export default function DecisionPanel({
   startup,
   effectiveReview,
   reviews = [],
-  sessions = [],
   onSubmit,
   isPending,
   isLocked, // effectiveReview?.is_final
@@ -69,9 +66,6 @@ export default function DecisionPanel({
 
   const [decision, setDecision] = useState(
     latestMine?.decision || effectiveReview?.decision || DECISION_DEFAULT,
-  );
-  const [clusterId, setClusterId] = useState(
-    latestMine?.assigned_session_id || effectiveReview?.assigned_session_id || null,
   );
   const [rationale, setRationale] = useState(
     latestMine?.rationale || effectiveReview?.rationale || '',
@@ -102,9 +96,6 @@ export default function DecisionPanel({
   // If the props change (different dossier), reset the form.
   useEffect(() => {
     setDecision(latestMine?.decision || effectiveReview?.decision || DECISION_DEFAULT);
-    setClusterId(
-      latestMine?.assigned_session_id || effectiveReview?.assigned_session_id || null,
-    );
     setRationale(latestMine?.rationale || effectiveReview?.rationale || '');
     setErrors({});
     setSaved(false);
@@ -114,9 +105,6 @@ export default function DecisionPanel({
   const handleSubmit = (e) => {
     e?.preventDefault?.();
     const next = {};
-    if (decision === 'eligible' && !clusterId) {
-      next.cluster = t(UI.errEligibleNeedsCluster);
-    }
     if (['rejete', 'liste_attente'].includes(decision) && !rationale?.trim()) {
       next.rationale = t(UI.errRationale);
     }
@@ -130,7 +118,7 @@ export default function DecisionPanel({
       reviewerId: authUser?.id,
       reviewerName,
       decision,
-      assignedSessionId: decision === 'eligible' ? clusterId : null,
+      assignedSessionId: null,
       rationale: rationale?.trim() || null,
     });
   };
@@ -198,26 +186,6 @@ export default function DecisionPanel({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Field label={t(UI.decisionField)} required>
           {() => <DecisionRadio value={decision} onChange={setDecision} disabled={isPending} />}
-        </Field>
-
-        <Field
-          label={t(UI.clusterField)}
-          required={decision === 'eligible'}
-          helper={decision !== 'eligible' ? t(UI.clusterNone) : undefined}
-          error={errors.cluster}
-        >
-          {({ id, invalid }) => (
-            <ClusterSelect
-              id={id}
-              value={clusterId}
-              onChange={setClusterId}
-              sessions={sessions}
-              startup={startup}
-              allowEmpty={decision !== 'eligible'}
-              disabled={isPending || decision !== 'eligible'}
-              invalid={invalid}
-            />
-          )}
         </Field>
 
         <Field
