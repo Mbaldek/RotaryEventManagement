@@ -12,19 +12,20 @@ function tos(items) {
   return items.map((i) => i.to);
 }
 
-// — Admin variants — toujours 1 seul item /Admin (admin trumps tout) —
+// — Admin variants — Administration + accès direct Sélection + Jury (admin
+//   trumps tout : la nav ops s'ajoute aux 3 points d'entrée, peu importe le rôle) —
 
-test('master_admin only -> 1 item Administration', () => {
+test('master_admin only -> Administration + Sélection + Jury', () => {
   const items = computePrimaryNav({ roles: ['master_admin'] });
-  assert.deepEqual(tos(items), ['/Admin']);
+  assert.deepEqual(tos(items), ['/Admin', '/Selection', '/Jury']);
   assert.equal(items[0].label.fr, 'Administration');
-  assert.equal(items[0].label.en, 'Administration');
-  assert.equal(items[0].label.de, 'Verwaltung');
+  assert.equal(items[1].label.fr, 'Sélection');
+  assert.equal(items[2].label.fr, 'Jury');
 });
 
-test('admin legacy only -> 1 item Administration', () => {
+test('admin legacy only -> Administration + Sélection + Jury', () => {
   const items = computePrimaryNav({ roles: ['admin'] });
-  assert.deepEqual(tos(items), ['/Admin']);
+  assert.deepEqual(tos(items), ['/Admin', '/Selection', '/Jury']);
 });
 
 test('competition_admin only -> 1 item Administration', () => {
@@ -32,7 +33,7 @@ test('competition_admin only -> 1 item Administration', () => {
     roles: [],
     competitionAdminEditions: ['edition-2027'],
   });
-  assert.deepEqual(tos(items), ['/Admin']);
+  assert.deepEqual(tos(items), ['/Admin', '/Selection', '/Jury']);
 });
 
 test('club_admin only -> 1 item Administration', () => {
@@ -40,12 +41,12 @@ test('club_admin only -> 1 item Administration', () => {
     roles: [],
     clubMemberships: [{ club_id: 'paris-etoile', role: 'club_admin' }],
   });
-  assert.deepEqual(tos(items), ['/Admin']);
+  assert.deepEqual(tos(items), ['/Admin', '/Selection', '/Jury']);
 });
 
 test('master_admin + jury -> 1 item Administration (admin trumps)', () => {
   const items = computePrimaryNav({ roles: ['master_admin', 'jury'] });
-  assert.deepEqual(tos(items), ['/Admin']);
+  assert.deepEqual(tos(items), ['/Admin', '/Selection', '/Jury']);
 });
 
 test('competition_admin + comite -> 1 item Administration (admin trumps)', () => {
@@ -53,7 +54,7 @@ test('competition_admin + comite -> 1 item Administration (admin trumps)', () =>
     roles: ['comite'],
     competitionAdminEditions: ['edition-2027'],
   });
-  assert.deepEqual(tos(items), ['/Admin']);
+  assert.deepEqual(tos(items), ['/Admin', '/Selection', '/Jury']);
 });
 
 test('club_admin + jury club-scoped -> 1 item Administration (admin trumps)', () => {
@@ -64,7 +65,7 @@ test('club_admin + jury club-scoped -> 1 item Administration (admin trumps)', ()
       { club_id: 'lyon', role: 'jury' },
     ],
   });
-  assert.deepEqual(tos(items), ['/Admin']);
+  assert.deepEqual(tos(items), ['/Admin', '/Selection', '/Jury']);
 });
 
 // — Ops sans admin —
