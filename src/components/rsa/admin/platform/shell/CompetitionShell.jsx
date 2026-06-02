@@ -89,7 +89,7 @@ export default function CompetitionShell({ editionId }) {
         <PhaseBar activePhase={phase} onChange={setPhase} />
       </div>
 
-      {phase === 'prep' && <CompetitionEditView editionId={editionId} onClose={goHub} />}
+      {phase === 'prep' && <CompetitionEditView editionId={editionId} onClose={goHub} embedded />}
       {phase === 'orga' && <PhaseLauncher items={orgaItems} />}
       {phase === 'pilotage' && <PhaseLauncher items={pilotageItems} />}
     </section>
