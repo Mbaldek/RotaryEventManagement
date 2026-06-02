@@ -2,7 +2,7 @@
 // Édition active unique (open || plus récente). Sessions chronologiques.
 // Frise sticky = nav. Veil au mount. Lecture seule, auth-gate magic-link.
 import React, { useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { PageShell, TopNav, Footer } from '@/components/design';
@@ -35,14 +35,22 @@ export default function Concours() {
   const { t, lang } = useLang();
   const reduce = useReducedMotion();
 
+  // ?edition=<id> scope la vitrine sur une compétition précise (liens diffusés).
+  // Absent → fallback sur l'édition ouverte, sinon la plus récente.
+  const [searchParams] = useSearchParams();
+  const editionParam = searchParams.get('edition');
+
   const editionsQ = useEditionsAvailable();
   const editions = editionsQ.data || [];
 
-  // Édition active unique — pas de selector.
   const edition = useMemo(() => {
     if (editions.length === 0) return null;
+    if (editionParam) {
+      const scoped = editions.find((e) => e.id === editionParam);
+      if (scoped) return scoped;
+    }
     return editions.find((e) => e.status === 'open') || editions[0];
-  }, [editions]);
+  }, [editions, editionParam]);
 
   const overviewQ = useEditionOverview(edition?.id);
   const overview = overviewQ.data;
