@@ -48,6 +48,13 @@ const T = {
     en: 'Pick the competition and enter your email address. You will receive a sign-in link to open your application — no password required.',
     de: 'Wählen Sie den Wettbewerb und geben Sie Ihre E-Mail-Adresse ein. Sie erhalten einen Anmeldelink, um Ihre Bewerbung zu öffnen — ganz ohne Passwort.',
   },
+  // Variante quand la compétition est déjà fixée (arrivée via lien compétition) :
+  // plus de mention « choisissez la compétition », on va droit à l'email.
+  subtitleLocked: {
+    fr: 'Indiquez votre adresse email. Vous recevrez un lien de connexion pour ouvrir votre dossier — sans mot de passe.',
+    en: 'Enter your email address. You will receive a sign-in link to open your application — no password required.',
+    de: 'Geben Sie Ihre E-Mail-Adresse ein. Sie erhalten einen Anmeldelink, um Ihre Bewerbung zu öffnen — ganz ohne Passwort.',
+  },
   competitionLabel: { fr: 'Compétition', en: 'Competition', de: 'Wettbewerb' },
   competitionPlaceholder: {
     fr: 'Sélectionnez une compétition…',
@@ -133,11 +140,16 @@ function mapError(raw, t) {
   return `${t(T.errGeneric)}${msg ? ` (${msg})` : ''}`;
 }
 
-export default function Step1Picker({ initialEdition = null, onSent }) {
+export default function Step1Picker({ initialEdition = null, lockedEditionId = null, onSent }) {
   const { t } = useLang();
   const { signInWithMagicLink } = usePlatformAuth();
 
-  const [editionId, setEditionId] = useState('');
+  // Mode « verrouillé » : la compétition est déjà fixée par l'URL (lien
+  // compétition). On masque le sélecteur et on fige l'édition — le candidat n'a
+  // plus qu'à saisir son email.
+  const locked = !!lockedEditionId;
+
+  const [editionId, setEditionId] = useState(lockedEditionId || '');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
   const [error, setError] = useState(null);
@@ -148,14 +160,19 @@ export default function Step1Picker({ initialEdition = null, onSent }) {
     staleTime: 60 * 1000,
   });
 
-  // Pre-select si query param fourni et match dans la liste ouverte.
+  // Verrou : si une compétition est imposée, on la force comme sélection.
   useEffect(() => {
-    if (!openList.length || editionId) return;
+    if (lockedEditionId) setEditionId(lockedEditionId);
+  }, [lockedEditionId]);
+
+  // Pre-select si query param fourni et match dans la liste ouverte (mode libre).
+  useEffect(() => {
+    if (locked || !openList.length || editionId) return;
     if (initialEdition) {
       const match = openList.find((e) => e.edition.id === initialEdition);
       if (match) setEditionId(match.edition.id);
     }
-  }, [openList, initialEdition, editionId]);
+  }, [locked, openList, initialEdition, editionId]);
 
   const options = useMemo(() => {
     return openList.map((entry) => ({
@@ -278,25 +295,29 @@ export default function Step1Picker({ initialEdition = null, onSent }) {
           {t(T.title)}
         </h2>
         <p className="text-[14.5px] leading-relaxed max-w-[440px] mx-auto" style={{ color: INK }}>
-          {t(T.subtitle)}
+          {t(locked ? T.subtitleLocked : T.subtitle)}
         </p>
       </div>
 
       <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
-        <Field label={t(T.competitionLabel)} required>
-          {({ id, describedBy, invalid }) => (
-            <Select
-              id={id}
-              aria-describedby={describedBy}
-              invalid={invalid}
-              value={editionId}
-              onChange={(e) => setEditionId(e.target.value)}
-              placeholder={t(T.competitionPlaceholder)}
-              options={options}
-              disabled={sending || isLoading || options.length === 0}
-            />
-          )}
-        </Field>
+        {/* Sélecteur de compétition — masqué en mode verrouillé (compétition
+            déjà fixée par le lien, rappelée dans le badge en tête de page). */}
+        {!locked && (
+          <Field label={t(T.competitionLabel)} required>
+            {({ id, describedBy, invalid }) => (
+              <Select
+                id={id}
+                aria-describedby={describedBy}
+                invalid={invalid}
+                value={editionId}
+                onChange={(e) => setEditionId(e.target.value)}
+                placeholder={t(T.competitionPlaceholder)}
+                options={options}
+                disabled={sending || isLoading || options.length === 0}
+              />
+            )}
+          </Field>
+        )}
 
         {isLoading && (
           <div className="flex items-center gap-2 text-[12.5px]" style={{ color: MUTED }}>
@@ -328,7 +349,7 @@ export default function Step1Picker({ initialEdition = null, onSent }) {
           </div>
         )}
 
-        {!isLoading && !isError && options.length === 0 && (
+        {!locked && !isLoading && !isError && options.length === 0 && (
           <p className="text-[13px]" style={{ color: MUTED }}>
             {t(T.noCompetitions)}
           </p>

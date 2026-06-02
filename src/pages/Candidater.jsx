@@ -20,12 +20,14 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, MailCheck } from 'lucide-react';
+import { Loader2, MailCheck, ArrowLeft, AlertCircle } from 'lucide-react';
 import {
   PageShell, Footer, EditorialTitle,
   GOLD, NAVY, INK, MUTED, CREAM2, SERIF, EASE,
 } from '@/components/design';
+import { DANGER, TINT_DANGER } from '@/components/design/tokens.app';
 
 // Hero variant : H-Step-Pictogram (catalog §16.1) — step counter `01 / 03` +
 // serif title + intro. Casse l'adjacence avec DevenirJury (H-Vertical-Rule).
@@ -37,7 +39,9 @@ import { usePlatformAuth } from '@/lib/platform/auth';
 import OpenCompetitions from '@/components/rsa/candidature/OpenCompetitions';
 import Step1Picker from '@/components/rsa/candidature/Step1Picker';
 import PublicEventBadge from '@/components/rsa/public/PublicEventBadge';
-import { Startup } from '@/lib/rsa/entities';
+import { summarizeRules, ELIGIBILITY_COPY } from '@/components/rsa/candidature/eligibilitySummary';
+import { formatDate } from '@/components/rsa/candidature/validation';
+import { Edition, Startup } from '@/lib/rsa/entities';
 
 const T = {
   eyebrow: { fr: 'Candidatures ouvertes', en: 'Open applications', de: 'Offene Bewerbungen' },
@@ -54,6 +58,23 @@ const T = {
   },
   sectionEyebrow: { fr: 'Compétitions', en: 'Competitions', de: 'Wettbewerbe' },
   startEyebrow: { fr: 'Démarrez en 30 secondes', en: 'Get started in 30 seconds', de: 'In 30 Sekunden starten' },
+  // Lien (mode ciblé) pour revenir à la liste de toutes les compétitions.
+  seeOthers: {
+    fr: 'Voir les autres compétitions ouvertes',
+    en: 'See other open competitions',
+    de: 'Andere offene Wettbewerbe ansehen',
+  },
+  // Bandeau : la compétition demandée n'est pas (ou plus) ouverte aux candidatures.
+  editionUnavailableTitle: {
+    fr: 'Cette compétition n’est pas ouverte aux candidatures',
+    en: 'This competition is not open for applications',
+    de: 'Dieser Wettbewerb ist nicht für Bewerbungen geöffnet',
+  },
+  editionUnavailableBody: {
+    fr: 'Le lien que vous avez suivi pointe vers une compétition fermée ou indisponible. Voici les compétitions actuellement ouvertes.',
+    en: 'The link you followed points to a closed or unavailable competition. Here are the competitions currently open.',
+    de: 'Der Link führt zu einem geschlossenen oder nicht verfügbaren Wettbewerb. Hier sind die aktuell offenen Wettbewerbe.',
+  },
   footerLeft: {
     fr: `© ${new Date().getFullYear()} Rotary Startup Award`,
     en: `© ${new Date().getFullYear()} Rotary Startup Award`,
@@ -190,6 +211,40 @@ export default function Candidater() {
 
   const initialEdition = useMemo(() => editionParam, [editionParam]);
 
+  // ── Mode de la page ──────────────────────────────────────────────────────
+  // On lit la liste des compétitions ouvertes (clé partagée avec OpenCompetitions
+  // / Step1Picker, donc en cache) pour décider entre :
+  //   • « ciblé »     : on arrive via un lien compétition valide → UN seul funnel,
+  //                     compétition verrouillée, vitrine masquée.
+  //   • « découverte » : pas de lien, OU lien vers une compétition fermée/invalide
+  //                     → vitrine + sélecteur (+ bandeau d'info le cas échéant).
+  const { data: openList = [], isLoading: listLoading } = useQuery({
+    queryKey: ['rsa', 'open-competitions'],
+    queryFn: () => Edition.openForApply(),
+    staleTime: 60 * 1000,
+    enabled: !claim, // inutile pendant le claim flow
+  });
+
+  const targetedEntry = useMemo(
+    () => (editionParam ? openList.find((e) => e.edition.id === editionParam) || null : null),
+    [openList, editionParam],
+  );
+
+  // Lien vers une compétition résolue comme fermée/inexistante (liste chargée,
+  // pas de match) → on bascule en découverte avec un bandeau explicatif.
+  const editionUnavailable = !!editionParam && !listLoading && !targetedEntry;
+  // Ciblé tant qu'on a un edition param non résolu-introuvable (inclut le
+  // chargement, optimiste : la liste est en cache la plupart du temps).
+  const targeted = !!editionParam && !editionUnavailable;
+
+  const targetedCriteria = useMemo(
+    () => (targetedEntry ? summarizeRules(targetedEntry.rules, t, lang) : []),
+    [targetedEntry, t, lang],
+  );
+  const targetedCloseLabel = targetedEntry?.edition?.application_close
+    ? `${t(ELIGIBILITY_COPY.deadline)} ${formatDate(targetedEntry.edition.application_close, lang)}`
+    : null;
+
   // ── Claim view ─────────────────────────────────────────────────────────────
   if (claim && (authLoading || claimState === 'claiming' || claimState === 'done')) {
     return (
@@ -261,11 +316,17 @@ export default function Candidater() {
         >
           {t(T.subtitle)}
         </p>
+        {/* Badge contexte — uniquement en mode ciblé (compétition valide). En
+            mode découverte / indisponible on ne montre pas de « vous candidatez
+            pour », ce serait trompeur. Enrichi des critères + date de clôture. */}
         <PublicEventBadge
-          editionId={initialEdition}
+          editionId={targeted ? editionParam : null}
           clubId={null}
           kind="startup"
           className="mt-6"
+          criteria={targeted ? targetedCriteria : null}
+          criteriaTitle={targeted && targetedCriteria.length ? t(ELIGIBILITY_COPY.criteriaTitle) : null}
+          closeLabel={targeted ? targetedCloseLabel : null}
         />
       </header>
 
@@ -323,46 +384,90 @@ export default function Candidater() {
         </p>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,420px)] gap-10 lg:gap-12">
-        {/* Liste des compétitions ouvertes — section opener S-Numbered. */}
-        <section aria-labelledby="open-competitions-title">
-          <div className="mb-5 flex items-baseline gap-3">
-            <span
-              className="tabular-nums text-[14px]"
-              style={{ fontFamily: SERIF, color: GOLD }}
-            >
-              01
-            </span>
-            <span aria-hidden className="h-px flex-1 max-w-[40px]" style={{ background: CREAM2 }} />
-            <h2
-              id="open-competitions-title"
-              className="text-[14px] m-0"
-              style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-            >
-              {t(T.sectionEyebrow)}
-            </h2>
+      {targeted ? (
+        /* ── Mode ciblé : UN seul funnel, compétition verrouillée ───────────── */
+        <section aria-labelledby="start-step1-title" className="max-w-[560px]">
+          <div className="pt-5 md:pt-7" style={{ borderTop: `1px solid ${GOLD}33` }}>
+            <h2 id="start-step1-title" className="sr-only">{t(T.startEyebrow)}</h2>
+            <AnimatePresence mode="wait">
+              <Step1Picker key="step1-locked" lockedEditionId={editionParam} />
+            </AnimatePresence>
           </div>
-          <OpenCompetitions />
+          <p className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => navigate('/Candidater')}
+              className="inline-flex items-center gap-1.5 text-[13px] font-medium underline underline-offset-4 rounded-[4px] px-1 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+              style={{ color: NAVY }}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
+              {t(T.seeOthers)}
+            </button>
+          </p>
         </section>
-
-        {/* Picker self-signup (Step1) */}
-        <aside aria-labelledby="start-step1-title">
-          <div className="lg:sticky lg:top-6">
+      ) : (
+        /* ── Mode découverte : vitrine + sélecteur ──────────────────────────── */
+        <>
+          {editionUnavailable && (
             <div
-              className="pt-5 md:pt-7"
-              style={{ borderTop: `1px solid ${GOLD}33` }}
+              role="status"
+              className="mb-8 max-w-[680px] flex items-start gap-2.5 px-4 py-3 rounded-[4px]"
+              style={{ background: TINT_DANGER, border: `1px solid ${DANGER}33` }}
             >
-              <h2 id="start-step1-title" className="sr-only">{t(T.startEyebrow)}</h2>
-              <AnimatePresence mode="wait">
-                <Step1Picker
-                  key="step1"
-                  initialEdition={initialEdition}
-                />
-              </AnimatePresence>
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: DANGER }} aria-hidden />
+              <div>
+                <p className="text-[13.5px] font-medium" style={{ color: NAVY }}>
+                  {t(T.editionUnavailableTitle)}
+                </p>
+                <p className="text-[12.5px] mt-0.5 leading-relaxed" style={{ color: INK }}>
+                  {t(T.editionUnavailableBody)}
+                </p>
+              </div>
             </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,420px)] gap-10 lg:gap-12">
+            {/* Liste des compétitions ouvertes — section opener S-Numbered. */}
+            <section aria-labelledby="open-competitions-title">
+              <div className="mb-5 flex items-baseline gap-3">
+                <span
+                  className="tabular-nums text-[14px]"
+                  style={{ fontFamily: SERIF, color: GOLD }}
+                >
+                  01
+                </span>
+                <span aria-hidden className="h-px flex-1 max-w-[40px]" style={{ background: CREAM2 }} />
+                <h2
+                  id="open-competitions-title"
+                  className="text-[14px] m-0"
+                  style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
+                >
+                  {t(T.sectionEyebrow)}
+                </h2>
+              </div>
+              <OpenCompetitions />
+            </section>
+
+            {/* Picker self-signup (Step1) */}
+            <aside aria-labelledby="start-step1-title">
+              <div className="lg:sticky lg:top-6">
+                <div
+                  className="pt-5 md:pt-7"
+                  style={{ borderTop: `1px solid ${GOLD}33` }}
+                >
+                  <h2 id="start-step1-title" className="sr-only">{t(T.startEyebrow)}</h2>
+                  <AnimatePresence mode="wait">
+                    <Step1Picker
+                      key="step1"
+                      initialEdition={initialEdition}
+                    />
+                  </AnimatePresence>
+                </div>
+              </div>
+            </aside>
           </div>
-        </aside>
-      </div>
+        </>
+      )}
     </PageShell>
   );
 }

@@ -12,9 +12,11 @@ import { NAVY, GOLD, INK, MUTED, CREAM2, SERIF } from '@/components/design/token
 import { FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { Edition } from '@/lib/rsa/entities';
-import { formatDate, formatEur } from '@/components/rsa/candidature/validation';
+import { formatDate } from '@/components/rsa/candidature/validation';
+import { summarizeRules, ELIGIBILITY_COPY } from '@/components/rsa/candidature/eligibilitySummary';
 
 // Petit dictionnaire local — pas de pollution de l'i18n principal du funnel.
+// Les libellés de critères / clôture sont mutualisés dans ELIGIBILITY_COPY.
 const T = {
   loading: { fr: 'Chargement des compétitions…', en: 'Loading competitions…', de: 'Wettbewerbe werden geladen…' },
   empty: {
@@ -34,57 +36,7 @@ const T = {
   },
   retry: { fr: 'Réessayer', en: 'Retry', de: 'Erneut versuchen' },
   cta: { fr: 'Candidater', en: 'Apply', de: 'Bewerben' },
-  deadline: { fr: 'Clôture le', en: 'Closes on', de: 'Anmeldeschluss' },
-  noDeadline: { fr: 'Sans date de clôture', en: 'No closing date', de: 'Kein Stichtag' },
-  criteriaTitle: { fr: 'Critères principaux', en: 'Key criteria', de: 'Hauptkriterien' },
-  ruleCreated: {
-    fr: (d) => `Créée après le ${d}`,
-    en: (d) => `Founded after ${d}`,
-    de: (d) => `Gegründet nach dem ${d}`,
-  },
-  ruleRevenue: {
-    fr: (v) => `Chiffre d'affaires < ${v}`,
-    en: (v) => `Revenue under ${v}`,
-    de: (v) => `Umsatz unter ${v}`,
-  },
-  ruleRaised: {
-    fr: (v) => `Levée totale < ${v}`,
-    en: (v) => `Funds raised under ${v}`,
-    de: (v) => `Eingeworbenes Kapital unter ${v}`,
-  },
-  ruleCountry: {
-    fr: (l) => `Pays : ${l}`,
-    en: (l) => `Country: ${l}`,
-    de: (l) => `Land: ${l}`,
-  },
 };
-
-// Extrait jusqu'à 3 critères clés des règles fusionnées (priorité created_after,
-// revenue_max, raised_max ; puis pays en repli si on a la place). On reste
-// indicatif : c'est le funnel qui matérialise les règles complètes.
-function summarizeRules(rules, t, lang) {
-  if (!rules || typeof rules !== 'object') return [];
-  const out = [];
-  const created = rules.created_after;
-  if (created && created.behavior !== 'off' && created.date) {
-    out.push(t(T.ruleCreated)(formatDate(created.date, lang)));
-  }
-  const revenue = rules.revenue_max;
-  if (revenue && revenue.behavior !== 'off' && revenue.threshold != null) {
-    out.push(t(T.ruleRevenue)(formatEur(revenue.threshold, lang)));
-  }
-  const raised = rules.raised_max;
-  if (raised && raised.behavior !== 'off' && raised.threshold != null) {
-    out.push(t(T.ruleRaised)(formatEur(raised.threshold, lang)));
-  }
-  if (out.length < 3) {
-    const country = rules.country;
-    if (country && country.behavior !== 'off' && Array.isArray(country.allowed) && country.allowed.length) {
-      out.push(t(T.ruleCountry)(country.allowed.join(' · ')));
-    }
-  }
-  return out.slice(0, 3);
-}
 
 function CompetitionRow({ entry }) {
   const navigate = useNavigate();
@@ -132,10 +84,10 @@ function CompetitionRow({ entry }) {
             <span className="text-[11.5px]">
               {closeDate ? (
                 <>
-                  {t(T.deadline)}&nbsp;<strong style={{ color: INK, fontWeight: 500 }}>{closeDate}</strong>
+                  {t(ELIGIBILITY_COPY.deadline)}&nbsp;<strong style={{ color: INK, fontWeight: 500 }}>{closeDate}</strong>
                 </>
               ) : (
-                t(T.noDeadline)
+                t(ELIGIBILITY_COPY.noDeadline)
               )}
             </span>
           </span>
