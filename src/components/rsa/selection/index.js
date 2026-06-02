@@ -1,6 +1,7 @@
 // Barrel — Espace Sélection RSA (Module 2).
 export { default as FiltersBar } from './FiltersBar';
-export { default as QueueList } from './QueueList';
+export { default as QueueTable } from './QueueTable';
+export { default as QueueList } from './QueueList'; // déprécié — cf. selection-queue-table.md
 export { default as DossierDrawer } from './DossierDrawer';
 export { default as DossierDetail } from './DossierDetail';
 export { default as EligibilitySnapshot } from './EligibilitySnapshot';

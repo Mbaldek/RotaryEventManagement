@@ -61,6 +61,31 @@ export const UI = {
   clusterLabel:   { fr: 'Cluster (session)',         en: 'Cluster (session)',    de: 'Cluster (Session)' },
   resetFilters:   { fr: 'Réinitialiser',             en: 'Reset',                de: 'Zurücksetzen' },
 
+  // Filtres tableau (nouveaux)
+  clubLabel:      { fr: 'Club',                       en: 'Club',                 de: 'Club' },
+  clubAll:        { fr: 'Tous les clubs',             en: 'All clubs',            de: 'Alle Clubs' },
+  statusLabel:    { fr: 'Statut',                     en: 'Status',               de: 'Status' },
+  statusAll:      { fr: 'Tous les statuts',           en: 'All statuses',         de: 'Alle Status' },
+  sectorLabel:    { fr: 'Secteur / Industrie',        en: 'Sector / Industry',    de: 'Sektor / Branche' },
+  sectorPlaceholder: { fr: 'Ajouter un secteur…',     en: 'Add a sector…',        de: 'Sektor hinzufügen…' },
+
+  // Colonnes tableau
+  colStartup:     { fr: 'Startup',                    en: 'Startup',              de: 'Startup' },
+  colClub:        { fr: 'Club',                        en: 'Club',                 de: 'Club' },
+  colStatus:      { fr: 'Statut',                      en: 'Status',               de: 'Status' },
+  colVerdict:     { fr: 'Verdict',                     en: 'Verdict',              de: 'Urteil' },
+  colSector:      { fr: 'Secteur',                     en: 'Sector',               de: 'Sektor' },
+  colDecision:    { fr: 'Décision',                    en: 'Decision',             de: 'Entscheidung' },
+  colContact:     { fr: 'Contact',                     en: 'Contact',              de: 'Kontakt' },
+  colCountry:     { fr: 'Pays',                        en: 'Country',              de: 'Land' },
+  colSubmitted:   { fr: 'Soumis',                      en: 'Submitted',            de: 'Eingereicht' },
+  colActions:     { fr: 'Actions',                     en: 'Actions',              de: 'Aktionen' },
+  rowOpen:        { fr: 'Ouvrir le dossier',           en: 'Open dossier',         de: 'Bewerbung öffnen' },
+  rowActions:     { fr: 'Actions rapides',             en: 'Quick actions',        de: 'Schnellaktionen' },
+  quickValidate:  { fr: 'Valider la décision',         en: 'Validate decision',    de: 'Entscheidung validieren' },
+  noDecision:     { fr: '— à examiner',                en: '— to review',          de: '— zu prüfen' },
+  resultsCount:   { fr: '{n} résultat(s)',             en: '{n} result(s)',        de: '{n} Ergebnis(se)' },
+
   // Liste
   emptyQueue:     { fr: 'Aucun dossier à examiner pour le moment.',
                     en: 'No applications to review at the moment.',

@@ -60,6 +60,8 @@ const STAFF_FILTER_KEYS = new Set([
   'statusIn',
   'verdictIn',
   'sessionIdIn',
+  'clubIdIn',
+  'sectorIn',
   'search',
   'cursor',
 ]);
@@ -206,6 +208,13 @@ export const Startup = {
     if (Array.isArray(safe.sessionIdIn) && safe.sessionIdIn.length) {
       q = q.in('session_id', safe.sessionIdIn);
     }
+    if (Array.isArray(safe.clubIdIn) && safe.clubIdIn.length) {
+      q = q.in('club_id', safe.clubIdIn);
+    }
+    if (Array.isArray(safe.sectorIn) && safe.sectorIn.length) {
+      // sectors est un text[] : overlap = la startup a AU MOINS un des secteurs filtrés.
+      q = q.overlaps('sectors', safe.sectorIn);
+    }
     if (safe.search && typeof safe.search === 'string' && safe.search.trim().length > 0) {
       // .or() prend une chaîne PostgREST ; on encode pour éviter les , et ) parasites.
       const s = safe.search.trim().replace(/[,()]/g, ' ');
@@ -217,6 +226,26 @@ export const Startup = {
     const { data, error } = await q;
     if (error) throw error;
     return data || [];
+  },
+
+  // Valeurs de secteurs distinctes présentes en base (pour peupler le filtre
+  // Secteur du tableau de sélection). On lit la seule colonne `sectors` (text[])
+  // puis on dédupe côté client — robuste aux données hétérogènes (clusters funnel
+  // + tags importés d'Airtable). editionId optionnel restreint le périmètre.
+  async distinctSectors({ editionId } = {}) {
+    let q = supabase.from('startups').select('sectors').limit(5000);
+    if (editionId) q = q.eq('edition_id', editionId);
+    const { data, error } = await q;
+    if (error) throw error;
+    const set = new Set();
+    for (const row of data || []) {
+      const arr = Array.isArray(row?.sectors) ? row.sectors : [];
+      for (const s of arr) {
+        const v = String(s || '').trim();
+        if (v) set.add(v);
+      }
+    }
+    return Array.from(set);
   },
 
   // Module 4a — Listing admin transverse (toute édition + tout statut). Pas de paginé

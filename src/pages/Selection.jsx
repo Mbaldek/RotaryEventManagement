@@ -1,13 +1,14 @@
 // Espace Sélection — orchestrateur du Module 2 (comité + admin).
 //
-// Flux : auth-gate (-> /Login) -> role-gate (comité OU admin) -> page filtres + queue
-// + drawer/detail. Filtres lifted ici ; les hooks vivent dans useSelection.
+// Flux : auth-gate (-> /Login) -> role-gate (comité OU admin) -> filtres + tableau
+// + drawer détail (sheet overlay). Filtres lifted ici ; les hooks vivent dans useSelection.
 //
-// Layout :
-//   lg+ : grille 2 colonnes (queue à gauche, drawer à droite, sticky).
-//   < lg : master/detail (drawer prend le plein écran avec bouton retour).
+// Refonte 2026-06-02 : la file passe d'une liste éditoriale (GroupedQueue par club /
+// QueueList plate) à un TABLEAU filtrable unifié (QueueTable) — tient à l'échelle
+// (~10 000 startups / ~200 clubs). Le club devient une colonne + un filtre.
+// Cf. docs/blueprints/selection-queue-table.md.
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
@@ -18,7 +19,7 @@ import {
   GOLD,
   NAVY,
   INK,
-  MUTED,
+  CREAM,
   CREAM2,
   SERIF,
   EASE,
@@ -27,9 +28,9 @@ import { usePlatformAuth } from '@/lib/platform/auth';
 import { useLang } from '@/lib/platform/i18n';
 import {
   FiltersBar,
-  QueueList,
   DossierDrawer,
   STATUS_FILTERS,
+  pickEffectiveReview,
   useEditions,
   useSessionsForEdition,
   useSelectionQueue,
@@ -39,14 +40,11 @@ import {
   useFinalizeReview,
   useAdminOverride,
 } from '@/components/rsa/selection';
-// Refonte hiérarchie : pour le master_admin / admin legacy, la queue est rendue
-// groupée Compétition ▸ Club au lieu d'une liste plate. Le club_admin / comité
-// scoped conserve la <QueueList> plate (un seul club implicite côté UX).
-import GroupedQueue from '@/components/rsa/selection/GroupedQueue';
-import { groupSelectionPages } from '@/components/rsa/selection/useSelectionQueueGrouped';
+import QueueTable from '@/components/rsa/selection/QueueTable';
+import { buildSectorOptions } from '@/components/rsa/selection/sectors';
 import { UI } from '@/components/rsa/selection/i18n';
 import GuideSpaceHelp from '@/components/rsa/guides/GuideSpaceHelp';
-import { Club, Edition } from '@/lib/rsa/entities';
+import { Club, Edition, Startup } from '@/lib/rsa/entities';
 import { useQuery } from '@tanstack/react-query';
 
 function Centered({ children, minHeight = '40vh' }) {
@@ -68,26 +66,29 @@ function Spinner({ size = 6, label }) {
   );
 }
 
-// Compute the server filters object passed to the queue from local UI state.
-// quickTab maps onto status filters ; verdict is a single value (kept as array).
-//
-// V2 multi-club : on ajoute clubIdsIn (multi-club allowed pour un master_admin
-// qui inspecterait 2 clubs simultanément ; pour le cas standard 1 seul club, on
-// passe un tableau singleton). Le client-side .pageForStaff ne le supporte pas
-// encore en natif — on filtre donc dans `filteredPages` côté composant.
-function buildFilters({ editionId, quickTab, verdictIn, search }) {
+// Compute the server filters object from local UI state.
+// - statusValue (selecteur explicite) prime sur le quickTab.
+// - sinon quickTab pilote statusIn (toReview / decided / union pour toValidate).
+// - clubId / sectorIn sont poussés côté serveur (clubIdIn / sectorIn).
+function buildFilters({ editionId, quickTab, verdictIn, search, clubId, statusValue, sectorIn }) {
   const filters = {
     editionId: editionId || undefined,
     search: search || undefined,
   };
-  if (quickTab === 'toReview') filters.statusIn = STATUS_FILTERS.toReview;
-  else if (quickTab === 'decided') filters.statusIn = STATUS_FILTERS.decided;
-  else if (quickTab === 'toValidate') {
-    // Côté serveur on ne sait pas filtrer sur "needs validation" sans une vue dédiée ;
-    // on ramène l'union (à examiner + décidés) puis on filtre côté client (cf. queue).
+  if (statusValue) {
+    filters.statusIn = [statusValue];
+  } else if (quickTab === 'toReview') {
+    filters.statusIn = STATUS_FILTERS.toReview;
+  } else if (quickTab === 'decided') {
+    filters.statusIn = STATUS_FILTERS.decided;
+  } else if (quickTab === 'toValidate') {
+    // "needs validation" non filtrable côté serveur sans vue dédiée :
+    // on ramène l'union puis on filtre côté client (cf. filteredPages).
     filters.statusIn = [...STATUS_FILTERS.toReview, ...STATUS_FILTERS.decided];
   }
   if (Array.isArray(verdictIn) && verdictIn.length > 0) filters.verdictIn = verdictIn;
+  if (clubId) filters.clubIdIn = [clubId];
+  if (Array.isArray(sectorIn) && sectorIn.length > 0) filters.sectorIn = sectorIn;
   return filters;
 }
 
@@ -101,19 +102,14 @@ export default function Selection() {
     clubMemberships,
     loading: authLoading,
   } = usePlatformAuth();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const reduce = useReducedMotion();
 
-  // Deep-link depuis le cockpit (« Espaces opérationnels ») : /Selection?edition=…
-  // pré-sélectionne la compétition pour atterrir directement sur ses dossiers.
+  // Deep-link cockpit : /Selection?edition=… pré-sélectionne la compétition.
   const [searchParams] = useSearchParams();
   const editionParam = searchParams.get('edition');
 
-  // V2 multi-club : périmètre de clubs visibles par défaut.
-  // - master_admin OR admin legacy : voit TOUT (rendu en GroupedQueue : sections
-  //   par compétition, sous-sections par club — refonte hiérarchie).
-  // - club_admin / comite scoped : limité à ses clubs (auto-filter sans toggle,
-  //   rendu en QueueList plate puisqu'un seul club est implicite).
+  // Périmètre clubs : comité / club_admin scoped à ses clubs ; admins voient tout.
   const myComiteClubIds = useMemo(
     () => (clubMemberships || [])
       .filter((m) => m.role === 'comite' || m.role === 'club_admin')
@@ -122,49 +118,70 @@ export default function Selection() {
   );
   const canSeeAllClubs = isMasterAdmin || isAdmin;
   const isClubScoped = !canSeeAllClubs && myComiteClubIds.length > 0;
+  const canValidate = isAdmin || isMasterAdmin || isCompetitionAdmin;
 
-  // Liste des clubs (pour résoudre les noms dans la GroupedQueue master/admin).
+  const isStaff = isComite || isAdmin || isMasterAdmin || isCompetitionAdmin;
+
+  // Liste des clubs (RPC public) — pour résoudre les noms + peupler le filtre Club.
   const { data: allClubs = [] } = useQuery({
     queryKey: ['rsa', 'selection', 'clubs'],
     queryFn: () => Club.listAll(),
-    enabled: canSeeAllClubs,
+    enabled: isAuthenticated && isStaff,
     staleTime: 5 * 60 * 1000,
   });
 
   // ── Filtres locaux ──────────────────────────────────────────────────────
-  // L'édition active sert de défaut tant que l'utilisateur n'en pick pas une autre.
-  // On charge l'édition active séparément pour pouvoir initialiser editionId.
   const { data: activeEdition } = useQuery({
     queryKey: ['rsa', 'selection', 'active-edition'],
     queryFn: () => Edition.active(),
     staleTime: 5 * 60 * 1000,
-    enabled: isAuthenticated && (isComite || isAdmin || isMasterAdmin || isCompetitionAdmin),
+    enabled: isAuthenticated && isStaff,
   });
 
-  // Le param d'URL prime sur l'édition active comme valeur initiale.
   const [editionId, setEditionId] = useState(editionParam || null);
   const [quickTab, setQuickTab] = useState('toReview');
   const [verdictIn, setVerdictIn] = useState([]);
   const [search, setSearch] = useState('');
+  const [clubId, setClubId] = useState(null);
+  const [statusValue, setStatusValue] = useState('');
+  const [sectorIn, setSectorIn] = useState([]);
+  const [sort, setSort] = useState(null); // { key, dir } | null
   const [selectedId, setSelectedId] = useState(null);
 
-  // Bootstrap editionId from the active edition once it loads — uniquement si
-  // aucun param d'URL n'a déjà fixé l'édition (le deep-link cockpit prime).
-  React.useEffect(() => {
-    if (!editionId && activeEdition?.id) {
-      setEditionId(activeEdition.id);
-    }
+  // Bootstrap editionId depuis l'édition active (sauf si un param d'URL prime).
+  useEffect(() => {
+    if (!editionId && activeEdition?.id) setEditionId(activeEdition.id);
   }, [editionId, activeEdition?.id]);
+
+  // Fermer le sheet détail sur Échap.
+  useEffect(() => {
+    if (!selectedId) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setSelectedId(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedId]);
 
   // ── Queries ─────────────────────────────────────────────────────────────
   const { data: editions = [] } = useEditions();
+
+  // Options secteur (valeurs distinctes en base, scopées à l'édition courante).
+  const { data: distinctSectors = [] } = useQuery({
+    queryKey: ['rsa', 'selection', 'sectors', editionId],
+    queryFn: () => Startup.distinctSectors({ editionId }),
+    enabled: isAuthenticated && isStaff,
+    staleTime: 5 * 60 * 1000,
+  });
+  const sectorOptions = useMemo(
+    () => buildSectorOptions(distinctSectors, lang),
+    [distinctSectors, lang],
+  );
+
   const filters = useMemo(
-    () => buildFilters({ editionId, quickTab, verdictIn, search }),
-    [editionId, quickTab, verdictIn, search],
+    () => buildFilters({ editionId, quickTab, verdictIn, search, clubId, statusValue, sectorIn }),
+    [editionId, quickTab, verdictIn, search, clubId, statusValue, sectorIn],
   );
 
   const queue = useSelectionQueue(filters);
-  // Sessions de l'édition sélectionnée (sinon de l'édition du dossier ouvert).
   const detail = useDossierDetail(selectedId);
   const { data: reviews = [] } = useReviews(selectedId);
 
@@ -176,13 +193,22 @@ export default function Selection() {
   const finalize = useFinalizeReview();
   const override = useAdminOverride();
 
-  // ── Client-side filtres (à valider + club_id) ──────────────────────────
-  // 1. quickTab=='toValidate' : on garde uniquement les rows ayant des reviews
-  //    non-finales.
-  // 2. Refonte hiérarchie : pour le club_scoped (comite/club_admin), on
-  //    restreint aux clubs visibles. Pour le master_admin / admin legacy, on
-  //    ne filtre plus côté client — la GroupedQueue rend visuellement par
-  //    section club, plus besoin de masquer.
+  // ── Lookups + filtre client (toValidate + scoping club) ──────────────────
+  const clubsLookup = useMemo(() => {
+    const m = new Map();
+    for (const c of allClubs) m.set(c.id, c);
+    return m;
+  }, [allClubs]);
+
+  // Options du filtre Club : limité aux clubs du comité scoped, sinon tous.
+  const clubFilterOptions = useMemo(() => {
+    if (isClubScoped) {
+      const allow = new Set(myComiteClubIds);
+      return allClubs.filter((c) => allow.has(c.id));
+    }
+    return allClubs;
+  }, [isClubScoped, myComiteClubIds, allClubs]);
+
   const clubAllowList = useMemo(() => {
     if (isClubScoped) return new Set(myComiteClubIds);
     return null;
@@ -194,35 +220,15 @@ export default function Selection() {
     const pages = queue.data.pages || [];
     return pages.map((page) =>
       (page || []).filter((row) => {
-        // Club filter (club_scoped uniquement)
         if (allow && row.club_id && !allow.has(row.club_id)) return false;
-        if (allow && !row.club_id && allow.size > 0) {
-          return false;
-        }
-        // Validation filter
+        if (allow && !row.club_id && allow.size > 0) return false;
         if (quickTab !== 'toValidate') return true;
-        const reviews = Array.isArray(row.selection_reviews) ? row.selection_reviews : [];
-        if (!reviews.length) return false;
-        return !reviews.some((r) => r.is_final);
+        const rev = Array.isArray(row.selection_reviews) ? row.selection_reviews : [];
+        if (!rev.length) return false;
+        return !rev.some((r) => r.is_final);
       }),
     );
   }, [queue.data, quickTab, clubAllowList]);
-
-  // Lookups + groupement pour la vue GroupedQueue (master_admin / admin).
-  const editionsLookup = useMemo(() => {
-    const m = new Map();
-    for (const e of editions) m.set(e.id, e);
-    return m;
-  }, [editions]);
-  const clubsLookup = useMemo(() => {
-    const m = new Map();
-    for (const c of allClubs) m.set(c.id, c);
-    return m;
-  }, [allClubs]);
-  const groupedFiltered = useMemo(
-    () => (canSeeAllClubs ? groupSelectionPages(filteredPages) : []),
-    [canSeeAllClubs, filteredPages],
-  );
 
   // ── Auth / role gates ──────────────────────────────────────────────────
   if (authLoading) {
@@ -238,38 +244,49 @@ export default function Selection() {
   }
   if (!isAuthenticated) return <Navigate to="/Login" replace />;
 
-  // Gate élargi à la hiérarchie : master_admin / competition_admin accèdent à la
-  // file de sélection au même titre que comité / admin legacy (cohérent avec
-  // canSeeAllClubs + GroupedQueue plus bas). Sinon un master_admin pur — sans le
-  // rôle 'admin' — tomberait sur Forbidden depuis le lien cockpit.
-  if (!(isComite || isAdmin || isMasterAdmin || isCompetitionAdmin)) {
+  if (!isStaff) {
     return (
       <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered minHeight="50vh">
           <div className="text-center max-w-md" role="status">
             <div className="flex items-center justify-center gap-2.5 mb-3">
               <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
-              <span
-                className="uppercase text-[10px] tracking-[0.18em] font-medium"
-                style={{ color: GOLD }}
-              >
+              <span className="uppercase text-[10px] tracking-[0.18em] font-medium" style={{ color: GOLD }}>
                 {t(UI.eyebrow)}
               </span>
               <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
             </div>
-            <p className="text-[15px]" style={{ color: INK }}>
-              {t(UI.noAccess)}
-            </p>
+            <p className="text-[15px]" style={{ color: INK }}>{t(UI.noAccess)}</p>
           </div>
         </Centered>
       </PageShell>
     );
   }
 
-  // ── Mutation handlers (close over selectedId) ──────────────────────────
+  // ── Mutation handlers ──────────────────────────────────────────────────
   const handleSubmitReview = (payload, options) => upsert.mutate(payload, options);
   const handleAdminValidate = (payload, options) => finalize.mutate(payload, options);
   const handleAdminOverride = (payload, options) => override.mutate(payload, options);
+
+  // Action rapide inline : valider (finaliser) la review en attente d'un dossier.
+  const handleQuickValidate = (startup) => {
+    const rev = Array.isArray(startup?.selection_reviews) ? startup.selection_reviews : [];
+    const eff = pickEffectiveReview(rev);
+    if (eff && !eff.is_final && eff.id) {
+      finalize.mutate({ reviewId: eff.id, startupId: startup.id });
+    }
+  };
+
+  const handleReset = () => {
+    setQuickTab('toReview');
+    setVerdictIn([]);
+    setSearch('');
+    setClubId(null);
+    setStatusValue('');
+    setSectorIn([]);
+    setSort(null);
+    setEditionId(activeEdition?.id || null);
+  };
 
   return (
     <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
@@ -293,30 +310,28 @@ export default function Selection() {
         <GuideSpaceHelp space="selection" editionId={editionId || null} className="shrink-0 mt-1" />
       </header>
 
-      {/* Refonte hiérarchie : retrait du toggle club pour master_admin / admin
-          legacy — devenu redondant puisque la GroupedQueue rend désormais une
-          section par compétition puis sous-section par club. */}
-
       <FiltersBar
         editions={editions}
         editionId={editionId}
         quickTab={quickTab}
         verdictIn={verdictIn}
         search={search}
+        clubs={clubFilterOptions}
+        clubId={clubId}
+        statusValue={statusValue}
+        sectorIn={sectorIn}
+        sectorOptions={sectorOptions}
         onEditionChange={setEditionId}
         onQuickTabChange={setQuickTab}
         onVerdictChange={setVerdictIn}
         onSearchChange={setSearch}
-        onReset={() => {
-          setQuickTab('toReview');
-          setVerdictIn([]);
-          setSearch('');
-          setEditionId(activeEdition?.id || null);
-        }}
+        onClubChange={setClubId}
+        onStatusChange={setStatusValue}
+        onSectorChange={setSectorIn}
+        onReset={handleReset}
       />
 
-      {/* Signature M-Hairline-Reveal — hairline scaleX 0→1 left-origin 400ms
-          juste avant la queue, signature comité/admin. */}
+      {/* Signature M-Hairline-Reveal avant le tableau. */}
       <motion.span
         aria-hidden
         initial={reduce ? { opacity: 0 } : { scaleX: 0 }}
@@ -326,95 +341,77 @@ export default function Selection() {
         style={{ background: CREAM2, transformOrigin: 'left' }}
       />
 
-      {/* Layout master/detail */}
+      {/* Tableau pleine largeur */}
       <motion.div
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: EASE, delay: 0.35 }}
-        className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,520px)] gap-6"
       >
-        {/* Queue — caché en mobile quand un dossier est ouvert.
-            master_admin / admin legacy : <GroupedQueue> (sections compétition
-              ▸ club, cf. refonte hiérarchie).
-            club_scoped (comité / club_admin) : <QueueList> plate (un seul
-              club implicite, comportement V2 préservé). */}
-        <div className={selectedId ? 'hidden lg:block' : ''}>
-          {canSeeAllClubs ? (
-            <GroupedQueue
-              groups={groupedFiltered}
-              editionsLookup={editionsLookup}
-              clubsLookup={clubsLookup}
-              isLoading={queue.isLoading}
-              isError={queue.isError}
-              hasNextPage={!!queue.hasNextPage}
-              isFetchingNextPage={queue.isFetchingNextPage}
-              onLoadMore={() => queue.fetchNextPage()}
-              onOpen={(id) => setSelectedId(id)}
-              selectedId={selectedId}
-              onRetry={() => queue.refetch()}
-            />
-          ) : (
-            <QueueList
-              pages={filteredPages}
-              isLoading={queue.isLoading}
-              isError={queue.isError}
-              hasNextPage={!!queue.hasNextPage}
-              isFetchingNextPage={queue.isFetchingNextPage}
-              onLoadMore={() => queue.fetchNextPage()}
-              onOpen={(id) => setSelectedId(id)}
-              selectedId={selectedId}
-              onRetry={() => queue.refetch()}
-            />
-          )}
-        </div>
-
-        {/* Drawer / Detail — sticky sur desktop */}
-        <div className={`${selectedId ? '' : 'hidden lg:block'} lg:sticky lg:top-20 lg:self-start`}>
-          <AnimatePresence mode="wait" initial={false}>
-            {selectedId ? (
-              <motion.div
-                key={`detail-${selectedId}`}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.22, ease: EASE }}
-              >
-                <DossierDrawer
-                  startupId={selectedId}
-                  startup={detail.data}
-                  reviews={reviews}
-                  sessions={sessions}
-                  isLoading={detail.isLoading}
-                  isError={detail.isError}
-                  onBack={() => setSelectedId(null)}
-                  onClose={() => setSelectedId(null)}
-                  onRetry={() => detail.refetch()}
-                  onSubmitReview={handleSubmitReview}
-                  onAdminValidate={handleAdminValidate}
-                  onAdminOverride={handleAdminOverride}
-                  isSubmittingReview={upsert.isPending}
-                  isAdminValidating={finalize.isPending}
-                  isAdminOverriding={override.isPending}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="detail-empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18, ease: EASE }}
-                className="rounded-[4px] p-6 text-center"
-                style={{ background: 'white', border: `1px solid ${CREAM2}` }}
-              >
-                <p className="text-[14px]" style={{ color: MUTED }}>
-                  {t(UI.emptyDetailHint)}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <QueueTable
+          pages={filteredPages}
+          clubsLookup={clubsLookup}
+          isLoading={queue.isLoading}
+          isError={queue.isError}
+          hasNextPage={!!queue.hasNextPage}
+          isFetchingNextPage={queue.isFetchingNextPage}
+          onLoadMore={() => queue.fetchNextPage()}
+          onOpen={(id) => setSelectedId(id)}
+          onQuickValidate={handleQuickValidate}
+          canValidate={canValidate}
+          selectedId={selectedId}
+          onRetry={() => queue.refetch()}
+          sort={sort}
+          onSortChange={setSort}
+        />
       </motion.div>
+
+      {/* Drawer détail — sheet overlay à droite (plein écran < lg) */}
+      <AnimatePresence>
+        {selectedId && (
+          <>
+            <motion.div
+              key="sheet-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setSelectedId(null)}
+              className="fixed inset-0 z-[60]"
+              style={{ background: 'rgba(15,31,61,0.18)' }}
+              aria-hidden
+            />
+            <motion.aside
+              key="sheet-panel"
+              role="dialog"
+              aria-modal="true"
+              initial={reduce ? { opacity: 0 } : { x: '100%' }}
+              animate={reduce ? { opacity: 1 } : { x: 0 }}
+              exit={reduce ? { opacity: 0 } : { x: '100%' }}
+              transition={{ duration: 0.28, ease: EASE }}
+              className="fixed top-0 right-0 bottom-0 z-[61] w-full max-w-[560px] overflow-y-auto p-5"
+              style={{ background: CREAM, borderLeft: `1px solid ${CREAM2}`, boxShadow: '-8px 0 24px rgba(15,31,61,0.10)' }}
+            >
+              <DossierDrawer
+                startupId={selectedId}
+                startup={detail.data}
+                reviews={reviews}
+                sessions={sessions}
+                isLoading={detail.isLoading}
+                isError={detail.isError}
+                onBack={() => setSelectedId(null)}
+                onClose={() => setSelectedId(null)}
+                onRetry={() => detail.refetch()}
+                onSubmitReview={handleSubmitReview}
+                onAdminValidate={handleAdminValidate}
+                onAdminOverride={handleAdminOverride}
+                isSubmittingReview={upsert.isPending}
+                isAdminValidating={finalize.isPending}
+                isAdminOverriding={override.isPending}
+              />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
     </PageShell>
   );
 }
