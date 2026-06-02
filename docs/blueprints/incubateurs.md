@@ -176,6 +176,50 @@ Vue lecture seule admin : KPI cards (catalog §5.2) + table « candidats par inc
 - Envoi automatisé via Email Studio / page publique de diffusion.
 - Génération auto de l'affiche et du règlement (graphique/légal → uploadés).
 
+## 11. Évolution — Contact incubateur + propriété par club (multi-club)
+
+> Statut : spec en validation — 2026-06-01. Lève le YAGNI §9 « Pack/gestion au niveau club ».
+
+### 11.1 Besoin
+1. Le **contact relais** de l'incubateur (personne + email — l'humain à qui l'on envoie le kit) doit être saisissable.
+2. **Multi-club** : chaque club gère **sa propre liste d'incubateurs (opt-in) + son contact** depuis **son** cockpit. Le master ne gère plus que la **base globale** (nom/pays/langue/site).
+3. **Monoclub** : inchangé fonctionnellement — tout reste au niveau compétition (onglet actuel), **plus** les champs contact.
+
+### 11.2 Modèle de données
+Le contact n'est **pas** global (il dépend de la relation club↔incubateur). On déplace l'opt-in **et** le contact sur une jonction scopée club :
+
+```sql
+-- Global inchangé : incubators (id, name, country, language, website) — master-only.
+
+-- NOUVEAU : opt-in + contact, scopé (compétition, club).
+create table club_incubators (
+  edition_id    text references editions(id)   on delete cascade,
+  club_id       text references clubs(id)       on delete cascade,
+  incubator_id  text references incubators(id)  on delete cascade,
+  position      int  not null default 0,
+  contact_name  text,
+  contact_email text,
+  primary key (edition_id, club_id, incubator_id)
+);
+
+-- Migration de données : edition_incubators (per-edition) → club_incubators
+-- pour le club unique attaché à chaque édition (resolve via edition_clubs).
+-- edition_incubators conservée le temps de la bascule, dépréciée ensuite.
+```
+
+- **Monoclub** : l'onglet compétition `IncubatorsTab` résout le club unique (via `edition_clubs`) et écrit dans `club_incubators` pour ce club. UI quasi identique + 2 champs contact par ligne.
+- **Multi-club** : nouvel onglet **« Incubateurs »** dans `ClubCockpit` (mode Préparation) → opt-in + contact du club courant. L'onglet compétition master passe en lecture : base globale + agrégat (qui a opté-in, combien de contacts renseignés).
+- Écritures via RPC `security definer` (master OU club_admin du club), `search_path=public`, revoke anon (cf. hardening RSA). Lecture publique pour alimenter le funnel.
+
+### 11.3 Funnel candidat (décision ouverte)
+Le candidat choisit déjà un club (`StepClub`). Deux options pour la liste montrée dans `StepCompany` :
+- **(a)** liste de **son club** (`listForClub(editionId, clubId)`) — cohérent avec la propriété par club. **Recommandé.**
+- **(b)** **union** des opt-ins de l'édition (comme aujourd'hui) — moins de refonte funnel. **✅ RETENU (2026-06-01).**
+→ `useEditionIncubators(editionId)` devient une requête **distinct** sur `club_incubators` (union de tous les clubs de l'édition). `StepCompany`/`StepReview` quasi inchangés (même hook, même forme `{id, name}`).
+
+### 11.4 Surfaces touchées
+`supabase/migrations/<date>_rsa_club_incubators.sql` · `entities/incubators.js` (+ `listForClub`, `setClubOptIn`, contact) · `hooks/useIncubators.js` · `competition-tabs/IncubatorsTab.jsx` (monoclub résout club + agrégat multi-club) · `competition-tabs/IncubatorEditModal.jsx` (global = nom/site ; contact déplacé sur la ligne d'opt-in) · **NOUVEAU** `club/tabs/IncubatorsTab.jsx` + entrée dans `ClubCockpit` + `club-cockpit/modes.js` · `candidature/steps/StepCompany.jsx` + `StepReview.jsx` (si option a) · `useIncubators` `useSourcingStats` (scope club).
+
 ## 10. Séquence de build (pour writing-plans)
 
 1. Migration SQL (tables, colonnes, RLS, bucket) — appliquée via MCP Supabase.

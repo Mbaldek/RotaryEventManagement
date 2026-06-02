@@ -6,7 +6,7 @@
 export const CLUB_MODES = { PREP: 'prep', PILOTAGE: 'pilotage' };
 
 // Onglets de configuration (mode Préparation).
-export const PREP_TABS = ['setup', 'team', 'rules', 'prizes', 'jury_applications'];
+export const PREP_TABS = ['setup', 'team', 'rules', 'incubators', 'prizes', 'jury_applications'];
 
 // Onglets de suivi/pilotage (mode Pilotage). 'pilotage' = landing dashboard.
 export const PILOTAGE_TABS = ['pilotage', 'live', 'results', 'analytics', 'comms'];

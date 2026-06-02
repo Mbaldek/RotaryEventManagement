@@ -36,6 +36,7 @@ import ClubLiveTab from './tabs/LiveTab';
 import ClubResultsTab from './tabs/ResultsTab';
 import ClubTeamTab from './tabs/TeamTab';
 import ClubRulesTab from './tabs/RulesTab';
+import ClubIncubatorsTab from './tabs/IncubatorsTab';
 import JuryApplicationsTab from './tabs/JuryApplicationsTab';
 // CommsTab : monté seulement si l'EmailStudio M9 a livré son shell (lazy import pour
 // rester tolérant pendant la mise en place — fallback minimal sinon).
@@ -412,6 +413,9 @@ export default function ClubCockpit({ clubId, editionId: propEditionId }) {
               )}
               {activeTab === 'rules' && (
                 <ClubRulesTab edition={edition} clubId={clubId} />
+              )}
+              {activeTab === 'incubators' && (
+                <ClubIncubatorsTab edition={edition} clubId={clubId} />
               )}
               {activeTab === 'prizes' && (
                 <PrizesList editionId={editionId} clubId={clubId} scope="club" />
