@@ -234,36 +234,23 @@ export default function usePilotageStatus({ competition }) {
     // on considère done quand step 1-5 sont done & step 2-4 ne sont pas vides)
     const step6Done = step1.done && step2.done && step3.done && step4.done && (step5.done || step5.optional);
 
-    // Apply : 1 lien UNIQUE pour toute la compétition (la startup candidate au
-    // concours en général, l'admin route ensuite vers un club organisateur).
-    // Jury : reste club-aware (un juré rejoint le comité d'UN club précis) →
-    // en multi-club, 1 lien jury par club + 1 lien public partagé.
+    // Schéma canonique unique (2026-06-02) — aligné sur DiffusionSection :
+    // UN seul lien par flux, toujours scopé par ?edition=. Pas de ?club= dans le
+    // lien jury (le juré choisit son club dans le funnel, club obligatoire) ;
+    // /Concours porte ?edition= et la page la lit. Fini la divergence Pilotage
+    // vs Communication.
     let links = [];
     if (editionId) {
       links.push({ key: 'apply', path: `/Candidater?edition=${editionId}`, clubName: null });
-
-      const useGenericJury = isMonoclub || attached.length <= 1;
-      if (useGenericJury) {
-        links.push({ key: 'jury', path: `/DevenirJury?edition=${editionId}`, clubName: null });
-      } else {
-        for (const row of attachedListEnriched) {
-          links.push({
-            key: `jury:${row.id}`,
-            kind: 'jury',
-            path: `/DevenirJury?edition=${editionId}&club=${encodeURIComponent(row.id)}`,
-            clubId: row.id,
-            clubName: row.name,
-          });
-        }
-      }
-
-      links.push({ key: 'public', kind: 'public', path: '/Concours', clubName: null });
+      links.push({ key: 'jury', path: `/DevenirJury?edition=${editionId}`, clubName: null });
+      links.push({ key: 'public', kind: 'public', path: `/Concours?edition=${editionId}`, clubName: null });
     }
 
     const step6 = {
       id: 'links',
       done: step6Done,
-      isMulticlub: !isMonoclub && attached.length > 1,
+      // Plus de format multi-club par lien : un lien unique par flux.
+      isMulticlub: false,
       links,
     };
 
