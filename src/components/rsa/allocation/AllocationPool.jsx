@@ -1,6 +1,6 @@
 // src/components/rsa/allocation/AllocationPool.jsx
 // Liste éditoriale des éligibles à placer (L-Numbered-Hairline) : rail numéroté
-// + nom + secteurs + dropdown cluster (réutilise le pattern ClusterSelect).
+// + nom + secteurs + dropdown cluster (Select + suggestion secteur en or).
 import React from 'react';
 import { CREAM2, NAVY, MUTED, GOLD, SERIF } from '@/components/design/tokens';
 import { Select } from '@/components/design';

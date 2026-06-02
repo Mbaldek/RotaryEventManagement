@@ -146,14 +146,18 @@ export default function Allocation() {
               {t(UI.clusters)}
             </h2>
             {!showCreate && (
-              <button type="button" onClick={() => setShowCreate(true)}
-                      className="text-[12px] font-medium px-3 py-1.5 rounded-[4px]"
-                      style={{ color: NAVY, border: `1px solid ${GOLD}` }}>
-                {t(UI.addCluster)}
-              </button>
+              clubId ? (
+                <button type="button" onClick={() => setShowCreate(true)}
+                        className="text-[12px] font-medium px-3 py-1.5 rounded-[4px]"
+                        style={{ color: NAVY, border: `1px solid ${GOLD}` }}>
+                  {t(UI.addCluster)}
+                </button>
+              ) : (
+                <span className="text-[12px]" style={{ color: MUTED }}>{t(UI.needClub)}</span>
+              )
             )}
           </div>
-          {showCreate && (
+          {showCreate && clubId && (
             <CreateClusterInline onCreate={onCreate} onCancel={() => setShowCreate(false)} isPending={createCluster.isPending} />
           )}
           {clusters.length === 0 && !showCreate ? (
