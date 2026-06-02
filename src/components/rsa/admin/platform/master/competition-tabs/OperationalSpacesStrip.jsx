@@ -49,7 +49,9 @@ const T = {
 };
 
 // Hook compteurs — dossiers (par statut) + jurés distincts de l'édition.
-function useOperationalCounts(editionId) {
+// Exporté : réutilisé par la coquille nav-flux (CompetitionShell) pour afficher
+// les compteurs live dans les lignes de la phase Organisation.
+export function useOperationalCounts(editionId) {
   return useQuery({
     queryKey: ['rsa', 'master', 'operational-counts', editionId],
     enabled: !!editionId,
