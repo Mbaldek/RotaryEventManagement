@@ -95,12 +95,13 @@ begin
   end if;
   -- (retiré : eligible_requires_session — l'allocation est désormais séparée)
 
-  if p_overrides_review_id is not null then
-    update public.selection_reviews
-       set is_final = false
-     where id = p_overrides_review_id
-       and is_final = true;
-  end if;
+  -- Clear ANY existing is_final row for this startup before inserting the new one
+  -- (the partial-unique index allows only one). Caller-independent: the Allocation
+  -- screen calls with p_overrides_review_id=NULL, so we cannot rely on it.
+  update public.selection_reviews
+     set is_final = false
+   where startup_id = p_startup_id
+     and is_final = true;
 
   select coalesce(p.full_name, auth.jwt() ->> 'email') into v_admin_name
     from public.profiles p
