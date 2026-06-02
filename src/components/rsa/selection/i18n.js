@@ -43,9 +43,9 @@ export const UI = {
   // En-tête / navigation
   eyebrow:        { fr: 'Espace Sélection',          en: 'Selection desk',       de: 'Auswahl-Bereich' },
   pageTitle:      { fr: 'File des candidatures',     en: 'Candidate queue',      de: 'Bewerbungsliste' },
-  pageSubtitle:   { fr: 'Décidez de l’éligibilité, attribuez un cluster, validez en équipe.',
-                    en: 'Decide eligibility, assign a cluster, validate as a team.',
-                    de: 'Entscheiden Sie über die Förderfähigkeit, weisen Sie ein Cluster zu und validieren Sie gemeinsam im Team.' },
+  pageSubtitle:   { fr: 'Décidez de l’éligibilité des dossiers, validez en équipe. L’allocation aux clusters se fait ensuite dans le cockpit.',
+                    en: 'Decide dossier eligibility, validate as a team. Cluster allocation happens afterwards in the cockpit.',
+                    de: 'Entscheiden Sie über die Eignung der Dossiers, validieren Sie im Team. Die Cluster-Zuteilung erfolgt anschließend im Cockpit.' },
 
   // Onglets / filtres
   filtersAll:     { fr: 'Tous',                      en: 'All',                  de: 'Alle' },
