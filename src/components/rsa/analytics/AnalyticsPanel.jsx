@@ -2,8 +2,8 @@
 //
 // Header éditorial (Eyebrow + EditorialTitle "Analytics / temps réel"),
 // puis :
-//   - grid 4 KPI cards (candidatures, éligibles, sélectionnées, finalistes)
-//   - une ligne secondaire 4 KPI (en instruction, évaluées, lauréates, refusées)
+//   - KPI rail 4 cellules (candidatures, éligibles, sélectionnées, finalistes)
+//   - KPI rail secondaire 4 cellules (en instruction, évaluées, lauréates, refusées)
 //   - section FunnelChart (toujours)
 //   - section ClubsBreakdownChart (scope=master uniquement)
 //   - section JuryActivityTable
@@ -52,6 +52,37 @@ function SectionHeader({ title, hint }) {
   );
 }
 
+// KpiRail — grille 4 colonnes de cellules KPI séparées par des filets verticaux
+// fins. Un filet horizontal CREAM2 court sous toute la rangée.
+function KpiRail({ children, label }) {
+  return (
+    <div className="mb-6">
+      {label && (
+        <div className="flex items-center gap-2.5 mb-1">
+          <span className="h-[1px]" style={{ background: GOLD, width: 32 }} aria-hidden />
+          <span className="uppercase text-[10px] tracking-[0.16em] font-medium" style={{ color: MUTED }}>
+            {label}
+          </span>
+        </div>
+      )}
+      <div
+        className="grid grid-cols-2 md:grid-cols-4"
+        style={{ borderBottom: `1px solid ${CREAM2}` }}
+      >
+        {React.Children.map(children, (child, i) => (
+          <div
+            key={i}
+            className={i > 0 ? 'pl-4 md:pl-5' : ''}
+            style={i > 0 ? { borderLeft: `1px solid ${CREAM2}` } : {}}
+          >
+            {child}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AnalyticsPanel({ scope, editionId, clubId = null }) {
   const { t } = useLang();
   const isMaster = scope === 'master';
@@ -77,12 +108,9 @@ export default function AnalyticsPanel({ scope, editionId, clubId = null }) {
             size="sm"
           />
         </div>
-        <div
-          className="rounded-[4px] p-6 text-center"
-          style={{ background: 'white', border: `1px solid ${CREAM2}` }}
-        >
-          <p className="text-[13px]" style={{ color: INK }}>{t(ANALYTICS_UI.noEdition)}</p>
-        </div>
+        <p className="py-10 text-[13px] italic" style={{ fontFamily: SERIF, color: MUTED }} role="status">
+          {t(ANALYTICS_UI.noEdition)}
+        </p>
       </section>
     );
   }
@@ -112,8 +140,8 @@ export default function AnalyticsPanel({ scope, editionId, clubId = null }) {
       </div>
       <p className="text-[13px] mb-6" style={{ color: INK }}>{subtitle}</p>
 
-      {/* KPI grid principal */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-3">
+      {/* KPI rail principal */}
+      <KpiRail>
         <KpiCard
           label={t(ANALYTICS_UI.kpiApplied)}
           value={funnel.applied ?? '—'}
@@ -142,10 +170,10 @@ export default function AnalyticsPanel({ scope, editionId, clubId = null }) {
           tooltip={t(ANALYTICS_UI.tooltipFinaliste)}
           loading={funnelQ.isLoading}
         />
-      </div>
+      </KpiRail>
 
-      {/* KPI grid secondaire */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
+      {/* KPI rail secondaire */}
+      <KpiRail>
         <KpiCard
           label={t(ANALYTICS_UI.kpiInReview)}
           value={funnel.in_review ?? '—'}
@@ -173,7 +201,7 @@ export default function AnalyticsPanel({ scope, editionId, clubId = null }) {
           tooltip={t(ANALYTICS_UI.tooltipRejected)}
           loading={funnelQ.isLoading}
         />
-      </div>
+      </KpiRail>
 
       {/* Funnel chart */}
       <div className="mb-8">
