@@ -1,8 +1,8 @@
-// KpiCard — carte KPI Élysée (pattern catalog §5.2).
+// KpiCard — cellule KPI rail éditorial (pattern catalog §5.2 — refonte anti-card).
 //
-// Rectangle blanc, hairline CREAM2, label uppercase tracking, valeur tabular-nums
-// 26/32px Inter 500 NAVY (count-up animé au mount), subtitle 11px INK, tooltip
-// optionnel sur le label.
+// Ligne sans boîte : label uppercase tracked muted + valeur Playfair navy
+// tabular-nums (26/32px), filet CREAM2 en haut, fond transparent. Animée au
+// mount via count-up ease-out-quart (preserve-motion-preference).
 //
 // Props :
 //   - label       : string (déjà résolu par t())
@@ -16,6 +16,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { NAVY, INK, MUTED, CREAM2, GOLD } from '@/components/design/tokens';
+import { SERIF } from '@/components/design/tokens';
 
 function Dot({ color, pulse }) {
   return (
@@ -82,8 +83,8 @@ export default function KpiCard({
   const animated = useCountUp(value);
   return (
     <div
-      className="rounded-[4px] p-4 md:p-5 flex flex-col gap-1"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      className="flex flex-col gap-0.5 pt-3 pb-2"
+      style={{ borderTop: `1px solid ${CREAM2}` }}
       title={tooltip || undefined}
     >
       <span
@@ -103,7 +104,7 @@ export default function KpiCard({
         ) : (
           <span
             className="text-[26px] md:text-[32px] tabular-nums leading-none"
-            style={{ color: NAVY, fontWeight: 500 }}
+            style={{ color: NAVY, fontFamily: SERIF, fontWeight: 500 }}
           >
             {animated}
           </span>

@@ -8,7 +8,8 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, ArrowRight, Calendar } from 'lucide-react';
-import { NAVY, GOLD, INK, MUTED, CREAM2, SERIF, FOCUS_RING_CLASS } from '@/components/design';
+import { NAVY, GOLD, INK, MUTED, CREAM2, SERIF } from '@/components/design/tokens';
+import { FOCUS_RING_CLASS } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { Edition } from '@/lib/rsa/entities';
 import { formatDate, formatEur } from '@/components/rsa/candidature/validation';
@@ -42,7 +43,7 @@ const T = {
     de: (d) => `Gegründet nach dem ${d}`,
   },
   ruleRevenue: {
-    fr: (v) => `Chiffre d’affaires < ${v}`,
+    fr: (v) => `Chiffre d'affaires < ${v}`,
     en: (v) => `Revenue under ${v}`,
     de: (v) => `Umsatz unter ${v}`,
   },
@@ -85,7 +86,7 @@ function summarizeRules(rules, t, lang) {
   return out.slice(0, 3);
 }
 
-function Card({ entry }) {
+function CompetitionRow({ entry }) {
   const navigate = useNavigate();
   const { t, lang } = useLang();
   const { edition, rules } = entry;
@@ -97,73 +98,59 @@ function Card({ entry }) {
   };
 
   return (
-    <article
-      className="rounded-[4px] p-5 md:p-6 bg-white flex flex-col gap-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm hover:border-[#c9a84c]/60"
-      style={{ border: `1px solid ${CREAM2}` }}
-    >
-      <div>
-        <div className="flex items-center gap-2.5 mb-2">
-          <span className="h-[1.5px] w-6" style={{ background: GOLD }} aria-hidden />
+    <li style={{ borderBottom: `1px solid ${CREAM2}` }}>
+      <button
+        type="button"
+        onClick={handleApply}
+        className={`group w-full text-left grid grid-cols-[auto_1fr_auto] items-center gap-5 py-5 outline-none transition-colors hover:bg-[#faf7f0] ${FOCUS_RING_CLASS}`}
+      >
+        {/* Eyebrow année / left column */}
+        <span
+          className="uppercase text-[12px] tracking-[0.16em] tabular-nums self-start pt-0.5 w-10 shrink-0"
+          style={{ color: GOLD, fontFamily: SERIF }}
+        >
+          {edition.year || '—'}
+        </span>
+
+        {/* Centre : nom + sous-ligne critères + date */}
+        <span className="min-w-0">
           <span
-            className="uppercase text-[10px] tracking-[0.18em] font-medium"
-            style={{ color: GOLD }}
+            className="block text-[22px] leading-tight"
+            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
           >
-            {edition.year || edition.name}
+            {edition.name}
           </span>
-        </div>
-        <h3
-          className="text-[22px] leading-tight"
-          style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}
-        >
-          {edition.name}
-        </h3>
-      </div>
 
-      {criteria.length > 0 && (
-        <div>
-          <p
-            className="uppercase text-[10px] tracking-[0.14em] font-medium mb-2"
-            style={{ color: MUTED }}
-          >
-            {t(T.criteriaTitle)}
-          </p>
-          <ul className="space-y-1.5">
-            {criteria.map((c, i) => (
-              <li key={i} className="text-[13px] flex items-start gap-2" style={{ color: INK }}>
-                <span
-                  className="inline-block w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
-                  style={{ background: GOLD }}
-                  aria-hidden
-                />
-                <span>{c}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between gap-3 pt-2 mt-auto" style={{ borderTop: `1px solid ${CREAM2}` }}>
-        <p className="text-[12px] inline-flex items-center gap-1.5" style={{ color: MUTED }}>
-          <Calendar className="w-3.5 h-3.5" aria-hidden />
-          {closeDate ? (
-            <>
-              {t(T.deadline)} <strong style={{ color: INK, fontWeight: 500 }}>{closeDate}</strong>
-            </>
-          ) : (
-            t(T.noDeadline)
+          {criteria.length > 0 && (
+            <span className="block text-[12px] mt-1 truncate" style={{ color: MUTED }}>
+              {criteria.join(' · ')}
+            </span>
           )}
-        </p>
-        <button
-          type="button"
-          onClick={handleApply}
-          className={`inline-flex items-center gap-1.5 text-[13.5px] font-medium px-4 py-2 rounded-[4px] text-white transition-colors ${FOCUS_RING_CLASS}`}
-          style={{ background: NAVY }}
-        >
-          {t(T.cta)}
-          <ArrowRight className="w-3.5 h-3.5" aria-hidden />
-        </button>
-      </div>
-    </article>
+
+          <span className="mt-1.5 inline-flex items-center gap-1" style={{ color: MUTED }}>
+            <Calendar className="w-3 h-3 shrink-0" aria-hidden />
+            <span className="text-[11.5px]">
+              {closeDate ? (
+                <>
+                  {t(T.deadline)}&nbsp;<strong style={{ color: INK, fontWeight: 500 }}>{closeDate}</strong>
+                </>
+              ) : (
+                t(T.noDeadline)
+              )}
+            </span>
+          </span>
+        </span>
+
+        {/* CTA label + arrow */}
+        <span className="shrink-0 inline-flex items-center gap-1.5 text-[12.5px] font-medium" style={{ color: NAVY }}>
+          <span className="hidden sm:inline">{t(T.cta)}</span>
+          <ArrowRight
+            className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        </span>
+      </button>
+    </li>
   );
 }
 
@@ -189,11 +176,7 @@ export default function OpenCompetitions() {
   // croire qu'aucune compétition n'est ouverte.
   if (isError) {
     return (
-      <div
-        className="py-10 px-6 text-center rounded-[4px]"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
-        role="alert"
-      >
+      <div className="py-10" role="alert">
         <p className="text-[15px] mb-1.5" style={{ fontFamily: SERIF, color: NAVY, fontWeight: 500 }}>
           {t(T.errorTitle)}
         </p>
@@ -215,26 +198,16 @@ export default function OpenCompetitions() {
   // Vrai empty state — succès backend mais aucune compétition ouverte.
   if (!data || data.length === 0) {
     return (
-      <div
-        className="py-10 px-6 text-center rounded-[4px]"
-        style={{ background: 'white', border: `1px dashed ${CREAM2}` }}
-        role="status"
-      >
-        <p className="text-[14px]" style={{ color: INK }}>
-          {t(T.empty)}
-        </p>
-      </div>
+      <p className="py-10 text-[14px] italic" style={{ fontFamily: SERIF, color: MUTED }} role="status">
+        {t(T.empty)}
+      </p>
     );
   }
 
   return (
-    <ul className="grid grid-cols-1 md:grid-cols-2 gap-5 list-none m-0 p-0">
+    <ul className="list-none m-0 p-0" style={{ borderTop: `1px solid ${CREAM2}` }}>
       {data.map((entry) => (
-        <li key={entry.edition.id} className="flex">
-          <div className="flex-1 flex">
-            <Card entry={entry} />
-          </div>
-        </li>
+        <CompetitionRow key={entry.edition.id} entry={entry} />
       ))}
     </ul>
   );
