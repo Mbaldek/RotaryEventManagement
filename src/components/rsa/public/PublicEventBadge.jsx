@@ -10,6 +10,10 @@
 //
 // API : <PublicEventBadge editionId="rsa2026" clubId="rotary-paris" /> — les 2
 // props peuvent être null ; le composant rend null si pas de editionId.
+//
+// Props optionnelles (candidature ciblée) : `criteria` (string[]) +
+// `criteriaTitle` (string) + `closeLabel` (string) enrichissent le badge avec un
+// rappel des critères clés et de la date de clôture — affichés sous un filet.
 
 import React, { useEffect, useState } from 'react';
 import { Calendar } from 'lucide-react';
@@ -35,7 +39,15 @@ const COPY = {
   },
 };
 
-export default function PublicEventBadge({ editionId, clubId, kind = 'startup', className = '' }) {
+export default function PublicEventBadge({
+  editionId,
+  clubId,
+  kind = 'startup',
+  className = '',
+  criteria = null,
+  criteriaTitle = null,
+  closeLabel = null,
+}) {
   const { t } = useLang();
   const [edition, setEdition] = useState(null);
   const [club, setClub] = useState(null);
@@ -81,6 +93,7 @@ export default function PublicEventBadge({ editionId, clubId, kind = 'startup', 
   const eventName = edition?.name || editionId;
   const eventYear = edition?.year || null;
   const clubName = club?.name || null;
+  const hasCriteria = Array.isArray(criteria) && criteria.length > 0;
 
   return (
     <aside
@@ -110,6 +123,41 @@ export default function PublicEventBadge({ editionId, clubId, kind = 'startup', 
           <p className="text-[12.5px] mt-1" style={{ color: INK }}>
             {t(COPY.inClub)} <strong>{clubName}</strong>
           </p>
+        )}
+
+        {(hasCriteria || closeLabel) && (
+          <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${CREAM2}` }}>
+            {hasCriteria && (
+              <>
+                {criteriaTitle && (
+                  <p
+                    className="uppercase text-[10px] tracking-[0.14em] font-medium mb-1.5"
+                    style={{ color: MUTED }}
+                  >
+                    {criteriaTitle}
+                  </p>
+                )}
+                <ul className="space-y-1 list-none m-0 p-0">
+                  {criteria.map((c, i) => (
+                    <li key={i} className="text-[12.5px] flex items-start gap-2" style={{ color: INK }}>
+                      <span
+                        className="inline-block w-1 h-1 rounded-full mt-1.5 shrink-0"
+                        style={{ background: GOLD }}
+                        aria-hidden
+                      />
+                      <span>{c}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {closeLabel && (
+              <p className={`text-[11.5px] inline-flex items-center gap-1.5 ${hasCriteria ? 'mt-2' : ''}`} style={{ color: MUTED }}>
+                <Calendar className="w-3 h-3 shrink-0" aria-hidden />
+                {closeLabel}
+              </p>
+            )}
+          </div>
         )}
       </div>
     </aside>
