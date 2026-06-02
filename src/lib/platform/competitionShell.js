@@ -7,7 +7,7 @@
 export const PHASES = [
   { id: 'prep',     label: { fr: 'Préparation',  en: 'Preparation', de: 'Vorbereitung' } },
   { id: 'orga',     label: { fr: 'Organisation', en: 'Organisation', de: 'Organisation' } },
-  { id: 'pilotage', label: { fr: 'Pilotage',     en: 'Pilotage',     de: 'Steuerung' } },
+  { id: 'pilotage', label: { fr: 'Pilotage',     en: 'Steering',     de: 'Steuerung' } },
 ];
 
 export const PHASE_IDS = PHASES.map((p) => p.id);
