@@ -72,6 +72,12 @@ const T = {
     en: 'No competition is currently open.',
     de: 'Derzeit ist kein Wettbewerb geöffnet.',
   },
+  loadError: {
+    fr: 'Impossible de charger les compétitions. Vérifiez votre connexion et réessayez.',
+    en: 'Could not load the competitions. Check your connection and try again.',
+    de: 'Wettbewerbe konnten nicht geladen werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.',
+  },
+  retry: { fr: 'Réessayer', en: 'Retry', de: 'Erneut versuchen' },
   loading: {
     fr: 'Chargement des compétitions…',
     en: 'Loading competitions…',
@@ -136,7 +142,7 @@ export default function Step1Picker({ initialEdition = null, onSent }) {
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
   const [error, setError] = useState(null);
 
-  const { data: openList = [], isLoading } = useQuery({
+  const { data: openList = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['rsa', 'open-competitions'],
     queryFn: () => Edition.openForApply(),
     staleTime: 60 * 1000,
@@ -299,7 +305,30 @@ export default function Step1Picker({ initialEdition = null, onSent }) {
           </div>
         )}
 
-        {!isLoading && options.length === 0 && (
+        {/* Panne backend : on signale clairement l'échec de chargement + retry,
+            sans laisser croire à tort qu'aucune compétition n'est ouverte. */}
+        {!isLoading && isError && (
+          <div
+            className="flex items-start gap-2 px-3 py-2 rounded-[4px]"
+            style={{ background: TINT_DANGER, border: `1px solid ${DANGER}33` }}
+            role="alert"
+          >
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: DANGER }} aria-hidden />
+            <div className="flex-1">
+              <p className="text-[13px] leading-relaxed" style={{ color: DANGER }}>{t(T.loadError)}</p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="mt-1.5 text-[12.5px] font-medium underline underline-offset-4 rounded-[4px] px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+                style={{ color: NAVY }}
+              >
+                {t(T.retry)}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !isError && options.length === 0 && (
           <p className="text-[13px]" style={{ color: MUTED }}>
             {t(T.noCompetitions)}
           </p>
