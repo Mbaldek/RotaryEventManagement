@@ -37,15 +37,24 @@ export function computePrimaryNav({
   const safeCM = Array.isArray(clubMemberships) ? clubMemberships : [];
   const safeCA = Array.isArray(competitionAdminEditions) ? competitionAdminEditions : [];
 
-  // 1. Admin (toute forme) : un seul item Administration. Master/legacy admin
-  //    voient l'admin global ; competition_admin et club_admin voient l'admin
-  //    scoped — c'est AdminShell qui résout le scope à partir de l'URL.
+  // 1. Admin (toute forme) : Administration + accès DIRECT aux modules
+  //    opérationnels (Sélection = dossiers candidats, Jury). Avant, l'admin
+  //    n'avait qu'un item « Administration » : les dossiers vivaient sur
+  //    /Selection et /Jury qu'AUCUN lien de nav ne surfaçait → il fallait
+  //    connaître l'URL. On expose désormais les 3 points d'entrée en permanence,
+  //    peu importe la profondeur où l'on se trouve dans le cockpit.
   const isAdmin =
     safeRoles.includes('master_admin') ||
     safeRoles.includes('admin') ||
     safeCA.length > 0 ||
     safeCM.some((m) => m && m.role === 'club_admin');
-  if (isAdmin) return [{ to: '/Admin', label: LABELS.admin }];
+  if (isAdmin) {
+    return [
+      { to: '/Admin', label: LABELS.admin },
+      { to: '/Selection', label: LABELS.selection },
+      { to: '/Jury', label: LABELS.jury },
+    ];
+  }
 
   // 2. Comité et/ou Jury (ops sans admin). On garde l'ordre stable
   //    Sélection > Jury — Sélection venant chronologiquement avant le Jury

@@ -15,6 +15,7 @@ import { StatusPill } from '@/components/design';
 import { useLang } from '@/lib/platform/i18n';
 import { CLUB_PILOTAGE } from '../i18n';
 import { useClubSessionMetrics, useClubStartupsSummary, useClubJuryAssignmentsCount } from '../useClub';
+import OperationalSpacesStrip from '@/components/rsa/admin/platform/master/competition-tabs/OperationalSpacesStrip';
 
 function KpiRow({ label, value, accent }) {
   return (
@@ -65,6 +66,10 @@ export default function PilotageOverview({ edition, clubId, sessions, isSessions
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(220px,260px)] gap-6">
       {/* Colonne principale */}
       <div>
+        {/* Pont direct vers les dossiers / jury de la compétition — placé tout
+            en haut pour ne pas avoir à fouiller. Scopé sur l'édition du club. */}
+        <OperationalSpacesStrip editionId={edition?.id} />
+
         {/* Header éditorial */}
         <div className="flex items-center gap-2.5 mb-2">
           <span className="h-[1.5px] w-7" style={{ background: GOLD }} aria-hidden />
