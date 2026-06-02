@@ -41,7 +41,7 @@ import SessionsTab from './competition-tabs/SessionsTab';
 import IncubatorsTab from './competition-tabs/IncubatorsTab';
 import DeleteCompetitionModal from './DeleteCompetitionModal';
 
-export default function CompetitionEditView({ editionId, onClose }) {
+export default function CompetitionEditView({ editionId, onClose, embedded = false }) {
   const { t } = useLang();
   const reduce = useReducedMotion();
   const competitions = useAllCompetitions();
@@ -254,41 +254,44 @@ export default function CompetitionEditView({ editionId, onClose }) {
 
   return (
     <section>
-      {/* Header */}
-      <div className="mb-4 flex items-start gap-3 flex-wrap">
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex items-center gap-1.5 text-[12.5px] px-2.5 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
-          style={{ background: TINT_ADMIN, color: NAVY, border: `1px solid ${CREAM2}` }}
-        >
-          <ArrowLeft className="w-4 h-4" aria-hidden />
-          {t(COMP.backToCompetitions)}
-        </button>
-        <div className="flex-1 min-w-0">
-          <p
-            className="uppercase tracking-[0.18em] text-[10.5px] font-medium"
-            style={{ color: GOLD }}
+      {/* Header — masqué quand la vue est embarquée dans CompetitionShell (la
+          coquille affiche déjà le back link et le nom de la compétition). */}
+      {!embedded && (
+        <div className="mb-4 flex items-start gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center gap-1.5 text-[12.5px] px-2.5 py-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c]"
+            style={{ background: TINT_ADMIN, color: NAVY, border: `1px solid ${CREAM2}` }}
           >
-            {t(COMP.funnelEyebrow)}
-          </p>
-          <h2
-            className="text-[22px] md:text-[26px] leading-tight"
-            style={{ fontFamily: SERIF, color: NAVY, fontWeight: 400 }}
-          >
-            {t(COMP.funnelEditTitle)}
-            {competition.name && (
-              <>
-                <span style={{ color: MUTED }}> · </span>
-                <span>{competition.name}</span>
-              </>
-            )}
-          </h2>
+            <ArrowLeft className="w-4 h-4" aria-hidden />
+            {t(COMP.backToCompetitions)}
+          </button>
+          <div className="flex-1 min-w-0">
+            <p
+              className="uppercase tracking-[0.18em] text-[10.5px] font-medium"
+              style={{ color: GOLD }}
+            >
+              {t(COMP.funnelEyebrow)}
+            </p>
+            <h2
+              className="text-[22px] md:text-[26px] leading-tight"
+              style={{ fontFamily: SERIF, color: NAVY, fontWeight: 400 }}
+            >
+              {t(COMP.funnelEditTitle)}
+              {competition.name && (
+                <>
+                  <span style={{ color: MUTED }}> · </span>
+                  <span>{competition.name}</span>
+                </>
+              )}
+            </h2>
+          </div>
+          <div className="self-center">
+            <StatusIndicator status={status} statusMessage={statusMessage} />
+          </div>
         </div>
-        <div className="self-center">
-          <StatusIndicator status={status} statusMessage={statusMessage} />
-        </div>
-      </div>
+      )}
 
       {/* Tabs box — fond TINT_ADMIN clair (mirror MasterCockpit). */}
       <div

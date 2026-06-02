@@ -52,6 +52,8 @@ const AdminShell = lazy(() => import('@/components/rsa/admin/platform/AdminShell
 const MasterCockpit = lazy(() => import('@/components/rsa/admin/platform/master/MasterCockpit'));
 const ClubCockpit = lazy(() => import('@/components/rsa/admin/platform/club/ClubCockpit'));
 const CompetitionAdminCockpit = lazy(() => import('@/components/rsa/admin/platform/master/CompetitionAdminCockpit'));
+const CompetitionHub = lazy(() => import('@/components/rsa/admin/platform/hub/CompetitionHub'));
+const CompetitionShell = lazy(() => import('@/components/rsa/admin/platform/shell/CompetitionShell'));
 
 function Centered({ children, minHeight = '40vh' }) {
   return (
@@ -114,6 +116,12 @@ export default function Admin() {
     p.delete('subview');
     p.delete('id');
     p.delete('tab');
+    // Nav-flux (Lot 1) : on quitte aussi l'état coquille pour repartir propre.
+    p.delete('competition');
+    p.delete('phase');
+    p.delete('screen');
+    p.delete('club');
+    p.delete('legacyNav');
     setParams(p, { replace: true });
   };
 
@@ -304,7 +312,17 @@ export default function Admin() {
   // Rendu du contenu selon le scope
   let body;
   if (effectiveScope === 'master') {
-    body = <MasterCockpit />;
+    // Lot 1 nav-flux : en scope master, on sert le Hub / la coquille compétition
+    // pilotés par ?competition=. Repli sur l'ancien MasterCockpit via ?legacyNav=1.
+    const legacyNav = params.get('legacyNav') === '1';
+    const competitionParam = params.get('competition');
+    if (legacyNav) {
+      body = <MasterCockpit />;
+    } else if (competitionParam) {
+      body = <CompetitionShell editionId={competitionParam} />;
+    } else {
+      body = <CompetitionHub />;
+    }
   } else if (effectiveScope.startsWith('competition:')) {
     const editionId = effectiveScope.slice('competition:'.length);
     body = (
