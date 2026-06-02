@@ -8,7 +8,6 @@ export { default as DocumentLinks } from './DocumentLinks';
 export { default as ReviewHistoryTimeline } from './ReviewHistoryTimeline';
 export { default as DecisionPanel } from './DecisionPanel';
 export { default as AdminOverridePanel } from './AdminOverridePanel';
-export { default as ClusterSelect } from './ClusterSelect';
 export { default as StatusBadge } from './StatusBadge';
 
 export {

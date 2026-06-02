@@ -58,7 +58,6 @@ export const UI = {
   editionLabel:   { fr: 'Édition',                   en: 'Edition',              de: 'Ausgabe' },
   editionAll:     { fr: 'Toutes les éditions',       en: 'All editions',         de: 'Alle Ausgaben' },
   verdictLabel:   { fr: 'Verdict d’éligibilité',     en: 'Eligibility verdict',  de: 'Förderfähigkeit' },
-  clusterLabel:   { fr: 'Cluster (session)',         en: 'Cluster (session)',    de: 'Cluster (Session)' },
   resetFilters:   { fr: 'Réinitialiser',             en: 'Reset',                de: 'Zurücksetzen' },
 
   // Liste
@@ -101,12 +100,6 @@ export const UI = {
   // Decision panel
   decisionTitle:   { fr: 'Décision du comité',        en: 'Committee decision',   de: 'Komitee-Entscheidung' },
   decisionField:   { fr: 'Décision',                  en: 'Decision',             de: 'Entscheidung' },
-  clusterField:    { fr: 'Cluster (session)',         en: 'Cluster (session)',    de: 'Cluster (Session)' },
-  clusterPlaceholder: { fr: 'Choisir un cluster…',    en: 'Pick a cluster…',      de: 'Cluster auswählen…' },
-  clusterNone:     { fr: 'Aucun cluster',             en: 'No cluster',           de: 'Kein Cluster' },
-  clusterSuggested: { fr: 'Suggéré d’après les secteurs déclarés.',
-                      en: 'Suggested from declared sectors.',
-                      de: 'Vorschlag auf Basis der angegebenen Sektoren.' },
   rationaleField:  { fr: 'Motif',                     en: 'Rationale',            de: 'Begründung' },
   rationaleRequired: { fr: 'Requis pour un rejet ou une mise en liste d’attente.',
                        en: 'Required when rejecting or waitlisting.',
@@ -121,9 +114,6 @@ export const UI = {
   decisionSaveError: { fr: "Échec de l'enregistrement. Réessayez.",
                        en: 'Save failed. Please retry.',
                        de: 'Speichern fehlgeschlagen. Bitte erneut versuchen.' },
-  errEligibleNeedsCluster: { fr: 'Choisissez un cluster pour une décision « éligible ».',
-                             en: 'Pick a cluster for an "eligible" decision.',
-                             de: 'Bitte wählen Sie ein Cluster, um die Entscheidung „förderfähig" festzulegen.' },
   errRationale: { fr: 'Le motif est requis pour ce verdict.',
                   en: 'A rationale is required for this verdict.',
                   de: 'Für dieses Urteil ist eine Begründung erforderlich.' },
