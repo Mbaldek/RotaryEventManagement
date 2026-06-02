@@ -2,6 +2,8 @@ import React from "react";
 import { ChevronDown, ChevronUp, Check, Loader2, Trophy } from "lucide-react";
 import CriterionRating from "./CriterionRating";
 import { CRITERIA, SCORE_FIELDS, weightedScore, criteriaFilledCount, MAX_WEIGHTED, SESSION_BY_ID, getSessionLabel } from "@/lib/rsa/constants";
+import { NAVY, CREAM2, INK, MUTED, TINT_SAGE } from "@/components/design/tokens";
+import { SUCCESS, GOLD_TEXT } from "@/components/design/tokens.app";
 
 const T = {
   fr: {
@@ -39,9 +41,6 @@ const T = {
   },
 };
 
-// Hairline separator color — warm beige consistent with Élysée design system
-const HAIRLINE = "#e8e3d9";
-
 export default function StartupScoreCard({
   startup,
   index,
@@ -71,7 +70,7 @@ export default function StartupScoreCard({
     : null;
 
   return (
-    <div style={{ borderBottom: `1px solid ${HAIRLINE}` }}>
+    <div style={{ borderBottom: `1px solid ${CREAM2}` }}>
       {/* Header row — always visible */}
       <button
         type="button"
@@ -80,9 +79,12 @@ export default function StartupScoreCard({
       >
         {/* Status indicator: index number or checkmark */}
         <div
-          className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
-            isSubmitted ? "bg-emerald-100 text-emerald-700" : "bg-stone-100 text-stone-500"
-          }`}
+          className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+          style={
+            isSubmitted
+              ? { background: TINT_SAGE, color: SUCCESS }
+              : { background: CREAM2, color: MUTED }
+          }
         >
           {isSubmitted ? <Check className="w-4 h-4" /> : index + 1}
         </div>
@@ -90,7 +92,7 @@ export default function StartupScoreCard({
         {/* Name + meta */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-stone-800 truncate">{startup}</span>
+            <span className="font-semibold truncate" style={{ color: NAVY }}>{startup}</span>
             {winnerBadge && (
               <span
                 className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded"
@@ -106,14 +108,14 @@ export default function StartupScoreCard({
               </span>
             )}
           </div>
-          <div className="text-xs text-stone-500 mt-0.5 flex items-center gap-2">
+          <div className="text-xs mt-0.5 flex items-center gap-2" style={{ color: MUTED }}>
             {isSubmitted ? (
-              <span className="text-emerald-700">{t.submittedTag}</span>
+              <span style={{ color: SUCCESS }}>{t.submittedTag}</span>
             ) : (
               <span>
                 {filled}/{total} {t.criteriaRated}
                 {weighted != null && (
-                  <span className="ml-2 text-amber-700 font-medium">
+                  <span className="ml-2 font-medium" style={{ color: GOLD_TEXT }}>
                     · {weighted.toFixed(2)}/{MAX_WEIGHTED.toFixed(0)}
                   </span>
                 )}
@@ -124,9 +126,9 @@ export default function StartupScoreCard({
 
         {/* Expand toggle */}
         {expanded ? (
-          <ChevronUp className="w-4 h-4 text-stone-400 shrink-0" />
+          <ChevronUp className="w-4 h-4 shrink-0" style={{ color: MUTED }} />
         ) : (
-          <ChevronDown className="w-4 h-4 text-stone-400 shrink-0" />
+          <ChevronDown className="w-4 h-4 shrink-0" style={{ color: MUTED }} />
         )}
       </button>
 
@@ -134,7 +136,7 @@ export default function StartupScoreCard({
       {expanded && (
         <div
           className="pb-5 space-y-3"
-          style={{ borderTop: `1px solid ${HAIRLINE}`, paddingTop: 16 }}
+          style={{ borderTop: `1px solid ${CREAM2}`, paddingTop: 16 }}
         >
           {CRITERIA.map((c) => (
             <CriterionRating
@@ -148,8 +150,9 @@ export default function StartupScoreCard({
           ))}
 
           <div>
-            <label className="text-xs text-stone-500 mb-1 block">
-              {t.commentLabel} <span className="text-stone-400">{t.commentOptional}</span>
+            <label className="text-xs mb-1 block" style={{ color: MUTED }}>
+              {t.commentLabel}{" "}
+              <span style={{ color: MUTED, opacity: 0.7 }}>{t.commentOptional}</span>
             </label>
             <textarea
               value={draft?.comment ?? ""}
@@ -157,18 +160,23 @@ export default function StartupScoreCard({
               disabled={disabled}
               rows={3}
               placeholder={t.commentPlaceholder}
-              className="w-full text-base sm:text-sm rounded-md border border-stone-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 disabled:bg-stone-50 disabled:text-stone-400"
+              className="w-full text-base sm:text-sm rounded-[4px] px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] disabled:opacity-50"
+              style={{
+                border: `1px solid ${CREAM2}`,
+                color: INK,
+                background: "transparent",
+              }}
             />
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1">
-            <div className="text-xs text-stone-500">
+            <div className="text-xs" style={{ color: MUTED }}>
               {filled < total ? (
                 <span>
                   {total - filled} {t.criteriaRemaining}
                 </span>
               ) : (
-                <span className="text-emerald-700">
+                <span style={{ color: SUCCESS }}>
                   {t.weightedTotal} <strong>{weighted.toFixed(2)}</strong>/{MAX_WEIGHTED.toFixed(0)}
                 </span>
               )}
@@ -177,11 +185,12 @@ export default function StartupScoreCard({
               type="button"
               onClick={onSubmit}
               disabled={!canSubmit}
-              className={`w-full sm:w-auto px-4 py-3 sm:py-2 rounded-md text-base sm:text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+              className="w-full sm:w-auto px-4 py-3 sm:py-2 rounded-[4px] text-base sm:text-sm font-medium transition-all flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+              style={
                 canSubmit
-                  ? "bg-amber-600 text-white hover:bg-amber-700 active:scale-95"
-                  : "bg-stone-100 text-stone-400 cursor-not-allowed"
-              }`}
+                  ? { background: NAVY, color: "white", border: `1px solid ${NAVY}` }
+                  : { background: CREAM2, color: MUTED, border: `1px solid ${CREAM2}` }
+              }
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {isSubmitted ? t.update : t.submit}
