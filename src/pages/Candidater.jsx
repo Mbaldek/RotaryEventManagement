@@ -349,8 +349,8 @@ export default function Candidater() {
         <aside aria-labelledby="start-step1-title">
           <div className="lg:sticky lg:top-6">
             <div
-              className="rounded-[4px] p-5 md:p-7"
-              style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+              className="pt-5 md:pt-7"
+              style={{ borderTop: `1px solid ${GOLD}33` }}
             >
               <h2 id="start-step1-title" className="sr-only">{t(T.startEyebrow)}</h2>
               <AnimatePresence mode="wait">
