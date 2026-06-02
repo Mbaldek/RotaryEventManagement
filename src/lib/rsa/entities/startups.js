@@ -233,6 +233,16 @@ export const Startup = {
     return data || [];
   },
 
+  // Module 2.5 — Allocation : eligible|affecte -> affecte + session_id, via RPC
+  // SECURITY DEFINER admin-only (rsa_allocate_startup). N'écrit pas de review.
+  async allocate(startupId, sessionId) {
+    const { error } = await supabase.rpc('rsa_allocate_startup', {
+      p_startup_id: startupId,
+      p_session_id: sessionId,
+    });
+    if (error) throw error;
+  },
+
   // Module 4a — Synthèse {status: count} pour la ModuleStatusStrip.
   // Une seule requête : on lit (id, status) puis on agrège côté client.
   async summaryByStatus(editionId) {
