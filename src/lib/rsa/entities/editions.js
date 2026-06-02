@@ -72,17 +72,26 @@ export const Edition = {
   // pas les clubs, c'est l'admin qui route post-soumission).
   //
   // "Ouverte" = editions.status='open' AND (application_close >= today OR null).
+  //
+  // ⚠️ On N'UTILISE PAS le filtre PostgREST `or=(application_close.is.null,…)` :
+  // son query string encodé (`%28…%29`, points, virgules) ressemble à une
+  // injection SQL et se fait bloquer par certains VPN / proxys / WAF d'entreprise
+  // AVANT d'atteindre Supabase — la requête échoue côté client (aucun log serveur)
+  // alors que toutes les autres lectures `editions` (sans `or`) passent. On
+  // récupère donc les éditions 'open' avec un filtre simple, puis on applique la
+  // borne de clôture en JS (le dataset fait quelques éditions, coût négligeable).
   async openForApply() {
     const today = new Date().toISOString().slice(0, 10);
     const { data: editions, error: e1 } = await supabase
       .from('editions')
       .select('*')
       .eq('status', 'open')
-      .or(`application_close.is.null,application_close.gte.${today}`)
       .order('year', { ascending: false })
       .order('application_open', { ascending: false });
     if (e1) throw e1;
-    const list = editions || [];
+    const list = (editions || []).filter(
+      (e) => e.application_close == null || e.application_close >= today,
+    );
     return list.map((edition) => ({
       edition,
       rules:
