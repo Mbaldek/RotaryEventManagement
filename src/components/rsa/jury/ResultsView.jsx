@@ -20,21 +20,20 @@ export default function ResultsView({ sessionConfig, finalistsPerSession = 1 }) 
 
   if (!ranking.length) {
     return (
-      <div
-        className="rounded-[4px] p-5 text-center"
-        style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      <p
+        className="py-8 text-[15px] italic text-center"
+        style={{ fontFamily: SERIF, color: MUTED }}
+        role="status"
       >
-        <p className="text-[14px]" style={{ color: MUTED }}>
-          {t(UI.rankingEmpty)}
-        </p>
-      </div>
+        {t(UI.rankingEmpty)}
+      </p>
     );
   }
 
   return (
     <div
-      className="rounded-[4px] p-4"
-      style={{ background: 'white', border: `1px solid ${CREAM2}` }}
+      className="pt-4"
+      style={{ borderTop: `1px solid ${CREAM2}` }}
     >
       <h4
         className="text-[15px] mb-3"
