@@ -27,6 +27,7 @@ import { GOLD_TEXT, WARNING } from '@/components/design/tokens.app';
 import { useLang } from '@/lib/platform/i18n';
 import { PILOTAGE } from '../i18n';
 import usePilotageStatus from '../usePilotageStatus';
+import OperationalSpacesStrip from './OperationalSpacesStrip';
 
 // ── Helpers visuels ────────────────────────────────────────────────────────
 
@@ -406,6 +407,10 @@ export default function PilotageTab({ competition, setActiveTab }) {
           {t(PILOTAGE.completionTemplate).replace('{percent}', String(pct))}
         </span>
       </div>
+
+      {/* Pont vers les espaces opérationnels (dossiers / sélection / jury),
+          scopé sur cette compétition. Comble le trou de nav admin→modules ops. */}
+      <OperationalSpacesStrip editionId={competition?.id} />
 
       <ol className="rounded-[4px] overflow-hidden" style={{ border: `1px solid ${CREAM2}` }}>
         {/* ── Step 1 — Compétition créée ───────────────────────────────────── */}

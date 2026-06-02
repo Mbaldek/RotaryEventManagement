@@ -13,6 +13,7 @@ export const CLUB_TABS = {
   team:               { fr: 'Équipe',            en: 'Team',           de: 'Team' },
   jury_applications:  { fr: 'Candidatures jury', en: 'Jury applications', de: 'Jury-Bewerbungen' },
   rules:              { fr: "Règles d'éligibilité", en: 'Eligibility rules', de: 'Eignungsregeln' },
+  incubators:         { fr: 'Incubateurs',       en: 'Incubators',     de: 'Inkubatoren' },
   prizes:             { fr: 'Prix',              en: 'Prizes',         de: 'Preise' },
   comms:              { fr: 'Communications',    en: 'Communications', de: 'Kommunikation' },
   analytics:          { fr: 'Analytics',          en: 'Analytics',      de: 'Analytics' },

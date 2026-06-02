@@ -2,27 +2,24 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useLang } from '@/lib/platform/i18n';
 import { SectionNote, TextRow } from './fields';
 import IncubatorEditModal from './IncubatorEditModal';
+import ClubIncubatorsManager from '@/components/rsa/incubators/ClubIncubatorsManager';
 import {
   useAllIncubators,
-  useEditionIncubators,
-  useSetEditionIncubators,
+  useEditionClubLinks,
   useDeleteIncubator,
   useSourcingStats,
 } from '@/components/rsa/hooks/useIncubators';
+import { useClubsForEdition } from '../useMaster';
 import { Edition } from '@/lib/rsa/entities/editions';
 import { uploadCommAsset, commAssetPublicUrl } from '@/lib/rsa/storage';
 
 export default function IncubatorsTab({ competition, mode = 'edit' }) {
   const { t } = useLang();
   const editionId = competition?.id;
+  const isMulti = (competition?.model || 'monoclub') === 'multiclub';
 
   // ALL hooks must be called unconditionally before any early return.
-  const { data: all = [] } = useAllIncubators();
-  const { data: optedRaw = [] } = useEditionIncubators(editionId);
-  const setOptIn = useSetEditionIncubators(editionId);
-  const del = useDeleteIncubator();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const { data: attachedClubs = [] } = useClubsForEdition(editionId);
 
   const [editionFull, setEditionFull] = useState(competition || {});
   const [config, setConfig] = useState(competition?.comm_pack_config || {});
@@ -49,16 +46,10 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
 
   const [generating, setGenerating] = useState(false);
 
-  const ordered = useMemo(() => {
-    const optedIds = optedRaw.map((o) => o.id);
-    const optedSet = new Set(optedIds);
-    const rest = all.filter((i) => !optedSet.has(i.id));
-    return { optedIds, optedSet, rest };
-  }, [all, optedRaw]);
-
-  const allById = useMemo(
-    () => Object.fromEntries(all.map((i) => [i.id, i])),
-    [all],
+  // Monoclub : le club unique attaché porte l'opt-in + les contacts.
+  const soloClubId = useMemo(
+    () => (attachedClubs.length > 0 ? (attachedClubs[0].club_id || attachedClubs[0].club?.id) : null),
+    [attachedClubs],
   );
 
   // Early return AFTER all hooks.
@@ -73,27 +64,6 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
       </SectionNote>
     );
   }
-
-  const persist = (ids) => setOptIn.mutate(ids);
-
-  const toggle = (id, checked) => {
-    const ids = ordered.optedIds.slice();
-    if (checked && !ids.includes(id)) ids.push(id);
-    if (!checked) {
-      const i = ids.indexOf(id);
-      if (i >= 0) ids.splice(i, 1);
-    }
-    persist(ids);
-  };
-
-  const move = (id, dir) => {
-    const ids = ordered.optedIds.slice();
-    const i = ids.indexOf(id);
-    const j = i + dir;
-    if (i < 0 || j < 0 || j >= ids.length) return;
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-    persist(ids);
-  };
 
   // patchConfig: updates local state immediately and schedules a debounced DB write.
   // One DB write fires 600 ms after the last edit — no write-per-keystroke.
@@ -138,142 +108,28 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
 
   return (
     <div className="space-y-6">
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-[#0a1f44]">
-            {t({
-              fr: 'Liste proposée au candidat',
-              en: 'List shown to applicants',
-              de: 'Den Bewerbern angezeigte Liste',
-            })}
-          </h3>
-          <button
-            type="button"
-            className="rounded-lg border border-[#0a1f44] px-3 py-1.5 text-sm text-[#0a1f44]"
-            onClick={() => {
-              setEditing(null);
-              setModalOpen(true);
-            }}
-          >
-            + {t({ fr: 'Nouvel incubateur', en: 'New incubator', de: 'Neuer Inkubator' })}
-          </button>
-        </div>
-
-        {all.length === 0 ? (
+      {isMulti ? (
+        <section>
           <SectionNote>
             {t({
-              fr: 'Aucun incubateur dans la base. Créez-en un.',
-              en: 'No incubators yet. Create one.',
-              de: 'Noch keine Inkubatoren. Erstellen Sie einen.',
+              fr: 'Compétition multi-club : chaque club gère sa propre liste d’incubateurs et ses contacts depuis son Cockpit Club. Ci-dessous, la base globale (partagée) et le récap des opt-in par club.',
+              en: 'Multi-club competition: each club manages its own incubator list and contacts from its Club Cockpit. Below, the shared global base and the per-club opt-in summary.',
+              de: 'Multi-Club-Wettbewerb: Jeder Club verwaltet seine eigene Inkubatorenliste und Kontakte über sein Club-Cockpit. Unten die gemeinsame globale Basis und die Opt-in-Übersicht pro Club.',
             })}
           </SectionNote>
-        ) : (
-          <ul className="space-y-2">
-            {ordered.optedIds.map((id, idx) => {
-              const inc = allById[id];
-              if (!inc) return null;
-              return (
-                <li
-                  key={id}
-                  className="flex items-center gap-3 rounded-xl border border-[#e7e1d6] bg-white px-3 py-2"
-                >
-                  <input
-                    type="checkbox"
-                    checked={true}
-                    onChange={() => toggle(id, false)}
-                    aria-label={`opt-out ${inc.name}`}
-                  />
-                  <span className="flex-1 text-sm">
-                    {inc.name}{' '}
-                    {inc.country ? (
-                      <em className="text-xs text-[#7a7367]">· {inc.country}</em>
-                    ) : null}
-                  </span>
-                  <button
-                    type="button"
-                    className="px-1 text-[#7a7367] disabled:opacity-30"
-                    disabled={idx === 0}
-                    onClick={() => move(id, -1)}
-                    aria-label="up"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    className="px-1 text-[#7a7367] disabled:opacity-30"
-                    disabled={idx === ordered.optedIds.length - 1}
-                    onClick={() => move(id, 1)}
-                    aria-label="down"
-                  >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    className="px-1 text-xs text-[#7a7367]"
-                    onClick={() => {
-                      setEditing(inc);
-                      setModalOpen(true);
-                    }}
-                    aria-label={`edit ${inc.name}`}
-                  >
-                    ✎
-                  </button>
-                </li>
-              );
-            })}
-            {ordered.rest.map((inc) => (
-              <li
-                key={inc.id}
-                className="flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 opacity-70"
-              >
-                <input
-                  type="checkbox"
-                  checked={false}
-                  onChange={() => toggle(inc.id, true)}
-                  aria-label={`opt-in ${inc.name}`}
-                />
-                <span className="flex-1 text-sm">
-                  {inc.name}{' '}
-                  {inc.country ? (
-                    <em className="text-xs text-[#7a7367]">· {inc.country}</em>
-                  ) : null}
-                </span>
-                <button
-                  type="button"
-                  className="px-1 text-xs text-[#7a7367]"
-                  onClick={() => {
-                    setEditing(inc);
-                    setModalOpen(true);
-                  }}
-                  aria-label={`edit ${inc.name}`}
-                >
-                  ✎
-                </button>
-                <button
-                  type="button"
-                  className="px-1 text-xs text-red-700"
-                  aria-label={`delete ${inc.name}`}
-                  onClick={() => {
-                    if (
-                      confirm(
-                        t({
-                          fr: 'Supprimer cet incubateur de la base globale ?',
-                          en: 'Delete this incubator from the global base?',
-                          de: 'Diesen Inkubator löschen?',
-                        }),
-                      )
-                    ) {
-                      del.mutate(inc.id);
-                    }
-                  }}
-                >
-                  🗑
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          <MulticlubOverview editionId={editionId} t={t} />
+        </section>
+      ) : soloClubId ? (
+        <ClubIncubatorsManager editionId={editionId} clubId={soloClubId} canEditBase />
+      ) : (
+        <SectionNote>
+          {t({
+            fr: 'Attachez d’abord un club à cette compétition (onglet Clubs) pour gérer les incubateurs.',
+            en: 'Attach a club to this competition first (Clubs tab) to manage incubators.',
+            de: 'Verknüpfen Sie zuerst einen Club mit diesem Wettbewerb (Tab Clubs), um Inkubatoren zu verwalten.',
+          })}
+        </SectionNote>
+      )}
 
       <section className="border-t border-[#e7e1d6] pt-6">
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#0a1f44]">
@@ -328,14 +184,88 @@ export default function IncubatorsTab({ competition, mode = 'edit' }) {
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#0a1f44]">
           {t({ fr: 'Provenance des candidats', en: 'Applicant sourcing', de: 'Herkunft der Bewerber' })}
         </h3>
-        <SourcingTable editionId={editionId} allById={allById} t={t} />
+        <SourcingTable editionId={editionId} t={t} />
       </section>
+    </div>
+  );
+}
 
-      <IncubatorEditModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        incubator={editing}
-      />
+// MulticlubOverview — vue master en multi-club : base globale (création/édition/
+// suppression master) + récap des opt-in par club (lecture). La gestion fine de
+// l'opt-in + contact se fait dans chaque Cockpit Club.
+function MulticlubOverview({ editionId, t }) {
+  const { data: all = [] } = useAllIncubators();
+  const { data: links = [] } = useEditionClubLinks(editionId);
+  const del = useDeleteIncubator();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+
+  const stats = useMemo(() => {
+    const m = {};
+    for (const l of links) {
+      const s = (m[l.incubator_id] ||= { clubs: new Set(), contacts: 0 });
+      s.clubs.add(l.club_id);
+      if (l.contact_name || l.contact_email) s.contacts += 1;
+    }
+    return m;
+  }, [links]);
+
+  return (
+    <div className="mt-3">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-[#0a1f44]">
+          {t({ fr: 'Base globale d’incubateurs', en: 'Global incubator base', de: 'Globale Inkubatoren-Basis' })}
+        </h3>
+        <button
+          type="button"
+          className="rounded-lg border border-[#0a1f44] px-3 py-1.5 text-sm text-[#0a1f44]"
+          onClick={() => { setEditing(null); setModalOpen(true); }}
+        >
+          + {t({ fr: 'Nouvel incubateur', en: 'New incubator', de: 'Neuer Inkubator' })}
+        </button>
+      </div>
+
+      {all.length === 0 ? (
+        <SectionNote>
+          {t({ fr: 'Aucun incubateur dans la base. Créez-en un.', en: 'No incubators yet. Create one.', de: 'Noch keine Inkubatoren. Erstellen Sie einen.' })}
+        </SectionNote>
+      ) : (
+        <ul className="space-y-2">
+          {all.map((inc) => {
+            const s = stats[inc.id];
+            const clubCount = s ? s.clubs.size : 0;
+            return (
+              <li key={inc.id} className="flex items-center gap-3 rounded-xl border border-[#e7e1d6] bg-white px-3 py-2">
+                <span className="flex-1 text-sm">
+                  {inc.name}{' '}
+                  {inc.country ? <em className="text-xs text-[#7a7367]">· {inc.country}</em> : null}
+                </span>
+                <span className="text-xs text-[#7a7367]">
+                  {clubCount > 0
+                    ? t({
+                        fr: `opté par ${clubCount} club${clubCount > 1 ? 's' : ''} · ${s.contacts} contact${s.contacts > 1 ? 's' : ''}`,
+                        en: `${clubCount} club${clubCount > 1 ? 's' : ''} opted · ${s.contacts} contact${s.contacts > 1 ? 's' : ''}`,
+                        de: `${clubCount} Club(s) · ${s.contacts} Kontakt(e)`,
+                      })
+                    : t({ fr: 'aucun club', en: 'no club', de: 'kein Club' })}
+                </span>
+                <button type="button" className="px-1 text-xs text-[#7a7367]"
+                  onClick={() => { setEditing(inc); setModalOpen(true); }} aria-label={`edit ${inc.name}`}>✎</button>
+                <button type="button" className="px-1 text-xs text-red-700" aria-label={`delete ${inc.name}`}
+                  onClick={() => {
+                    if (confirm(t({
+                      fr: 'Supprimer cet incubateur de la base globale ?',
+                      en: 'Delete this incubator from the global base?',
+                      de: 'Diesen Inkubator löschen?',
+                    }))) del.mutate(inc.id);
+                  }}>🗑</button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <IncubatorEditModal open={modalOpen} onClose={() => setModalOpen(false)} incubator={editing} />
     </div>
   );
 }
@@ -368,8 +298,10 @@ function AssetUpload({ label, kind, current, onUploaded, editionId }) {
   );
 }
 
-function SourcingTable({ editionId, allById, t }) {
+function SourcingTable({ editionId, t }) {
   const { data } = useSourcingStats(editionId);
+  const { data: all = [] } = useAllIncubators();
+  const allById = useMemo(() => Object.fromEntries(all.map((i) => [i.id, i])), [all]);
   if (!data || data.total === 0) {
     return <SectionNote>{t({ fr: 'Aucune candidature soumise pour le moment.', en: 'No submitted applications yet.', de: 'Noch keine eingereichten Bewerbungen.' })}</SectionNote>;
   }

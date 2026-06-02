@@ -8,7 +8,7 @@
 //   < lg : master/detail (drawer prend le plein écran avec bouton retour).
 
 import React, { useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import {
@@ -97,11 +97,17 @@ export default function Selection() {
     isComite,
     isAdmin,
     isMasterAdmin,
+    isCompetitionAdmin,
     clubMemberships,
     loading: authLoading,
   } = usePlatformAuth();
   const { t } = useLang();
   const reduce = useReducedMotion();
+
+  // Deep-link depuis le cockpit (« Espaces opérationnels ») : /Selection?edition=…
+  // pré-sélectionne la compétition pour atterrir directement sur ses dossiers.
+  const [searchParams] = useSearchParams();
+  const editionParam = searchParams.get('edition');
 
   // V2 multi-club : périmètre de clubs visibles par défaut.
   // - master_admin OR admin legacy : voit TOUT (rendu en GroupedQueue : sections
@@ -132,16 +138,18 @@ export default function Selection() {
     queryKey: ['rsa', 'selection', 'active-edition'],
     queryFn: () => Edition.active(),
     staleTime: 5 * 60 * 1000,
-    enabled: isAuthenticated && (isComite || isAdmin),
+    enabled: isAuthenticated && (isComite || isAdmin || isMasterAdmin || isCompetitionAdmin),
   });
 
-  const [editionId, setEditionId] = useState(null);
+  // Le param d'URL prime sur l'édition active comme valeur initiale.
+  const [editionId, setEditionId] = useState(editionParam || null);
   const [quickTab, setQuickTab] = useState('toReview');
   const [verdictIn, setVerdictIn] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
-  // Bootstrap editionId from the active edition once it loads.
+  // Bootstrap editionId from the active edition once it loads — uniquement si
+  // aucun param d'URL n'a déjà fixé l'édition (le deep-link cockpit prime).
   React.useEffect(() => {
     if (!editionId && activeEdition?.id) {
       setEditionId(activeEdition.id);
@@ -230,7 +238,11 @@ export default function Selection() {
   }
   if (!isAuthenticated) return <Navigate to="/Login" replace />;
 
-  if (!(isComite || isAdmin)) {
+  // Gate élargi à la hiérarchie : master_admin / competition_admin accèdent à la
+  // file de sélection au même titre que comité / admin legacy (cohérent avec
+  // canSeeAllClubs + GroupedQueue plus bas). Sinon un master_admin pur — sans le
+  // rôle 'admin' — tomberait sur Forbidden depuis le lien cockpit.
+  if (!(isComite || isAdmin || isMasterAdmin || isCompetitionAdmin)) {
     return (
       <PageShell nav width="wide" footer={<PlatformFooter width="wide" />}>
         <Centered minHeight="50vh">

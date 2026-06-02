@@ -12,10 +12,10 @@ test('isClubMode reconnaît les modes valides uniquement', () => {
   assert.ok(!isClubMode(null));
 });
 
-test('arrays couvrent les 9 onglets existants + pilotage, sans doublon', () => {
+test('arrays couvrent tous les onglets existants + pilotage, sans doublon', () => {
   const all = [...PREP_TABS, ...PILOTAGE_TABS];
   assert.equal(new Set(all).size, all.length); // pas de doublon
-  for (const id of ['setup', 'team', 'rules', 'prizes', 'jury_applications',
+  for (const id of ['setup', 'team', 'rules', 'incubators', 'prizes', 'jury_applications',
                     'pilotage', 'live', 'results', 'analytics', 'comms']) {
     assert.ok(all.includes(id), `manque ${id}`);
   }
