@@ -175,3 +175,9 @@ $$;
 
 revoke all on function public.rsa_allocate_startup(uuid, text) from public;
 grant execute on function public.rsa_allocate_startup(uuid, text) to authenticated;
+
+-- Re-déclaration explicite des grants pour les deux fonctions remplacées (policy hardening).
+revoke all on function public.rsa_apply_selection_review(uuid) from public;
+grant execute on function public.rsa_apply_selection_review(uuid) to authenticated;
+revoke all on function public.rsa_admin_override(uuid, text, text, text, uuid) from public;
+grant execute on function public.rsa_admin_override(uuid, text, text, text, uuid) to authenticated;
