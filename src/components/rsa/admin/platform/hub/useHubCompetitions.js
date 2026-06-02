@@ -44,5 +44,12 @@ export function useHubCompetitions() {
     [competitionsQ.data, isMasterAdmin, competitionAdminEditions, clubEditionsQ.data],
   );
 
-  return { competitions, isLoading: competitionsQ.isLoading, isError: competitionsQ.isError };
+  // isLoading gate AUSSI sur clubEditionsQ : sinon un user club-scopé (club_admin)
+  // verrait une liste incomplète/vide pendant la fenêtre de chargement du 2e fetch
+  // (competitionsQ résolu mais editions-clubs pas encore). Cf. review Lot 1.
+  return {
+    competitions,
+    isLoading: competitionsQ.isLoading || clubEditionsQ.isLoading,
+    isError: competitionsQ.isError || clubEditionsQ.isError,
+  };
 }
