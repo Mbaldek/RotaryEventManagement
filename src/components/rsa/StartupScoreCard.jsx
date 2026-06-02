@@ -39,6 +39,9 @@ const T = {
   },
 };
 
+// Hairline separator color — warm beige consistent with Élysée design system
+const HAIRLINE = "#e8e3d9";
+
 export default function StartupScoreCard({
   startup,
   index,
@@ -68,27 +71,26 @@ export default function StartupScoreCard({
     : null;
 
   return (
-    <div
-      className={`rounded-xl border transition-shadow ${
-        expanded ? "border-amber-300 shadow-sm bg-white" : "border-stone-200 bg-white/70 hover:bg-white"
-      }`}
-    >
-      {/* Header — always visible */}
+    <div style={{ borderBottom: `1px solid ${HAIRLINE}` }}>
+      {/* Header row — always visible */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-3 p-4 text-left"
+        className="w-full flex items-center gap-3 py-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c9a84c] hover:bg-[#faf7f0] transition-colors"
       >
+        {/* Status indicator: index number or checkmark */}
         <div
-          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
+          className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
             isSubmitted ? "bg-emerald-100 text-emerald-700" : "bg-stone-100 text-stone-500"
           }`}
         >
           {isSubmitted ? <Check className="w-4 h-4" /> : index + 1}
         </div>
+
+        {/* Name + meta */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="font-semibold text-stone-800 truncate">{startup}</div>
+            <span className="font-semibold text-stone-800 truncate">{startup}</span>
             {winnerBadge && (
               <span
                 className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded"
@@ -119,15 +121,21 @@ export default function StartupScoreCard({
             )}
           </div>
         </div>
+
+        {/* Expand toggle */}
         {expanded ? (
-          <ChevronUp className="w-4 h-4 text-stone-400" />
+          <ChevronUp className="w-4 h-4 text-stone-400 shrink-0" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-stone-400" />
+          <ChevronDown className="w-4 h-4 text-stone-400 shrink-0" />
         )}
       </button>
 
+      {/* Expanded detail — no card wrapper, just content below a hairline */}
       {expanded && (
-        <div className="border-t border-stone-100 p-4 space-y-3">
+        <div
+          className="pb-5 space-y-3"
+          style={{ borderTop: `1px solid ${HAIRLINE}`, paddingTop: 16 }}
+        >
           {CRITERIA.map((c) => (
             <CriterionRating
               key={c.id}
